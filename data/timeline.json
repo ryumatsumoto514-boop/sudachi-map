@@ -1,0 +1,100 @@
+[
+  {
+    "id": "minus6",
+    "label": "6か月前",
+    "shortLabel": "6か月前",
+    "monthsOffset": -6,
+    "description": "巣立ちのイメージを固め始める時期。進路や暮らし方の希望を職員・先生と話しておくと、あとの手続きがスムーズになります。",
+    "checklist": [
+      "進路（進学・就職・まだ決めていない）の希望をざっくり考えてみる",
+      "施設の職員や学校の先生に、今の気持ちを話しておく",
+      "奨学金・給付金など、使えそうな制度をこのサイトの診断で調べてみる",
+      "住みたい地域・暮らし方（一人暮らし／シェアハウス／寮）のイメージを持つ"
+    ],
+    "relatedResourceIds": [
+      "jasso-kyufu-shakaiteki-yougo",
+      "shinsotsu-ouen-hw"
+    ]
+  },
+  {
+    "id": "minus3",
+    "label": "3か月前",
+    "shortLabel": "3か月前",
+    "monthsOffset": -3,
+    "description": "具体的な手続きが動き出す時期。お金まわりの制度は申込期限があるものが多いので、早めの確認が大事です。",
+    "checklist": [
+      "奨学金・給付金の申込スケジュールを確認する",
+      "住居探し（賃貸・シェアハウス・社員寮）を具体的に始める",
+      "必要な書類（住民票・保険証など）の種類を確認しておく",
+      "生活費シミュレーターで、毎月どれくらいお金がかかりそうか見てみる"
+    ],
+    "relatedResourceIds": [
+      "jasso-kyufu-shakaiteki-yougo",
+      "safety-net-jutaku"
+    ]
+  },
+  {
+    "id": "minus1",
+    "label": "1か月前",
+    "shortLabel": "1か月前",
+    "monthsOffset": -1,
+    "description": "引っ越しや契約の最終確認をする時期。困ったときにすぐ連絡できる窓口を控えておきましょう。",
+    "checklist": [
+      "住居の契約内容（初期費用・家賃・保証人）を確認する",
+      "転居先の住所変更の手続きを確認する",
+      "電気・ガス・水道・通信の契約手続きを進める",
+      "困ったときの相談先・電話スクリプトを控えておく"
+    ],
+    "relatedResourceIds": [
+      "safety-net-jutaku",
+      "yorisoi-hotline"
+    ]
+  },
+  {
+    "id": "day0",
+    "label": "巣立ちの日",
+    "shortLabel": "巣立ちの日",
+    "monthsOffset": 0,
+    "description": "新しい生活のスタート。すべてを完璧にする必要はありません。困ったときに頼れる場所を知っておくだけで十分です。",
+    "checklist": [
+      "身分証明書・保険証など、大事な書類を手元にまとめておく",
+      "緊急連絡先（このサイトの下部バー）をスマホに控えておく",
+      "困ったら一人で抱え込まず、相談窓口に連絡してよいと知っておく"
+    ],
+    "relatedResourceIds": [
+      "yorisoi-hotline"
+    ]
+  },
+  {
+    "id": "plus1",
+    "label": "1か月後",
+    "shortLabel": "1か月後",
+    "monthsOffset": 1,
+    "description": "新生活のリズムができ始める時期。生活費が想定通りか、一度見直してみましょう。",
+    "checklist": [
+      "実際の生活費と、事前に立てた予算を比べてみる",
+      "仕事・学校のリズムに慣れてきたか振り返る",
+      "困りごとが出てきたら、早めに相談窓口に連絡する"
+    ],
+    "relatedResourceIds": [
+      "shinsotsu-ouen-hw",
+      "jiritsu-shien-shikin-kashitsuke"
+    ]
+  },
+  {
+    "id": "plus3",
+    "label": "3か月後",
+    "shortLabel": "3か月後",
+    "monthsOffset": 3,
+    "description": "少し落ち着いてくる時期。使える制度を再確認して、次の半年の見通しを立ててみましょう。",
+    "checklist": [
+      "利用できる制度に変更・追加がないか確認する",
+      "貯金や支出のバランスを見直す",
+      "次の進路（転職・進学・引っ越しなど）の予定があれば早めに情報収集する"
+    ],
+    "relatedResourceIds": [
+      "jiritsu-shien-shikin-kashitsuke",
+      "jasso-kyufu-shakaiteki-yougo"
+    ]
+  }
+]

@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #faf7f5;
+  --foreground: #1c1a19;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+  outline: 2px solid #c6303e;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+@media print {
+  body {
+    background: #ffffff;
+  }
+  a[href]::after {
+    content: none !important;
+  }
+}

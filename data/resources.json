@@ -1,0 +1,388 @@
+[
+  {
+    "id": "jasso-kyufu-shakaiteki-yougo",
+    "name": "JASSO給付奨学金（社会的養護を必要とする人向け）",
+    "operator": "独立行政法人 日本学生支援機構（JASSO）",
+    "category": "education",
+    "region": "全国",
+    "summary": "大学・短大・専門学校等に進学する人が対象の返済不要の奨学金。児童養護施設出身者などは「生計維持者なし（独立生計者）」として、住民税非課税世帯と同じ最も手厚い第1区分の給付額が適用される。",
+    "eligibility": [
+      "社会的養護を必要とする人で、18歳になる前日に児童養護施設・里親・ファミリーホーム等に入所/委託されていたこと",
+      "大学・短期大学・専門学校・高専に進学（進学予定）していること",
+      "学業成績・学習意欲の要件を満たすこと（家計基準は原則適用されない）"
+    ],
+    "benefit": "国公立自宅外: 月額66,700円、私立自宅外: 月額75,800円（2025年度水準、第1区分相当）。授業料等減免と併用可能。",
+    "deadline": "進学前予約採用は高3の春〜夏頃、在学採用は入学後に随時。学校の奨学金窓口またはJASSOに要確認",
+    "contact": {
+      "org": "JASSO奨学金相談センター",
+      "phone": "0570-666-301",
+      "url": "https://www.jasso.go.jp/shogakukin/"
+    },
+    "tags": ["施設出身", "奨学金", "進学", "返済不要"],
+    "source_url": "https://www.jasso.go.jp/shogakukin/about/kyufu/kingaku.html"
+  },
+  {
+    "id": "jasso-jyukenryo-shien",
+    "name": "児童養護施設等の生徒への受験料等支援",
+    "operator": "独立行政法人 日本学生支援機構（JASSO）",
+    "category": "education",
+    "region": "全国",
+    "summary": "高校3年生などが大学・専門学校を受験する際にかかる受験料を、上限20万円まで支援してもらえる制度。",
+    "eligibility": [
+      "令和8年度に高等学校等を卒業予定で、児童養護施設・里親家庭等で生活している生徒",
+      "大学・短大・専門学校等の受験を予定していること"
+    ],
+    "benefit": "受験料の実費を上限20万円まで支援",
+    "deadline": "毎年7月1日から募集開始（年度により異なるため要確認）",
+    "contact": {
+      "org": "JASSO 児童養護施設等支援事業窓口",
+      "phone": "0570-666-301",
+      "url": "https://www.jasso.go.jp/kihukin/j_shien/index.html"
+    },
+    "tags": ["施設出身", "受験", "進学"],
+    "source_url": "https://www.jasso.go.jp/kihukin/j_shien/index.html"
+  },
+  {
+    "id": "koukou-shougaku-kyufukin",
+    "name": "高校生等奨学給付金（都道府県別・返済不要）",
+    "operator": "各都道府県教育委員会",
+    "category": "education",
+    "region": "全国",
+    "summary": "住民税非課税世帯・生活保護世帯の高校生を対象に、授業料以外の教育費（教科書代・制服代・修学旅行費など）を支援する返済不要の給付金。児童養護施設入所者は世帯区分の考え方が異なるため、学校・施設と要確認。",
+    "eligibility": [
+      "住民税所得割が非課税の世帯（生活保護世帯を含む）に属する高校生等",
+      "児童養護施設入所者は「特別育成費」等の措置がある場合は対象外になることがある"
+    ],
+    "benefit": "年額数万円〜13万円程度（世帯区分・都道府県により異なる）",
+    "deadline": "都道府県ごとに異なる（例年春〜初夏に学校経由で申請案内）",
+    "contact": {
+      "org": "在籍する高校の担当窓口、または都道府県教育委員会",
+      "phone": null,
+      "url": "https://www.kyoiku.metro.tokyo.lg.jp/admission/tuition/tuition/scholarship_public_school"
+    },
+    "tags": ["奨学金", "高校生", "返済不要"],
+    "source_url": "https://www.kyoiku.metro.tokyo.lg.jp/admission/tuition/tuition/scholarship_public_school"
+  },
+  {
+    "id": "b4s-scholarship",
+    "name": "ブリッジフォースマイル 奨学金支援プログラム",
+    "operator": "認定NPO法人ブリッジフォースマイル（B4S）",
+    "category": "education",
+    "region": "全国",
+    "summary": "児童養護施設や里親家庭などで暮らす、親を頼れない子ども・若者向けの給付型奨学金プログラム群（企業協賛のプログラムを複数運営）。",
+    "eligibility": [
+      "児童養護施設・里親家庭・ファミリーホーム等の出身、または親を頼れない背景があること",
+      "プログラムごとに対象学年・進路（高校生〜大学院・就職）が異なる"
+    ],
+    "benefit": "プログラムにより年間30万円〜100万円程度",
+    "deadline": "プログラムごとに異なる（公式サイトで最新の募集状況を確認）",
+    "contact": {
+      "org": "認定NPO法人ブリッジフォースマイル",
+      "phone": null,
+      "url": "https://www.b4s.jp/activity/scholarship/"
+    },
+    "tags": ["施設出身", "奨学金", "返済不要"],
+    "source_url": "https://www.b4s.jp/activity/scholarship/"
+  },
+  {
+    "id": "nf-dream-scholarship",
+    "name": "日本財団 夢の奨学金",
+    "operator": "公益財団法人 日本財団",
+    "category": "education",
+    "region": "全国",
+    "summary": "社会的養護の経験がある18歳〜30歳の若者を対象に、学費全額に加えて生活費・住居費もカバーする返済不要の給付型奨学金。",
+    "eligibility": [
+      "日本における社会的養護の経験がある18歳〜30歳の若者",
+      "明確で現実的な人生プランを示せること（選考あり）"
+    ],
+    "benefit": "学費全額 + 生活費・住居費相当を給付",
+    "deadline": "年1回程度の募集（公式サイトで最新募集時期を確認）",
+    "contact": {
+      "org": "日本財団 夢の奨学金事務局",
+      "phone": null,
+      "url": "https://dreamscholarship.jp/"
+    },
+    "tags": ["施設出身", "奨学金", "生活費", "返済不要"],
+    "source_url": "https://dreamscholarship.jp/"
+  },
+  {
+    "id": "jiritsu-shien-shikin-kashitsuke",
+    "name": "児童養護施設退所者等に対する自立支援資金貸付事業",
+    "operator": "都道府県社会福祉協議会（各都道府県が実施）",
+    "category": "money",
+    "region": "全国",
+    "summary": "施設退所後の生活費・家賃を無利子で借りられる制度。進学者・就職者どちらも対象になりうる。就業継続などの条件を満たすと返還が免除される場合がある。",
+    "eligibility": [
+      "児童養護施設・自立援助ホーム等を退所した人、または里親等への委託を解除された人",
+      "退所・委託解除から概ね5年以内であること（都道府県により異なる）"
+    ],
+    "benefit": "生活支援費: 月額5万円以内、家賃支援費: 家賃実費相当（上限あり）を無利子で貸付。一定条件で返還免除あり。",
+    "deadline": "通年（在学中・就職後も申請可、都道府県の社会福祉協議会に要確認）",
+    "contact": {
+      "org": "居住する都道府県の社会福祉協議会",
+      "phone": null,
+      "url": "https://www.mhlw.go.jp/content/12000000/001300278.pdf"
+    },
+    "tags": ["施設出身", "住まい", "お金", "貸付"],
+    "source_url": "https://www.mhlw.go.jp/content/12000000/001300278.pdf"
+  },
+  {
+    "id": "jukyo-kakuho-kyufukin",
+    "name": "住居確保給付金",
+    "operator": "各市区町村（自立相談支援機関）",
+    "category": "housing",
+    "region": "全国",
+    "summary": "離職・休業などで家賃が払えなくなった、または払えなくなるおそれがある人に、家賃相当額を一定期間支給してくれる制度。就職活動などが条件になる場合がある。",
+    "eligibility": [
+      "離職・廃業から2年以内、または収入が離職・廃業と同程度まで減少していること",
+      "求職活動等の要件を満たすこと（自治体窓口で詳細確認）"
+    ],
+    "benefit": "市区町村ごとの上限額まで家賃実費を原則3か月間支給（延長で最大9か月間）",
+    "deadline": "通年（要件を満たす間はいつでも申請可）",
+    "contact": {
+      "org": "お住まいの市区町村の自立相談支援機関（福祉事務所）",
+      "phone": null,
+      "url": "https://corona-support.mhlw.go.jp/jukyokakuhokyufukin/index.html"
+    },
+    "tags": ["住まい", "お金", "家賃"],
+    "source_url": "https://corona-support.mhlw.go.jp/jukyokakuhokyufukin/index.html"
+  },
+  {
+    "id": "safety-net-jutaku",
+    "name": "住宅セーフティネット制度（保証人不要の賃貸物件検索）",
+    "operator": "国土交通省 / 各都道府県（東京都は「東京ささエール住宅」）",
+    "category": "housing",
+    "region": "全国",
+    "summary": "保証人がいなくても入居を拒まない賃貸住宅を検索できる制度・データベース。家賃債務保証や見守り支援を行う「居住支援法人」も併せて探せる。",
+    "eligibility": [
+      "低額所得者・子育て世帯・高齢者など「住宅確保要配慮者」に該当する人（若年の一人暮らし開始者も対象になりうる、自治体により基準は異なる）"
+    ],
+    "benefit": "保証人不要で入居できる登録住宅の情報提供。家賃債務保証等の支援を受けられる場合あり。",
+    "deadline": "通年",
+    "contact": {
+      "org": "住宅セーフティネット情報提供システム / 東京都住宅政策本部",
+      "phone": null,
+      "url": "https://safetynet-jutaku.mlit.go.jp/guest/"
+    },
+    "tags": ["住まい", "保証人不要", "賃貸"],
+    "source_url": "https://safetynet-jutaku.mlit.go.jp/guest/"
+  },
+  {
+    "id": "tokyo-challenge-net",
+    "name": "TOKYOチャレンジネット",
+    "operator": "東京都",
+    "category": "housing",
+    "region": "東京都",
+    "summary": "ネットカフェ生活など住まいを失った人・失うおそれのある人に、一時的に利用できる住宅を提供し、定期的な面談で住居確保をサポートする窓口。",
+    "eligibility": [
+      "東京都内で住居を失っている、または失うおそれがある人",
+      "就労中・離職中いずれも相談可能"
+    ],
+    "benefit": "一時利用住宅の提供、住居確保に向けた継続的な面談支援",
+    "deadline": "通年（電話予約制、相談日は月・水・金・土）",
+    "contact": {
+      "org": "TOKYOチャレンジネット",
+      "phone": "0120-874-225",
+      "url": "https://www.tokyo-challenge.net/"
+    },
+    "tags": ["住まい", "緊急", "東京"],
+    "source_url": "https://www.tokyo-challenge.net/"
+  },
+  {
+    "id": "shinsotsu-ouen-hw",
+    "name": "新卒応援ハローワーク／わかものハローワーク",
+    "operator": "厚生労働省・全国のハローワーク",
+    "category": "work",
+    "region": "全国",
+    "summary": "高校・大学等の卒業予定者や既卒者、若年求職者向けに、専門の相談員が履歴書添削・面接指導・職業紹介まで無料でサポートしてくれる窓口。",
+    "eligibility": [
+      "高校・大学等の卒業予定者、卒業後おおむね3年以内の人",
+      "若年（おおむね35歳未満）の求職者"
+    ],
+    "benefit": "無料の就職相談、履歴書・面接対策、求人紹介",
+    "deadline": "通年（予約制の場合あり）",
+    "contact": {
+      "org": "最寄りの新卒応援ハローワーク／わかものハローワーク",
+      "phone": null,
+      "url": "https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/0000132220.html"
+    },
+    "tags": ["仕事", "就職", "無料相談"],
+    "source_url": "https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/0000132220.html"
+  },
+  {
+    "id": "chiiki-wakamono-support-station",
+    "name": "地域若者サポートステーション（サポステ）",
+    "operator": "厚生労働省委託・全国179か所",
+    "category": "work",
+    "region": "全国",
+    "summary": "働くことに悩みを抱える15歳〜49歳を対象に、就職相談から職場定着まで無料で伴走してくれる支援機関。学校に行っていない・働いていない状態からでも相談できる。",
+    "eligibility": [
+      "15歳〜49歳で、働くことに関して悩みを抱えている人（無業・非就学状態でも可）"
+    ],
+    "benefit": "無料の個別相談、コミュニケーション講座、職場体験、就職後の定着支援",
+    "deadline": "通年",
+    "contact": {
+      "org": "最寄りの地域若者サポートステーション",
+      "phone": null,
+      "url": "https://saposute-net.mhlw.go.jp/"
+    },
+    "tags": ["仕事", "無料相談", "就労支援"],
+    "source_url": "https://saposute-net.mhlw.go.jp/"
+  },
+  {
+    "id": "houterasu",
+    "name": "法テラス（日本司法支援センター）",
+    "operator": "法テラス（国が設立した公的な法人）",
+    "category": "procedures",
+    "region": "全国",
+    "summary": "契約トラブル、賃貸借、労働問題など法律に関わる悩みを無料または低額で弁護士に相談できる窓口。収入が一定以下の場合は相談料が無料になる制度がある。",
+    "eligibility": [
+      "法的なトラブルを抱えている人（誰でも電話相談は可能）",
+      "無料法律相談は収入・資産が一定基準以下であることが条件"
+    ],
+    "benefit": "電話でのアドバイス（無料）、条件を満たせば弁護士による無料相談・費用立替",
+    "deadline": "通年",
+    "contact": {
+      "org": "法テラス・サポートダイヤル",
+      "phone": "0570-078374",
+      "url": "https://www.houterasu.or.jp/"
+    },
+    "tags": ["契約トラブル", "法律相談", "無料相談"],
+    "source_url": "https://www.houterasu.or.jp/site/soudanmadoguchi-houseido/support-dial.html"
+  },
+  {
+    "id": "shouhisha-hotline",
+    "name": "消費者ホットライン",
+    "operator": "消費者庁",
+    "category": "procedures",
+    "region": "全国",
+    "summary": "契約や訪問販売、悪質商法などのトラブルについて、最寄りの消費生活センターにつないでもらえる全国共通の電話番号。",
+    "eligibility": ["契約・消費トラブルに困っている人なら誰でも"],
+    "benefit": "消費生活相談員による無料相談、クーリングオフなどの助言",
+    "deadline": "通年",
+    "contact": {
+      "org": "消費者ホットライン",
+      "phone": "188",
+      "url": "https://www.caa.go.jp/policies/policy/local_cooperation/local_consumer_administration/hotline/"
+    },
+    "tags": ["契約トラブル", "緊急", "無料相談"],
+    "source_url": "https://www.caa.go.jp/policies/policy/local_cooperation/local_consumer_administration/hotline/"
+  },
+  {
+    "id": "gakusei-nofu-tokurei",
+    "name": "国民年金保険料 学生納付特例制度",
+    "operator": "日本年金機構",
+    "category": "procedures",
+    "region": "全国",
+    "summary": "20歳になると国民年金の保険料を納める義務が発生するが、学生は申請することで在学中の保険料納付を猶予してもらえる制度。手続きを知らないと未納扱いになり将来の年金に影響するため要注意。",
+    "eligibility": [
+      "日本国内に住む20歳以上の学生（大学・専門学校・高専など対象校に在学）",
+      "前年所得が一定基準以下であること"
+    ],
+    "benefit": "在学中の保険料納付が猶予される（追納も可能）",
+    "deadline": "毎年度申請が必要（4月〜翌年3月分、年度ごとに更新）",
+    "contact": {
+      "org": "お住まいの市区町村役場の国民年金担当窓口、または年金事務所",
+      "phone": null,
+      "url": "https://www.nenkin.go.jp/service/kokunen/menjo/20150514.html"
+    },
+    "tags": ["手続き", "年金", "20歳"],
+    "source_url": "https://www.nenkin.go.jp/service/kokunen/menjo/20150514.html"
+  },
+  {
+    "id": "yorisoi-hotline",
+    "name": "よりそいホットライン",
+    "operator": "一般社団法人 社会的包摂サポートセンター",
+    "category": "emergency",
+    "region": "全国",
+    "summary": "暮らしの困りごと、DV、性暴力、生きるのがつらいなど、どんな相談でも24時間無料で受け付けてくれる電話相談窓口。",
+    "eligibility": ["誰でも利用可能"],
+    "benefit": "24時間・通話無料の相談対応",
+    "deadline": "常時対応",
+    "contact": {
+      "org": "よりそいホットライン",
+      "phone": "0120-279-338",
+      "url": "https://www.since2011.net/yorisoi/"
+    },
+    "tags": ["緊急", "相談", "24時間"],
+    "source_url": "https://www.since2011.net/yorisoi/"
+  },
+  {
+    "id": "jido-soudanjo-189",
+    "name": "児童相談所虐待対応ダイヤル「189」",
+    "operator": "こども家庭庁 / 全国の児童相談所",
+    "category": "emergency",
+    "region": "全国",
+    "summary": "虐待を受けている、またはそのおそれがあるとき、すぐに児童相談所につながる全国共通の3桁ダイヤル（通話無料）。18歳未満の本人からの相談も可能。",
+    "eligibility": ["18歳未満の子ども本人、または周囲の大人（誰でも通報・相談可）"],
+    "benefit": "児童相談所への通告・相談を24時間受付",
+    "deadline": "常時対応",
+    "contact": {
+      "org": "児童相談所虐待対応ダイヤル",
+      "phone": "189",
+      "url": "https://www.cfa.go.jp/policies/jidougyakutai/gyakutai-taiou-dial"
+    },
+    "tags": ["緊急", "虐待", "18歳未満"],
+    "source_url": "https://www.cfa.go.jp/policies/jidougyakutai/gyakutai-taiou-dial"
+  },
+  {
+    "id": "keisatsu-110",
+    "name": "警察（110番）",
+    "operator": "警察庁",
+    "category": "emergency",
+    "region": "全国",
+    "summary": "今すぐ身の危険がある、事件・事故が起きたときに使う緊急通報番号。",
+    "eligibility": ["誰でも"],
+    "benefit": "緊急時の警察出動",
+    "deadline": "常時対応",
+    "contact": { "org": "警察", "phone": "110", "url": null },
+    "tags": ["緊急", "危険"],
+    "source_url": "https://www.npa.go.jp/"
+  },
+  {
+    "id": "kyukyu-119",
+    "name": "救急・消防（119番）",
+    "operator": "総務省消防庁",
+    "category": "emergency",
+    "region": "全国",
+    "summary": "急なけが、病気、火事のときに使う緊急通報番号。",
+    "eligibility": ["誰でも"],
+    "benefit": "救急車の要請、消防の出動",
+    "deadline": "常時対応",
+    "contact": { "org": "救急・消防", "phone": "119", "url": null },
+    "tags": ["緊急", "けが", "病気", "火事"],
+    "source_url": "https://www.fdma.go.jp/"
+  },
+  {
+    "id": "kyukyu-soudan-7119",
+    "name": "救急相談センター（#7119）",
+    "operator": "東京消防庁ほか各地域の消防機関",
+    "category": "emergency",
+    "region": "全国（対応地域は拡大中、非対応地域もあり）",
+    "summary": "「救急車を呼ぶべきか迷う」ときに、看護師・医師などに24時間相談できる窓口。実施エリアは順次拡大中のため、非対応地域では自治体の相談窓口を確認。",
+    "eligibility": ["誰でも（対応エリア内）"],
+    "benefit": "24時間の医療相談、必要に応じて救急要請のアドバイス",
+    "deadline": "常時対応（実施エリアによる）",
+    "contact": { "org": "救急相談センター", "phone": "#7119", "url": "https://www.tfd.metro.tokyo.lg.jp/lfe/" },
+    "tags": ["緊急", "健康", "24時間"],
+    "source_url": "https://www.tfd.metro.tokyo.lg.jp/lfe/"
+  },
+  {
+    "id": "musubie-kodomo-shokudo",
+    "name": "こども食堂マップ（むすびえ）",
+    "operator": "認定NPO法人全国こども食堂支援センター・むすびえ",
+    "category": "money",
+    "region": "全国",
+    "summary": "全国6,000か所以上のこども食堂を地図から検索できるサービス。無料または低額で食事ができ、居場所としても利用できる。",
+    "eligibility": ["制限なし（子どもだけでなく大人も利用可能な食堂も多い）"],
+    "benefit": "無料〜低額での食事提供、地域の居場所",
+    "deadline": "通年",
+    "contact": {
+      "org": "認定NPO法人むすびえ",
+      "phone": null,
+      "url": "https://musubie.org/search"
+    },
+    "tags": ["食事", "居場所", "無料"],
+    "source_url": "https://musubie.org/search"
+  }
+]
