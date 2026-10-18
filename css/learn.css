@@ -1,0 +1,593 @@
+/* =====================================================================
+   巣立ちマップ v4 — learn.css  (owner: LEARN) — まなぶ  #/learn  #/learn/ID
+   VISUAL-SPEC §7.9 · MOTION-SPEC §3.4 (cover morph), §3.5 (step axis), §4.2 Learn (quiz, calculators, 修了).
+   教科書と駅サイン: ruled rows, illustrated covers standing on the ground line, Plex numbers, flat tints.
+   Radius 0 (2px on controls). No shadows, no gradients. Tokens + text styles from base.css only
+   (no raw px font sizes, only the four tracking tokens, no weight 900). transform/opacity motion only.
+   Everything scoped under .v-learn, except the view-transition pseudo-elements of the cover morph.
+   ===================================================================== */
+
+/* ---------- shared ---------- */
+.v-learn .ln-sep { color: var(--ink-4); padding: 0 2px; }
+.v-learn .ln-meta {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 2px;
+  font-family: var(--font-display); font-size: var(--t-label); font-weight: 500; line-height: var(--lh-ui);
+  letter-spacing: var(--ls-label); color: var(--ink-3);
+}
+.v-learn .ln-meta .num { font-weight: 700; color: var(--ink-2); }
+/* single-column grids: pin the track to the column width (a long phrase must never widen an auto track) */
+.v-learn :is(.ln-index, .ln-aside, .ln-main, .ln-groups, .ln-top, .ln-sum, .ln-feature, .ln-feature-main, .ln-group, .ln-row-body,
+  .ln-head, .ln-step, .ln-side, .ln-fb-box, .ln-calc, .ln-fields, .ln-field, .ln-out, .ln-detail, .ln-recap, .ln-fin-text, .ln-related) {
+  grid-template-columns: minmax(0, 1fr);
+}
+.v-learn :is(.ln-side, .ln-opt-t, .ln-fb-box, .ln-kv dt) { overflow-wrap: anywhere; }
+
+/* lesson covers (SM.illus, artboard 240×160, ground line at 140). One SVG serves every crop: it is drawn with
+   preserveAspectRatio="xMidYMid slice", so a square box shows the safe square (x 40–200) and a 3:2 box the
+   whole cover — the row thumb and the lesson cover are the same picture, which is what lets it travel. */
+.v-learn .ln-cover { position: relative; display: block; width: 100%; aspect-ratio: 3 / 2; margin: 0; }
+.v-learn .ln-cover > svg.il-svg { width: 100%; height: 100%; }
+
+/* =====================================================================
+   LIST  #/learn
+   ===================================================================== */
+.v-learn .ln-index { display: grid; gap: var(--s-8); }
+.v-learn .ln-aside, .v-learn .ln-main { display: grid; gap: var(--s-7); align-content: start; min-width: 0; }
+
+.v-learn .ln-top { display: grid; gap: var(--s-3); }
+/* the subbar already names the screen (戻る ｜ まなぶ): no second 「まなぶ」 eyebrow over the title */
+html:has(.subbar:not([hidden]) .subbar-title:not(:empty)) .v-learn .ln-top > .eyebrow { display: none; }
+.v-learn .ln-h1 { font-size: var(--t-h1); line-height: var(--lh-heading); }
+.v-learn .ln-lead { max-width: 30em; }
+
+/* progress summary: the count (num-xl, rolls when it changed) + one segment per lesson */
+.v-learn .ln-sum { display: grid; gap: var(--s-3); }
+.v-learn .ln-sum-num { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 0; line-height: 1; }
+.v-learn .ln-sum-num > .num-xl { color: var(--ink); }
+.v-learn .ln-sum-of { margin-left: 0.3em; font-family: var(--font-num); font-weight: 700; font-size: var(--t-h2); letter-spacing: var(--ls-0); color: var(--ink-3); }
+.v-learn .ln-sum-k { margin-left: var(--s-3); font-family: var(--font-display); font-weight: 500; font-size: var(--t-meta); letter-spacing: var(--ls-0); color: var(--ink-3); }
+.v-learn .ln-psegs { display: flex; gap: 3px; }
+.v-learn .ln-pseg { position: relative; flex: 1; height: 4px; background: var(--paper-3); overflow: hidden; }
+.v-learn .ln-pseg > i { position: absolute; inset: 0; background: var(--action); transform: scaleX(0); transform-origin: left center; }
+.v-learn .ln-pseg.is-done > i { transform: none; }
+
+/* まずはここから / つぎはこれ: a full-bleed band with the lesson's cover (3:2), the one solid green on the screen */
+.v-learn .ln-feature { display: grid; gap: var(--s-4); }
+.v-learn .ln-feature-k { font-family: var(--font-display); font-weight: 700; font-size: var(--t-label); letter-spacing: var(--ls-label); color: var(--ink); }
+.v-learn .ln-feature-art { display: block; margin-bottom: var(--s-1); }
+.v-learn .ln-feature-main { display: grid; gap: 6px; min-width: 0; }
+.v-learn .ln-feature-h { font-size: var(--t-h2); line-height: var(--lh-heading); }
+.v-learn .ln-feature-lead { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-2); }
+.v-learn .ln-feature-go { justify-self: start; min-width: 12em; justify-content: space-between; margin-top: var(--s-1); }
+.v-learn .ln-feature.is-done { grid-template-columns: minmax(0, 1fr); }
+.v-learn .ln-feature.is-done .il { width: 200px; }
+.v-learn .ln-feature.is-done .ln-feature-k { font-size: var(--t-h3); font-weight: 700; letter-spacing: var(--ls-0); line-height: var(--lh-title); }
+@media (max-width: 379px) { .v-learn .ln-feature-go { justify-self: stretch; } }
+
+/* a pressed segment stays filled while hovered (on phones :hover sticks after a tap) */
+.v-learn .seg > [aria-pressed="true"]:hover { color: var(--paper); }
+.v-learn .ln-filter .seg { max-width: 30rem; }
+
+/* groups: one section head (01 + title + 2px rule) then ruled rows that start AT the rule */
+.v-learn .ln-groups { display: grid; gap: var(--sec-gap); }
+.v-learn .ln-group { display: grid; gap: 0; }
+.v-learn .ln-rows { display: grid; margin: 0; padding: 0; list-style: none; border-bottom: 1px solid var(--rule); }
+.v-learn .ln-li + .ln-li { border-top: 1px solid var(--rule); }
+
+.v-learn .ln-row {
+  position: relative; isolation: isolate;
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 0 14px; align-items: start;
+  padding: var(--s-4) 0;
+  color: var(--ink); text-decoration: none;
+}
+.v-learn .ln-row::before {
+  content: ""; position: absolute; inset: 0 calc(var(--bleed) * -1); z-index: -1;
+  background: var(--paper-2); opacity: 0; pointer-events: none;
+  transition: opacity var(--dur-quick) var(--ease-standard);
+}
+@media (hover: hover) { .v-learn .ln-row:hover::before { opacity: 1; } }
+.v-learn .ln-row[data-press="ink"]::after { inset: 0 calc(var(--bleed) * -1); }
+.v-learn .ln-row:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+/* the cover thumb: 72px square crop of the same SVG */
+.v-learn .ln-thumb { position: relative; flex: none; width: 72px; height: 72px; }
+.v-learn .ln-thumb > .ln-cover { width: 72px; height: 72px; aspect-ratio: auto; }
+.v-learn .ln-thumb.is-blank { display: grid; place-items: center; background: var(--paper-2); }
+/* a 72px row thumb is the subject on its ground line, not a tinted tile (the card and cover keep the tint) */
+@media (max-width: 899px) { .v-learn .ln-thumb .il [data-il="plate"] { display: none; } }
+.v-learn .ln-row-body { display: grid; gap: 4px; min-width: 0; padding-top: 1px; }
+.v-learn .ln-row-title { font-family: var(--font-display); font-weight: 700; font-size: var(--t-h3); line-height: var(--lh-title); letter-spacing: var(--ls-0); }
+@media (hover: hover) { .v-learn .ln-row:hover .ln-row-title { text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 0.22em; } }
+.v-learn .ln-row-lead {
+  font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-2);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.v-learn .ln-row-go { align-self: center; color: var(--ink-2); --arrow-s: 20px; }
+
+/* 済: a small hanko pressed over the thumb's corner (rests straight; SM.motion.stamp tilts it only while it presses) */
+.v-learn .ln-done {
+  position: absolute; right: -7px; bottom: -7px; z-index: 1;
+  display: grid; place-items: center; width: 28px; height: 28px;
+  background: var(--paper); color: var(--action-text); box-shadow: inset 0 0 0 1.5px var(--action);
+  font-family: var(--font-display); font-weight: 700; font-size: var(--fs-sm); line-height: 1; letter-spacing: var(--ls-0);
+}
+.v-learn .ln-done > .icon { width: 16px; height: 16px; stroke-width: 2.5; }
+.v-learn .ln-done.is-pre { opacity: 0; }
+.v-learn .ln-row.is-done .ln-row-title { color: var(--ink-2); }
+
+/* in-progress line (rows, feature): grows to its value when revealed */
+.v-learn .ln-line { display: flex; align-items: center; gap: 10px; margin-top: 4px; }
+.v-learn .ln-line-track { position: relative; flex: 1; max-width: 12rem; height: 3px; background: var(--paper-3); overflow: hidden; }
+.v-learn .ln-line-track > i { position: absolute; inset: 0; background: var(--ink); transform: scaleX(var(--p, 0)); transform-origin: left center; }
+.v-learn .ln-line-n { font: 700 var(--fs-xs)/1 var(--font-num); letter-spacing: var(--ls-0); color: var(--ink-2); }
+
+/* deferred groups render after the transition; lay out only when near the viewport */
+.v-learn .ln-group.cv { content-visibility: auto; contain-intrinsic-width: none; contain-intrinsic-height: auto 560px; }
+.v-learn .ln-later { display: contents; }
+
+/* desktop: covers in a 2-column ruled grid (cover on top), then from 1100px a sticky 4 / 8 split */
+@media (min-width: 900px) {
+  .v-learn .ln-rows { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--s-6); border-bottom: 0; }
+  .v-learn .ln-li + .ln-li { border-top: 0; }
+  .v-learn .ln-li { border-bottom: 1px solid var(--rule); }
+  .v-learn .ln-row { grid-template-columns: minmax(0, 1fr); gap: var(--s-3); padding: var(--s-5) 0 var(--s-6); }
+  .v-learn .ln-thumb, .v-learn .ln-thumb > .ln-cover { width: 100%; height: auto; aspect-ratio: 3 / 2; }
+  .v-learn .ln-thumb { background: none; }
+  .v-learn .ln-row-go { display: none; }
+  .v-learn .ln-done { right: 0; bottom: 8px; width: 36px; height: 36px; font-size: var(--fs-base); }
+  .v-learn .ln-row::before { inset: 0 calc(var(--s-3) * -1); }
+}
+/* a group with one lesson is one full-width row (cover 2 | text 3), not half of an empty two-column grid */
+@media (min-width: 900px) {
+  .v-learn .ln-group.is-single .ln-rows { grid-template-columns: minmax(0, 1fr); }
+  .v-learn .ln-group.is-single .ln-row { grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); column-gap: var(--s-6); align-items: center; }
+  .v-learn .ln-group.is-single .ln-row-title { font-size: var(--t-h2); line-height: var(--lh-heading); }
+  .v-learn .ln-group.is-single .ln-row-lead { -webkit-line-clamp: 3; font-size: var(--fs-md); line-height: 1.7; }
+}
+@media (min-width: 1100px) {
+  .v-learn .ln-index.ln-index { grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: 0 var(--s-8); align-items: start; }
+  .v-learn .ln-aside { position: sticky; top: var(--sticky-top); }
+  .v-learn .ln-feature.band { margin-inline: 0; padding: var(--s-5); }
+  .v-learn .ln-feature-go { justify-self: stretch; }
+}
+
+/* =====================================================================
+   LESSON  #/learn/ID
+   ===================================================================== */
+.v-learn .ln-lesson {
+  display: flex; flex-direction: column;
+  min-height: calc(100vh - var(--appbar-h) - var(--tabbar-h) - 140px);
+  min-height: calc(100dvh - var(--appbar-h) - var(--tabbar-h) - 140px);
+}
+@media (min-width: 900px) {
+  .v-learn .ln-lesson { min-height: calc(100vh - var(--appbar-h) - 160px); min-height: calc(100dvh - var(--appbar-h) - 160px); }
+}
+
+/* running header: eyebrow, title, step segments */
+.v-learn .ln-head { display: grid; gap: var(--s-2); padding-bottom: var(--s-4); border-bottom: 1px solid var(--rule); }
+.v-learn .ln-eyebrow {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px;
+  font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); letter-spacing: var(--ls-label); color: var(--ink-3);
+}
+.v-learn .ln-eyebrow .cat-icon { margin-right: 2px; }
+.v-learn .ln-title { font-size: var(--t-h3); line-height: var(--lh-title); }
+@media (min-width: 900px) { .v-learn .ln-title { font-size: var(--t-h2); line-height: var(--lh-heading); } }
+.v-learn .ln-prog { display: flex; align-items: center; gap: var(--s-3); margin-top: var(--s-1); }
+.v-learn .ln-segs { flex: 1; display: flex; gap: 3px; }
+.v-learn .ln-seg { position: relative; flex: 1; height: 2px; background: var(--paper-3); overflow: hidden; }
+.v-learn .ln-seg > i {
+  position: absolute; inset: 0; background: var(--ink);
+  transform: scaleX(0); transform-origin: left center;
+  transition: transform var(--dur-page) var(--ease-standard), background-color var(--dur-quick) var(--ease-standard);
+}
+.v-learn .ln-seg.is-done > i, .v-learn .ln-seg.is-current > i { transform: scaleX(1); }
+.v-learn .ln-seg.is-current > i { background: var(--action); }
+/* finished: the whole line turns green in one sweep from the left */
+.v-learn .ln-segs.is-full .ln-seg > i { background: var(--action); transition-delay: calc(var(--i, 0) * 40ms); }
+.v-learn .ln-prog-n { flex: none; display: inline-flex; align-items: baseline; gap: 3px; font: 700 var(--fs-sm)/1 var(--font-num); letter-spacing: var(--ls-0); color: var(--ink); }
+.v-learn .ln-prog-n .of { font-weight: 500; color: var(--ink-3); }
+
+/* the stage: one step at a time */
+.v-learn .ln-stage { flex: 1 0 auto; padding: var(--s-6) 0 var(--s-8); }
+.v-learn .ln-step { display: grid; gap: var(--s-4); align-content: start; }
+.v-learn .ln-step > * { min-width: 0; }
+/* step 1 (only) opens under the cover the reader tapped: full width on a phone, a 2:1 crop of the same picture
+   (≤180px tall), so it reads as the lesson's picture, not a thumbnail in an empty slot; later steps have none.
+   Desktop: the art sits to the right of the text (7 / 5) instead of above it. */
+.v-learn .ln-step > .ln-cover { width: 100%; height: auto; aspect-ratio: 2 / 1; max-height: 180px; margin-bottom: var(--s-1); }
+@media (min-width: 900px) {
+  .v-learn .ln-step > .ln-cover { width: 100%; height: auto; aspect-ratio: 3 / 2; max-width: 480px; max-height: none; }
+  .v-learn .ln-step-text:has(> .ln-cover) {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); grid-template-rows: auto auto auto 1fr; column-gap: var(--s-8);
+  }
+  .v-learn .ln-step-text:has(> .ln-cover) > :not(.ln-cover) { grid-column: 1; }
+  .v-learn .ln-step-text > .ln-cover { grid-column: 2; grid-row: 1 / span 4; align-self: start; margin: 0; }
+}
+.v-learn .ln-step-h { font-size: var(--t-h1); line-height: var(--lh-heading); }
+.v-learn .ln-step-h:focus { outline: none; }
+.v-learn .ln-text { max-width: 40em; font-size: var(--fs-lg); line-height: 1.9; color: var(--ink); letter-spacing: var(--ls-body); }
+@media (min-width: 900px) { .v-learn .ln-text { font-size: var(--fs-xl); } }
+body.lang-en .v-learn .ln-text { line-height: 1.65; }
+.v-learn .ln-text .marker { font-weight: 700; }
+
+/* step kind: くらべる · 計算 · 問 クイズ */
+.v-learn .ln-kind {
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); letter-spacing: var(--ls-label); color: var(--ink-3);
+}
+.v-learn .ln-kind-quiz { color: var(--ink); font-weight: 700; }
+.v-learn .ln-kind-mark {
+  display: grid; place-items: center; flex: none; width: 24px; height: 24px;
+  background: var(--ink); color: var(--paper);
+  font-family: var(--font-display); font-weight: 700; font-size: var(--fs-sm); line-height: 1; letter-spacing: var(--ls-0);
+}
+
+/* one big number above the text (rolls in like a station board when the step first appears) */
+.v-learn .ln-big { display: grid; gap: 6px; padding: var(--s-1) 0 var(--s-2); }
+.v-learn .ln-big-k { font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); letter-spacing: var(--ls-label); color: var(--ink-3); line-height: var(--lh-ui); }
+.v-learn .ln-big-v {
+  font-family: var(--font-display); font-weight: 700; font-size: var(--t-h2); line-height: 1.05; letter-spacing: var(--ls-0);
+  color: var(--ink); overflow-wrap: anywhere;
+}
+.v-learn .ln-big-v .ln-dg { font-family: var(--font-num); font-weight: 700; font-size: var(--t-num-xl); letter-spacing: var(--ls-num); margin: 0 0.04em; }
+
+/* compare: two flat columns divided by a hairline; a 2px tone rule on top that draws in */
+.v-learn .ln-cmp { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; }
+.v-learn .ln-side { position: relative; display: grid; gap: 8px; align-content: start; padding: var(--s-4) var(--s-4) var(--s-4) 0; min-width: 0; }
+.v-learn .ln-side + .ln-side { padding: var(--s-4) 0 var(--s-4) var(--s-4); border-left: 1px solid var(--rule); }
+.v-learn .ln-side-rule { position: absolute; left: 0; right: 0; top: 0; height: 2px; background: var(--ink); transform-origin: left center; }
+.v-learn .tone-free .ln-side-rule { background: var(--action); }
+.v-learn .tone-loan .ln-side-rule { background: var(--amber); }
+.v-learn .ln-side-t { font-size: var(--t-h3); line-height: var(--lh-title); }
+.v-learn .tone-free .ln-side-t { color: var(--action-text); }
+.v-learn .tone-loan .ln-side-t { color: var(--amber-text); }
+.v-learn .ln-side-big { font-family: var(--font-display); font-weight: 700; font-size: var(--fs-md); line-height: 1.3; overflow-wrap: anywhere; }
+.v-learn .ln-side-big .ln-dg { font-family: var(--font-num); font-weight: 700; font-size: var(--t-num-l); letter-spacing: var(--ls-num); }
+.v-learn .ln-side-body { font-size: var(--fs-md); line-height: 1.7; color: var(--ink-2); }
+.v-learn .ln-side-pts { font-size: var(--t-meta); line-height: var(--lh-meta); }
+@media (min-width: 600px) {
+  .v-learn .ln-side { padding-right: var(--s-5); }
+  .v-learn .ln-side + .ln-side { padding-left: var(--s-5); }
+  .v-learn .ln-side-t { font-size: var(--t-h2); }
+}
+@media (max-width: 359px) {
+  .v-learn .ln-cmp { grid-template-columns: minmax(0, 1fr); }
+  .v-learn .ln-side, .v-learn .ln-side + .ln-side { padding: var(--s-4) 0; border-left: 0; }
+}
+@media (max-width: 439px) {
+  body.is-big .v-learn .ln-cmp { grid-template-columns: minmax(0, 1fr); gap: var(--s-4); }
+  body.is-big .v-learn .ln-side, body.is-big .v-learn .ln-side + .ln-side { padding: var(--s-4) 0 var(--s-1); border-left: 0; }
+}
+.v-learn .ln-note { padding-top: 10px; border-top: 1px solid var(--rule); font-size: var(--t-meta); line-height: 1.7; color: var(--ink-2); }
+
+/* ---------- quiz: lettered option rows (ア イ ウ), feedback in place ----------
+   right (you):  green frame; a hand-drawn ○ round the key letter (ja; en: the key fills, ✓); a 正解 seal stamps
+                 across the frame's top edge.
+   wrong (you):  the key's letter becomes a quiet amber ✕, the text steps back, an あなたの答え tag on the edge.
+   the answer (after a wrong pick): green frame, the ○ and a 正解 tag on the edge (en: ✓ + a 2px underline drawn under its text).
+   Nothing reflows when you answer: the hint keeps its line, every verdict tag sits on the frame (absolute). */
+.v-learn .ln-q { font-size: var(--t-h1); line-height: var(--lh-heading); }
+.v-learn .ln-quiz-hint { font-size: var(--t-meta); color: var(--ink-3); transition: opacity var(--dur-quick) var(--ease-exit); }
+.v-learn .ln-quiz-hint.is-gone { opacity: 0; visibility: hidden; }
+.v-learn .ln-opts { display: grid; gap: 12px; }
+.v-learn .ln-opt {
+  position: relative;
+  display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 14px;
+  width: 100%; min-height: 64px; padding: 14px 16px 14px 14px;
+  text-align: left; color: var(--ink);
+  background: var(--paper);
+  border-radius: var(--r-ctl);
+  box-shadow: inset 0 0 0 1px var(--rule-2);
+  transition: box-shadow var(--dur-quick) var(--ease-standard), background-color var(--dur-quick) var(--ease-standard),
+    color var(--dur-quick) var(--ease-standard), opacity var(--dur-quick) var(--ease-standard);
+}
+@media (hover: hover) { .v-learn .ln-opt:not([aria-disabled="true"]):hover { box-shadow: inset 0 0 0 1px var(--ink); } }
+.v-learn .ln-opt:not([aria-disabled="true"]):active { background: var(--paper-2); }
+.v-learn .ln-opt:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.v-learn .ln-opt[aria-disabled="true"] { cursor: default; }
+.v-learn .ln-opt-key {
+  position: relative; display: grid; place-items: center; flex: none; width: 32px; height: 32px;
+  border-radius: var(--r-ctl);
+  box-shadow: inset 0 0 0 1.5px var(--ink); color: var(--ink);
+  transition: background-color var(--dur-quick) var(--ease-standard), box-shadow var(--dur-quick) var(--ease-standard), color var(--dur-quick) var(--ease-standard);
+}
+.v-learn .ln-opt-key > * { grid-area: 1 / 1; }
+.v-learn .ln-key-l {
+  font-family: var(--font-display); font-weight: 700; font-size: var(--fs-md); line-height: 1; letter-spacing: var(--ls-0);
+  transition: opacity var(--dur-quick) var(--ease-standard);
+}
+.v-learn .ln-opt-key > .icon { width: 20px; height: 20px; stroke-width: 2.5; color: var(--on-action-fill); opacity: 0; transition: opacity var(--dur-quick) var(--ease-standard); }
+.v-learn .ln-key-x { position: relative; width: 16px; height: 16px; opacity: 0; transition: opacity var(--dur-quick) var(--ease-standard); }
+.v-learn .ln-key-x::before, .v-learn .ln-key-x::after {
+  content: ""; position: absolute; left: -1px; right: -1px; top: 50%; height: 2px; margin-top: -1px; background: currentColor;
+}
+.v-learn .ln-key-x::before { rotate: 45deg; }
+.v-learn .ln-key-x::after { rotate: -45deg; }
+.v-learn .ln-opt-t { font-family: var(--font-display); font-size: var(--t-h3); font-weight: 700; line-height: var(--lh-title); letter-spacing: var(--ls-0); transition: color var(--dur-quick) var(--ease-standard); }
+/* the answer's underline sits in the option's bottom padding, exactly under its text (inline-block = text width) */
+.v-learn .ln-opt-tw { position: relative; display: inline-block; max-width: 100%; }
+.v-learn .ln-opt-u {
+  position: absolute; left: 0; right: 0; bottom: -6px; height: 2px;
+  background: var(--action); transform-origin: left center;
+}
+.v-learn .ln-opt.is-dim { opacity: 0.5; }
+
+.v-learn .ln-opts .ln-opt.is-correct { background: var(--action-tint); box-shadow: inset 0 0 0 2px var(--action); }
+/* ja: the key's outline gives way to a hand-drawn ○ round the (now green) letter — the mark a teacher puts on a
+   right answer. The ring is one stroke (pathLength 1) that learn.js draws with a dash offset. */
+.v-learn .ln-opt.is-correct .ln-opt-key { box-shadow: inset 0 0 0 1.5px transparent; color: var(--action-text); }
+.v-learn .ln-key-maru { position: absolute; left: 50%; top: 50%; width: 48px; height: 48px; max-width: none; margin: -24px 0 0 -24px; overflow: visible; pointer-events: none; }
+.v-learn .ln-key-maru path {
+  fill: none; stroke: var(--action); stroke-width: 2.75; stroke-linecap: round; stroke-linejoin: round;
+  stroke-dasharray: 1 1; stroke-dashoffset: 0;
+}
+/* en: a ✓ is the convention — the key fills green and the check draws (SM.motion.check) */
+body.lang-en .v-learn .ln-opt.is-correct .ln-opt-key { background: var(--action-fill); box-shadow: none; color: var(--on-action-fill); }
+body.lang-en .v-learn .ln-opt.is-correct .ln-key-l { opacity: 0; }
+body.lang-en .v-learn .ln-opt.is-correct .ln-opt-key > .icon { opacity: 1; }
+body.lang-en .v-learn .ln-key-maru { display: none; }
+/* wrong: the outline steps back and the letter becomes a quiet amber ✕ (information, not a verdict: no red) */
+.v-learn .ln-opts .ln-opt.is-wrong { background: transparent; box-shadow: inset 0 0 0 1px var(--rule-2); }
+.v-learn .ln-opt.is-wrong .ln-opt-key { box-shadow: inset 0 0 0 1.5px var(--rule); color: var(--amber-text); }
+.v-learn .ln-opt.is-wrong .ln-key-l { opacity: 0; }
+.v-learn .ln-opt.is-wrong .ln-key-x { opacity: 1; }
+.v-learn .ln-opt.is-wrong .ln-opt-t { color: var(--ink-3); }
+
+/* verdict tags: on the frame's top edge at the right (like a seal pressed across an edge — 割印), so the option
+   text never rewraps and nothing below moves. 20px tall from -10px: inside the 12px gap above. */
+.v-learn .ln-opt-res { position: absolute; top: -10px; right: 12px; z-index: 1; display: flex; pointer-events: none; }
+.v-learn .ln-opt-res:empty { display: none; }
+.v-learn .ln-stamp { display: block; }
+.v-learn :is(.ln-stamp-in, .ln-ans-l, .ln-yours) {
+  display: inline-grid; place-items: center; min-height: 20px; padding: 0 7px;
+  background: var(--paper); white-space: nowrap;
+  font-family: var(--font-display); font-size: var(--fs-xs); line-height: 1.2; letter-spacing: var(--ls-label);
+}
+.v-learn .ln-stamp-in { min-height: 22px; margin-top: -1px; padding: 0 8px; color: var(--action-text); box-shadow: inset 0 0 0 2px var(--action); font-weight: 700; }
+.v-learn .ln-ans-l { color: var(--action-text); box-shadow: inset 0 0 0 1.5px var(--action); font-weight: 700; }
+.v-learn .ln-yours { color: var(--ink-2); box-shadow: inset 0 0 0 1px var(--rule-2); font-weight: 500; letter-spacing: var(--ls-0); }
+body.is-big .v-learn .ln-opt-res { top: -12px; }
+body.is-big .v-learn .ln-opts { gap: 16px; }
+@media (max-width: 379px) {
+  .v-learn .ln-opt { gap: 10px; padding: 12px 12px 12px 10px; }
+  .v-learn .ln-opt-res { right: 8px; }
+}
+
+/* feedback: a flat tint with a 2px top rule (green when you got it, ink for the key point) */
+.v-learn .ln-fb:empty { display: none; }
+.v-learn .ln-fb-box {
+  display: grid; gap: 8px; padding: var(--s-4);
+  background: var(--paper-2); border-top: 2px solid var(--ink);
+  font-size: var(--fs-md); line-height: 1.75;
+}
+.v-learn .ln-fb-box.is-ok { background: var(--action-tint); border-top-color: var(--action); }
+.v-learn .ln-fb-h { font-family: var(--font-display); font-weight: 700; font-size: var(--t-h3); line-height: var(--lh-title); letter-spacing: var(--ls-0); }
+.v-learn .ln-fb-h:focus { outline: none; }
+.v-learn .ln-fb-box.is-ok .ln-fb-h { color: var(--action-text); }
+.v-learn .ln-fb-a { margin-top: 4px; padding-top: 10px; border-top: 1px solid var(--rule-2); font-weight: 700; }
+.v-learn .ln-fb-try { color: var(--ink-2); }
+.v-learn .ln-fb-acts { margin-top: 4px; }
+
+/* ---------- calculators: a sticky display, ruled input rows ----------
+   while a slider is dragged (.is-live) bars and numbers follow the finger directly; otherwise bars settle on
+   the snappy spring and numbers roll (odometer). Bars move by scaleX / translateX only. */
+.v-learn .ln-calc { display: grid; gap: var(--s-5); align-items: start; }
+.v-learn .ln-calc > * { min-width: 0; }
+.v-learn .ln-fields { display: grid; border-top: 1px solid var(--rule); }
+.v-learn .ln-calc > .seg { max-width: 26rem; }
+.v-learn .ln-field { display: grid; gap: 6px; padding: 14px 0 12px; border-bottom: 1px solid var(--rule); }
+.v-learn .ln-field-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.v-learn .ln-field-l { min-width: 0; font-family: var(--font-display); font-size: var(--t-ui); font-weight: 700; line-height: var(--lh-ui); letter-spacing: var(--ls-0); }
+.v-learn .ln-field-in { flex: none; display: inline-flex; align-items: center; gap: 4px; }
+.v-learn .ln-field-in .input {
+  width: 7.4em; min-height: 46px; padding: 0 10px; text-align: right;
+  font-family: var(--font-num); font-size: max(16px, var(--fs-lg)); font-weight: 700; font-variant-numeric: tabular-nums;
+}
+.v-learn .ln-field-rate .ln-field-in .input, .v-learn .ln-field-years .ln-field-in .input { width: 4.4em; }
+.v-learn .ln-u { font-family: var(--font-display); font-size: var(--fs-sm); font-weight: 500; color: var(--ink-2); }
+.v-learn .ln-field .help { margin-top: -2px; }
+.v-learn .ln-field-seg { gap: 10px; }
+.v-learn .ln-field-seg .seg { max-width: 24rem; }
+.v-learn .ln-slider { position: relative; height: 36px; }
+.v-learn .ln-slider-track { position: absolute; left: 0; right: 0; top: 16px; height: 4px; background: var(--paper-3); overflow: hidden; pointer-events: none; }
+.v-learn .ln-slider-track > i {
+  position: absolute; inset: 0; background: var(--ink); transform-origin: left center;
+  transition: transform var(--spring-snappy-dur) var(--spring-snappy);
+}
+.v-learn .ln-range {
+  position: relative; z-index: 1; display: block; width: 100%; height: 36px; margin: 0;
+  background: transparent; cursor: pointer; -webkit-appearance: none; appearance: none; touch-action: pan-y;
+}
+.v-learn .ln-range:focus { outline: none; }
+.v-learn .ln-range::-webkit-slider-runnable-track { height: 36px; background: transparent; border: 0; }
+.v-learn .ln-range::-moz-range-track { height: 36px; background: transparent; border: 0; }
+.v-learn .ln-range::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none; width: 20px; height: 28px; margin-top: 4px;
+  background: var(--paper); border: 2px solid var(--ink); border-radius: var(--r-ctl);
+  transition: background-color var(--dur-quick) var(--ease-standard);
+}
+.v-learn .ln-range::-moz-range-thumb { width: 16px; height: 24px; background: var(--paper); border: 2px solid var(--ink); border-radius: var(--r-ctl); }
+.v-learn .ln-range:active::-webkit-slider-thumb { background: var(--ink); }
+.v-learn .ln-range:active::-moz-range-thumb { background: var(--ink); }
+.v-learn .ln-range:focus-visible::-webkit-slider-thumb { outline: 2px solid var(--focus); outline-offset: 2px; }
+.v-learn .ln-range:focus-visible::-moz-range-thumb { outline: 2px solid var(--focus); outline-offset: 2px; }
+.v-learn .ln-rchips { padding: 2px 0 12px; border-bottom: 1px solid var(--rule); }
+.v-learn .ln-field-rate { border-bottom: 0; padding-bottom: 8px; }
+.v-learn .ln-rchip { min-width: 58px; justify-content: center; font-family: var(--font-num); }
+.v-learn .ln-calc .switch-row { padding: 12px 0; border-bottom: 1px solid var(--rule); }
+.v-learn .ln-calc .switch-text b { line-height: 1.5; }
+.v-learn .ln-calc .switch-text small { font-size: var(--fs-xs); line-height: 1.6; }
+
+/* the display: sticks under the bars while you adjust the inputs below it */
+.v-learn .ln-out {
+  position: sticky; top: calc(var(--appbar-h) + var(--safe-t) + var(--subbar-h) + 3px); z-index: 4;
+  display: grid; gap: 8px; padding: 12px var(--s-4) 14px;
+  background: var(--paper-2); border-top: 2px solid var(--ink);
+}
+@media (min-width: 900px) { .v-learn .ln-out { top: calc(var(--appbar-h) + var(--safe-t) + 8px); } }
+@media (max-height: 620px) { .v-learn .ln-out { position: static; } }
+.v-learn .ln-key { display: flex; flex-wrap: wrap; gap: 2px 14px; font-family: var(--font-display); font-size: var(--t-label); font-weight: 500; line-height: 1.5; letter-spacing: var(--ls-0); color: var(--ink-2); }
+.v-learn .ln-key > span { display: inline-flex; align-items: center; gap: 6px; }
+.v-learn .ln-detail { display: grid; gap: 4px; }
+.v-learn .ln-detail-k { font-family: var(--font-display); font-size: var(--t-label); font-weight: 500; letter-spacing: var(--ls-label); color: var(--ink-3); padding-bottom: 6px; border-bottom: 2px solid var(--ink); }
+.v-learn .ln-out-k { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-family: var(--font-display); font-size: var(--t-meta); font-weight: 700; letter-spacing: var(--ls-0); color: var(--ink-2); transition: color var(--dur-quick) var(--ease-standard); }
+.v-learn .ln-est {
+  display: inline-flex; align-items: center; flex: none; min-height: 22px; padding: 1px 7px;
+  border-radius: var(--r-ctl); background: var(--ink); color: var(--paper);
+  font-family: var(--font-display); font-size: var(--t-label); font-weight: 500; line-height: 1.3; letter-spacing: var(--ls-label);
+}
+.v-learn .ln-out-big { font-family: var(--font-display); font-weight: 700; line-height: 1; min-height: 1em; color: var(--ink); transition: color var(--dur-quick) var(--ease-standard); }
+.v-learn .ln-out-big .ln-n { font-family: var(--font-num); font-weight: 700; font-size: var(--t-num-xl); letter-spacing: var(--ls-num); }
+.v-learn .ln-out-big .ln-u { margin-left: 0.08em; font-size: var(--fs-lg); font-weight: 500; color: inherit; }
+.v-learn .ln-out-big .ln-sign { font-family: var(--font-num); font-size: var(--fs-3xl); }
+.v-learn .ln-out-never { display: inline-block; font-size: var(--t-h1); color: var(--amber-text); }
+.v-learn .ln-out-sub { font-family: var(--font-display); font-size: var(--t-ui); font-weight: 500; letter-spacing: var(--ls-0); color: var(--ink-2); }
+.v-learn .ln-out.is-short :is(.ln-out-big, .ln-out-kt) { color: var(--amber-text); }
+.v-learn .ln-bar { position: relative; height: 12px; margin: 4px 0 0; background: var(--paper-3); overflow: hidden; }
+.v-learn .ln-bar-seg {
+  position: absolute; left: 0; top: 0; bottom: 0; width: 100%;
+  transform-origin: left center;
+  transition: transform var(--spring-snappy-dur) var(--spring-snappy), background-color var(--dur-quick) var(--ease-standard);
+}
+.v-learn .ln-calc.is-live :is(.ln-bar-seg, .ln-slider-track > i) { transition: none; }
+.v-learn .c-ink { background: var(--ink); }
+.v-learn .c-amber { background: var(--amber); }
+.v-learn .c-action { background: var(--action); }
+.v-learn .c-blue { background: var(--blue); }
+.v-learn .c-housing { background: var(--cat-housing); }
+.v-learn .ln-kvs { display: grid; margin: 0; }
+.v-learn .ln-kv { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--rule); }
+.v-learn .ln-kv dt { min-width: 0; font-size: var(--t-meta); line-height: 1.5; color: var(--ink-2); }
+.v-learn .ln-kv dd { flex: none; margin: 0; text-align: right; font-family: var(--font-num); font-weight: 700; white-space: nowrap; }
+.v-learn .ln-kv dd .ln-u { font-size: var(--fs-xs); margin-left: 1px; }
+.v-learn .ln-kv dd small { display: block; font-family: var(--font-display); font-size: var(--fs-xs); font-weight: 500; color: var(--ink-3); }
+.v-learn .ln-kv.is-total { border-bottom: 0; border-top: 2px solid var(--ink); margin-top: -1px; }
+.v-learn .ln-kv.is-total dt { color: var(--ink); font-family: var(--font-display); font-weight: 700; }
+.v-learn .ln-sw { flex: none; display: inline-block; width: 12px; height: 12px; }
+.v-learn .ln-warn { padding: 10px 12px; background: var(--amber-tint); border-top: 2px solid var(--amber); color: var(--amber-text); font-size: var(--t-meta); font-weight: 700; line-height: 1.6; }
+.v-learn .ln-note-est { display: flex; align-items: baseline; gap: 10px; }
+.v-learn .ln-sim-link { justify-self: start; }
+
+/* ---------- finish: the learn-done picture, a 修了 seal on its ground line, the score, the learned count ----------
+   The picture's ground line (1.5px ink at 140/160 of its height) runs on to the column edge as .ln-fin-ground, and the
+   seal stands on it — one line, like every illustration in the app (VISUAL-SPEC §5, §10). --fin-w is the picture's
+   width; its height is 2/3 of that, so the line sits --fin-w / 12 above the box's bottom. */
+.v-learn .ln-step-finish { gap: var(--s-8); }
+.v-learn .ln-fin-top { --fin-w: 200px; display: grid; gap: var(--s-5); padding-bottom: var(--s-6); border-bottom: 1px solid var(--rule); }
+@media (min-width: 900px) { .v-learn .ln-fin-top { --fin-w: 240px; } }
+.v-learn .ln-fin-art { position: relative; display: flex; align-items: flex-end; gap: var(--s-4); }
+.v-learn .ln-fin-art > .il { flex: none; width: var(--fin-w); margin: 0; }
+/* drawn as SVG in a box the picture's height, so the line lands on the same sub-pixel and antialiases the same */
+.v-learn .ln-fin-ground {
+  position: absolute; left: var(--fin-w); top: 0; width: calc(100% - var(--fin-w)); max-width: none; height: calc(var(--fin-w) * 2 / 3);
+  overflow: visible; pointer-events: none; transform-origin: left center;
+}
+.v-learn .ln-fin-ground path { fill: none; stroke: var(--ink); stroke-width: 1.5px; stroke-linecap: butt; vector-effect: non-scaling-stroke; }
+.v-learn .ln-fin-ground.is-pre { transform: scaleX(0); }
+.v-learn .ln-hanko { flex: none; display: block; margin-bottom: calc(var(--fin-w) / 12 + 0.75px); }
+.v-learn .ln-fin-art.is-bare .ln-hanko { margin-bottom: 0; }
+/* 角印: a square seal, outer rule + inner hairline, 修 over 了 */
+.v-learn .ln-hanko-in {
+  display: grid; place-content: center; justify-items: center; width: 64px; height: 64px;
+  background: var(--paper); color: var(--action-text);
+  box-shadow: inset 0 0 0 2.5px var(--action), inset 0 0 0 5px var(--paper), inset 0 0 0 6px var(--action);
+  font-family: var(--font-display); font-weight: 700; font-size: var(--fs-xl); line-height: 1.04; letter-spacing: var(--ls-0);
+}
+.v-learn .ln-hanko-in.is-en { font-size: var(--fs-sm); letter-spacing: var(--ls-label); }
+.v-learn .ln-hanko-in.is-pre { opacity: 0; }
+@media (min-width: 900px) { .v-learn .ln-hanko-in { width: 76px; height: 76px; font-size: var(--fs-2xl); } }
+.v-learn .ln-fin-text { display: grid; gap: 6px; min-width: 0; }
+.v-learn .ln-fin-score { font-family: var(--font-display); font-size: var(--t-ui); font-weight: 500; color: var(--ink-2); }
+.v-learn .ln-fin-score .num { font-weight: 700; color: var(--ink); }
+.v-learn .ln-fin-tip { font-size: var(--t-meta); color: var(--ink-2); }
+.v-learn .ln-fin-count { display: grid; gap: var(--s-3); max-width: 30rem; padding-top: var(--s-4); border-top: 1px solid var(--rule); }
+.v-learn .ln-fin-count-n { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0 8px; line-height: 1; }
+.v-learn .ln-fin-count-k { font-family: var(--font-display); font-size: var(--t-label); font-weight: 500; letter-spacing: var(--ls-label); color: var(--ink-3); }
+.v-learn .ln-fin-count .ts-num-l { color: var(--action-text); }
+.v-learn .ln-fin-count .of { font-family: var(--font-num); font-weight: 500; font-size: var(--fs-base); color: var(--ink-3); }
+.v-learn .ln-sub-h { padding-bottom: 8px; border-bottom: 1px solid var(--rule); font-size: var(--t-h3); line-height: var(--lh-title); }
+.v-learn .ln-recap { display: grid; gap: var(--s-4); }
+.v-learn .ln-recap-list { gap: 14px; font-family: var(--font-display); font-size: var(--t-h3); font-weight: 700; line-height: 1.6; letter-spacing: var(--ls-0); }
+.v-learn .ln-cta .btn { max-width: 30rem; }
+.v-learn .ln-related { display: grid; gap: 0; }
+.v-learn .ln-related.cv { contain-intrinsic-width: none; contain-intrinsic-height: auto 720px; }
+.v-learn .ln-more { border-top: 0; }
+.v-learn .ln-more > .pcards { padding: 0; }
+.v-learn .ln-alldone { font-weight: 700; }
+.v-learn .ln-fin-links { display: flex; flex-wrap: wrap; gap: 4px 20px; }
+
+/* bottom bar: ← もどる | つぎへ → (.q-foot from base). On phones the tab bar steps aside during a lesson
+   (base.css §10), so the bar sits on the bottom safe area */
+.v-learn .ln-nav { z-index: 6; }
+@media (max-width: 899px) {
+  .v-learn .ln-nav.q-foot { bottom: 0; padding-bottom: calc(12px + var(--safe-b)); }
+  body:has(#view.v-learn .ln-nav) .toast { bottom: calc(var(--safe-b) + 76px + 12px); }
+}
+.v-learn .ln-nav-in { display: flex; gap: 8px; max-width: var(--col); }
+.v-learn .ln-nav .ln-prev { flex: none; padding: 0 16px; }
+.v-learn .ln-nav .ln-next { flex: 1 1 auto; min-height: 52px; justify-content: space-between; text-align: left; }
+.v-learn .ln-next-lesson { padding-top: 6px; padding-bottom: 6px; }
+.v-learn .ln-next-lbl { display: grid; gap: 1px; min-width: 0; line-height: 1.35; }
+.v-learn .ln-next-lbl small { font-family: var(--font-display); font-size: var(--t-label); font-weight: 500; letter-spacing: var(--ls-label); opacity: 0.9; }
+.v-learn .ln-next-lbl > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* with ふりがな the title wraps (an ellipsis would clip the readings), at most two lines in the sticky bar */
+body.is-ruby .v-learn .ln-next-lbl > span { white-space: normal; line-height: 1.75; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
+/* the finish on a phone with big text or ふりがな: もどる shrinks to its arrow (the name stays for screen readers),
+   so the next lesson's title gets the room */
+@media (max-width: 379px) {
+  body:is(.is-big, .is-ruby) .v-learn .ln-nav-in.is-fin .ln-prev { width: 52px; padding: 0; justify-content: center; }
+  body:is(.is-big, .is-ruby) .v-learn .ln-nav-in.is-fin .ln-prev > span:not(.arrow) {
+    position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+  }
+}
+.v-learn .ln-keys { display: none; }
+@media (hover: hover) and (pointer: fine) and (min-width: 900px) {
+  .v-learn .ln-keys { display: block; margin-top: var(--s-2); font-size: var(--fs-xs); color: var(--ink-3); }
+}
+
+/* sources */
+.v-learn .ln-src { margin-top: var(--s-6); }
+.v-learn .ln-src > summary > span { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; }
+.v-learn .ln-src-d { font-family: var(--font-num); font-size: var(--fs-xs); font-weight: 500; color: var(--ink-3); }
+.v-learn .ln-src-list { display: grid; margin: 0 0 8px; padding: 0; list-style: none; }
+.v-learn .ln-src-a {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 10px; align-items: center;
+  min-height: var(--tap); padding: 8px 0; border-top: 1px solid var(--rule);
+  color: var(--ink); text-decoration: none;
+}
+.v-learn .ln-src-o { font-family: var(--font-display); font-size: var(--fs-sm); font-weight: 700; line-height: 1.5; }
+.v-learn .ln-src-u { grid-column: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-xs); color: var(--ink-3); }
+.v-learn .ln-src-ic { grid-column: 2; grid-row: 1 / span 2; width: 16px; height: 16px; stroke-width: 2.25; color: var(--ink-2); }
+@media (hover: hover) { .v-learn .ln-src-a:hover .ln-src-o { text-decoration: underline; text-underline-offset: 0.2em; } }
+
+/* ---------- ふりがな: room for the readings ---------- */
+body.is-ruby .v-learn .ln-text { line-height: 2.15; }
+body.is-ruby .v-learn :is(.ln-opt-t, .ln-row-title, .ln-feature-h, .ln-side-body, .ln-fb-box, .ln-recap-list) { line-height: 1.95; }
+body.is-ruby .v-learn :is(.ln-step-h, .ln-title, .ln-h1) { line-height: 1.6; }
+body.is-ruby .v-learn .ln-row-lead { -webkit-line-clamp: 3; line-height: 1.9; }
+
+/* ---------- the cover morph (MOTION-SPEC §3.4): the row thumb / band cover flies into the lesson cover ----------
+   Both snapshots fill the travelling box with object-fit: cover, so the square thumb opens out into the 3:2
+   cover (the square IS the cover's centre). The new image stays opaque for the whole flight. */
+::view-transition-group(sm-lesson) { animation-duration: var(--dur-morph); animation-timing-function: var(--ease-standard); }
+::view-transition-image-pair(sm-lesson) { isolation: auto; }
+::view-transition-old(sm-lesson), ::view-transition-new(sm-lesson) { height: 100%; object-fit: cover; overflow: clip; }
+::view-transition-old(sm-lesson) { animation: m-fade-out 60ms linear both; }
+::view-transition-new(sm-lesson) { animation: none; }
+/* back: the big cover is the sharp one, so it stays and is cropped down to the square; the thumb only shows
+   for the last 100ms, when the box is already its size (an upscaled 72px snapshot would look soft) */
+html.vt-back::view-transition-old(sm-lesson) { animation: none; }
+html.vt-back::view-transition-new(sm-lesson) { animation: m-fade-in 100ms linear calc(var(--dur-morph) - 100ms) both; }
+
+/* ---------- reduced motion: final states, no movement (motion.css zeroes durations; these drop JS-held states) ---------- */
+html.m-reduce .v-learn :is(.ln-hanko-in, .ln-done).is-pre { opacity: 1; }
+html.m-reduce .v-learn .ln-fin-ground.is-pre { transform: none; }
+html.m-reduce .v-learn .ln-segs.is-full .ln-seg > i { transition-delay: 0ms; }
+
+/* ---------- print ---------- */
+@media print {
+  .v-learn .ln-nav, .v-learn .ln-keys, .v-learn .ln-filter, .v-learn .ln-fin-links { display: none !important; }
+  .v-learn .ln-lesson { min-height: 0; }
+  .v-learn .ln-src[open] > *, .v-learn .ln-src > * { display: block; }
+  .v-learn :is(.ln-hanko-in, .ln-done).is-pre { opacity: 1; }
+  .v-learn .ln-fin-ground.is-pre { transform: none; }
+}

@@ -1,0 +1,1688 @@
+/* =====================================================================
+   巣立ちマップ v4 — base.css  (owner: SYSTEM)
+   "教科書と駅サイン" — textbook × station signage, v4 craft pass (VISUAL-SPEC.md).
+   Paper + 墨 ink + ONE action colour. Flat, ruled, typographic.
+   Type: IBM Plex Sans JP 500/700 (display, numbers) + BIZ UDPGothic 400/700 (body). No 900, no 300.
+   Rules: hairline 1px --rule everywhere, ONE heavy rule (2px ink) for section starts. Never two rules within 8px.
+   Radius 0 on blocks, 2px on controls. No shadows except overlays. No gradients, blur or glow.
+   Motion: transform/opacity only; tokens and springs come from motion.css (ENGINE) — aliased here so this
+   file stands alone. Reduced motion = html.m-reduce (one switch), handled in motion.css.
+   Views: tokens + text styles only (no raw px font sizes, no other letter-spacing, no weight 900). DESIGN.md.
+   ===================================================================== */
+
+/* ---------- 1. Tokens (light) ---------- */
+:root {
+  color-scheme: light;
+
+  /* paper & ink */
+  --paper: #ffffff;          /* page (white, always light by default) */
+  --paper-2: #f5f4ef;        /* band, hover row, selected option */
+  --paper-3: #ebeae4;        /* pressed, empty track */
+  --field: #ffffff;          /* inputs */
+  --ink: #1b1b19;            /* 墨: text, solid buttons, heavy rules */
+  --ink-2: #3e3d39;          /* secondary text */
+  --ink-3: #5e5d57;          /* labels, captions (AA on paper-2) */
+  --ink-4: #9c9a92;          /* decorative / disabled only — never text */
+  --rule: #e3e1da;           /* 1px hairline */
+  --rule-2: #8f8c83;         /* control borders (≥3:1) */
+  --rule-heavy: var(--ink);  /* the one heavy rule: 2px */
+  --wash: rgba(27, 27, 25, 0.06);   /* press: 6% ink wash on rows */
+  --scrim: rgba(27, 27, 25, 0.32);  /* sheets: ink at 32% */
+
+  /* ONE action colour — 若葉 green (if LOGO.md changes the brand green, only these change) */
+  --action: #0b6e44;
+  --action-hover: #095c39;
+  --action-press: #074a2e;
+  --on-action: #ffffff;
+  --action-tint: #e3f0e8;
+  --action-text: #0b6a41;
+  --action-fill: var(--action);
+  --action-fill-hover: var(--action-hover);
+  --action-fill-press: var(--action-press);
+  --on-action-fill: var(--on-action);
+
+  /* semantic (flat, few). Blue = focus + info only. Amber = 締切・貸付. Red = emergency only. */
+  --blue: #1d5aa6;   --blue-tint: #e8eef7;   --blue-text: #1a4f93;
+  --amber: #c98500;  --amber-tint: #fbf0d9;  --amber-text: #8a5300;
+  --red: #c8281e;    --red-hover: #a82017;   --red-tint: #fbe8e5;  --red-text: #b0231a;  --on-red: #ffffff;
+  --marker: #ffe45c; /* 蛍光ペン — one phrase per screen; illustration light sources */
+
+  /* category marks — one family in OKLCH (L≈.46–.50), white glyph ≥6:1. Never body text. */
+  --cat-housing: #355695;     /* 住 */
+  --cat-money: #895700;       /* 金 */
+  --cat-education: #68448d;   /* 学 */
+  --cat-work: #006a7d;        /* 働 */
+  --cat-procedures: #4c5a69;  /* 手 */
+  --cat-consult: #8e3665;     /* 話 */
+  --on-cat: #ffffff;
+  --cat-housing-tint: #ebf1fe; --cat-money-tint: #f8f0e4; --cat-education-tint: #f4eefb;
+  --cat-work-tint: #e4f5f9;    --cat-procedures-tint: #edf2f6; --cat-consult-tint: #fbecf3;
+
+  --focus: #1d5aa6;
+  --focus-ring: 0 0 0 2px var(--paper), 0 0 0 4px var(--focus);
+
+  /* ---- type ---- */
+  --font-body: "BIZ UDPGothic", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic UI", "Yu Gothic", Meiryo, system-ui, sans-serif;
+  --font-display: "IBM Plex Sans JP", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic UI", system-ui, sans-serif;
+  --font-num: "IBM Plex Sans JP", "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
+  /* the 12 sizes (rem, so they follow the reader's browser setting) */
+  --fs-micro: 0.6875rem;  /* 11 */
+  --fs-xs: 0.75rem;       /* 12 */
+  --fs-sm: 0.875rem;      /* 14 */
+  --fs-md: 0.9375rem;     /* 15 */
+  --fs-base: 1rem;        /* 16 */
+  --fs-lg: 1.125rem;      /* 18 */
+  --fs-xl: 1.375rem;      /* 22 */
+  --fs-2xl: 1.75rem;      /* 28 */
+  --fs-3xl: 2.25rem;      /* 36 */
+  --fs-4xl: 3rem;         /* 48 */
+  --fs-5xl: 4.5rem;       /* 72 */
+  --fs-6xl: 6rem;         /* 96 */
+  /* role tokens (views use these; they step up at ≥900px) */
+  --t-num-hero: var(--fs-5xl);
+  --t-num-xl: var(--fs-4xl);
+  --t-display: var(--fs-3xl);
+  --t-h1: var(--fs-2xl);
+  --t-h2: var(--fs-xl);
+  --t-h3: var(--fs-lg);
+  --t-kicker: var(--fs-lg);
+  --t-lead: var(--fs-base);
+  --t-body: var(--fs-base);
+  --t-ui: var(--fs-md);
+  --t-meta: var(--fs-sm);
+  --t-label: var(--fs-xs);
+  --t-micro: var(--fs-micro);
+  --t-num-l: 1.625rem;    /* 26 — phone numbers */
+  --t-num-inline: 1.4em;  /* numbers inside text (月5万円): relative to the text around them */
+  --t-num-inline-lg: 2em;
+  --t-unit: 0.38em;       /* 件・日・円 after a big number */
+  --t-unit-inline: 0.72em;
+  --t-ruby: 0.55em; --t-ruby-long: 0.5em; --t-kbd: 0.85em;
+  /* chrome sizes: fixed px — the header and tab bar never grow with 文字を大きく (they must fit at 320px) */
+  --t-chrome: 13px;       /* すぐ閉じる・緊急, section numbers, the phone sub-bar title */
+  --t-chrome-s: 12px;     /* the same below 380px */
+  --t-badge: 10px;        /* tab badge (phone) */
+  --t-badge-rail: 11px;   /* tab badge (rail) */
+  /* line heights */
+  --lh-display: 1.25; --lh-heading: 1.35; --lh-title: 1.45; --lh-ui: 1.4; --lh: 1.75; --lh-meta: 1.6; --lh-num: 1;
+  --lh-tight: var(--lh-heading);
+  /* tracking — the only four */
+  --ls-num: -0.02em; --ls-0: 0; --ls-body: 0.02em; --ls-label: 0.04em;
+
+  /* ---- space (4px grid) ---- */
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 20px;
+  --s-6: 24px; --s-7: 32px; --s-8: 40px; --s-9: 56px; --s-10: 72px; --s-11: 96px;
+  --gutter: 20px;
+  --sec-gap: var(--s-9);      /* between sections: 56 phone / 72 desktop */
+  --bleed: 12px;              /* hover band bleed past the column edge */
+
+  /* ---- radius ---- */
+  --r-0: 0;
+  --r-ctl: 2px;               /* buttons, inputs, tags, chips */
+  --r-round: 50%;             /* radio, map pin, timeline dot */
+
+  /* ---- elevation: overlays only ---- */
+  --shadow-overlay: 0 16px 48px rgba(20, 20, 18, 0.18), 0 2px 8px rgba(20, 20, 18, 0.10);
+
+  /* ---- motion (canonical in motion.css; mirrored so base.css stands alone) ---- */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-enter: cubic-bezier(0, 0, 0.2, 1);
+  --ease-exit: cubic-bezier(0.3, 0, 0.8, 0.15);
+  --ease-draw: cubic-bezier(0.5, 0, 0.15, 1);
+  --ease-rise: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-instant: 90ms; --dur-quick: 160ms; --dur-base: 240ms; --dur-page: 300ms; --dur-morph: 420ms; --dur-draw: 440ms; --dur-hero: 520ms;
+  --spring-snappy: var(--ease-standard); --spring-snappy-dur: 320ms;
+  --spring-smooth: var(--ease-standard); --spring-smooth-dur: 400ms;
+  --spring-stamp: cubic-bezier(0.34, 1.4, 0.64, 1); --spring-stamp-dur: 420ms;
+  --ease: var(--ease-standard); --ease-out: var(--ease-standard);
+  --dur-1: var(--dur-quick); --dur-2: var(--dur-base); --dur-3: var(--dur-page);
+
+  /* ---- layout ---- */
+  --appbar-h: 56px;
+  --subbar-h: 48px;
+  --tabbar-h: 64px;
+  --rail-w: 232px;
+  --rail-row: 48px;
+  --container: 1120px;        /* desktop content container (12 columns, 24px gaps) */
+  --read-w: 720px;            /* reading column = 8 of 12 */
+  --col: 100%;                /* outer width of .view incl. gutters (desktop: reading or container) */
+  --tap: 44px;
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-l: env(safe-area-inset-left, 0px);
+  --safe-r: env(safe-area-inset-right, 0px);
+  --sticky-top: calc(var(--appbar-h) + var(--safe-t) + var(--s-6));
+
+  /* ---- v2/v3 names, aliased so older view CSS keeps working (migrate when you restyle) ---- */
+  --bg: var(--paper); --bg-dawn: var(--paper); --surface: var(--paper); --surface-2: var(--paper-2); --surface-3: var(--paper-3);
+  --line: var(--rule); --line-strong: var(--rule-2); --glass: var(--paper); --band: var(--paper-2);
+  --primary: var(--action); --primary-hover: var(--action-hover); --primary-press: var(--action-press); --on-primary: var(--on-action);
+  --primary-soft: var(--action-tint); --primary-soft-2: var(--action-tint); --primary-text: var(--action-text); --leaf: var(--action);
+  --sky: var(--blue); --sky-soft: var(--blue-tint); --sky-text: var(--blue-text); --amber-soft: var(--amber-tint);
+  --violet: var(--ink-2); --violet-soft: var(--paper-2); --violet-text: var(--ink-2);
+  --teal: var(--ink-2); --teal-soft: var(--paper-2); --teal-text: var(--ink-2);
+  --coral: var(--red); --coral-hover: var(--red-hover); --coral-soft: var(--red-tint); --coral-text: var(--red-text); --on-coral: var(--on-red);
+  --neutral-soft: var(--paper-2); --neutral-text: var(--ink-2);
+  --cat-housing-fg: var(--cat-housing);       --cat-housing-bg: var(--cat-housing-tint);
+  --cat-money-fg: var(--cat-money);           --cat-money-bg: var(--cat-money-tint);
+  --cat-education-fg: var(--cat-education);   --cat-education-bg: var(--cat-education-tint);
+  --cat-work-fg: var(--cat-work);             --cat-work-bg: var(--cat-work-tint);
+  --cat-procedures-fg: var(--cat-procedures); --cat-procedures-bg: var(--cat-procedures-tint);
+  --cat-consult-fg: var(--cat-consult);       --cat-consult-bg: var(--cat-consult-tint);
+  --r-xs: 2px; --r-sm: 2px; --r: 0px; --r-lg: 0px; --r-xl: 0px; --r-pill: 2px;
+  --shadow-xs: none; --shadow-sm: none; --shadow: none; --shadow-lg: var(--shadow-overlay);
+}
+@media (max-width: 374px) { :root { --gutter: 16px; } }
+@media (min-width: 900px) {
+  :root {
+    --gutter: 32px;
+    --sec-gap: var(--s-10);
+    --t-num-hero: var(--fs-6xl);
+    --t-num-xl: 3.5rem;       /* 56 */
+    --t-display: var(--fs-4xl);
+    --t-h1: 2rem;             /* 32 */
+    --t-h2: 1.5rem;           /* 24 */
+    --t-kicker: 1.25rem;      /* 20 */
+    --t-lead: var(--fs-lg);
+    --t-num-l: var(--fs-2xl);
+    --col: calc(var(--read-w) + 2 * var(--gutter));
+  }
+}
+@media (min-width: 1100px) { :root { --gutter: 40px; } }
+@media (min-width: 1280px) { :root { --rail-w: 256px; } }
+
+/* ---------- 1b. Dark (opt-in only: 設定 › 暗い画面 → html[data-theme="dark"]). Never prefers-color-scheme. ---------- */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #141413; --paper-2: #1d1d1b; --paper-3: #2a2a27; --field: #1a1a18;
+  --ink: #edebe4; --ink-2: #ccc9c0; --ink-3: #a3a097; --ink-4: #6c6a64;
+  --rule: #34332f; --rule-2: #75736b;
+  --wash: rgba(237, 235, 228, 0.07); --scrim: rgba(0, 0, 0, 0.6);
+  --action: #3fb37a; --action-hover: #55c38c; --action-press: #34a06b; --on-action: #08130d; --action-tint: #15291f; --action-text: #6fd19e;
+  --action-fill: #1f7a4d; --action-fill-hover: #25855a; --action-fill-press: #1b6b44; --on-action-fill: #ffffff;
+  --blue: #6fa3e6; --blue-tint: #16243a; --blue-text: #8db7ee;
+  --amber: #e3a531; --amber-tint: #2e2410; --amber-text: #f0c064;
+  --red: #d2392e; --red-hover: #e04a3f; --red-tint: #3a1a17; --red-text: #ff9a90; --on-red: #ffffff;
+  --marker: #6b5a06;
+  --cat-housing: #3d62a8; --cat-money: #96630a; --cat-education: #75519c; --cat-work: #0b7689; --cat-procedures: #586777; --cat-consult: #9c4072;
+  --cat-housing-fg: #98b8f2; --cat-money-fg: #eab26b; --cat-education-fg: #c6a7eb; --cat-work-fg: #78c5d7; --cat-procedures-fg: #b0c0d1; --cat-consult-fg: #e89dc0;
+  --cat-housing-tint: #1e2735; --cat-money-tint: #2e2515; --cat-education-tint: #2a2332; --cat-work-tint: #142a30; --cat-procedures-tint: #1b2835; --cat-consult-tint: #322028;
+  --focus: #8db7ee;
+  --shadow-overlay: 0 16px 48px rgba(0, 0, 0, 0.6), 0 0 0 1px #34332f;
+}
+
+/* ---------- 1c. 文字を大きく (root goes to 18px; tokens are rem, so these are the final px ÷ 18) ---------- */
+html:has(body.is-big) { font-size: 112.5%; }
+body.is-big {
+  --fs-micro: 0.6667rem;  /* 12 */
+  --fs-xs: 0.7778rem;     /* 14 */
+  --fs-sm: 0.8889rem;     /* 16 */
+  --fs-md: 0.9444rem;     /* 17 */
+  --fs-base: 1rem;        /* 18 */
+  --fs-lg: 1.1111rem;     /* 20 */
+  --fs-xl: 1.3333rem;     /* 24 */
+  --fs-2xl: 1.7778rem;    /* 32 */
+  --fs-3xl: 2.2222rem;    /* 40 */
+  --fs-4xl: 3rem;         /* 54 */
+  --fs-5xl: 4.4444rem;    /* 80 */
+  --fs-6xl: 5.7778rem;    /* 104 */
+  --t-num-l: 1.6667rem;   /* 30 */
+  --tap: 52px;
+}
+@media (min-width: 900px) { body.is-big { --t-h1: 1.9444rem; --t-h2: 1.4444rem; --t-num-xl: 3.4444rem; --t-kicker: 1.2222rem; --t-num-l: 1.7778rem; } }
+
+/* ---------- 2. Reset & base ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+html {
+  -webkit-text-size-adjust: 100%; text-size-adjust: 100%;
+  scroll-padding-top: calc(var(--appbar-h) + var(--safe-t) + 16px);
+  background: var(--paper);
+}
+/* keyboard focus never lands under the fixed bars (WCAG 2.4.11): the tab bar (+ a program page's action bar)
+   below, the sub bar above */
+@media (max-width: 899px) {
+  html { scroll-padding-bottom: calc(var(--tabbar-h) + var(--safe-b) + 16px); }
+  html:has(.v-program .pg-bar) { scroll-padding-bottom: calc(var(--tabbar-h) + var(--safe-b) + 80px); }
+}
+html:has(.subbar:not([hidden])) { scroll-padding-top: calc(var(--appbar-h) + var(--subbar-h) + var(--safe-t) + 16px); }
+body {
+  margin: 0;
+  min-height: 100vh; min-height: 100dvh;
+  font-family: var(--font-body);
+  font-size: var(--t-body);
+  line-height: var(--lh);
+  letter-spacing: var(--ls-body);
+  color: var(--ink);
+  background: var(--paper);
+  font-synthesis-weight: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+  overflow-x: hidden;
+}
+img, svg { display: block; max-width: 100%; }
+svg.icon { display: inline-block; }
+button, input, select, textarea { font: inherit; color: inherit; letter-spacing: inherit; }
+button { cursor: pointer; background: none; border: 0; padding: 0; margin: 0; border-radius: 0; }
+button:disabled { cursor: not-allowed; }
+p, h1, h2, h3, h4, h5, ul, ol, dl, dd, figure, blockquote { margin: 0; }
+ul[class], ol[class] { list-style: none; padding: 0; }
+[hidden] { display: none !important; }
+::selection { background: var(--marker); color: var(--ink); }
+hr { border: 0; border-top: 1px solid var(--rule); margin: var(--s-6) 0; }
+strong, b { font-weight: 700; }
+small { font-size: var(--fs-sm); }
+mark { background: none; color: inherit; }
+ruby { ruby-align: center; }
+rt { font-size: var(--t-ruby); letter-spacing: 0; color: inherit; opacity: 0.75; font-weight: 400; font-family: var(--font-body); }
+body.is-ruby .btn { line-height: 1.6; padding-top: 6px; padding-bottom: 4px; }
+body.is-ruby :is(#view, .sheet) :is(div, section, article, header, footer, li, ul, ol, p, h1, h2, h3, h4, a, label, dl, dd, dt):not(.chips-scroll > *):not(.chips-scroll) { min-width: 0; }
+
+/* links: action colour, a real underline that thickens on hover */
+a { color: var(--action-text); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.24em; }
+@media (hover: hover) { a:hover { text-decoration-thickness: 2px; } }
+.link {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: var(--action-text); font-family: var(--font-display); font-weight: 700; letter-spacing: var(--ls-0);
+  font-feature-settings: "palt" 1;
+  text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 0.28em;
+}
+.link .icon { width: 1em; height: 1em; }
+
+/* focus: 2px blue, 2px offset, square — appears instantly (never transitioned) */
+:focus { outline: none; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; transition: none; }
+#view:focus, #view h1[tabindex="-1"]:focus, #view h2[tabindex="-1"]:focus { outline: none; }
+/* over ink / colour fills a paper inner ring keeps the blue readable */
+:is(.btn-primary, .btn-ink, .btn-sos, .pill-sos, .chip[aria-pressed="true"], .seg > [aria-pressed="true"]):focus-visible { box-shadow: 0 0 0 2px var(--paper); }
+
+/* icons: 16 / 20 / 24 only; stroke 2.25 / 2 / 1.75 (≈ the label stems beside them) */
+.icon { width: 1.25em; height: 1.25em; flex: none; vertical-align: -0.25em; stroke-width: 2; }
+.icon-sm { width: 16px; height: 16px; stroke-width: 2.25; }
+.icon-md { width: 20px; height: 20px; stroke-width: 2; }
+.icon-lg { width: 24px; height: 24px; stroke-width: 1.75; }
+
+/* ---------- 3. Arrow: one drawn arrow everywhere (masked SVG; the glyph stays in the DOM for no-CSS) ----------
+   <span class="arrow [arrow-l|arrow-d|arrow-u]" aria-hidden="true">→</span>  ·  SM.ui.arrow(dir) */
+.arrow {
+  --arrow-s: 1.125em;
+  display: inline-block; flex: none; vertical-align: -0.2em;
+  width: var(--arrow-s); height: var(--arrow-s);
+  overflow: hidden; white-space: nowrap; text-indent: 200%; color: inherit;
+  font-size: inherit; line-height: 1;
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='square' stroke-linejoin='miter'%3E%3Cpath d='M4 12h15'/%3E%3Cpath d='m13.5 6.5 5.5 5.5-5.5 5.5'/%3E%3C/svg%3E") center / contain no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='square' stroke-linejoin='miter'%3E%3Cpath d='M4 12h15'/%3E%3Cpath d='m13.5 6.5 5.5 5.5-5.5 5.5'/%3E%3C/svg%3E") center / contain no-repeat;
+  --arrow-nx: 3px; --arrow-ny: 0px;
+  transition: translate var(--spring-snappy-dur) var(--spring-snappy);
+}
+.arrow-l { rotate: 180deg; --arrow-nx: -3px; }
+.arrow-d { rotate: 90deg; --arrow-nx: 0px; --arrow-ny: 3px; }
+.arrow-u { rotate: -90deg; --arrow-nx: 0px; --arrow-ny: -3px; }
+.arrow-ne { -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='square' stroke-linejoin='miter'%3E%3Cpath d='M6.5 17.5 17 7'/%3E%3Cpath d='M9 7h8v8'/%3E%3C/svg%3E"); mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='square' stroke-linejoin='miter'%3E%3Cpath d='M6.5 17.5 17 7'/%3E%3Cpath d='M9 7h8v8'/%3E%3C/svg%3E"); --arrow-nx: 2px; --arrow-ny: -2px; }
+/* nudge toward where it goes: hover (pointer devices) and press (ENGINE adds .m-pressed) */
+@media (hover: hover) {
+  :is(a, button, .pcard, [data-press]):hover .arrow { translate: var(--arrow-nx) var(--arrow-ny); }
+}
+:is(a, button, [data-press]):active .arrow, .m-pressed .arrow { translate: calc(var(--arrow-nx) * 4 / 3) calc(var(--arrow-ny) * 4 / 3); }
+
+/* ---------- 4. Typography: text styles (the only ones allowed) ---------- */
+/* palt is the DEFAULT in Japanese (v4 r3): every label, title, chip, number and name is set tight, so the same
+   string never looks different on two screens (a span in a <p> or <li> no longer drifts back to full-width
+   、？). BIZ UDPGothic is proportional already, so palt changes nothing in body text set in it; running text
+   is still switched back to the font's own spacing (at zero specificity, so any display style wins) for the
+   case where the phone's own font stands in for it (data saver), where palt would cramp a paragraph. */
+:lang(ja) body { font-feature-settings: "palt" 1; }
+:where(:lang(ja)) :where(p:not([class]), dd:not([class]), blockquote, .prose :is(p, li), .lead, .ts-body, .callout-body > div, .list-sub, .pcard-hook, .empty-body) { font-feature-settings: normal; }
+/* display family everywhere it appears: proportional kana (palt), 0 tracking */
+:is(h1, h2, h3, h4, .h1, .h2, .h3, .h4, .display, .kicker, .ts-display, .ts-h1, .ts-h2, .ts-h3, .ts-kicker, .ts-ui, .ts-label, .ts-micro,
+    .num, .num-big, .num-xl, .num-hero, .ts-num-hero, .ts-num-xl, .ts-num-l, .ts-num-inline, .amt-n, .eyebrow, .label,
+    .btn, .chip, .seg, .tab, .pill, .back, .subbar-title, .section-title, .section-num, .section-action, .tag,
+    .pcard-title, .pcard-eyebrow, .q-title, .opt-title, .sheet-title, .empty-title, .list-title, .list-count, .contact-value, .cat-mark) {
+  font-feature-settings: "palt" 1;
+}
+h1, .h1, .ts-h1 { font-family: var(--font-display); font-weight: 700; font-size: var(--t-h1); line-height: var(--lh-heading); letter-spacing: var(--ls-0); color: var(--ink); }
+h2, .h2, .ts-h2 { font-family: var(--font-display); font-weight: 700; font-size: var(--t-h2); line-height: 1.4; letter-spacing: var(--ls-0); color: var(--ink); }
+h3, .h3, .ts-h3 { font-family: var(--font-display); font-weight: 700; font-size: var(--t-h3); line-height: var(--lh-title); letter-spacing: var(--ls-0); color: var(--ink); }
+h4, .h4 { font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); line-height: var(--lh-ui); letter-spacing: var(--ls-0); color: var(--ink-2); }
+.display, .ts-display { font-family: var(--font-display); font-weight: 700; font-size: var(--t-display); line-height: var(--lh-display); letter-spacing: var(--ls-0); }
+.kicker, .ts-kicker { font-family: var(--font-display); font-weight: 500; font-size: var(--t-kicker); line-height: 1.5; letter-spacing: var(--ls-0); color: var(--ink); }
+.lead, .ts-lead { font-family: var(--font-body); font-weight: 400; font-size: var(--t-lead); line-height: var(--lh); letter-spacing: var(--ls-body); color: var(--ink-2); }
+.ts-body { font-family: var(--font-body); font-weight: 400; font-size: var(--t-body); line-height: var(--lh); letter-spacing: var(--ls-body); }
+.ts-ui { font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); line-height: var(--lh-ui); letter-spacing: var(--ls-0); }
+.small, .ts-meta { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-body); }
+.ts-meta { font-family: var(--font-body); font-weight: 400; color: var(--ink-2); }
+.eyebrow, .ts-label { font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui); letter-spacing: var(--ls-label); color: var(--ink-3); }
+.ts-micro { font-family: var(--font-display); font-weight: 500; font-size: var(--t-micro); line-height: 1.2; letter-spacing: var(--ls-0); }
+.tiny { font-size: var(--fs-xs); line-height: var(--lh-meta); }
+.muted { color: var(--ink-3); }
+/* numbers: Plex digits are tabular by default; keep tnum for the fallback fonts */
+.num { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+.num-hero, .ts-num-hero { font-family: var(--font-num); font-weight: 700; font-size: var(--t-num-hero); line-height: var(--lh-num); letter-spacing: var(--ls-num); font-variant-numeric: tabular-nums; }
+.num-big, .num-xl, .ts-num-xl { font-family: var(--font-num); font-weight: 700; font-size: var(--t-num-xl); line-height: var(--lh-num); letter-spacing: var(--ls-num); font-variant-numeric: tabular-nums; }
+.ts-num-l { font-family: var(--font-num); font-weight: 700; font-size: var(--t-num-l); line-height: 1.15; letter-spacing: var(--ls-0); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ts-num-inline { font-family: var(--font-num); font-weight: 700; font-size: var(--t-num-inline); line-height: var(--lh-num); letter-spacing: var(--ls-0); font-variant-numeric: tabular-nums; }
+/* the unit after a big number: same baseline, .38em, Plex 500 (件 日 円 万円 歳) — never vertically centred */
+.unit, .num-unit, .num-big small, .num-hero small, .num-xl small {
+  font-family: var(--font-display); font-weight: 500; font-size: var(--t-unit); letter-spacing: var(--ls-0); margin-left: 0.08em; vertical-align: baseline;
+}
+.ts-num-inline .unit, .amt-n + .unit { font-size: var(--t-unit-inline); }
+.nowrap { white-space: nowrap; }
+.sr-only, .visually-hidden { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0; }
+
+/* prose: paragraphs fill the line (no phrase breaking), measure ≤ 40 Japanese characters */
+.prose { display: grid; gap: var(--s-3); }
+.prose > p, .prose li, :where(.view) p:not([class]) { max-width: 40em; }
+.prose ul, .prose ol, ul.bullets, ol.steps { padding-left: 1.3em; display: grid; gap: 6px; }
+.prose ul, ul.bullets { list-style: none; padding-left: 0; }
+.prose ul > li, ul.bullets > li { position: relative; padding-left: 1.1em; }
+.prose ul > li::before, ul.bullets > li::before { content: ""; position: absolute; left: 0.1em; top: 0.74em; width: 0.36em; height: 0.36em; background: var(--ink-2); }
+ol.steps { counter-reset: step; list-style: none; padding-left: 0; }
+ol.steps > li { counter-increment: step; position: relative; padding-left: 2.25em; }
+ol.steps > li::before {
+  content: counter(step); position: absolute; left: 0; top: 0.2em;
+  width: 24px; height: 24px; display: grid; place-items: center;
+  background: var(--ink); color: var(--paper); font: 700 var(--fs-sm)/1 var(--font-num);
+}
+
+/* 蛍光ペン: a flat highlight under the text, offset low like a real marker stroke. ONE per screen. */
+.marker {
+  color: inherit; background: none;
+  text-decoration-line: underline; text-decoration-color: var(--marker);
+  text-decoration-thickness: 0.42em; text-underline-offset: -0.18em; text-decoration-skip-ink: none;
+  -webkit-box-decoration-break: clone; box-decoration-break: clone;
+}
+
+/* ---------- 4b. Japanese line breaking (VISUAL-SPEC §2.5) ---------- */
+/* text-wrap-style, not the text-wrap shorthand: the shorthand also resets text-wrap-mode, which silently undid
+   white-space: nowrap on every label these broad selectors reach (INTEGRATOR) */
+/* headings and short UI strings: keep phrases together, balanced */
+:lang(ja) :is(h1, h2, h3, h4, .h1, .h2, .h3, .display, .kicker, .pcard-title, .q-title, .section-title, .opt-title, .list-title, .sheet-title, .empty-title, .callout-title) {
+  word-break: auto-phrase; line-break: strict; overflow-wrap: anywhere; text-wrap-style: balance;
+}
+:lang(ja) :is(.lead, .list-sub, .opt-hint, .pcard-hook, .pcard-why, .section-sub, .empty-body, .q-why, .sos-desc, .help, .btn, .chip, .tag, .label, .eyebrow, .contact-label, .toast-msg, .ui-wrap) {
+  word-break: auto-phrase; line-break: strict; overflow-wrap: anywhere; text-wrap-style: pretty;
+}
+/* paragraphs: fill the line; strict kinsoku */
+:lang(ja) :is(p, li, .callout-body, .prose):not(.lead):not(.list-sub):not(.opt-hint):not(.pcard-hook):not(.pcard-why):not(.section-sub):not(.empty-body):not(.q-why):not(.ui-wrap) {
+  word-break: normal; line-break: strict; overflow-wrap: anywhere; text-wrap-style: pretty;
+}
+/* row titles and subs, check labels and fact values are short UI strings too: they break between phrases and
+   never leave a one-word orphan (おこづかい・生活費け / いさん, 受ける高校を決 / める, 「かし / て」) */
+:lang(ja) :is(label, summary, dt, dd, .check, .list-title, .list-sub,
+  .h-tool-t, .h-tool-s, .tl-hub-t, .tl-hub-s, .ck-t, .tl-item-text, .tl-item-meta,
+  .pf dd, .pcard-amount, .callout-title, .ts-meta, .small) {
+  word-break: auto-phrase; line-break: strict; overflow-wrap: anywhere; text-wrap-style: pretty;
+}
+/* the one marked phrase never splits mid-word (クイズと計 / 算): it breaks only between phrases */
+:lang(ja) .marker { word-break: auto-phrase; }
+@supports not (word-break: auto-phrase) {
+  :lang(ja) :is(h1, h2, h3, h4, .h1, .h2, .h3, .display, .pcard-title, .q-title, .section-title) { word-break: keep-all; overflow-wrap: anywhere; }
+}
+/* ふりがな: a <ruby> wider than its line (SM.fitRuby marks it .is-long) shows as 語（よみ） so the line can wrap */
+ruby.is-long { display: inline; }
+/* no reading inside tags and chips, nor in labels of 12px and under (components.js marks those .rb-off): there a
+   ruby breaks the box; the title above carries the reading. components.js also lets a wide reading overhang a
+   neighbouring kana (inline margins on the rt) instead of opening a gap inside the phrase. */
+:is(.tag, .chip) :is(rt, rp), ruby.rb-off > :is(rt, rp) { display: none !important; }
+ruby.is-long > :is(rt, rp) { display: inline; font-size: var(--t-ruby-long); font-weight: 400; letter-spacing: 0; opacity: 0.8; }
+
+/* ---------- 4c. English mode: no Japanese tracking or palt; labels uppercase ---------- */
+/* One Latin family in English: running text is IBM Plex Sans (the Latin slice of Plex JP, ≈20 KB per weight),
+   not BIZ UDPGothic's wide Latin, whose ’ is full-width ("You’ re"). The faces are declared here so only an
+   English page that actually sets Latin text fetches them, and only once LAUNCH has loaded the web fonts
+   (html:has(#sm-fonts)): with data saver / 2G nothing is requested and the phone's own font is used. The 500 and
+   700 files are the same ones the Plex JP stylesheet already loads (cached). Japanese inside English text
+   (names of 制度) falls back to BIZ UDPGothic, as before. */
+@font-face { font-family: "SM Plex Latin"; font-style: normal; font-weight: 400; font-display: swap; src: url(https://fonts.gstatic.com/s/ibmplexsansjp/v8/Z9XNDn9KbTDf6_f7dISNqYf_tvPT5C3yiQ.woff2) format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "SM Plex Latin"; font-style: normal; font-weight: 500; font-display: swap; src: url(https://fonts.gstatic.com/s/ibmplexsansjp/v8/Z9XKDn9KbTDf6_f7dISNqYf_tvPT7N7RnN1fug.woff2) format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "SM Plex Latin"; font-style: normal; font-weight: 700; font-display: swap; src: url(https://fonts.gstatic.com/s/ibmplexsansjp/v8/Z9XKDn9KbTDf6_f7dISNqYf_tvPT7JbXnN1fug.woff2) format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+html:has(#sm-fonts) body.lang-en { --font-body: "SM Plex Latin", "BIZ UDPGothic", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic UI", "Yu Gothic", Meiryo, system-ui, sans-serif; }
+/* without the web fonts the phone's own Latin (system-ui) beats a full-width-apostrophe fallback */
+html:not(:has(#sm-fonts)) body.lang-en { --font-body: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Hiragino Sans", "Noto Sans JP", sans-serif; }
+body.lang-en, body.lang-en * { font-feature-settings: normal; }
+/* Latin text wants no added tracking: the body token goes to 0 (every component that uses it follows) */
+body.lang-en { --ls-body: 0; letter-spacing: var(--ls-0); }
+body.lang-en :is(h1, h2, h3, .h1, .h2, .display) { text-wrap: balance; }
+body.lang-en { --ls-label: 0.06em; }  /* uppercase labels want a little more air; still the same token */
+body.lang-en :is(.eyebrow, .ts-label, .pcard-eyebrow, .section-num, .opt-group-label, .pf dt, .kv dt, .pcard-why-k) { text-transform: uppercase; letter-spacing: var(--ls-label); }
+
+/* ---------- 5. Layout helpers ---------- */
+.stack { display: grid; gap: var(--s-4); align-content: start; }
+.stack-sm { display: grid; gap: var(--s-2); align-content: start; }
+.stack-lg { display: grid; gap: var(--s-7); align-content: start; }
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); }
+.row-between { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); }
+.grid-2 { display: grid; gap: var(--s-3); grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.section { display: grid; gap: var(--s-4); }
+:is(.stack, .stack-sm, .stack-lg, .section, .grid-2, .cols, .pcards, .opts, .list, .contact, .callout-body, .sheet-body) > * { min-width: 0; }
+.full-bleed { margin-inline: calc(var(--gutter) * -1); }
+/* performance: sections after the first lay out only when near the viewport (MOTION-SPEC §6 rule 3) */
+.cv { content-visibility: auto; contain-intrinsic-size: auto 240px; }
+@media print { .cv { content-visibility: visible; } }
+
+/* desktop grid: 12 columns, 24px gaps, inside the 1120px container (phone: one column) */
+.grid-12 { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-6); }
+:is(.split-4-8, .split-8-4, .split-7-5, .split-5-7, .split-6-6) { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-6); align-items: start; }
+@media (min-width: 900px) {
+  .grid-12 { grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--s-6); }
+  .span-3 { grid-column: span 3; } .span-4 { grid-column: span 4; } .span-5 { grid-column: span 5; } .span-6 { grid-column: span 6; }
+  .span-7 { grid-column: span 7; } .span-8 { grid-column: span 8; } .span-12 { grid-column: 1 / -1; }
+  .split-4-8 { grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); }
+  .split-8-4 { grid-template-columns: minmax(0, 8fr) minmax(0, 4fr); }
+  .split-7-5 { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); }
+  .split-5-7 { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); }
+  .split-6-6 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  :is(.split-4-8, .split-8-4, .split-7-5, .split-5-7, .split-6-6) { column-gap: var(--s-6); }
+  /* a side column that stays in view while the main column scrolls */
+  .sticky-col { position: sticky; top: var(--sticky-top); align-self: start; }
+}
+
+/* rules (罫線): hairline everywhere, ONE heavy rule (2px ink) for section starts */
+.divider, .rule { height: 0; border: 0; border-top: 1px solid var(--rule); margin: var(--s-4) 0; }
+.rule-heavy { height: 0; border: 0; border-top: 2px solid var(--rule-heavy); margin: 0; }
+/* flat tinted band: full bleed on phones (both sides), exactly the grid area on desktop */
+.band { margin-inline: calc(var(--gutter) * -1); padding: var(--s-6) var(--gutter); background: var(--paper-2); }
+.band-action { background: var(--action-tint); }
+.band-ink { background: var(--ink); color: var(--paper); }
+.band-ink :is(h1, h2, h3, .h1, .h2, .h3) { color: var(--paper); }
+@media (min-width: 900px) { .band { margin-inline: 0; padding: var(--s-6); } }
+/* newspaper columns with hairline column rules (2 at ≥600px, 3 at ≥900px with .cols-3) */
+.cols { display: grid; gap: var(--s-5) 0; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 600px) {
+  .cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cols > * { padding: 0 var(--s-5); border-left: 1px solid var(--rule); }
+  .cols > :nth-child(2n+1) { padding-left: 0; border-left: 0; }
+  .cols > :nth-child(2n) { padding-right: 0; }
+}
+@media (min-width: 900px) {
+  .cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .cols-3 > * { padding: 0 var(--s-5) !important; border-left: 1px solid var(--rule) !important; }
+  .cols-3 > :nth-child(3n+1) { padding-left: 0 !important; border-left: 0 !important; }
+  .cols-3 > :nth-child(3n) { padding-right: 0 !important; }
+}
+/* standalone section label: 01 ── はじめに */
+.sec-num { display: flex; align-items: center; gap: 10px; font: 500 var(--t-label)/1 var(--font-num); letter-spacing: var(--ls-label); color: var(--ink-3); }
+.sec-num::after { content: ""; flex: 0 0 24px; height: 0; border-top: 1px solid currentColor; }
+
+/* ---------- 6. Skip link ---------- */
+.skip {
+  position: fixed; left: 12px; top: calc(var(--safe-t) + 8px); z-index: 1000;
+  transform: translateY(-160%);
+  background: var(--ink); color: var(--paper); padding: 10px 16px;
+  font-family: var(--font-display); font-weight: 700; text-decoration: none;
+}
+.skip:focus, .skip:focus-visible { transform: none; outline: 2px solid var(--focus); outline-offset: 2px; }
+
+/* ---------- 7. App bar: 56px, paper, 1px hairline (the identity lives in the logo) ----------
+   Its border-bottom is read by launch.js (the opening's rule lands on it) and by launch.css (the returning
+   beat redraws it as ::after) — keep it a real border. .appbar::before/::after belong to LAUNCH. */
+.appbar {
+  position: sticky; top: 0; z-index: 60;
+  display: flex; align-items: center; gap: var(--s-2);
+  min-height: calc(var(--appbar-h) + var(--safe-t));
+  padding: var(--safe-t) max(10px, var(--safe-r)) 0 max(var(--gutter), var(--safe-l));
+  background: var(--paper);
+  border-bottom: 1px solid var(--rule);
+}
+.brand {
+  position: relative;
+  flex: 1 1 auto; min-width: 0;
+  display: inline-flex; align-items: center; gap: 0;
+  min-height: var(--tap); margin-block: -2px;
+  color: var(--ink); text-decoration: none;
+}
+/* the outlined lockup (LOGO.md §4, §8): CSS height = the box size in px, edges on whole pixels */
+.appbar .brand .logo-lockup { display: block; flex: none; height: 22px; width: auto; max-width: none; overflow: visible; }
+.appbar .brand .brand-name { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+.brand > .icon, .brand > .logo { width: 24px; height: 24px; flex: none; }   /* fallback mark (no SM.brand) */
+.brand:focus-visible { outline-offset: 4px; }
+@media (max-width: 379px) { .appbar .brand .logo-lockup { height: 20px; } }
+@media (max-width: 339px) { .appbar .brand .logo-lockup { height: 18px; } }
+@media (max-width: 419px) { body.lang-en .appbar .brand .logo-lockup { height: 18px; } }
+@media (max-width: 339px) { body.lang-en .appbar .brand .logo-lockup { height: 14px; } }
+@media (min-width: 900px) { .appbar .brand .logo-lockup { height: 24px; } }
+/* The brand line on the bar that is always on screen: 2px green under 立ちマップ, 2px below the box, ending in
+   the 45° step (the launch lockup's line, so the splash hands its line to the bar). Pixel geometry: --lk is the
+   lockup's CSS height (= the box), one lockup unit = --lk / 20; the run starts under 立 (23.333u) and the step
+   ends where the lockup's line ends (134u). The step is a fixed 10×6px mask so it never stretches. ja only. */
+.appbar .brand { --lk: 22px; }
+@media (max-width: 379px) { .appbar .brand { --lk: 20px; } }
+@media (max-width: 339px) { .appbar .brand { --lk: 18px; } }
+@media (min-width: 900px) { .appbar .brand { --lk: 24px; } }
+.appbar .brand:has(> .logo-lockup:not(.is-en))::after {
+  content: ""; position: absolute; pointer-events: none;
+  left: calc(var(--lk) * 23.333 / 20); width: calc(var(--lk) * (134 - 23.333) / 20);
+  top: calc(50% + var(--lk) / 2 - 2px); height: 6px;
+  background: var(--action);
+  -webkit-mask: linear-gradient(#000 0 0) left bottom / calc(100% - 6px) 2px no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M0 4H3.586L7.586 0H10V2H8.414L4.414 6H0Z'/%3E%3C/svg%3E") right top / 10px 6px no-repeat;
+  mask: linear-gradient(#000 0 0) left bottom / calc(100% - 6px) 2px no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M0 4H3.586L7.586 0H10V2H8.414L4.414 6H0Z'/%3E%3C/svg%3E") right top / 10px 6px no-repeat;
+}
+@media print { .appbar .brand::after { content: none; } }
+.appbar-actions { flex: none; display: flex; align-items: center; gap: 6px; }
+
+/* header buttons (class .pill kept for core markup): 36px rectangles with 44px hit areas */
+.pill {
+  position: relative;
+  display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+  height: 36px; padding: 0 12px;
+  border-radius: var(--r-ctl);
+  font-family: var(--font-display); font-size: var(--t-chrome); font-weight: 700; line-height: 1; letter-spacing: var(--ls-body);
+  white-space: nowrap; word-break: keep-all; flex: none;
+  transition: background-color var(--dur-quick) var(--ease-standard), color var(--dur-quick) var(--ease-standard);
+}
+.pill::before { content: ""; position: absolute; inset: -4px -3px; }
+.pill .icon { width: 14px; height: 14px; stroke-width: 2.5; }
+.pill-exit { background: var(--paper); color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.pill-sos { background: var(--red); color: var(--on-red); padding: 0 11px 0 9px; }
+@media (hover: hover) {
+  .pill-exit:hover { background: var(--ink); color: var(--paper); }
+  .pill-sos:hover { background: var(--red-hover); }
+}
+.pill-exit:active { background: var(--ink); color: var(--paper); }
+
+.icon-btn {
+  position: relative;
+  display: inline-grid; place-items: center; flex: none;
+  width: 40px; height: 40px; border-radius: var(--r-ctl);
+  color: var(--ink);
+  transition: background-color var(--dur-quick) var(--ease-standard);
+}
+.icon-btn::before { content: ""; position: absolute; inset: -2px; }
+.icon-btn .icon { width: 24px; height: 24px; stroke-width: 1.75; }
+@media (hover: hover) { .icon-btn:hover { background: var(--paper-2); } }
+.icon-btn:active { background: var(--paper-3); }
+
+@media (max-width: 379px) {
+  .appbar { gap: 4px; padding-right: max(6px, var(--safe-r)); }
+  .appbar-actions { gap: 4px; }
+  .pill { padding: 0 9px; font-size: var(--t-chrome-s); }
+  .pill-sos { padding: 0 9px 0 7px; }
+  .icon-btn { width: 36px; }
+  .icon-btn::before { inset: -2px -4px; }
+}
+/* English labels are longer (Quick exit / SOS) */
+body.lang-en .pill { letter-spacing: 0; }
+@media (max-width: 419px) { body.lang-en .pill { padding: 0 8px; } body.lang-en .pill-sos { padding: 0 8px 0 6px; } }
+@media (min-width: 900px) {
+  .appbar { padding-left: max(24px, var(--safe-l)); padding-right: max(16px, var(--safe-r)); }
+  .appbar-actions { gap: 8px; }
+  .pill { height: 36px; padding: 0 14px; font-size: var(--fs-sm); }
+}
+
+/* ---------- 8. Sub bar: back + title (phone); a back link above the H1 (desktop) ---------- */
+.subbar {
+  position: sticky; top: calc(var(--appbar-h) + var(--safe-t)); z-index: 40;
+  display: flex; align-items: center; gap: 0;
+  min-height: var(--subbar-h);
+  padding: 0 max(var(--gutter), var(--safe-r)) 0 max(calc(var(--gutter) - 8px), var(--safe-l));
+  background: var(--paper);
+  border-bottom: 1px solid var(--rule);
+}
+.back {
+  display: inline-flex; align-items: center; gap: 2px; flex: none;
+  min-height: var(--tap); padding: 0 12px 0 2px;
+  color: var(--ink); font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); letter-spacing: var(--ls-0);
+  border-radius: var(--r-ctl);
+  transition: background-color var(--dur-quick) var(--ease-standard);
+}
+@media (hover: hover) { .back:hover { background: var(--paper-2); } }
+.back:active { background: var(--paper-3); }
+.back .icon { width: 20px; height: 20px; stroke-width: 2; transition: translate var(--spring-snappy-dur) var(--spring-snappy); }
+.back:active .icon, .back.m-pressed .icon { translate: -3px 0; }
+.subbar-title {
+  position: relative; min-width: 0; flex: 1; padding-left: 13px;
+  font-family: var(--font-display); font-weight: 500; font-size: var(--t-chrome); letter-spacing: var(--ls-body); line-height: 24px; color: var(--ink-3);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.subbar-title::before { content: ""; position: absolute; left: 0; top: 4px; bottom: 4px; border-left: 1px solid var(--rule); }
+.subbar-title:empty::before { content: none; }
+
+/* ---------- 9. View container ---------- */
+.view {
+  display: block;
+  max-width: var(--col);
+  margin: 0 auto;
+  padding: var(--s-6) max(var(--gutter), var(--safe-r)) calc(var(--tabbar-h) + var(--safe-b) + var(--s-8)) max(var(--gutter), var(--safe-l));
+}
+.subbar:not([hidden]) + .view { padding-top: var(--s-6); }
+.view > * + * { margin-top: var(--s-6); }
+.view > .tight + *, .view > * + .tight { margin-top: var(--s-3); }
+/* sections: 56px apart on phones, 72px on desktop (views can always set their own) */
+.view > :where(section, .sec) + :where(section, .sec) { margin-top: var(--sec-gap); }
+
+/* ---------- 10. Tab bar (phone): 64px, hairline top, a 32×3 green bar over the active tab ----------
+   The indicator is .tabbar::before, positioned by --tab-index (0..3) with `transform` only, so it slides on
+   the snappy spring (motion.css adds the transition once .ind-ready). CSS derives --tab-index from
+   .is-active / [aria-current] with :has(), so it works with no JS; core sets it inline (inline wins).
+   The 32px bar is the content box of a column-wide element (padding % = containing block width). */
+.tabbar {
+  --tab-count: 4;
+  --tab-index: 0;
+  --tab-ind-o: 0;
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
+  display: grid; grid-template-columns: repeat(var(--tab-count), minmax(0, 1fr));
+  padding: 0 var(--safe-r) var(--safe-b) var(--safe-l);
+  background: var(--paper);
+  border-top: 1px solid var(--rule);
+}
+.tabbar:has(> .tab:nth-child(1):is(.is-active, [aria-current="page"])) { --tab-index: 0; --tab-ind-o: 1; }
+.tabbar:has(> .tab:nth-child(2):is(.is-active, [aria-current="page"])) { --tab-index: 1; --tab-ind-o: 1; }
+.tabbar:has(> .tab:nth-child(3):is(.is-active, [aria-current="page"])) { --tab-index: 2; --tab-ind-o: 1; }
+.tabbar:has(> .tab:nth-child(4):is(.is-active, [aria-current="page"])) { --tab-index: 3; --tab-ind-o: 1; }
+.tabbar::before {
+  content: ""; position: absolute; top: -1px; left: var(--safe-l);
+  width: calc((100% - var(--safe-l) - var(--safe-r)) / var(--tab-count)); height: 3px;
+  padding: 0 calc((100% - var(--safe-l) - var(--safe-r)) / var(--tab-count) / 2 - 16px);
+  background: var(--action); background-clip: content-box;
+  transform: translateX(calc(var(--tab-index) * 100%));
+  opacity: var(--tab-ind-o);
+  pointer-events: none;
+}
+.tab {
+  position: relative;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  min-width: 0; min-height: var(--tabbar-h); padding: 6px 0 8px;
+  color: var(--ink-3); text-decoration: none;
+  font-family: var(--font-display); font-size: var(--t-micro); font-weight: 500; letter-spacing: var(--ls-0); line-height: 1.2;
+}
+.tab .icon { width: 24px; height: 24px; stroke-width: 1.75; }
+.tab-label, .tab > span:not(.tab-badge) { white-space: nowrap; }
+.tab.is-active, .tab[aria-current="page"] { color: var(--ink); font-weight: 700; }
+.tab.is-active .icon, .tab[aria-current="page"] .icon { stroke-width: 2; }
+@media (hover: hover) { .tab:not(.is-active):not([aria-current="page"]):hover { color: var(--ink); } }
+.tab-badge {
+  position: absolute; top: 7px; left: calc(50% + 7px);
+  min-width: 16px; height: 16px; padding: 0 3px;
+  display: inline-grid; place-items: center;
+  background: var(--action-fill); color: var(--on-action-fill);
+  font: 700 var(--t-badge)/1 var(--font-num); letter-spacing: 0; font-variant-numeric: tabular-nums;
+  box-shadow: 0 0 0 2px var(--paper);
+}
+.tab-badge:empty { display: none; }
+body.is-big .tab { font-size: var(--fs-micro); }
+/* まなぶ is a rail-only row (boot.js .tab-extra); on phones it lives on home and in the views */
+.tab-extra { display: none; }
+/* Detail screens with their own action bar (program 保存｜電話する, tool summaries, the lesson's つぎへ): the tab bar
+   steps down out of the way while that bar is up, so one bar sits on the bottom safe area, never two. 戻る in the
+   subbar is the way out. The program and tool bars only come up once their inline actions have scrolled away. */
+@media (max-width: 899px) {
+  .tabbar { transition: transform 220ms var(--ease-exit), visibility 0s; }
+  body:has(#view.v-program .pg-bar:is(.is-on, :not(.is-auto))) .tabbar,
+  body:has(#view.v-tools .tl-float.is-on) .tabbar,
+  body:has(#view.v-learn .ln-nav) .tabbar {
+    transform: translateY(calc(100% + 1px)); visibility: hidden;
+    transition: transform 220ms var(--ease-exit), visibility 0s linear 220ms;
+  }
+}
+
+/* ---------- 11. Desktop (≥900px): the tab bar becomes a left rail ----------
+   Rows 48px: 20px icon + label. The active row is ONE sliding element (paper-2 fill with a 3px ink bar at
+   its left edge) — .tabbar::before, moved by --tab-index (or core's measured --tab-y). */
+@media (min-width: 900px) {
+  .tabbar {
+    top: calc(var(--appbar-h) + var(--safe-t)); bottom: 0; right: auto; width: var(--rail-w);
+    display: flex; flex-direction: column; gap: 0;
+    padding: var(--s-6) 0 var(--s-6) var(--safe-l);
+    border-top: 0; border-right: 1px solid var(--rule);
+    isolation: isolate;
+  }
+  .tabbar::before {
+    top: var(--s-6); left: var(--safe-l); right: 0; width: auto; height: var(--rail-row); padding: 0;
+    background: var(--paper-2); box-shadow: inset 3px 0 0 var(--ink);
+    transform: translateY(calc(var(--tab-index) * 100%));
+    z-index: -1;
+  }
+  .tab {
+    flex: none; flex-direction: row; justify-content: flex-start; gap: 12px;
+    height: var(--rail-row); min-height: 0; padding: 0 16px 0 24px;
+    font-size: var(--t-ui); font-weight: 500; color: var(--ink-2); line-height: 1.25;
+  }
+  .tab .icon { width: 20px; height: 20px; stroke-width: 2; }
+  .tab-extra { display: flex; }
+  .tabbar:has(> .tab:nth-child(5):is(.is-active, [aria-current="page"])) { --tab-index: 4; --tab-ind-o: 1; }
+  .tabbar.is-extra { --tab-ind-o: 1; }
+  .tab.is-active, .tab[aria-current="page"] { font-weight: 700; color: var(--ink); }
+  @media (hover: hover) { .tab:not(.is-active):not([aria-current="page"]):hover { color: var(--ink); background: color-mix(in srgb, var(--paper-2) 60%, transparent); } }
+  /* one line per row, like every other rail item: まなぶ  お金のきほん (the sub sits after the label, quieter) */
+  .tabbar .tab .tab-label { display: flex; flex-direction: row; align-items: baseline; gap: 8px; min-width: 0; white-space: nowrap; line-height: inherit; }
+  .tabbar .tab .tab-sub { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-family: var(--font-display); font-size: var(--t-micro); font-weight: 500; color: var(--ink-3); letter-spacing: var(--ls-0); line-height: 1.3; }
+  .tab-badge { position: static; margin-left: auto; min-width: 20px; height: 20px; font-size: var(--t-badge-rail); box-shadow: none; }
+  body.is-big .tab { font-size: var(--fs-md); }
+  /* privacy note at the foot of the rail */
+  .tabbar::after {
+    content: "答えはこの端末の中だけに保存されます。「すぐ閉じる」で一瞬で画面を切りかえられます。";
+    margin: auto 20px 0 24px; padding-top: 12px; border-top: 1px solid var(--rule);
+    color: var(--ink-3);
+    font-family: var(--font-body); font-size: var(--fs-xs); line-height: var(--lh-meta); font-weight: 400; letter-spacing: var(--ls-body);
+    word-break: auto-phrase; line-break: strict;
+  }
+  body.lang-en .tabbar::after { content: "Your answers stay on this device only. \201CQuick exit\201D  leaves the page instantly."; letter-spacing: 0; }
+
+  /* the content container sits in the space right of the rail: 1120px max, centred; reading views use its
+     first 8 columns (≈720px), so every view shares one left edge */
+  .view, .subbar {
+    width: min(var(--col), 100% - var(--rail-w));
+    max-width: none;
+    margin-left: calc(var(--rail-w) + max(0px, (100% - var(--rail-w) - var(--container) - 2 * var(--gutter)) / 2));
+    margin-right: 0;
+  }
+  .view { padding: var(--s-8) var(--gutter) var(--s-10); }
+  .subbar { position: static; min-height: 0; padding: var(--s-5) var(--gutter) 0; border: 0; background: none; }
+  .subbar .back { margin-left: -8px; }
+  .subbar-title { display: none; }
+  .subbar:not([hidden]) + .view { padding-top: var(--s-4); }
+  .toast { bottom: var(--s-7); left: calc(50% + var(--rail-w) / 2); }
+  body:has(#view .wide-layout), .view.is-wide { --col: calc(var(--container) + 2 * var(--gutter)); }
+  /* the map is not in the container: map.css takes it edge to edge right of the rail at ≥1100 (below that it is
+     a reading-width stage) */
+}
+/* wide screens (≥1440): the whole shell — app bar inner edges, rail, content — is one 1440px frame, centred, so
+   the logo stands over the rail and the bar's actions over the content's right edge (no dead gutter between the
+   rail and the content). --shell-x is the frame's left edge; the map still bleeds to the right edge (map.css). */
+@media (min-width: 1440px) {
+  :root { --shell-w: 1440px; }
+  .appbar {
+    padding-left: max(var(--gutter), var(--safe-l), calc((100% - var(--shell-w)) / 2 + var(--gutter)));
+    padding-right: max(10px, var(--safe-r), calc((100% - var(--shell-w)) / 2 + 10px));
+  }
+  .tabbar { left: calc((100% - var(--shell-w)) / 2); }
+  .view, .subbar {
+    margin-left: calc((100% - var(--shell-w)) / 2 + var(--rail-w) + max(0px, (var(--shell-w) - var(--rail-w) - var(--container) - 2 * var(--gutter)) / 2));
+  }
+}
+
+/* ---------- 12. Buttons: rectangles, Plex 700, the arrow only on forward actions ---------- */
+.btn {
+  position: relative;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 48px; padding: 0 20px;
+  border: 1.5px solid transparent; border-radius: var(--r-ctl);
+  font-family: var(--font-display); font-size: var(--t-ui); font-weight: 700; line-height: 1.3; letter-spacing: var(--ls-body);
+  text-decoration: none; text-align: center;
+  user-select: none; -webkit-user-select: none;
+  transition: background-color var(--dur-quick) var(--ease-standard), border-color var(--dur-quick) var(--ease-standard), color var(--dur-quick) var(--ease-standard);
+}
+.btn .icon { width: 20px; height: 20px; stroke-width: 2; }
+.btn > span { min-width: 0; }
+.btn .arrow { --arrow-s: 20px; margin-right: -2px; }
+.btn .btn-ext { width: 16px; height: 16px; stroke-width: 2.25; opacity: 0.85; }
+/* two-line CTA: label + meta stacked, arrow centred */
+.btn .btn-label { display: grid; gap: 2px; text-align: left; }
+.btn .btn-sub { font-family: var(--font-display); font-size: var(--t-label); font-weight: 500; letter-spacing: var(--ls-label); line-height: 1.3; opacity: 0.85; }
+.btn:has(.btn-sub) { padding-block: 10px; }
+.btn-primary { background: var(--action-fill); border-color: var(--action-fill); color: var(--on-action-fill); }
+.btn-primary:active { background: var(--action-fill-press); border-color: var(--action-fill-press); }
+.btn-ink { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.btn-secondary { background: transparent; color: var(--ink); border-color: var(--ink); }
+.btn-secondary:active { background: var(--paper-3); }
+.btn-soft { background: var(--paper-2); color: var(--ink); border-color: var(--paper-2); }
+.btn-soft:active { background: var(--paper-3); border-color: var(--paper-3); }
+/* ghost / text link = THE link (.link): green 700, a 1.5px underline under the label, an optional trailing
+   arrow that is never underlined. Every in-app navigation link looks like this, section 「すべて見る」 included. */
+.btn-ghost, .btn-text {
+  min-height: var(--tap); padding-inline: 0; border-color: transparent; background: transparent;
+  color: var(--action-text);
+  text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 0.28em;
+}
+.btn-ghost:has(.arrow), .btn-text:has(.arrow) { text-decoration: none; }
+:is(.btn-ghost, .btn-text):has(.arrow) > span:not(.arrow):not(.sr-only),
+.link:has(.arrow) > span:not(.arrow):not(.sr-only) { text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 0.28em; }
+.link:has(.arrow) { text-decoration: none; }
+.btn-danger { background: transparent; color: var(--red-text); border-color: var(--red-text); }
+.btn-danger:active { background: var(--red-tint); }
+.btn-sos { background: var(--red); border-color: var(--red); color: var(--on-red); }
+@media (hover: hover) {
+  .btn-primary:hover { background: var(--action-fill-hover); border-color: var(--action-fill-hover); }
+  .btn-ink:hover { background: var(--ink-2); border-color: var(--ink-2); }
+  .btn-secondary:hover { background: var(--paper-2); }
+  .btn-soft:hover { background: var(--paper-3); border-color: var(--paper-3); }
+  .btn-ghost:hover, .btn-text:hover { text-decoration-line: underline; text-decoration-thickness: 2px; }
+  :is(.btn-ghost, .btn-text):has(.arrow):hover { text-decoration-line: none; }
+  :is(.btn-ghost, .btn-text, .link):has(.arrow):hover > span:not(.arrow):not(.sr-only) { text-decoration-thickness: 2px; }
+  .btn-danger:hover { background: var(--red-tint); }
+  .btn-sos:hover { background: var(--red-hover); border-color: var(--red-hover); }
+}
+.btn-lg { min-height: 56px; padding: 0 24px; font-size: var(--fs-lg); }
+.btn-lg .arrow { --arrow-s: 24px; }
+.btn-lg .icon { width: 24px; height: 24px; stroke-width: 1.75; }
+.btn-sm { min-height: var(--tap); padding: 0 16px; font-size: var(--fs-sm); gap: 6px; }
+.btn-sm .icon { width: 16px; height: 16px; stroke-width: 2.25; }
+.btn-sm .arrow { --arrow-s: 16px; }
+.btn-block { display: flex; width: 100%; }
+.btn-block.btn-lg, .btn-block:has(.arrow), .btn-block:has(.btn-sub) { justify-content: space-between; text-align: left; }
+.btn[disabled], .btn[aria-disabled="true"] { opacity: 0.4; pointer-events: none; }
+.btn-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-3); }
+@media (max-width: 599px) { .btn-row > .btn:not(.btn-ghost):not(.btn-text) { flex: 1 1 auto; } }
+
+/* ---------- 13. Toggles: chips, segments, underline tabs, switch ---------- */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chips-scroll {
+  display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none;
+  padding: 4px var(--gutter); margin-inline: calc(var(--gutter) * -1); scroll-padding-inline: var(--gutter);
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 24px), transparent);
+          mask-image: linear-gradient(90deg, #000 calc(100% - 24px), transparent);
+}
+.chips-scroll::-webkit-scrollbar { display: none; }
+.chips-scroll > * { flex: none; }
+.chips-scroll::after { content: ""; flex: none; width: 12px; }
+/* chip: 36px tall (44px hit), 1px border, Plex 500; pressed = ink fill + Plex 700. The fill IS the state. */
+.chip {
+  position: relative;
+  display: inline-flex; align-items: center; gap: 6px;
+  min-height: 36px; padding: 0 12px;
+  border-radius: var(--r-ctl);
+  background: transparent; color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--rule-2);
+  font-family: var(--font-display); font-size: var(--fs-sm); font-weight: 500; line-height: 1.2; letter-spacing: var(--ls-0);
+  white-space: nowrap; text-decoration: none;
+  transition: background-color var(--dur-quick) var(--ease-standard), color var(--dur-quick) var(--ease-standard), box-shadow var(--dur-quick) var(--ease-standard);
+}
+.chip::after { content: ""; position: absolute; inset: -4px 0; }  /* 44px hit area */
+.chip .icon { width: 16px; height: 16px; stroke-width: 2.25; }
+.chip .cat-icon { --mark: 24px; margin-left: -6px; }
+.chip:has(.cat-icon) { padding-left: 12px; }
+/* the label reserves its bold width, so pressing never shifts the row */
+.chip-l { display: inline-grid; }
+.chip-l > *, .chip-l::after { grid-area: 1 / 1; }
+.chip-l::after { content: attr(data-t); font-weight: 700; visibility: hidden; height: 0; overflow: hidden; }
+.chip[aria-pressed="true"], .chip.is-active {
+  background: var(--ink); color: var(--paper); font-weight: 700;
+  box-shadow: inset 0 0 0 1px var(--ink);
+}
+.chip-count { font: 500 var(--fs-sm)/1 var(--font-num); color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.chip[aria-pressed="true"] .chip-count, .chip.is-active .chip-count { color: var(--paper); opacity: 0.72; }
+@media (hover: hover) { .chip:not([aria-pressed="true"]):not(.is-active):hover { box-shadow: inset 0 0 0 1px var(--ink); } }
+.chip:active { background: var(--paper-3); }
+.chip[aria-pressed="true"]:active { background: var(--ink-2); }
+/* desktop: enough room — toggle rows wrap instead of scrolling */
+@media (min-width: 900px) {
+  .chips-scroll { flex-wrap: wrap; overflow: visible; margin-inline: 0; padding-inline: 0; -webkit-mask-image: none; mask-image: none; }
+  .chips-scroll::after { content: none; }
+}
+
+/* segmented: 44px, 1px ink frame; the ink fill is ONE element (.seg::before) that slides to the pressed
+   segment on the snappy spring. Segments are equal width; the index comes from :has() (no JS). */
+.seg {
+  --seg-n: 2; --seg-i: 0; --seg-o: 0;
+  position: relative; isolation: isolate;
+  display: flex; border: 1px solid var(--ink); border-radius: var(--r-ctl); overflow: hidden;
+}
+.seg:has(> :nth-child(3):last-child) { --seg-n: 3; }
+.seg:has(> :nth-child(4):last-child) { --seg-n: 4; }
+.seg:has(> :nth-child(5):last-child) { --seg-n: 5; }
+.seg:has(> :nth-child(6):last-child) { --seg-n: 6; }
+.seg:has(> :nth-child(1):is([aria-pressed="true"], [aria-selected="true"], [aria-current="page"], .is-active)) { --seg-i: 0; --seg-o: 1; }
+.seg:has(> :nth-child(2):is([aria-pressed="true"], [aria-selected="true"], [aria-current="page"], .is-active)) { --seg-i: 1; --seg-o: 1; }
+.seg:has(> :nth-child(3):is([aria-pressed="true"], [aria-selected="true"], [aria-current="page"], .is-active)) { --seg-i: 2; --seg-o: 1; }
+.seg:has(> :nth-child(4):is([aria-pressed="true"], [aria-selected="true"], [aria-current="page"], .is-active)) { --seg-i: 3; --seg-o: 1; }
+.seg:has(> :nth-child(5):is([aria-pressed="true"], [aria-selected="true"], [aria-current="page"], .is-active)) { --seg-i: 4; --seg-o: 1; }
+.seg:has(> :nth-child(6):is([aria-pressed="true"], [aria-selected="true"], [aria-current="page"], .is-active)) { --seg-i: 5; --seg-o: 1; }
+.seg::before {
+  content: ""; position: absolute; top: 0; bottom: 0; left: 0; z-index: -1;
+  width: calc(100% / var(--seg-n));
+  background: var(--ink); opacity: var(--seg-o);
+  transform: translateX(calc(var(--seg-i) * 100%));
+  transition: transform var(--spring-snappy-dur) var(--spring-snappy), opacity var(--dur-quick) var(--ease-standard);
+  pointer-events: none;
+}
+.seg > button, .seg > a {
+  position: relative;
+  flex: 1 1 0; min-width: 0; min-height: var(--tap); padding: 0 10px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  color: var(--ink); font-family: var(--font-display); font-size: var(--fs-sm); font-weight: 700; letter-spacing: var(--ls-0);
+  text-decoration: none; white-space: nowrap;
+  transition: color var(--dur-quick) var(--ease-standard), background-color var(--dur-quick) var(--ease-standard);
+}
+.seg > * + * { border-left: 1px solid var(--ink); }
+@media (hover: hover) {
+  .seg > :is(button, a):not([aria-pressed="true"]):not([aria-selected="true"]):not([aria-current="page"]):not(.is-active):hover { background: var(--paper-2); }
+}
+.seg > :is([aria-pressed="true"], [aria-selected="true"], [aria-current="page"], .is-active) { color: var(--paper); }
+.seg .icon { width: 16px; height: 16px; stroke-width: 2.25; }
+.seg > :focus-visible { outline-offset: -4px; }
+/* underline tabs: .seg.seg-tabs or .tabs — 2px ink underline; views that slide it use SM.motion.indicator with a
+   .m-indicator child (the static underline then steps aside) */
+.seg-tabs, .tabs {
+  position: relative; display: flex; gap: 0; border: 0; border-bottom: 1px solid var(--rule); border-radius: 0;
+  overflow-x: auto; overflow-y: hidden; scrollbar-width: none; overscroll-behavior-x: contain;
+}
+.seg-tabs::-webkit-scrollbar, .tabs::-webkit-scrollbar { display: none; }
+:is(.seg-tabs, .tabs) > :focus-visible { outline-offset: -2px; }
+.seg.seg-tabs::before { content: none; }
+.seg.seg-tabs > :where(:not(.m-indicator)), .seg-tabs > :where(:not(.m-indicator)), .tabs > button, .tabs > a {
+  flex: 0 0 auto; min-height: var(--tap); padding: 0 14px;
+  display: inline-flex; align-items: center; gap: 6px;
+  color: var(--ink-3); font-family: var(--font-display); font-weight: 500; font-size: var(--t-ui); letter-spacing: var(--ls-0);
+  text-decoration: none; white-space: nowrap;
+  border: 0 !important; box-shadow: inset 0 -2px 0 transparent; background: none !important;
+  transition: color var(--dur-quick) var(--ease-standard), box-shadow var(--dur-quick) var(--ease-standard);
+}
+.seg-tabs > :first-child, .tabs > :first-child { padding-left: 0; }
+@media (hover: hover) { .seg-tabs > :hover, .tabs > :hover { color: var(--ink); } }
+.seg-tabs > :is([aria-pressed="true"], [aria-selected="true"], [aria-current="page"], .is-active),
+.tabs > :is([aria-pressed="true"], [aria-selected="true"], [aria-current="page"], .is-active) { color: var(--ink); font-weight: 700; box-shadow: inset 0 -2px 0 var(--ink); }
+:is(.seg-tabs, .tabs):has(> .m-indicator) > * { box-shadow: none !important; }
+:is(.seg-tabs, .tabs) > .m-indicator { display: block; height: 2px; min-height: 0; padding: 0; bottom: -1px; background: var(--ink); }
+
+/* switch: 48×28 track in a 1.5px ink frame, one square 20px knob that slides 20px on the snappy spring.
+   off = paper-3 track, ink knob at the start; on = ink track, paper knob at the end (the contrast flips, so the
+   state never rests on position alone). No オン/オフ text beside it: the native checkbox carries the state. */
+.switch {
+  -webkit-appearance: none; appearance: none; flex: none; cursor: pointer;
+  position: relative; width: 48px; height: 28px; margin: 0; border-radius: var(--r-ctl);
+  background: var(--paper-3); box-shadow: inset 0 0 0 1.5px var(--ink);
+  transition: background-color var(--dur-quick) var(--ease-standard);
+}
+.switch::before {
+  content: ""; position: absolute; top: 4px; left: 4px; width: 20px; height: 20px; border-radius: 0;
+  background: var(--ink);
+  transition: transform var(--spring-snappy-dur) var(--spring-snappy), background-color var(--dur-quick) var(--ease-standard);
+}
+.switch:checked { background: var(--ink); }
+.switch:checked::before { transform: translateX(20px); background: var(--paper); }
+.switch:active::before { transform: scale(0.9); }
+.switch:checked:active::before { transform: translateX(20px) scale(0.9); }
+@media (forced-colors: active) { .switch { border: 2px solid CanvasText; } .switch::before { background: CanvasText; } .switch:checked { background: Highlight; } .switch:checked::before { background: Canvas; } }
+.switch:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.switch-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 56px; cursor: pointer; }
+.switch-row:not(.set-row) { padding: 8px 0; }
+.switch-row + .switch-row { border-top: 1px solid var(--rule); }
+.switch-text { display: grid; gap: 2px; min-width: 0; }
+.switch-text b { font-family: var(--font-display); font-weight: 700; font-size: var(--fs-base); letter-spacing: var(--ls-0); }
+.switch-text small { font-size: var(--t-meta); color: var(--ink-3); line-height: 1.5; }
+
+/* narrow screens: single-column text grids never grow past their box (auto-phrase keeps phrases together,
+   which can make an implicit `auto` column as wide as the longest phrase with 文字を大きく + ふりがな) */
+:is(.prose, .stack, .stack-sm, .stack-lg, .section, .pcards, .pcard-main, .section-head-text, .callout-body, .kv, .opts, .opt-body, .field, .switch-text, .list, .list-body, .contact, .contact-main, .sheet-body, .sos-list, .empty) { grid-template-columns: minmax(0, 1fr); }
+:is(.list-title, .list-sub, .opt-title, .opt-hint, .contact-main, .pcard-hook, .pcard-why, .switch-text) { overflow-wrap: anywhere; }
+
+/* ---------- 14. Tags: 22px, Plex 500 12, flat ---------- */
+.tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  min-height: 22px; padding: 0 6px;
+  border-radius: var(--r-ctl);
+  font-family: var(--font-display); font-size: var(--t-label); font-weight: 500; line-height: 1.2; letter-spacing: var(--ls-label);
+  white-space: nowrap;
+  background: var(--paper-2); color: var(--ink-2);
+}
+.tag .icon { width: 12px; height: 12px; stroke-width: 2.5; }
+.tag-free { background: var(--action-tint); color: var(--action-text); }
+.tag-loan, .tag-deadline { background: var(--amber-tint); color: var(--amber-text); }
+.tag-gov { background: var(--paper-2); color: var(--ink-2); }
+.tag-local { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 1px var(--rule-2); }
+.tag-npo, .tag-neutral { background: var(--paper-2); color: var(--ink-2); }
+.tag-right { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.tag-sos { background: var(--red); color: var(--on-red); }
+.tag-ink { background: var(--ink); color: var(--paper); }
+.tag-action { background: var(--action-fill); color: var(--on-action-fill); }
+.badge {
+  display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 6px;
+  background: var(--paper-3); color: var(--ink); font: 700 var(--fs-xs)/1 var(--font-num); font-variant-numeric: tabular-nums;
+}
+.badge-primary { background: var(--action-fill); color: var(--on-action-fill); }
+
+/* ---------- 15. Kanji category marks — station numbering. Sizes 24 · 32 (default) · 56 · 80 ----------
+   <span class="cat-icon cat-money [is-xs|is-sm|is-lg|is-xl] [has-label] [has-reading]">
+     <span class="cat-stack"><span class="cat-mark" [data-vt="cat"|data-vt-hero="cat"]>金</span><span class="cat-reading">おかね</span></span>
+     <span class="cat-name">お金</span>
+   </span>   The square is the shared-morph tile (it travels between list rows and headers). */
+.cat-icon {
+  --mark: 32px;
+  --cat-c: var(--cat-procedures);
+  display: inline-flex; align-items: center; gap: 10px; flex: none;
+  vertical-align: middle;
+}
+.cat-stack { display: inline-flex; flex-direction: column; align-items: center; gap: 3px; flex: none; }
+.cat-mark {
+  display: grid; place-items: center;
+  width: var(--mark); height: var(--mark);
+  background: var(--cat-c); color: var(--on-cat);
+  font-family: var(--font-display); font-weight: 700; font-size: calc(var(--mark) * 0.58); line-height: 1;
+  letter-spacing: 0;
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
+}
+.cat-reading { display: none; font-family: var(--font-display); font-size: var(--t-micro); font-weight: 500; line-height: 1.1; letter-spacing: 0; color: var(--ink-2); white-space: nowrap; }
+body.is-ruby .cat-reading, .cat-icon.has-reading .cat-reading { display: block; }
+.cat-name { font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); color: var(--ink); white-space: nowrap; letter-spacing: var(--ls-0); }
+.cat-icon.is-xs { --mark: 24px; gap: 6px; }
+.cat-icon.is-xs .cat-reading { display: none; }
+.cat-icon.is-sm { --mark: 32px; }
+.cat-icon.is-lg { --mark: 56px; gap: 14px; }
+.cat-icon.is-lg .cat-name { font-size: var(--t-h2); }
+.cat-icon.is-xl { --mark: 80px; gap: 16px; }
+.cat-icon.is-xl .cat-reading { font-size: var(--fs-xs); }
+.cat-housing { --cat-c: var(--cat-housing); --cat-t: var(--cat-housing-tint); }
+.cat-money { --cat-c: var(--cat-money); --cat-t: var(--cat-money-tint); }
+.cat-education { --cat-c: var(--cat-education); --cat-t: var(--cat-education-tint); }
+.cat-work { --cat-c: var(--cat-work); --cat-t: var(--cat-work-tint); }
+.cat-procedures { --cat-c: var(--cat-procedures); --cat-t: var(--cat-procedures-tint); }
+.cat-consult { --cat-c: var(--cat-consult); --cat-t: var(--cat-consult-tint); }
+/* v2 markup that still puts an <svg> inside .cat-icon */
+.cat-icon > .icon { width: var(--mark); height: var(--mark); padding: 6px; background: var(--cat-c); color: var(--on-cat); }
+
+/* ---------- 16. Program row (the most-seen element): a ruled list row ----------
+   [32 mark]  eyebrow (label) / title (h3) / hook (2 lines) / amount (num-inline) / facts / 理由     [☆ 44] */
+.pcards { display: grid; border-bottom: 1px solid var(--rule); }
+.pcard {
+  position: relative;
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; column-gap: 14px;
+  padding: var(--s-5) 0;
+  border-top: 1px solid var(--rule);
+}
+/* lists start with a hairline; directly under a section head they start AT its 2px rule (§17) */
+.pcard:not(.pcards > .pcard) { border-bottom: 1px solid var(--rule); }
+.pcard > * { min-width: 0; }
+.pcard-mark { padding-top: 1px; }
+/* with ふりがな the reading (てつづき) sits under the mark: give every row the same mark column so titles align */
+body.is-ruby :is(.pcard-mark, .list-item > .cat-icon, .opt > .cat-icon) { min-width: calc(var(--t-micro) * 4.4); display: flex; justify-content: center; }
+.pcard-main { display: grid; gap: 6px; align-content: start; }
+.pcard-eyebrow {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 2px;
+  font-family: var(--font-display); font-size: var(--t-label); font-weight: 500; line-height: 1.5; letter-spacing: var(--ls-label);
+  color: var(--ink-3);
+}
+.pcard-sep { color: var(--ink-4); padding: 0 2px; }
+.pcard-basis { color: var(--ink-2); }
+.pcard-basis-gov, .pcard-basis-npo { color: var(--ink-2); }
+.pcard-basis-local { color: var(--ink); }
+.pcard-right { color: var(--ink-2); }
+.pcard-title {
+  font-family: var(--font-display); font-size: var(--t-h3); font-weight: 700; line-height: var(--lh-title); letter-spacing: var(--ls-0);
+  color: var(--ink); text-wrap: balance;
+}
+.pcard-link { color: inherit; text-decoration: none; }
+.pcard-link::after { content: ""; position: absolute; inset: 0; z-index: 1; }
+.pcard-link:focus-visible { outline: none; }
+.pcard-link:focus-visible::after { outline: 2px solid var(--focus); outline-offset: 2px; }
+@media (hover: hover) { .pcard:hover .pcard-link { text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 0.22em; } }
+.pcard-hook {
+  font-size: var(--fs-md); color: var(--ink-2); line-height: 1.65; letter-spacing: var(--ls-body);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+/* amount: numbers set big (Plex 700), units small — like a price in print */
+.pcard-amount, .amount { font-family: var(--font-body); font-weight: 400; font-size: var(--fs-md); line-height: 1.5; color: var(--ink); letter-spacing: var(--ls-body); overflow-wrap: normal; }
+.amt-g { white-space: nowrap; }
+.amt-n { font-family: var(--font-num); font-weight: 700; font-size: var(--t-num-inline); letter-spacing: var(--ls-0); font-variant-numeric: tabular-nums; line-height: 1; margin: 0 0.06em; }
+.amount-lg { font-size: var(--fs-lg); }
+.amount-lg .amt-n { font-size: var(--t-num-inline-lg); letter-spacing: var(--ls-num); }
+/* the row's amount is a headline (label + one amount, see amountClause) and is never cut */
+.pcard .pcard-amount { line-height: 1.65; margin-top: 2px; }
+/* ふりがな on: a 2-line clamp cuts through ruby (the hidden line's readings show under line 2), so show it all */
+body.is-ruby .pcard :is(.pcard-hook, .pcard-amount) { display: block; -webkit-line-clamp: unset; overflow: visible; }
+/* facts: plain labelled text, one pair per line in every row, labels in one column —
+   返済 ｜ 返さなくていい
+   期限 ｜ 巣立つ10か月前まで */
+.pcard-facts { display: flex; flex-wrap: wrap; gap: 4px 20px; margin: 2px 0 0; font-size: var(--fs-sm); line-height: 1.5; }
+.pcard .pcard-facts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 3px 8px; }
+.pcard .pcard-facts > .pf { display: contents; }
+.pf { display: flex; gap: 8px; align-items: baseline; min-width: 0; }
+.pf dt {
+  flex: none; padding-right: 8px; border-right: 1px solid var(--rule);
+  font-family: var(--font-display); font-size: var(--t-label); font-weight: 500; letter-spacing: var(--ls-label); line-height: 1.2; color: var(--ink-3);
+}
+.pf dd { margin: 0; min-width: 0; font-family: var(--font-display); font-weight: 700; letter-spacing: var(--ls-0); color: var(--ink); }
+.pf-free dd { color: var(--action-text); }
+.pf-loan dd, .pf-deadline dd { color: var(--amber-text); }
+.pf-muted dd { color: var(--ink-2); font-weight: 500; }
+/* a row shows the headline of a long 期限 (the whole sentence is on the program page); it may take two lines but is
+   never cut with an ellipsis */
+.pcard-facts .pf { max-width: 100%; }
+.pcard .pcard-facts dt { align-self: baseline; }
+.pcard .pcard-facts dd { align-self: baseline; overflow-wrap: anywhere; }
+/* EN labels differ in length (WHY / REPAY): one label width, so the facts and the why line share one rule */
+body.lang-en .pcard :is(.pcard-facts dt, .pcard-why-k) { min-width: 4.3em; }
+:lang(ja) .pcard .pcard-amount { word-break: auto-phrase; }
+/* "ほか": the rest of a list of amounts is on the program page */
+.pcard-amount-more { margin-left: 0.5em; font-size: var(--t-meta); color: var(--ink-3); white-space: nowrap; }
+/* why-line */
+.pcard-why { display: flex; gap: 8px; align-items: baseline; font-size: var(--fs-sm); line-height: 1.55; color: var(--ink-2); }
+.pcard-why-k {
+  flex: none; padding-right: 8px; border-right: 1px solid var(--rule);
+  font-family: var(--font-display); font-size: var(--t-label); font-weight: 700; letter-spacing: var(--ls-label); line-height: 1.2; color: var(--action-text);
+}
+.pcard-why > span:last-child { min-width: 0; }
+/* save: 44×44, star 22px, aligned to the eyebrow line; filled = ink (ENGINE stamps it on save) */
+.pcard-save {
+  position: relative; z-index: 2; flex: none; align-self: start;
+  display: inline-grid; place-items: center;
+  width: 44px; height: 44px; margin: -12px -11px 0 0;
+  color: var(--ink-3); border-radius: var(--r-ctl);
+  transition: color var(--dur-quick) var(--ease-standard), background-color var(--dur-quick) var(--ease-standard);
+}
+.pcard-save .icon { width: 22px; height: 22px; stroke-width: 1.75; }
+@media (hover: hover) { .pcard-save:hover { background: var(--paper-3); color: var(--ink); } }
+.pcard-save[aria-pressed="true"] { color: var(--ink); }
+.pcard-save:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+.pcard .tags { position: relative; }
+.pcard-compact { padding: var(--s-4) 0; column-gap: 12px; }
+.pcard-compact .pcard-main { gap: 3px; }
+.pcard-compact .pcard-hook { -webkit-line-clamp: 1; font-size: var(--fs-sm); }
+.pcard-compact .pcard-facts { margin-top: 2px; }
+.pcard-compact .pcard-save { margin-top: -10px; }
+@media (min-width: 600px) { .pcard { column-gap: 16px; } }
+
+/* hover / press band for ruled rows: a flat tint that bleeds 12px past the column (no box, no shadow).
+   Press = an instant 6% ink wash that fades out over 160ms after release (MOTION-SPEC §4.1).
+   A program card washes when its title link (stretched over the row) is pressed, not its save button: motion.js
+   sets .m-row-press on the row. Not .pcard:has(.pcard-link:active): a :has() over :active re-styled ~1,100 elements on
+   every tap anywhere (two ~55ms recalcs per tap at 4x CPU). */
+:is(.pcard, a.list-item, button.list-item, .contact-item, details.disclose > summary) { position: relative; isolation: isolate; }
+:is(.pcard, a.list-item, button.list-item, .contact-item, details.disclose > summary)::before {
+  content: ""; position: absolute; inset: 0 calc(var(--bleed) * -1); z-index: -1;
+  background: var(--paper-2); opacity: 0; pointer-events: none;
+  transition: opacity var(--dur-quick) var(--ease-standard), background-color var(--dur-quick) var(--ease-standard);
+}
+@media (hover: hover) { :is(.pcard, a.list-item, button.list-item, .contact-item, details.disclose > summary):hover::before { opacity: 1; } }
+:is(a.list-item, button.list-item, .contact-item, details.disclose > summary):active::before,
+.pcard.m-row-press::before { opacity: 1; background: color-mix(in srgb, var(--paper-2), var(--ink) 6%); transition: none; }
+/* rows inside a band already sit on paper-2: their hover deepens instead */
+.band :is(.pcard, a.list-item, button.list-item, .contact-item)::before { background: var(--paper-3); }
+
+/* ---------- 17. Section head: one component for every view ----------
+   01  困りごとから見る                         すべて見る →
+       いちばん近いものをえらんでね
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  (2px ink; .section-rule draws on reveal) */
+.section-head {
+  position: relative;
+  display: flex; align-items: flex-end; justify-content: space-between; gap: var(--s-3);
+  padding-bottom: 10px;
+}
+.section-rule, .section-head:not(:has(> .section-rule)):not(.is-plain)::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
+  background: var(--rule-heavy); transform-origin: left center; pointer-events: none;
+}
+.section-rule { display: block; }
+.section-head.is-plain { padding-bottom: 0; }
+.section-head.is-plain > .section-rule { display: none; }
+/* never two rules within 8px: rows, lists and empties start AT the head's rule */
+.section-head + .pcards > .pcard:first-child,
+.section-head + :is(.list, .empty, .kv, .contact, .g-sw, .opts, details.disclose, .sos-list) { border-top: 0; }
+.view > .section-head + * { margin-top: var(--s-4); }
+.view > .section-head + :is(.pcards, .list, .kv, .contact, details.disclose) { margin-top: 0; }
+.section-head-text { min-width: 0; display: grid; gap: 2px; }
+.section-head-text:has(> .section-num) { grid-template-columns: auto minmax(0, 1fr); column-gap: 10px; align-items: baseline; }
+.section-head-text:has(> .section-num) > :not(.section-num):not(.section-title) { grid-column: 2; }
+.section-num {
+  margin: 0; font-family: var(--font-num); font-weight: 500; font-size: var(--t-chrome); line-height: 1; letter-spacing: var(--ls-label);
+  color: var(--ink-3); font-variant-numeric: tabular-nums;
+}
+.section-title { font-family: var(--font-display); font-size: var(--t-h2); font-weight: 700; line-height: var(--lh-heading); letter-spacing: var(--ls-0); }
+.section-sub { font-size: var(--t-meta); color: var(--ink-3); line-height: var(--lh-meta); }
+.section-action {
+  flex: none; display: inline-flex; align-items: center; gap: 6px;
+  min-height: var(--tap); margin-bottom: -10px; padding: 0 0 0 8px;
+  color: var(--action-text); font-family: var(--font-display); font-weight: 700; font-size: var(--fs-sm); letter-spacing: var(--ls-0);
+  text-decoration: none; white-space: nowrap;
+}
+/* the section's 「すべて見る →」 is the same link as everywhere else: green 700, 1.5px underline under the label */
+.section-action span:not(.arrow) { text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 0.28em; }
+@media (hover: hover) { .section-action:hover span:not(.arrow) { text-decoration-thickness: 2px; } }
+.section-action .arrow { --arrow-s: 16px; }
+.section-action .icon { width: 16px; height: 16px; stroke-width: 2.25; }
+
+/* ---------- 18. Callouts: flat tint + 2px top rule in the tone colour, no icons ---------- */
+.callout {
+  display: flex; gap: 12px; align-items: flex-start;
+  padding: var(--s-4);
+  background: var(--paper-2); color: var(--ink);
+  border-top: 2px solid var(--ink);
+  font-size: var(--fs-md); line-height: 1.7;
+}
+.callout > .icon { width: 20px; height: 20px; margin-top: 3px; color: var(--ink); }
+.callout-body { min-width: 0; flex: 1; display: grid; gap: 4px; }
+.callout-title, .callout-body > b:first-child { font-family: var(--font-display); font-weight: 700; font-size: var(--fs-base); letter-spacing: var(--ls-0); color: var(--ink); line-height: var(--lh-title); }
+.callout-info { border-top-color: var(--blue); background: var(--blue-tint); }
+.callout-warn { border-top-color: var(--amber); background: var(--amber-tint); }
+.callout-safe { border-top-color: var(--action); background: var(--action-tint); }
+.callout-danger { border-top-color: var(--red); background: var(--red-tint); }
+.callout a { font-weight: 700; color: inherit; }
+
+/* ---------- 19. Key / value list ---------- */
+.kv { display: grid; margin: 0; border-top: 1px solid var(--rule); }
+.kv-row { display: grid; grid-template-columns: minmax(6.5em, 28%) 1fr; gap: 4px 16px; padding: 12px 0; border-bottom: 1px solid var(--rule); }
+.kv dt { font-family: var(--font-display); font-size: var(--t-label); font-weight: 500; letter-spacing: var(--ls-label); color: var(--ink-3); line-height: 1.6; padding-top: 0.15em; }
+.kv dd { margin: 0; min-width: 0; color: var(--ink); line-height: 1.7; overflow-wrap: anywhere; }
+@media (max-width: 420px) { .kv-row { grid-template-columns: 1fr; gap: 2px; } }
+
+/* ---------- 20. Progress ----------
+   SM.ui.progress → segments (2px; done ink, current green) + "2 / 6".  {style:'bar'} → one 2px track with a
+   green fill (scaleX, ENGINE grows it) and hairline ticks. .progress-bar > i = a single bar. */
+.progress { display: flex; align-items: center; gap: 12px; }
+.progress-track { position: relative; flex: 1; display: flex; gap: 3px; }
+.progress-seg { flex: 1; height: 2px; background: var(--paper-3); position: relative; overflow: hidden; }
+.progress-seg::after { content: ""; position: absolute; inset: 0; background: var(--ink); transform: scaleX(0); transform-origin: left center; }
+.progress-seg.is-done::after { transform: none; }
+.progress-seg.is-current::after { transform: none; background: var(--action); }
+.progress-label { flex: none; font: 700 var(--fs-sm)/1 var(--font-num); color: var(--ink); letter-spacing: var(--ls-0); font-variant-numeric: tabular-nums; }
+.progress-label .of { color: var(--ink-3); font-weight: 500; }
+.progress.is-bar .progress-track { height: 2px; gap: 0; background: var(--paper-3); }
+.progress.is-bar { gap: 16px; }
+.progress.is-bar .progress-label { order: -1; display: inline-flex; align-items: baseline; gap: 2px; line-height: 1; }
+.progress-k { margin-right: 8px; font-family: var(--font-display); font-size: var(--t-label); font-weight: 500; letter-spacing: var(--ls-label); color: var(--ink-3); }
+.progress.is-bar .progress-n { font-size: var(--t-num-l); letter-spacing: var(--ls-num); }
+.progress-n { font-weight: 700; }
+.progress-fill { position: absolute; inset: 0; background: var(--action); transform-origin: left center; transform: scaleX(var(--p, 0)); transition: transform var(--dur-page) var(--ease-standard); }
+.progress-tick { position: absolute; top: -2px; bottom: -2px; width: 1px; background: var(--paper); }
+.progress-bar { height: 6px; background: var(--paper-3); overflow: hidden; }
+.progress-bar > i { display: block; height: 100%; background: var(--action); transform-origin: left center; transition: transform var(--dur-page) var(--ease-standard); }
+
+/* ---------- 21. Question / quiz option rows ---------- */
+.q-title { font-family: var(--font-display); font-size: var(--t-h1); font-weight: 700; line-height: var(--lh-heading); letter-spacing: var(--ls-0); text-wrap: balance; }
+.q-why { display: flex; gap: 6px; align-items: flex-start; font-size: var(--t-meta); color: var(--ink-3); line-height: var(--lh-meta); }
+.q-why .icon { width: 16px; height: 16px; margin-top: 3px; stroke-width: 2.25; }
+.opts { display: grid; gap: 8px; }
+.opt {
+  position: relative;
+  display: flex; align-items: center; gap: 14px;
+  width: 100%; min-height: 60px; padding: 14px 16px;
+  text-align: left; text-decoration: none; color: var(--ink);
+  background: var(--paper);
+  border-radius: var(--r-ctl);
+  box-shadow: inset 0 0 0 1px var(--rule-2);
+  transition: box-shadow var(--dur-quick) var(--ease-standard), background-color var(--dur-quick) var(--ease-standard), opacity var(--dur-quick) var(--ease-standard);
+}
+@media (hover: hover) { .opt:hover { box-shadow: inset 0 0 0 1px var(--ink); } }
+.opt:active { background: var(--paper-2); }
+.opt-ind {
+  position: relative;
+  flex: none; display: inline-grid; place-items: center;
+  width: 22px; height: 22px; border-radius: var(--r-round);
+  box-shadow: inset 0 0 0 1.5px var(--rule-2);
+  color: transparent; --m-check-color: var(--paper);
+  transition: background-color var(--dur-quick) var(--ease-standard), box-shadow var(--dur-quick) var(--ease-standard);
+}
+.opt-ind .icon { width: 14px; height: 14px; stroke-width: 3; }
+.opt-multi .opt-ind { border-radius: var(--r-ctl); }
+.opt-icon { flex: none; }
+.opt-body { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.opt-title { font-family: var(--font-display); font-size: var(--fs-lg); font-weight: 700; line-height: var(--lh-title); letter-spacing: var(--ls-0); }
+.opt-hint { font-size: var(--t-meta); color: var(--ink-3); line-height: 1.55; }
+.opt-end { flex: none; color: var(--ink-3); }
+.opt[aria-pressed="true"], .opt[aria-checked="true"], .opt[aria-selected="true"], .opt.is-selected, .opt:has(input:checked) {
+  background: var(--paper-2);
+  box-shadow: inset 0 0 0 2px var(--ink);
+}
+.opt[aria-pressed="true"] .opt-ind, .opt[aria-checked="true"] .opt-ind, .opt[aria-selected="true"] .opt-ind, .opt.is-selected .opt-ind, .opt:has(input:checked) .opt-ind {
+  background: var(--ink); color: var(--paper); box-shadow: none;
+}
+/* after an answer: the other options step back (ENGINE adds .is-dimmed / the view adds .opts.has-choice) */
+.opt.is-dimmed, .opts.has-choice > .opt:not(.is-selected):not([aria-pressed="true"]) { opacity: 0.5; }
+.opt input { position: absolute; opacity: 0; pointer-events: none; }
+/* quiet option (わからない・スキップ): no frame, a hairline on top, text + arrow */
+.opt-quiet { min-height: 52px; background: transparent; box-shadow: none; border-top: 1px solid var(--rule); border-radius: 0; padding-inline: 0; }
+@media (hover: hover) { .opt-quiet:hover { box-shadow: none; background: transparent; } .opt-quiet:hover .opt-title { color: var(--ink); } }
+.opt-quiet .opt-title { font-size: var(--fs-base); font-weight: 500; color: var(--ink-2); }
+.opt-quiet .opt-end .arrow, .opt-quiet > .arrow { --arrow-s: 20px; color: var(--ink-2); }
+.opt-group-label {
+  font-family: var(--font-display); font-size: var(--t-label); font-weight: 500; letter-spacing: var(--ls-label); color: var(--ink-3);
+  padding: 16px 0 6px; border-bottom: 1px solid var(--rule);
+}
+.q-foot {
+  position: sticky; bottom: calc(var(--tabbar-h) + var(--safe-b)); z-index: 5;
+  margin-inline: calc(var(--gutter) * -1);
+  padding: 12px var(--gutter);
+  background: var(--paper);
+  border-top: 1px solid var(--rule);
+}
+@media (min-width: 900px) { .q-foot { bottom: 0; margin-inline: 0; padding-inline: 0; } }
+
+/* ---------- 22. Forms ---------- */
+.field { display: grid; gap: 6px; }
+.label, .field > label { font-family: var(--font-display); font-size: var(--fs-sm); font-weight: 700; color: var(--ink); letter-spacing: var(--ls-0); }
+.help { font-size: var(--fs-xs); color: var(--ink-3); line-height: var(--lh-meta); }
+.input, .select, .textarea {
+  width: 100%; min-height: 48px; padding: 10px 14px;
+  background: var(--field); color: var(--ink);
+  border: 1px solid var(--rule-2); border-radius: var(--r-ctl);
+  font-family: var(--font-display); font-weight: 500; font-size: max(16px, var(--fs-base)); line-height: 1.5; letter-spacing: var(--ls-0);
+  transition: border-color var(--dur-quick) var(--ease-standard), box-shadow var(--dur-quick) var(--ease-standard);
+  -webkit-appearance: none; appearance: none;
+}
+.textarea { min-height: 120px; resize: vertical; line-height: 1.7; font-family: var(--font-body); font-weight: 400; }
+.select { padding-right: 40px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235e5d57' stroke-width='2' stroke-linecap='square'%3E%3Cpath d='M6 9.5l6 6 6-6'/%3E%3C/svg%3E"); background-position: right 12px center; background-size: 18px 18px; background-repeat: no-repeat; }
+:root[data-theme="dark"] .select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a3a097' stroke-width='2' stroke-linecap='square'%3E%3Cpath d='M6 9.5l6 6 6-6'/%3E%3C/svg%3E"); }
+.input::placeholder, .textarea::placeholder { color: var(--ink-3); opacity: 1; font-family: var(--font-body); font-weight: 400; }
+@media (hover: hover) { .input:hover, .select:hover, .textarea:hover { border-color: var(--ink-2); } }
+.input:focus, .select:focus, .textarea:focus { outline: none; border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.input:focus-visible, .select:focus-visible, .textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+input[type="date"].input { min-height: 48px; }
+.search { position: relative; display: block; }
+.search > .icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); width: 22px; height: 22px; stroke-width: 2; color: var(--ink); pointer-events: none; }
+.search .input { min-height: 52px; padding-left: 48px; padding-right: 48px; }
+.search .input::-webkit-search-cancel-button { display: none; }
+.search-clear { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; display: grid; place-items: center; color: var(--ink-2); border-radius: var(--r-ctl); }
+@media (hover: hover) { .search-clear:hover { color: var(--ink); background: var(--paper-2); } }
+.search-clear .icon { width: 16px; height: 16px; stroke-width: 2.25; }
+/* checkbox (native, ink) */
+.check { display: flex; gap: 12px; align-items: flex-start; min-height: var(--tap); padding: 10px 0; cursor: pointer; line-height: 1.6; }
+.check input { flex: none; width: 22px; height: 22px; margin: 1px 0 0; accent-color: var(--ink); }
+.check.is-done > span, .check:has(input:checked) > .check-text-strike { color: var(--ink-3); text-decoration: line-through; text-decoration-thickness: 1px; }
+
+/* ---------- 23. Lists: ruled rows ---------- */
+.list { display: grid; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); background: none; }
+.list-plain { border: 0; }
+.list-item {
+  position: relative;
+  display: flex; align-items: center; gap: 14px;
+  min-height: 56px; padding: var(--s-4) 0;
+  color: var(--ink); text-decoration: none; text-align: left; width: 100%;
+}
+.list-item + .list-item { border-top: 1px solid var(--rule); }
+.list-ic { flex: none; display: inline-grid; place-items: center; width: 32px; height: 32px; color: var(--ink); }
+.list-ic .icon { width: 20px; height: 20px; stroke-width: 2; }
+.list-body { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.list-item:has(.list-sub) { align-items: flex-start; }
+.list-item:has(.list-sub) > :is(.cat-icon, .list-ic) { margin-top: 1px; }
+.list-title { font-family: var(--font-display); font-weight: 700; font-size: var(--fs-base); line-height: var(--lh-title); letter-spacing: var(--ls-0); }
+.list-sub { font-size: var(--t-meta); color: var(--ink-3); line-height: 1.55; }
+.list-meta { flex: none; margin-left: auto; align-self: center; display: inline-flex; align-items: center; gap: 10px; color: var(--ink); white-space: nowrap; }
+.list-count { font: 700 var(--fs-lg)/1 var(--font-num); font-variant-numeric: tabular-nums; letter-spacing: var(--ls-0); }
+.list-count .unit { font-size: var(--fs-xs); font-weight: 500; margin-left: 2px; color: var(--ink-2); }
+.list-meta .icon, .list-chev { width: 20px; height: 20px; color: var(--ink-3); }
+.list-chev.arrow { --arrow-s: 20px; color: var(--ink-2); }
+
+/* ---------- 24. Contact rows: the number is the biggest thing; call = ink outline (not green) ---------- */
+.contact { display: grid; border-top: 1px solid var(--rule); }
+.contact-item {
+  display: flex; align-items: center; gap: 14px;
+  min-height: 60px; padding: 14px 0;
+  border-bottom: 1px solid var(--rule);
+  color: var(--ink); text-decoration: none;
+}
+.contact-ic { display: none; }
+.contact-main { flex: 1; min-width: 0; display: grid; gap: 2px; line-height: 1.35; }
+.contact-label { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-family: var(--font-display); font-size: var(--t-label); color: var(--ink-3); font-weight: 500; letter-spacing: var(--ls-label); }
+.contact-free { display: inline-grid; place-items: center; min-height: 18px; padding: 0 5px; background: var(--action-tint); color: var(--action-text); font-size: var(--fs-micro); font-weight: 700; letter-spacing: var(--ls-0); line-height: 1; border-radius: var(--r-ctl); }
+.contact-value { font-family: var(--font-display); font-weight: 700; font-size: var(--fs-base); letter-spacing: var(--ls-0); overflow-wrap: anywhere; }
+.contact-phone .contact-value { font: 700 var(--t-num-l)/1.15 var(--font-num); letter-spacing: var(--ls-0); font-variant-numeric: tabular-nums; white-space: nowrap; text-decoration: underline; text-decoration-color: transparent; text-decoration-thickness: 1.5px; text-underline-offset: 0.16em; transition: text-decoration-color var(--dur-quick) var(--ease-standard); }
+@media (hover: hover) { .contact-phone:hover .contact-value { text-decoration-color: currentColor; } }
+/* call button (contact rows, home, map, program, tools): sm secondary — 1.5px ink outline + phone glyph */
+.call-go, .contact-cta {
+  flex: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  min-height: var(--tap); padding: 0 14px;
+  border-radius: var(--r-ctl);
+  background: transparent; color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--ink);
+  font-family: var(--font-display); font-size: var(--fs-sm); font-weight: 700; line-height: 1.2; letter-spacing: var(--ls-body);
+  white-space: nowrap; text-decoration: none;
+  transition: background-color var(--dur-quick) var(--ease-standard), color var(--dur-quick) var(--ease-standard);
+}
+.call-go .icon, .contact-cta .icon { width: 16px; height: 16px; stroke-width: 2.25; }
+@media (hover: hover) { a:hover > :is(.call-go, .contact-cta), :is(.call-go, .contact-cta):is(a, button):hover { background: var(--paper-2); } }
+a:active > :is(.call-go, .contact-cta), :is(.call-go, .contact-cta):is(a, button):active { background: var(--paper-3); }
+/* a primary call (the one solid green per view region) */
+.call-go.is-primary { background: var(--action-fill); color: var(--on-action-fill); box-shadow: none; }
+@media (hover: hover) { a:hover > .call-go.is-primary, .call-go.is-primary:is(a, button):hover { background: var(--action-fill-hover); } }
+.call-go.is-quiet { color: var(--ink-2); box-shadow: inset 0 0 0 1px var(--rule-2); }
+@media (max-width: 359px) {
+  .call-go-t, .contact-cta-t { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .call-go, .contact-cta { width: var(--tap); padding: 0; }
+}
+.contact-go { flex: none; width: 16px; height: 16px; stroke-width: 2.25; color: var(--ink-3); }
+.contact-hours { display: flex; gap: 10px; align-items: baseline; font-size: var(--fs-sm); color: var(--ink); line-height: 1.6; padding: 10px 0; border-bottom: 1px solid var(--rule); }
+.contact-hours-k { flex: none; padding-right: 10px; border-right: 1px solid var(--rule); font-family: var(--font-display); font-size: var(--t-label); font-weight: 500; letter-spacing: var(--ls-label); color: var(--ink-3); line-height: 1.2; }
+.contact-hours .icon { width: 16px; height: 16px; color: var(--ink-3); }
+
+/* ---------- 25. Empty state: spot illustration + h3 + kind body + one action. No heavy rule. ---------- */
+.empty { display: grid; justify-items: start; gap: 8px; text-align: left; padding: var(--s-6) 0 var(--s-2); }
+.empty > .il, .empty-art { width: 200px; max-width: 100%; margin: 0 0 var(--s-2); }
+.empty-art:empty { display: none; }
+.empty-title { font-family: var(--font-display); font-size: var(--t-h3); font-weight: 700; line-height: var(--lh-title); letter-spacing: var(--ls-0); }
+.empty-body { font-size: var(--fs-md); color: var(--ink-2); max-width: 30em; line-height: 1.75; }
+.empty-action { margin-top: 8px; }
+@media (min-width: 900px) { .empty > .il, .empty-art { width: 240px; } }
+/* SM.illus figure baseline (ILLUS owns the artwork and its parts; these keep layout sane before illus.js loads) */
+.il { display: block; margin: 0; max-width: 100%; }
+.il > svg { display: block; width: 100%; height: auto; overflow: visible; }
+
+/* ---------- 26. Sheets (bottom sheet on phones, dialog ≥640px) — overlays: shadow allowed ----------
+   SM.motion.sheet drives open/close/drag with springs (`translate` + opacity; motion.css turns the CSS
+   keyframes below off with .m-sheet). The keyframes are only the fallback when the engine is missing. */
+.sheet-overlay {
+  position: fixed; inset: 0; z-index: 90;
+  background: var(--scrim);
+  animation: sm-fade var(--dur-base) var(--ease-enter) both;
+}
+.sheet {
+  position: fixed; z-index: 91; left: 0; right: 0; bottom: 0;
+  display: flex; flex-direction: column;
+  max-height: calc(100vh - var(--safe-t) - 24px);
+  background: var(--paper); color: var(--ink);
+  border-radius: 0;
+  box-shadow: var(--shadow-overlay);
+  padding-bottom: var(--safe-b);
+  animation: sm-sheet-up var(--dur-page) var(--ease-standard) both;
+  overscroll-behavior: contain;
+}
+@supports (height: 100dvh) { .sheet { max-height: calc(100dvh - var(--safe-t) - 24px); } }
+.sheet-handle { flex: none; position: relative; width: 36px; height: 4px; background: var(--ink-4); margin: 8px auto 0; border-radius: 2px; }
+.sheet-handle::before { content: ""; position: absolute; inset: -10px -40px; }   /* a generous grab area */
+.sheet-head {
+  flex: none; position: relative;
+  display: flex; align-items: center; gap: 8px;
+  min-height: 56px; padding: 0 12px 0 var(--gutter);
+  border-bottom: 1px solid var(--rule);
+}
+.sheet-title { flex: 1; min-width: 0; font-family: var(--font-display); font-size: var(--fs-xl); font-weight: 700; line-height: 1.35; letter-spacing: var(--ls-0); }
+.sheet-head .sheet-exit { flex: none; }
+.sheet-head .sheet-sos-btn { flex: none; }
+/* the narrowest phones: the sheet's 緊急 keeps its red and its phone, the word goes (its name stays: aria-label) */
+@media (max-width: 339px) {
+  .sheet-head .sheet-sos-btn { width: 40px; padding: 0; }
+  .sheet-head .sheet-sos-btn > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+  .sheet-head .sheet-sos-btn .icon { width: 18px; height: 18px; }
+}
+.sheet-close, .sheet-x { width: 44px; height: 44px; border-radius: var(--r-ctl); }
+.sheet-close .icon, .sheet-x .icon { width: 24px; height: 24px; stroke-width: 1.75; }
+.sheet:focus { outline: none; }
+.sheet.no-anim, .sheet-overlay.no-anim { animation: none; }
+.sheet-body { flex: 1 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; padding: var(--s-4) var(--gutter) var(--s-6); display: grid; gap: var(--s-5); align-content: start; }
+.sheet-foot { flex: none; padding: 12px var(--gutter) 16px; border-top: 1px solid var(--rule); display: flex; gap: 8px; }
+.sheet-foot > .btn { flex: 1; }
+.sheet.is-closing { animation: sm-sheet-down var(--dur-base) var(--ease-exit) both; }
+.sheet-overlay.is-closing { animation: sm-fade var(--dur-quick) var(--ease-exit) reverse both; }
+@keyframes sm-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes sm-sheet-up { from { transform: translateY(100%); } to { transform: none; } }
+@keyframes sm-sheet-down { from { transform: none; } to { transform: translateY(100%); } }
+@keyframes sm-dialog-in { from { opacity: 0; transform: translate(-50%, calc(-50% + 16px)); } to { opacity: 1; transform: translate(-50%, -50%); } }
+@media (min-width: 640px) {
+  .sheet {
+    left: 50%; top: 50%; right: auto; bottom: auto;
+    width: min(560px, calc(100vw - 48px));
+    max-height: min(780px, calc(100vh - 64px));
+    padding-bottom: 0;
+    border-top: 2px solid var(--ink);
+    transform: translate(-50%, -50%);
+    animation: sm-dialog-in var(--dur-page) var(--ease-standard) both;
+  }
+  .sheet-handle { display: none; }
+  .sheet-head { padding: 4px 12px 0 24px; }
+  .sheet-body { padding: var(--s-5) 24px var(--s-7); }
+  .sheet-foot { padding-inline: 24px; }
+  .sheet.is-closing { animation: sm-fade var(--dur-quick) var(--ease-exit) reverse both; }
+}
+body.sheet-open { overflow: hidden; }
+
+/* ---------- 27. Core-owned sheet content (SOS, settings), flattened onto the system ----------
+   index.html carries CORE's fallback styles (before this file); these win wherever both style a thing. */
+:root:root:root {
+  --smc-surface: var(--paper); --smc-bg: var(--paper-2); --smc-ink: var(--ink); --smc-ink2: var(--ink-3);
+  --smc-line: var(--rule); --smc-line2: var(--rule-2);
+  --smc-green: var(--action-text); --smc-green-bg: var(--action-tint);
+  --smc-coral: var(--red-text); --smc-coral-bg: var(--red-tint);
+  --smc-sky: var(--blue-text); --smc-sky-bg: var(--blue-tint);
+  --smc-amber: var(--amber-text); --smc-amber-bg: var(--amber-tint);
+  --smc-scrim: var(--scrim); --smc-focus: var(--focus); --smc-display: var(--font-display);
+}
+.sos-lead { font-size: var(--fs-base); line-height: var(--lh); color: var(--ink-2); }
+.sos-gtitle, .set-gtitle {
+  margin: 0; padding: 0 0 8px;
+  font-family: var(--font-display); font-size: var(--t-label); font-weight: 500; letter-spacing: var(--ls-label); line-height: var(--lh-ui);
+  color: var(--ink-3); border-bottom: 2px solid var(--ink);
+}
+.sos-list { display: grid; gap: 0; border-top: 0; }
+.sos-li { position: relative; display: block; border-bottom: 1px solid var(--rule); }
+.sos-row { width: 100%; display: flex; align-items: flex-start; gap: 12px; border-radius: 0; background: transparent; box-shadow: none; padding: 14px 0; color: var(--ink); text-decoration: none; }
+@media (hover: hover) { .sos-row:hover { background: transparent; box-shadow: none; } .sos-row:hover .sos-num { text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 0.14em; } }
+.sos-li:has(.sos-copy) .sos-row { padding-right: 56px; }
+.sos-ic, .sos-chat-ic, .set-ic { border-radius: 0 !important; }
+.sos-ic { background: none; color: var(--ink); box-shadow: none; width: 20px; height: 20px; margin-top: 3px; }
+.sos-ic svg { width: 20px; height: 20px; stroke-width: 2; }
+.sos-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.sos-name { font-family: var(--font-display); font-weight: 700; font-size: var(--fs-base); letter-spacing: var(--ls-0); line-height: var(--lh-title); }
+.sos-num { font-family: var(--font-num); font-weight: 700; font-size: var(--t-num-l); line-height: 1.15; letter-spacing: var(--ls-0); font-variant-numeric: tabular-nums; color: var(--ink); white-space: nowrap; }
+.sos-desc { font-size: var(--fs-sm); line-height: 1.55; color: var(--ink-2); }
+.sos-hours { align-self: flex-start; margin-top: 4px; padding: 2px 6px; border-radius: var(--r-ctl); background: var(--paper-2); font-family: var(--font-display); font-size: var(--t-label); font-weight: 500; letter-spacing: var(--ls-label); color: var(--ink-2); }
+.sos-copy { position: absolute; top: 14px; right: 0; z-index: 1; width: 44px; height: 44px; display: grid; place-items: center; border-radius: var(--r-ctl); background: transparent; color: var(--ink-2); box-shadow: inset 0 0 0 1px var(--rule-2); }
+@media (hover: hover) { .sos-copy:hover { color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); background: var(--paper-2); } }
+.sos-copy svg { width: 20px; height: 20px; stroke-width: 2; }
+/* 110 / 119: red tiles, numbers readable from the first frame */
+.sos-group-urgent .sos-list { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding-top: 12px; border-top: 0; }
+.sos-li.is-urgent { border-bottom: 0; }
+.sos-li.is-urgent .sos-row { flex-direction: column; align-items: flex-start; gap: 4px; min-height: 112px; padding: 14px 14px 16px; background: var(--red); color: var(--on-red); border-radius: var(--r-ctl); }
+@media (hover: hover) { .sos-li.is-urgent .sos-row:hover { background: var(--red-hover); } .sos-li.is-urgent .sos-row:hover .sos-num { text-decoration: none; } }
+.sos-li.is-urgent .sos-ic { position: absolute; top: 14px; right: 14px; margin: 0; color: var(--on-red); }
+.sos-li.is-urgent .sos-text { gap: 2px; }
+.sos-li.is-urgent .sos-num { order: -1; color: var(--on-red); font-size: var(--fs-3xl); line-height: 1; letter-spacing: var(--ls-num); margin-bottom: 4px; }
+.sos-li.is-urgent .sos-name { color: var(--on-red); }
+.sos-li.is-urgent .sos-desc { color: var(--on-red); opacity: 0.92; font-size: var(--fs-xs); }
+.sos-li.is-urgent .sos-row:focus-visible { outline-offset: 2px; box-shadow: none; }
+.sos-chat { display: block; padding: 0; border-radius: 0; background: none; border-top: 0; }
+.sos-chat-title { font-family: var(--font-display); font-weight: 700; font-size: var(--fs-base); letter-spacing: var(--ls-0); }
+.sos-chat-body { font-size: var(--fs-sm); color: var(--ink-2); line-height: 1.65; }
+.sos-chat-link { display: inline-flex; align-items: center; gap: 4px; min-height: var(--tap); font-family: var(--font-display); font-weight: 700; color: var(--action-text); text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 0.28em; }
+.sos-chat-link svg { width: 16px; height: 16px; stroke-width: 2.25; }
+/* 生活保護 row under the housing group: a ruled row (title in action green, the why in meta), not an underlined paragraph */
+.sos-home-link { position: relative; isolation: isolate; display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; padding: 14px 0; border-bottom: 1px solid var(--rule); text-decoration: none; line-height: var(--lh-title); }
+.sos-home-link > span { display: grid; gap: 4px; min-width: 0; }
+.sos-home-link .sos-desc { font-family: var(--font-body); font-weight: 400; font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-body); color: var(--ink-2); }
+.sos-home-link > svg { width: 20px; height: 20px; flex: none; color: var(--ink-3); transition: translate var(--spring-snappy-dur) var(--spring-snappy); }
+.sos-home-link::before { content: ""; position: absolute; inset: 0 calc(var(--bleed) * -1); z-index: -1; background: var(--paper-2); opacity: 0; transition: opacity var(--dur-quick) var(--ease-standard); }
+@media (hover: hover) { .sos-home-link:hover::before { opacity: 1; } .sos-home-link:hover > svg { translate: 3px 0; } }
+.sos-home-link:active::before { opacity: 1; background: color-mix(in srgb, var(--paper-2), var(--ink) 6%); transition: none; }
+.sos-home-link { border-bottom: 1px solid var(--rule); }
+.sos-foot { font-size: var(--fs-xs); color: var(--ink-3); }
+.sos-item { display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 10px 0; border-bottom: 1px solid var(--rule); color: var(--ink); text-decoration: none; }
+.sos-item .contact-ic { display: none; }
+/* settings */
+.set-card { border-radius: 0; background: transparent; padding: 0; border: 0; }
+.set-row.switch-row { min-height: 64px; padding: 12px 0; border-top: 0; border-bottom: 1px solid var(--rule); }
+.set-card > .set-row:last-child { border-bottom: 0; }
+.set-row .switch-text b { font-size: var(--fs-base); }
+.set-row .switch-text small { font-size: var(--fs-sm); color: var(--ink-3); line-height: 1.55; }
+.set-ic { background: none; color: var(--ink); box-shadow: none; }
+.set-link { display: flex; align-items: center; gap: 10px; min-height: 56px; border-radius: 0; background: transparent; padding: 0; border-bottom: 1px solid var(--rule); color: var(--ink); text-decoration: none; font-family: var(--font-display); font-weight: 700; letter-spacing: var(--ls-0); }
+@media (hover: hover) { .set-link:hover { background: transparent; text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 0.28em; } }
+.set-link svg { width: 20px; height: 20px; stroke-width: 2; color: var(--ink-2); }
+.set-priv { font-size: var(--fs-md); line-height: 1.75; }
+.set-warn { border-radius: 0; border-top: 2px solid var(--amber); background: var(--amber-tint); color: var(--amber-text); }
+.set-erase .btn { width: 100%; }
+.set-note { font-size: var(--fs-xs); color: var(--ink-3); }
+.set-version { font-family: var(--font-num); font-size: var(--fs-xs); color: var(--ink-3); }
+.set-confirm-ic { border-radius: 0; }
+.set-row:focus-within { outline: none; }
+.set-row:has(.switch:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
+.set-row:has(.switch:focus-visible) .switch { outline: none; }
+/* error card (core): spot illustration above the title when SM.illus has 'error' */
+.sm-error { border-radius: 0; box-shadow: none; border-top: 0; background: transparent; max-width: var(--read-w); }
+.sm-error > .il { width: 200px; margin-bottom: var(--s-4); }
+.sm-error-title { font-family: var(--font-display); font-weight: 700; font-size: var(--t-h1); letter-spacing: var(--ls-0); border-bottom: 2px solid var(--ink); padding-bottom: 10px; }
+.sm-error-icon { border-radius: 0; }
+/* 中学生: ふりがな offer — asked once, in one place: under the home hero and on the results page. Never on
+   detail, tool, lesson, map or browse screens (a one-time question repeated on every page reads like nagware);
+   設定 › ふりがな stays the way to change it later. No top rule (never a double rule under the header). */
+.view:not(.v-home) > .jr-banner { display: none; }
+.view.v-find:has(> .f-res) > .jr-banner { display: flex; }
+/* a hidden banner leaves no rhythm gap above the view's real first block */
+.view:not(.v-home):not(:has(> .f-res)) > .jr-banner + * { margin-top: 0; }
+.view > .jr-banner { grid-column: 1 / -1; }   /* any view whose root is a grid: the banner spans it, never one track */
+.jr-banner {
+  border-top: 0 !important; background: var(--paper-2);
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-3) var(--s-6);
+  padding: var(--s-4) var(--gutter);
+}
+/* the answers sit beside the question when the banner is wide enough, and wrap under it when it is not */
+.jr-banner-text { flex: 1 1 20em; gap: 2px; }
+.jr-banner-actions { flex: 0 0 auto; }
+.jr-banner-text b {
+  font-family: var(--font-display); font-weight: 700; font-size: var(--t-h3); line-height: var(--lh-title);
+  letter-spacing: var(--ls-0); font-feature-settings: "palt" 1;
+}
+.jr-banner-text span { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-2); word-break: auto-phrase; text-wrap: balance; }
+.jr-banner-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-5); }
+.jr-banner-actions .btn-ghost, .jr-banner-actions .btn-text { padding-inline: 0; }
+/* desktop: one strip in the reading column — the question and its note on the left, the two answers on the right */
+@media (min-width: 900px) {
+  .jr-banner {
+    max-width: var(--read-w);
+    padding: var(--s-3) var(--s-4) var(--s-3) var(--s-5);
+  }
+  .jr-banner-text b { font-size: var(--t-ui); }
+  .jr-banner-actions { flex-wrap: nowrap; }
+  /* home and results are 12-column pages: the strip spans their grid, never stops 224px short of its edge */
+  .view.v-home > .jr-banner, .view.v-find > .jr-banner { max-width: none; }
+}
+.sos-row:focus-visible, .sos-copy:focus-visible, .set-link:focus-visible, .sos-chat-link:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; box-shadow: none; }
+
+/* ---------- 28. Toast: ink, 48px, square; the action in marker yellow ----------
+   ENGINE animates it (`translate` + opacity, .m-toast); these are the resting states + a no-engine fallback. */
+.toast {
+  position: fixed; z-index: 100;
+  left: 50%; bottom: calc(var(--tabbar-h) + var(--safe-b) + 12px);
+  transform: translateX(-50%);
+  max-width: min(440px, calc(100vw - 2 * var(--gutter))); width: max-content;
+  min-height: 48px; padding: 12px 16px;
+  display: flex; align-items: center;
+  border-radius: 0;
+  background: var(--ink); color: var(--paper);
+  font-family: var(--font-display); font-size: var(--t-ui); font-weight: 700; line-height: 1.5; letter-spacing: var(--ls-0); text-align: left;
+  box-shadow: var(--shadow-overlay);
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transition: opacity var(--dur-quick) var(--ease-exit), visibility 0s linear var(--dur-quick);
+}
+.toast.is-show, .toast.is-visible, .toast.is-on, .toast.show {
+  opacity: 1; visibility: visible;
+  transition: opacity var(--dur-base) var(--ease-enter), visibility 0s;
+}
+.toast .toast-row { flex: 1; min-width: 0; }
+.toast .toast-act { color: var(--marker); }
+:root[data-theme="dark"] .toast .toast-act { color: var(--ink); }
+
+/* ---------- 29. Misc ---------- */
+details.disclose { border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); background: none; border-radius: 0; }
+details.disclose + details.disclose { border-top: 0; }
+details.disclose > summary {
+  list-style: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  min-height: 56px; padding: 12px 0;
+  font-family: var(--font-display); font-weight: 700; letter-spacing: var(--ls-0);
+}
+details.disclose > summary::-webkit-details-marker { display: none; }
+details.disclose > summary::after {
+  content: ""; flex: none; width: 16px; height: 16px;
+  background:
+    linear-gradient(currentColor, currentColor) center / 14px 2px no-repeat,
+    linear-gradient(currentColor, currentColor) center / 2px 14px no-repeat;
+  transition: rotate var(--spring-snappy-dur) var(--spring-snappy);
+}
+details.disclose[open] > summary::after { background: linear-gradient(currentColor, currentColor) center / 14px 2px no-repeat; }
+details.disclose > :not(summary) { padding: 0 0 16px; }
+kbd { font-family: var(--font-num); font-size: var(--t-kbd); padding: 1px 6px; background: var(--paper-2); box-shadow: inset 0 0 0 1px var(--rule-2); }
+
+/* supporter-only blocks */
+.for-supporter { display: none; }
+body.supporter .for-supporter { display: block; }
+
+/* ---------- 30. Print ---------- */
+@media print {
+  .appbar, .tabbar, .subbar, .toast, #sheet-root, .skip, .no-print { display: none !important; }
+  body { background: #fff; color: #000; }
+  .view { max-width: none; margin: 0; padding: 0; width: auto; }
+  .cat-mark, .arrow, .tag, .chip[aria-pressed="true"] { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .section-rule { transform: none !important; }
+  .il:not(.il--about-team) { display: none; }
+}

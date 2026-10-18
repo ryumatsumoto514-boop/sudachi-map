@@ -1,0 +1,203 @@
+/* 巣立ちマップ v4 — launch.css (LAUNCH). The opening, the returning-visit beat and their failsafes.
+   MOTION-SPEC §2, LOGO.md §7. Loaded after motion.css.
+
+   Which opening plays is decided by the inline head script in index.html before first paint:
+     html.lx-full   first visit to home (or ?lx=1): the splash below plays "the line"
+     html.lx-short  returning visit, first load this session: masthead rule draws + the box beat
+     (none)         deep link, reload in the session, ?lx=0, or reduced motion (html.m-reduce)
+   The intro is pure CSS (transform/opacity), so it runs from first paint while the scripts parse.
+   js/launch.js does the hand-off (the lockup FLIPs into the app bar) and removes the splash.
+
+   Hard rules
+   - #launch sits at z 55, under .appbar (60): すぐ閉じる / 緊急 / 設定 are tappable from frame 1.
+   - #launch is never `inert` (inert is skipped by hit testing, so taps would fall through) and never takes focus.
+   - Every keyframe that must land on an end state sets BOTH `from` and `to` (a 1ms animation after a long
+     delay ends at progress 0.99999…, so a lone `to` never fully applies).
+   - If launch.js never runs, everything the splash hid comes back at 3.2s (lx-failsafe / lx-restore-*). */
+
+/* ------------------------------------------------------------------ splash frame */
+#launch { display: none; }
+html.lx-full #launch {
+  /* geometry (phone): lockup left on the gutter, box B ≤ 52px and never wider than the screen allows */
+  --lx-gx: max(20px, env(safe-area-inset-left, 0px));
+  --lx-b: min(52px, calc((100vw - 2 * var(--lx-gx)) * 20 / 134));
+  --lx-u: calc(var(--lx-b) / 20);            /* one lockup unit (the box is 20 units) */
+  --lx-y: 46%;                                /* the rule's centre line: optical centre, a little above half */
+  --lx-ink: var(--ink, #1b1b19);
+  --lx-paper: var(--paper, #ffffff);
+  display: block; position: fixed; inset: 0; z-index: 55;
+  pointer-events: auto; contain: strict; overflow: hidden;
+  color: var(--lx-ink);
+  -webkit-tap-highlight-color: transparent;
+  animation: lx-failsafe 1ms linear 3200ms forwards;
+}
+@media (min-width: 900px) {
+  /* desktop: the same poster, aligned with the app bar's brand; box 60 = 3px units, so every edge is a whole pixel */
+  html.lx-full #launch { --lx-gx: max(28px, env(safe-area-inset-left, 0px)); --lx-b: 60px; --lx-y: 44%; }
+}
+@keyframes lx-failsafe { from, to { visibility: hidden; pointer-events: none; } }
+
+#launch .lx-paper { position: absolute; inset: 0; background: var(--lx-paper); }
+
+/* the rule: 2px ink, full bleed. Its centre sits on the centre of the logo's green line (lockup y = 22 units). */
+#launch .lx-rule {
+  position: absolute; left: 0; right: 0; height: 2px;
+  top: calc(var(--lx-y) - 1px);
+  top: round(nearest, calc(var(--lx-y) - 1px), 1px);
+  transform-origin: 0 0;
+}
+#launch .lx-rule > i { position: absolute; inset: 0; display: block; }
+#launch .lx-rule-ink { background: var(--lx-ink); transform-origin: 0 50%; animation: lx-draw 400ms cubic-bezier(0.5, 0, 0.15, 1) 0ms both; }
+#launch .lx-rule-hair { opacity: 0; } /* launch.js gives it the app bar's border colour for the landing */
+@keyframes lx-draw { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+/* the lockup: BRAND-FINAL's line lockup (same SVG, same paths as the static logo). Box top-left = lockup top-left,
+   which is also the FLIP origin for the hand-off. */
+#launch .lx-lockup {
+  position: absolute; left: var(--lx-gx);
+  top: calc(var(--lx-y) - 22 * var(--lx-u));
+  width: calc(134 * var(--lx-u)); height: calc(23 * var(--lx-u));
+  transform-origin: 0 0;
+  will-change: transform;
+}
+#launch .lx-lockup svg { display: block; width: 100%; height: 100%; max-width: none; overflow: visible; }
+
+/* caption: hangs from the rule (clipped at the line's foot, so it slides out from behind it). System fonts on
+   purpose: it never waits for or swaps to the web font. */
+#launch .lx-cap {
+  position: absolute; left: var(--lx-gx); right: var(--lx-gx);
+  top: calc(var(--lx-y) + var(--lx-u));
+  margin: 0; padding: 14px 0 4px; overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Noto Sans CJK JP", "Yu Gothic UI", Meiryo, system-ui, sans-serif;
+  font-size: clamp(11px, 3.35vw, 13px); font-weight: 500; line-height: 1.6; letter-spacing: 0.08em;
+  color: var(--ink-2, #3a3a36);
+  font-feature-settings: "palt" 1;
+}
+#launch .lx-cap-ja, #launch .lx-cap-en { display: block; animation: lx-hang 320ms cubic-bezier(0.16, 1, 0.3, 1) 440ms both; }
+/* the clip edge is the line's foot, 14px above the text: travel the text's height plus that gap */
+#launch .lx-cap .lx-cap-en { display: none; letter-spacing: 0.02em; }
+html.lx-en #launch .lx-cap .lx-cap-ja { display: none; }
+html.lx-en #launch .lx-cap .lx-cap-en { display: block; }
+@keyframes lx-hang { from { transform: translateY(calc(-100% - 18px)); } to { transform: translateY(0); } }
+@media (min-width: 900px) { #launch .lx-cap { font-size: 14px; padding-top: 18px; } #launch .lx-cap-ja, #launch .lx-cap-en { animation-name: lx-hang-wide; } }
+@keyframes lx-hang-wide { from { transform: translateY(calc(-100% - 22px)); } to { transform: translateY(0); } }
+
+/* ------------------------------------------------------------------ the mark slot (LOGO.md §7, brand-snippets §4)
+   120–520ms: the box stamps (the one accent beat), the line leaves the box like a train, each kana of 立ちマップ rises
+   from behind the line as its head passes, the 45° step comes last. Settles at 662ms. Transform/opacity only.
+   fill-mode stays `backwards`: with `both` the identity transform stays on and re-antialiases the settled frame. */
+#launch .lg-box, #launch .lg-line path, #launch .lg-word path { transform-box: fill-box; }
+#launch .lg-box { transform-origin: 50% 100%; animation: lg-stamp 300ms 120ms backwards; }
+#launch .lg-run1 { transform-origin: 0 50%; animation: lg-draw-x 200ms cubic-bezier(.45,0,.55,1) 200ms backwards; }
+#launch .lg-step { transform-origin: 0 100%; animation: lg-draw-xy 50ms cubic-bezier(.4,0,1,1) 400ms backwards; }
+#launch .lg-run2 { transform-origin: 0 50%; animation: lg-draw-x 70ms cubic-bezier(0,0,.2,1) 450ms backwards; }
+#launch .lg-g1 { animation: lg-rise 340ms cubic-bezier(.16,1,.3,1) 240ms backwards; }
+#launch .lg-g2 { animation: lg-rise 340ms cubic-bezier(.16,1,.3,1) 262ms backwards; }
+#launch .lg-g3 { animation: lg-rise 340ms cubic-bezier(.16,1,.3,1) 282ms backwards; }
+#launch .lg-g4 { animation: lg-rise 340ms cubic-bezier(.16,1,.3,1) 302ms backwards; }
+#launch .lg-g5 { animation: lg-rise 340ms cubic-bezier(.16,1,.3,1) 322ms backwards; }
+@keyframes lg-stamp {
+  0%   { opacity: 0; transform: scale(1.14); animation-timing-function: cubic-bezier(.55,0,.9,.45); }
+  20%  { opacity: 1; }
+  55%  { opacity: 1; transform: scale(.975); animation-timing-function: cubic-bezier(.2,0,.2,1); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes lg-draw-x  { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes lg-draw-xy { from { transform: scale(0); }  to { transform: scale(1); } }
+@keyframes lg-rise    { from { transform: translateY(24px); } to { transform: translateY(0); } }
+
+/* ------------------------------------------------------------------ chrome while the splash is up
+   The app bar keeps only its actions, floating on the splash paper: the brand waits (it is the FLIP target) and
+   the bottom rule is masked (the splash rule becomes it). The tab bar waits off-screen and rises in the hand-off.
+   Each has a 3.2s restore, so a dead launch.js can never hide them. */
+html.lx-full .appbar .brand { opacity: 0; animation: lx-restore-o 1ms linear 3200ms forwards; }
+/* the bar's own green line (base.css .brand::after) stays hidden while the splash's line flies in; it takes over in
+   the landing frame, when launch.js removes lx-full together with #launch (no frame without a line) */
+html.lx-full .appbar .brand::after { opacity: 0; }
+html.lx-full .appbar::after {
+  content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 0; pointer-events: none;
+  border-bottom: inherit; border-bottom-color: var(--paper, #fff);
+  animation: lx-restore-hide 1ms linear 3200ms forwards;
+}
+html.lx-full.lx-out .appbar::after { content: none; } /* hand-off: launch.js clears the bar's own paper + border */
+html.lx-full .tabbar { transform: translateY(100%); animation: lx-restore-t 1ms linear 3200ms forwards; }
+/* the view under the splash: nothing may show through the fading paper (MOTION-SPEC §2.5). Whatever the view does
+   not hold itself stays invisible until launch.js releases the entrance (html.lx-in, at H+140). */
+html.lx-full:not(.lx-in) #view { opacity: 0; animation: lx-restore-o 1ms linear 3200ms forwards; }
+/* desktop: the rail slides in from the left, right through the lockup's path to the brand, so during the opening
+   it sits just under the splash (54 < 55): the logo flies over it and the fading paper reveals it */
+@media (min-width: 900px) { html.lx-full .tabbar { transform: translateX(-100%); z-index: 54; } }
+@keyframes lx-restore-o { from, to { opacity: 1; } }
+@keyframes lx-restore-hide { from, to { opacity: 0; } }
+@keyframes lx-restore-t { from, to { transform: none; } }
+
+/* skip: a tap / key / wheel fast-forwards the intro (head script: one playback rate for every part, so the
+   choreography stays intact and lands within 140ms). This class is only the fallback where WAAPI is missing. */
+/* every animated part by class (a rightmost `*` would be checked against every element of every page, forever) */
+html.lx-skip-css #launch .lx-rule-ink, html.lx-skip-css #launch .lx-cap-ja, html.lx-skip-css #launch .lx-cap-en,
+html.lx-skip-css #launch .lg-box, html.lx-skip-css #launch .lg-run1, html.lx-skip-css #launch .lg-step,
+html.lx-skip-css #launch .lg-run2, html.lx-skip-css #launch .lg-g1, html.lx-skip-css #launch .lg-g2,
+html.lx-skip-css #launch .lg-g3, html.lx-skip-css #launch .lg-g4, html.lx-skip-css #launch .lg-g5 {
+  animation-delay: 0ms !important; animation-duration: 120ms !important;
+}
+
+/* hand-off running: the splash no longer takes taps (the view underneath is arriving) */
+html.lx-out #launch { pointer-events: none; }
+
+/* ------------------------------------------------------------------ returning visit: the short beat
+   0–360ms the masthead rule draws: a 2px INK rule (MOTION-SPEC §2.7), scaleX from the left, over a paper mask that
+   hides the bar's own hairline. It holds, then from 520ms the ink softens into the hairline underneath (ink and
+   mask fade out together over 240ms). 60–320ms the box plays its accent. Nothing covers content, so there is
+   nothing to skip. launch.js tidies up when the softening ends. */
+html.lx-short .appbar::before,
+html.lx-short .appbar::after {
+  content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 0; pointer-events: none;
+  border-bottom: inherit;
+}
+html.lx-short .appbar::before { border-bottom-color: var(--paper, #fff); animation: lx-soft 240ms linear 520ms both; }
+html.lx-short .appbar::after {
+  border-bottom: 2px solid var(--ink, #1b1b19); transform-origin: 0 0;
+  animation: lx-draw 360ms cubic-bezier(0.5, 0, 0.15, 1) both, lx-soft 240ms linear 520ms both;
+}
+@keyframes lx-soft { from { opacity: 1; } to { opacity: 0; } }
+html.lx-short .appbar .brand .lg-box,
+html.lx-short .appbar .brand .lg-line path,
+html.lx-short .appbar .brand .lg-word path { transform-box: fill-box; }
+html.lx-short .appbar .brand .lg-box { transform-origin: 50% 100%; animation: lg-beat 260ms 60ms backwards; }
+@keyframes lg-beat {
+  0%   { transform: scale(1.08); animation-timing-function: cubic-bezier(.55,0,.9,.45); }
+  50%  { transform: scale(.975); animation-timing-function: cubic-bezier(.2,0,.2,1); }
+  100% { transform: scale(1); }
+}
+
+/* the tab bar is written by boot (the static <nav> is empty): an empty bar never shows, and the filled one rises
+   in once (phone: from below, 280ms --ease-enter; desktop rail: a 200ms fade) instead of popping in */
+html.lx-short .tabbar:empty { visibility: hidden; }
+html.lx-short .tabbar:not(:empty) { animation: lx-tab-rise 280ms cubic-bezier(0, 0, 0.2, 1) both; }
+@keyframes lx-tab-rise { from { transform: translateY(100%); } to { transform: none; } }
+@media (min-width: 900px) {
+  html.lx-short .tabbar:not(:empty) { animation: lx-tab-fade 200ms cubic-bezier(0, 0, 0.2, 1) both; }
+  @keyframes lx-tab-fade { from { opacity: 0; } to { opacity: 1; } }
+}
+
+/* English, before boot repaints the shell: the static HTML carries the Japanese lockup; never flash it */
+html.lx-en .appbar .brand .logo-lockup:not(.is-en) { visibility: hidden; }
+
+/* ------------------------------------------------------------------ reduced motion, print */
+html.m-reduce #launch { display: none !important; }
+html.m-reduce .logo-lockup, html.m-reduce .logo-lockup .lg-box, html.m-reduce .logo-lockup .lg-run1,
+html.m-reduce .logo-lockup .lg-run2, html.m-reduce .logo-lockup .lg-step, html.m-reduce .logo-lockup .lg-g1,
+html.m-reduce .logo-lockup .lg-g2, html.m-reduce .logo-lockup .lg-g3, html.m-reduce .logo-lockup .lg-g4,
+html.m-reduce .logo-lockup .lg-g5 { animation: none !important; }
+html.m-reduce.lx-short .appbar::before, html.m-reduce.lx-short .appbar::after { content: none; }
+html.m-reduce.lx-short .tabbar:not(:empty) { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  #launch { display: none !important; }
+  html.lx-short .tabbar:not(:empty) { animation: none; }
+  .logo-lockup, .logo-lockup * { animation: none !important; }
+}
+@media print {
+  #launch { display: none !important; }
+  html.lx-full .appbar .brand { opacity: 1; }
+  html.lx-full .tabbar { transform: none; }
+}
