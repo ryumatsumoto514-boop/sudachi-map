@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- CSP: nothing is ever sent anywhere (connect-src 'none'). blob: workers/images are for the vendored MapLibre
+     (its worker starts from a blob: URL). Web fonts are the only outside requests (skipped in data-saver mode). -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; worker-src blob:; child-src blob:; script-src 'self' 'unsafe-inline'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<title>巣立ちマップ｜施設や里親家庭を出る人の支援ガイド（東京）</title>
+<meta name="description" content="児童養護施設・里親家庭・自立援助ホームを出る人（出た人）が使える東京の支援が、3分でわかる。お金・住まい・進学・仕事・手続き・相談先を、地図とやることリストで。名前もログインもいりません。">
+<meta name="theme-color" content="#FFFFFF">
+<meta name="color-scheme" content="light">
+<meta name="format-detection" content="telephone=no">
+<meta name="application-name" content="巣立ちマップ">
+<meta name="apple-mobile-web-app-title" content="巣立ちマップ">
+<meta property="og:title" content="巣立ちマップ">
+<meta property="og:description" content="施設や里親家庭を出る人の「使える支援」が、3分でわかる。東京版。">
+<meta property="og:type" content="website">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/brand/png/favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/brand/png/favicon-32.png">
+<link rel="icon" type="image/svg+xml" sizes="any" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='32' height='32'%3E%3Cstyle%3E.b%7Bfill:%231b1b19%7D.g%7Bfill:%23ffffff%7D.l%7Bfill:%230b6e44%7D@media (prefers-color-scheme:dark)%7B.b%7Bfill:%23edebe4%7D.g%7Bfill:%231b1b19%7D.l%7Bfill:%233fb37a%7D%7D%3C/style%3E%3Cpath class='b' d='M0 0H26V26H0Z'/%3E%3Cpath class='g' d='M12 23L12 18.823Q10.888 19.626 9.503 20.366Q8.118 21.107 6.991 21.724Q5.885 22.342 4.75 22.753Q4.654 22.506 4.462 22.156Q4.269 21.807 4.048 21.447Q3.813 21.086 3.605 20.881Q4.538 20.593 5.567 20.14Q6.549 19.687 7.496 19.132Q8.592 18.576 9.657 18L4 18L4 16L12 16L12 15L6 15L6 8L7.08 8Q6.69 7.418 6.159 6.721Q5.596 6.024 5.135 5.566L6.903 4.36Q7.416 4.942 7.991 5.702Q8.757 6.461 9.302 7.106Q8.994 7.251 8.544 7.511Q8.095 7.771 7.77 8L12.276 8Q11.929 7.334 11.266 6.44Q10.604 5.546 9.988 4.88L12.207 3.882Q12.707 4.589 13.216 5.483Q13.724 6.378 14.119 7.147Q13.81 7.293 13.397 7.542Q12.983 7.792 12.638 8L15.333 8Q15.786 7.522 16.321 6.856Q16.857 6.19 17.405 5.473Q17.952 4.755 18.265 4.131L20.231 5.13Q19.876 5.733 19.398 6.513Q18.92 7.293 18.442 8L20 8L20 15L14 15L14 16L22 16L22 18L16.31 18Q17.405 18.576 18.513 19.111Q19.469 19.646 20.471 20.068Q21.519 20.49 22.437 20.778Q22.229 21.004 21.981 21.385Q21.75 21.765 21.548 22.136Q21.346 22.506 21.231 22.753Q20.115 22.342 19.018 21.745Q17.905 21.148 16.524 20.407Q15.143 19.667 14 18.864L14 23ZM8 11L12 11L12 10L8 10ZM14 11L18 11L18 10L14 10ZM8 13L12 13L12 12L8 12ZM14 13L18 13L18 12L14 12Z'/%3E%3Cpath class='l' d='M0 28H32V32H0Z'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="assets/brand/png/app-icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<script>
+/* LAUNCH — head gate. Runs before first paint; small and synchronous on purpose (MOTION-SPEC §2.1, §2.6, §7).
+   1. Paints the stored theme, language and reduced-motion state, so frame 1 is already right.
+   2. Picks the opening: html.lx-full (first visit to home, or ?lx=1), html.lx-short (returning, first load this
+      session), or none (deep link, reload in the session, ?lx=0, reduced motion, storage blocked).
+   3. Makes the splash skippable and すぐ閉じる work from frame 1, before any app script has parsed;
+      a 緊急 / 設定 tap made before the app starts is replayed once it has.
+   4. Loads the web fonts (BIZ UDPGothic 400/700 + IBM Plex Sans JP 500/700): now on a fast connection and device,
+      after the opening (L.loadFonts, called by boot in idle time) on a slow one or a low-memory phone, never with
+      data saver or on 2g/3g (text stays in the phone's own Japanese font).
+   5. Lazy views: window.__smLazy = route -> script files (js/core.js SM.need loads them on first use). A deep link
+      preloads its view's files here, in parallel with the page's own scripts.
+   State for js/launch.js lives on window.__lx. */
+(function () {
+  'use strict';
+  var w = window, d = document, de = d.documentElement, s = {}, ls = null, ss = null, i;
+  var EXIT = 'https://www.google.co.jp/search?q=%E5%A4%A9%E6%B0%97';
+  /* Arrived (Forward, or a restored tab) on a history entry that quick exit left behind: leave again at once. */
+  try { if (history.state && history.state.smExited) { de.style.display = 'none'; location.replace(EXIT); return; } } catch (e) { }
+  var now = function () { return w.performance && performance.now ? performance.now() : Date.now(); };
+  function meta(n, v) { var m = d.querySelector('meta[name="' + n + '"]'); if (m) m.setAttribute('content', v); }
+  try { ls = w.localStorage; } catch (e) { }
+  try { ss = w.sessionStorage; } catch (e) { }
+  /* ホーム from the guard entry steps back onto the page's own entry (js/core.js SM.go). If that entry belongs to
+     an earlier load of the page (after a reload or a restored tab), the browser loads it afresh: open on home. */
+  try { if (ss && ss.getItem('sm2:home')) { ss.removeItem('sm2:home'); if (!(history.state && history.state.smGuard)) history.replaceState(null, '', location.pathname + location.search + '#/'); } } catch (e) { }
+  try { var st = JSON.parse((ls && ls.getItem('sm2:state')) || 'null'); if (st && st.settings) s = st.settings; } catch (e) { }
+  if (s.dark) { de.setAttribute('data-theme', 'dark'); meta('theme-color', '#141413'); meta('color-scheme', 'dark'); }
+  if (s.lang === 'en') { de.setAttribute('lang', 'en'); de.classList.add('lx-en'); }
+  var rm = false;
+  try { rm = w.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { }
+  if (rm || s.motion === 'reduce') de.classList.add('m-reduce');
+
+  var h = location.hash, q = location.search, home = !h || h === '#' || h === '#/';
+  var seen = null, again = null, stored = true, mode = '';
+  try { seen = ls.getItem('sm2:seen'); } catch (e) { stored = false; }
+  try { again = ss.getItem('sm2:ss'); ss.setItem('sm2:ss', '1'); } catch (e) { }
+  if (!/[?&]lx=0(&|$)/.test(q) && !de.classList.contains('m-reduce')) {
+    if (/[?&]lx=1(&|$)/.test(q) || (home && stored && !seen)) mode = 'full';
+    else if (home && !again) mode = 'short';
+  }
+  var L = w.__lx = { mode: mode, t0: now(), skipped: false, out: false, done: !mode, queued: null };
+  if (mode) de.classList.add('lx-' + mode);
+
+  if (mode === 'full') {
+    /* Skip: one playback rate for every part of the intro, so it lands intact within 140ms of the tap. */
+    L.skip = function () {
+      if (L.skipped || L.out || L.done) return;
+      L.skipped = true; L.skipAt = now(); de.classList.add('lx-skip');
+      try {
+        var el = d.getElementById('launch'), list = el ? el.getAnimations({ subtree: true }) : [], max = 0, a, t;
+        list = list.filter(function (x) { return !/^lx-(failsafe|restore)/.test(x.animationName || ''); });
+        for (i = 0; i < list.length; i++) { t = list[i].effect.getComputedTiming(); max = Math.max(max, t.endTime - (list[i].currentTime || 0)); }
+        if (max > 140) for (i = 0; i < list.length; i++) { a = list[i]; if (a.updatePlaybackRate) a.updatePlaybackRate(max / 140); else a.playbackRate = max / 140; }
+      } catch (e) { de.classList.add('lx-skip-css'); }
+      if (L.onskip) L.onskip();
+    };
+    var onIn = function (e) {
+      if (L.skipped || L.out || L.done) return;
+      // a press anywhere but the header buttons (and sheets / toast) is a press on the splash, also before it painted
+      if (e.type === 'pointerdown') { var t = e.target; if (t && t.closest && t.closest('.appbar, .skip, #sheet-root, #toast')) return; }
+      L.skip();
+    };
+    var evs = ['pointerdown', 'keydown', 'wheel'];
+    for (i = 0; i < evs.length; i++) w.addEventListener(evs[i], onIn, { capture: true, passive: true });
+    L.off = function () { for (var k = 0; k < evs.length; k++) w.removeEventListener(evs[k], onIn, { capture: true, passive: true }); };
+  }
+
+  /* Before the app has started, the header buttons have no handlers yet (boot binds them on DOMContentLoaded).
+     すぐ閉じる must work anyway, from frame 1 — same behaviour as boot's quickExit; keep the URL in sync. */
+  function started() { return !!(w.SM && w.SM._started); }
+  /* Leaving. The app keeps at most two history entries: the page's own and one guard (js/core.js, so that the
+     phone's Back works inside the app). On the guard, quick exit first steps back onto the page's own entry and
+     replaces THAT with the weather page, so Back from the weather page can never return to the app; the guard is
+     left as a forward entry marked smExited, which leaves again at once if it is ever reached (top of this script). */
+  L.leaving = false;
+  L.leave = function () {
+    var st = null;
+    try { st = history.state; } catch (e) { }
+    if (st && st.smGuard) {
+      L.leaving = true;
+      try { history.replaceState({ smExited: 1 }, '', location.pathname + location.search + '#/'); history.back(); }
+      catch (e) { location.replace(EXIT); return; }
+      setTimeout(function () { location.replace(EXIT); }, 300);   // in case popstate never comes
+    } else location.replace(EXIT);
+  };
+  w.addEventListener('popstate', function () { if (L.leaving) location.replace(EXIT); });
+  function exitNow() {
+    try { d.body.style.visibility = 'hidden'; } catch (e) { }
+    try { d.title = ''; } catch (e) { }
+    try { ss.clear(); } catch (e) { }
+    L.leave();
+  }
+  L.exit = exitNow;
+  /* 緊急 before the app has started (slow phone, or a script that failed to load): the static list #sos-static
+     opens at once, with no app code. Boot (SM.start) swaps it for the full SOS sheet as soon as it runs. */
+  function sosStatic(open) {
+    var p = d.getElementById('sos-static');
+    if (!p) return false;
+    if (open) {
+      p.hidden = false;
+      var a = p.querySelector('a[href]');
+      try { (a || p).focus({ preventScroll: true }); } catch (x) { }
+    } else if (!p.hidden) {
+      p.hidden = true;
+      var s = d.querySelector('.appbar [data-act="sos"]');
+      try { if (s) s.focus({ preventScroll: true }); } catch (x) { }
+    }
+    return true;
+  }
+  L.sosStatic = sosStatic;
+  d.addEventListener('click', function (e) {
+    if (started()) return;
+    var t = e.target && e.target.closest ? e.target : null;
+    if (t && t.closest('#sos-st-x')) { e.preventDefault(); sosStatic(false); return; }
+    var b = t ? t.closest('.appbar [data-act]') : null;
+    if (!b) return;
+    e.preventDefault();
+    var act = b.getAttribute('data-act');
+    if (act === 'exit') exitNow();
+    else if (act === 'sos') { if (!sosStatic(true)) L.queued = act; }
+    else L.queued = act;
+  }, true);
+  var esc = 0;
+  d.addEventListener('keydown', function (e) {
+    if (started() || (e.key !== 'Escape' && e.key !== 'Esc')) return;
+    var n = Date.now(); if (n - esc < 1000) exitNow(); esc = n;
+    sosStatic(false);
+  }, true);
+  /* The app never started (core.js or boot.js failed to load): say so, offer a reload, keep the numbers in reach.
+     (<noscript> only covers JavaScript turned off.) */
+  w.addEventListener('load', function () {
+    setTimeout(function () {
+      if (started()) return;
+      var v = d.getElementById('view'), f = d.getElementById('sm-fail');
+      if (!v || !f) return;
+      v.innerHTML = f.innerHTML;
+      var r = v.querySelector('.sm-fail-reload');
+      if (r) r.addEventListener('click', function () { location.reload(); });
+      var so = v.querySelector('.sm-fail-sos');
+      if (so) so.addEventListener('click', function () { sosStatic(true); });
+      try { var lx = d.getElementById('launch'); if (lx && lx.parentNode) lx.parentNode.removeChild(lx); } catch (x) { }
+      de.classList.remove('lx-full', 'lx-short', 'lx-on');
+    }, 0);
+  });
+  d.addEventListener('DOMContentLoaded', function () {
+    var tries = 0;
+    (function replay() {
+      if (!L.queued) return;
+      if (!started()) { if (++tries < 80) setTimeout(replay, 50); return; }
+      var b = d.querySelector('.appbar [data-act="' + L.queued + '"]'); L.queued = null;
+      if (b) b.click();
+    })();
+  });
+
+  /* Web fonts. Decoding the Japanese font slices is long main-thread work, and every slice is a request to Google:
+     on a slow connection or a low-memory phone they wait until the app is up (boot calls L.loadFonts in idle time). */
+  L.loadFonts = function () {
+    if (d.getElementById('sm-fonts')) return;
+    var l = d.createElement('link');
+    l.id = 'sm-fonts'; l.rel = 'stylesheet';
+    l.href = 'https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=IBM+Plex+Sans+JP:wght@500;700&display=swap';
+    l.onload = function () { L.fontsCss = 1; };
+    l.onerror = function () { L.fontsCss = -1; };
+    d.head.appendChild(l);
+  };
+  try {
+    var c = navigator.connection, ect = (c && c.effectiveType) || '';
+    var mem = navigator.deviceMemory;
+    if (c && (c.saveData || /2g|3g/.test(ect))) L.fonts = 'off';
+    else if ((c && c.downlink && c.downlink < 5) || (mem && mem < 4)) L.fonts = 'later';
+    else { L.fonts = 'now'; L.loadFonts(); }
+  } catch (e) { }
+
+  /* Lazy views (see 5. above). Order inside a list = execution order. */
+  var lazy = w.__smLazy = {
+    find: ['js/views/find.js'],
+    p: ['js/views/program.js'],
+    program: ['js/views/program.js'],
+    tools: ['data/tools.js', 'js/views/program.js', 'js/views/tools.js'],
+    map: ['data/geo.js', 'js/views/map.js'],
+    plan: ['data/timeline.js', 'js/views/plan.js'],
+    learn: ['data/tools.js', 'js/views/learn.js'],
+    about: ['js/views/about.js']
+  };
+  try {
+    var rn = (h.replace(/^#\/?/, '').split(/[\/?]/)[0]) || '';
+    var pre = lazy[rn] || [];
+    for (i = 0; i < pre.length; i++) {
+      var pl = d.createElement('link');
+      pl.rel = 'preload'; pl.as = 'script'; pl.href = pre[i];
+      d.head.appendChild(pl);
+    }
+  } catch (e) { }
+})();
+</script>
+<!-- Core-owned styles (CORE, v3 flat "教科書と駅サイン") for markup only core produces: SOS list, settings rows,
+     error notice, ふりがな banner, tab indicator + まなぶ rail row. Tokens come from css/base.css (with fallbacks).
+     Placed BEFORE base.css, so DESIGN's rules in base.css win wherever both style the same thing:
+     this block is the flat fallback. -->
+<style>
+.sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+#view:focus,#view h1[tabindex="-1"]:focus,#view h2[tabindex="-1"]:focus{outline:none}
+.sheet.no-anim,.sheet-overlay.no-anim{animation:none}
+@media (prefers-reduced-motion: reduce){.sheet,.sheet-overlay,.view{animation:none!important}}
+
+/* ---- SOS sheet: ruled rows, big numbers, coral only for 110/119 ---- */
+.sos-lead{margin:0;color:var(--ink-2,#3a3a36);font-size:1rem;line-height:1.7}
+.sos-group{margin:0}
+.sos-gtitle,.set-gtitle{margin:0;padding:0 0 6px;font-family:var(--font-display,inherit);font-size:.875rem;font-weight:700;letter-spacing:.06em;color:var(--ink,#1b1b19);border-bottom:2px solid var(--ink,#1b1b19)}
+.sos-list{list-style:none;margin:0;padding:0;display:block}
+.sos-li{position:relative;display:flex;gap:0;align-items:stretch;min-width:0;border-bottom:1px solid var(--rule,var(--line,#dcdad2))}
+.sos-row{flex:1;min-width:0;display:flex;align-items:flex-start;gap:12px;padding:14px 4px 14px 0;border-radius:0;
+  background:none;box-shadow:none;color:var(--ink,#1b1b19);text-decoration:none;transition:background-color .15s ease}
+.sos-li:has(.sos-copy) .sos-row{padding-right:56px}
+.sos-row:hover{background:var(--surface-2,rgba(0,0,0,.035));box-shadow:none}
+.sos-row:focus-visible,.sos-copy:focus-visible,.set-link:focus-visible,.sos-chat-link:focus-visible{outline:3px solid var(--focus,#2a6fdb);outline-offset:2px;box-shadow:none}
+.sos-ic{flex:none;width:24px;height:24px;margin-top:2px;display:block;border-radius:0;background:none;color:var(--ink,#1b1b19)}
+.sos-ic svg{width:22px;height:22px}
+.sos-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.sos-name{font-weight:700;font-size:.9375rem;line-height:1.45}
+.sos-num{font-family:var(--font-num,inherit);font-weight:700;font-size:clamp(1.375rem,6vw,1.625rem);line-height:1.2;letter-spacing:.02em;font-variant-numeric:tabular-nums;color:var(--ink,#1b1b19);white-space:nowrap}
+.sos-desc{font-size:.8125rem;line-height:1.6;color:var(--ink-2,#3a3a36)}
+.sos-hours{margin-top:2px;align-self:flex-start;padding:0;border-radius:0;background:none;font-size:.75rem;font-weight:700;line-height:1.5;color:var(--ink-3,#5f5e58);font-variant-numeric:tabular-nums}
+.sos-copy{position:absolute;top:14px;right:0;width:44px;height:44px;display:grid;place-items:center;border:0;border-radius:3px;
+  background:none;box-shadow:inset 0 0 0 1.5px var(--rule-strong,var(--line-strong,#b9b6ab));color:var(--ink-2,#3a3a36);cursor:pointer}
+.sos-copy:hover{color:var(--ink,#1b1b19);box-shadow:inset 0 0 0 2px var(--ink,#1b1b19);background:none}
+.sos-copy svg{width:20px;height:20px}
+.sos-group-urgent .sos-list{display:grid;grid-template-columns:1fr 1fr;gap:0 2px;padding-top:2px}
+.sos-li.is-urgent{border-bottom:0}
+.sos-li.is-urgent .sos-row{flex-direction:column;gap:2px;padding:12px 12px 14px;background:var(--coral-soft,#fbe3df)}
+.sos-li.is-urgent .sos-row:hover{background:color-mix(in srgb,var(--coral-soft,#fbe3df) 85%,var(--coral,#c8352a))}
+.sos-li.is-urgent .sos-ic{color:var(--coral-text,#a52a21);margin:0}
+.sos-li.is-urgent .sos-text{gap:0}
+.sos-li.is-urgent .sos-num{order:-1;font-size:2.25rem;line-height:1.1;color:var(--coral-text,#a52a21)}
+.sos-chat{display:block;padding:14px 0 0;border-radius:0;background:none;border-top:2px solid var(--ink,#1b1b19)}
+.sos-chat-text{min-width:0}
+.sos-chat-title{margin:0;font-weight:700}
+.sos-chat-body{margin:2px 0 0;font-size:.875rem;color:var(--ink-2,#3a3a36)}
+.sos-chat-link{display:inline-flex;align-items:center;gap:4px;min-height:44px;font-weight:700;color:var(--action-text,var(--primary-text,#0b6e44));text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:1.5px;border-radius:0}
+.sos-chat-link svg{width:18px;height:18px}
+.sos-home-link{display:flex;align-items:center;gap:8px;margin:0;padding:12px 0;min-height:56px;line-height:1.5;text-decoration:none;border-bottom:1px solid var(--rule,var(--line,#dcdad2))}
+.sos-home-link>span{flex:1;min-width:0;text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:1.5px}
+.sos-home-link small{display:block;margin-top:2px;font-weight:400;text-decoration:none;color:var(--ink-2,#3a3a36)}
+.sos-home-link svg{flex:none;width:20px;height:20px}
+.sos-foot{margin:0;font-size:.75rem;color:var(--ink-3,#5f5e58)}
+
+/* ---- settings sheet: ruled rows, no boxes ---- */
+.set-group{margin:0}
+.set-card{border-radius:0;background:none;box-shadow:none;padding:0}
+.set-row.switch-row{justify-content:space-between;gap:16px;min-height:64px;padding:12px 0;border-radius:0;border-top:0;border-bottom:1px solid var(--rule,var(--line,#dcdad2))}
+.set-card>.set-row:last-child{border-bottom:0}
+.set-row .switch-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.set-row .switch-text b{font-size:1rem}
+.set-row .switch-text small{font-size:.8125rem;line-height:1.55;color:var(--ink-2,#3a3a36)}
+.set-row:focus-within{box-shadow:none;outline:3px solid var(--focus,#2a6fdb);outline-offset:2px}
+.set-card.set-privacy{padding:12px 0 14px}
+.set-priv{display:block;margin:0 0 14px;font-size:.9375rem;line-height:1.75;color:var(--ink,#1b1b19)}
+.set-warn{margin:0 0 12px;padding:10px 12px;border-radius:0;background:var(--amber-soft,#f8ecd0);color:var(--amber-text,#7a4f00);font-size:.8125rem;font-weight:700}
+.set-note{margin:10px 0 0;font-size:.75rem;line-height:1.6;color:var(--ink-3,#5f5e58)}
+.set-link{display:flex;align-items:center;gap:10px;min-height:56px;padding:0;border-radius:0;background:none;box-shadow:none;border-bottom:1px solid var(--rule,var(--line,#dcdad2));color:var(--ink,#1b1b19);text-decoration:none;font-weight:700}
+.set-link:hover{background:var(--surface-2,rgba(0,0,0,.035))}
+.set-link span{flex:1}
+.set-link svg{width:20px;height:20px;flex:none;color:var(--ink,#1b1b19)}
+.set-version{margin:0;text-align:left;font-size:.75rem;color:var(--ink-3,#5f5e58);font-variant-numeric:tabular-nums}
+.set-confirm{text-align:left;padding:4px 0 0}
+.set-confirm-body{margin:0 0 20px;padding:0 0 16px;border-bottom:1px solid var(--rule,var(--line,#dcdad2));color:var(--ink,#1b1b19);font-size:1rem;line-height:1.75}
+.set-confirm-actions{display:grid;gap:10px}
+
+/* ---- error notice ---- */
+.sm-error{box-sizing:border-box;max-width:520px;margin:24px 0 0;padding:0;text-align:left;border-radius:0;background:none;box-shadow:none;color:var(--ink,#1b1b19)}
+.sm-error-title{margin:0 0 12px;padding:0 0 10px;font-family:var(--font-display,inherit);font-size:1.5rem;line-height:1.4;border-bottom:3px solid var(--ink,#1b1b19)}
+.sm-error-body{margin:0 0 20px;color:var(--ink-2,#3a3a36);line-height:1.75}
+.sm-error-actions{display:grid;gap:10px}
+
+/* ---- 中学生: ふりがな offer (flat band, top of the view) ---- */
+.jr-banner{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;margin:0 calc(-1 * var(--gutter,16px));padding:14px var(--gutter,16px);
+  background:var(--band,var(--surface-2,#efede6));border-top:3px solid var(--ink,#1b1b19);border-radius:0;box-shadow:none}
+.jr-banner-text{flex:1 1 220px;min-width:0;margin:0;display:flex;flex-direction:column;gap:2px;line-height:1.6}
+.jr-banner-text b{font-size:1rem}
+.jr-banner-text span{font-size:.875rem;color:var(--ink-2,#3a3a36)}
+.jr-banner-actions{display:flex;flex-wrap:wrap;gap:8px}
+.jr-banner .btn{min-height:44px}
+@media (min-width:900px){.jr-banner{margin-left:0;margin-right:0}}
+@media print{.jr-banner{display:none}}
+
+/* ---- tab bar: indicator = base.css .tabbar::before on --tab-index (core sets it inline with --tab-i);
+   まなぶ is a 5th row on the desktop rail only ---- */
+.tabbar:not(.ind-ready)::before{transition:none!important}
+.tabbar .tab-extra{display:none}
+.tab-sub{display:none}
+@media (min-width:900px){
+  .tabbar.is-extra{--tab-ind-o:1}
+  .tabbar .tab-extra{display:flex}
+  .tab-learn .tab-label{display:flex;flex-direction:column;line-height:1.25}
+  .tab-sub{display:block;font-family:var(--font-body,inherit);font-size:11px;font-weight:400;letter-spacing:.02em;color:var(--ink-3,#5f5e58)}
+}
+
+/* ---- 緊急 before boot (#sos-static) and the failed-start notice: same ruled rows as the SOS sheet ---- */
+#sos-static{position:fixed;z-index:70;left:0;right:0;bottom:0;top:calc(var(--appbar-h,56px) + var(--safe-t,0px));overflow-y:auto;overscroll-behavior:contain;
+  padding:0 var(--gutter,16px) calc(24px + var(--safe-b,0px));background:var(--paper,#fff);color:var(--ink,#1b1b19);border-top:2px solid var(--ink,#1b1b19)}
+#sos-static[hidden]{display:none}
+#sos-static:focus{outline:none}
+.sos-st-in{max-width:560px;margin:0 auto}
+.sos-st-head{display:flex;align-items:center;gap:12px;min-height:56px;border-bottom:1px solid var(--rule,#e3e1da)}
+.sos-st-head h2{flex:1;min-width:0;margin:0;font-family:var(--font-display,inherit);font-size:1.25rem;font-weight:700;line-height:1.35}
+.sos-st-x{flex:none;min-height:44px;min-width:64px;padding:0 14px;border:0;border-radius:3px;background:none;box-shadow:inset 0 0 0 1.5px var(--ink,#1b1b19);color:var(--ink,#1b1b19);font:inherit;font-weight:700;cursor:pointer}
+.sos-st-lead{margin:12px 0 4px;font-size:.9375rem;line-height:1.7;color:var(--ink-2,#3a3a36)}
+.sos-st-list{list-style:none;margin:0;padding:0}
+.sos-st-list a{display:flex;flex-direction:column;justify-content:center;gap:2px;min-height:56px;padding:10px 0;border-bottom:1px solid var(--rule,#e3e1da);color:var(--ink,#1b1b19);text-decoration:none}
+.sos-st-list b{font-family:var(--font-num,inherit);font-size:1.5rem;line-height:1.2;letter-spacing:.02em;font-variant-numeric:tabular-nums}
+.sos-st-list span{font-size:.875rem;line-height:1.55;color:var(--ink-2,#3a3a36)}
+.sos-st-list .is-urgent b{color:var(--red-text,#b0231a)}
+.sos-st-list a:focus-visible,.sos-st-x:focus-visible{outline:3px solid var(--focus,#1d5aa6);outline-offset:2px}
+.sm-fail{margin-left:var(--gutter,16px);margin-right:var(--gutter,16px)}
+@media print{#sos-static{display:none}}
+
+/* ---- a view's files are on their way (core: html.sm-loading): a thin bar under the app bar, after 150ms ---- */
+html.sm-loading body::after{content:"";position:fixed;z-index:61;left:0;right:0;top:calc(var(--appbar-h,56px) + var(--safe-t,0px) - 2px);height:2px;
+  background:var(--action,#0b6e44);transform-origin:0 50%;animation:sm-load 2.4s cubic-bezier(.2,0,0,1) .15s both;pointer-events:none}
+@keyframes sm-load{from{transform:scaleX(0)}to{transform:scaleX(.85)}}
+html.m-reduce.sm-loading body::after{transform:scaleX(.5);animation:sm-load-rm 1ms .15s both}
+@keyframes sm-load-rm{from{opacity:0}to{opacity:1}}
+html.sm-loading #view{cursor:progress}
+
+/* no-JS notice */
+.nojs{box-sizing:border-box;max-width:520px;margin:40px auto;padding:20px;border-top:3px solid #1b1b19;background:#f2f0ea;color:#1b1b19;line-height:1.8}
+.nojs h1{font-size:1.25rem;margin:0 0 8px}
+.nojs a{color:#0b5c39;font-weight:700}
+</style>
+<!-- LAUNCH (critical): the splash markup stays out of the page until css/launch.css switches it on -->
+<style>#launch{display:none}</style>
+<link rel="stylesheet" href="css/app.css">
+<!-- MapLibre (js/vendor/maplibre-gl.{css,js}) and the map data (data/map/base.js, style.js) are NOT loaded here:
+     SM.loadMapLib() in js/launch.js adds them the first time the map is opened (or a map link is pressed). -->
+</head>
+<body>
+<a class="skip" href="#view">本文へ</a>
+<!-- The complete app bar is static, identical to what boot paints (SM.brand.lockup({label:false}) + actions), so
+     nothing pops in when the scripts arrive. The header buttons work before boot via the head gate. -->
+<header class="appbar">
+  <a class="brand" href="#/" aria-label="巣立ちマップ — ホーム"><svg class="logo-lockup" viewBox="0 0 122.5 20" width="122.5" height="20" aria-hidden="true" overflow="visible" focusable="false"><path class="lg-box" fill="currentColor" fill-rule="evenodd" d="M0 0H20V20H0ZM9.167 16.667L9.167 13.882Q8.471 14.417 7.606 14.911Q6.741 15.405 5.826 15.816Q4.904 16.228 3.958 16.502Q3.878 16.337 3.718 16.104Q3.558 15.871 3.373 15.631Q3.197 15.391 3.045 15.254Q3.782 15.062 4.639 14.76Q5.457 14.458 6.246 14.088Q7.036 13.717 7.702 13.333L3.333 13.333L3.333 11.667L9.167 11.667L9.167 10.833L5 10.833L5 5.833L5.9 5.833Q5.575 5.408 5.133 4.899Q4.663 4.389 4.279 4.055L5.752 3.173Q6.18 3.599 6.659 4.154Q7.14 4.709 7.48 5.18Q7.288 5.286 7.007 5.476Q6.726 5.666 6.475 5.833L9.397 5.833Q9.122 5.347 8.708 4.693Q8.294 4.04 7.909 3.553L9.339 2.824Q9.756 3.341 10.18 3.994Q10.603 4.648 10.908 5.21Q10.675 5.317 10.33 5.499Q9.986 5.681 9.698 5.833L11.667 5.833Q11.949 5.484 12.284 4.997Q12.619 4.511 12.961 3.987Q13.304 3.462 13.555 3.006L15.192 3.736Q14.897 4.177 14.499 4.747Q14.1 5.317 13.702 5.833L15 5.833L15 10.833L10.833 10.833L10.833 11.667L16.667 11.667L16.667 13.333L12.277 13.333Q12.961 13.717 13.761 14.074Q14.558 14.431 15.393 14.712Q16.266 14.993 16.986 15.185Q16.834 15.336 16.651 15.59Q16.458 15.844 16.29 16.091Q16.122 16.337 16.026 16.502Q15.096 16.228 14.181 15.83Q13.274 15.432 12.411 14.938Q11.548 14.444 10.833 13.909L10.833 16.667ZM6.667 8.333L9.167 8.333L9.167 7.5L6.667 7.5ZM10.833 8.333L13.333 8.333L13.333 7.5L10.833 7.5ZM6.667 10L9.167 10L9.167 9.167L6.667 9.167ZM10.833 10L13.333 10L13.333 9.167L10.833 9.167Z"/><g class="lg-word" fill="currentColor"><path class="lg-g1" d="M23.333 20L23.333 16.667L32.723 16.667Q33.105 15.812 33.487 14.724Q33.869 13.636 34.207 12.5Q34.533 11.364 34.776 10.383Q35.02 9.402 35.122 8.78L38.211 9.518Q38.028 10.237 37.734 11.169Q37.439 12.102 37.093 13.102Q36.748 14.103 36.402 15.035Q36.057 15.967 35.752 16.667L41.667 16.667L41.667 20ZM24.167 8.333L24.167 5L30.833 5L30.833 1.667L34.167 1.667L34.167 5L40.833 5L40.833 8.333ZM28.418 16.239Q28.258 15.287 27.989 14.103Q27.72 12.918 27.38 11.772Q27.041 10.625 26.702 9.829L29.416 9.052Q29.855 10.043 30.205 11.179Q30.554 12.315 30.833 13.452Q31.131 14.588 31.322 15.579Q30.897 15.618 30.334 15.734Q29.775 15.851 29.256 15.977Q28.738 16.103 28.418 16.239Z"/><path class="lg-g2" d="M51.061 20.095Q51 19.667 50.796 19.095Q50.592 18.524 50.296 17.952Q50 17.381 49.673 17.014Q53.143 17.299 55 16.565Q56.857 15.83 56.857 14.299Q56.857 13.524 56.204 13.034Q55.551 12.544 54.469 12.544Q53.204 12.544 51.98 12.963Q50.755 13.381 49.796 14.361Q49.653 14.565 49.49 14.769Q49.327 14.973 49.163 15.136L46.714 13.442Q47.673 12.483 48.337 10.973Q49 9.463 49.408 7.789Q46.653 7.891 44.796 7.789L44.612 4.83Q45.449 4.973 46.857 5.003Q48.265 5.034 49.939 4.973Q50.041 4.075 50.092 3.218Q50.143 2.361 50.122 1.667L53.265 1.667Q53.265 2.34 53.204 3.146Q53.143 3.952 53.041 4.83Q54.469 4.728 55.786 4.595Q57.102 4.463 58.163 4.289Q59.224 4.116 59.857 3.912L59.633 6.85Q58.857 7.014 57.735 7.167Q56.612 7.32 55.276 7.442Q53.939 7.565 52.531 7.646Q52.204 9.116 51.694 10.605Q52.469 10.218 53.224 10.014Q53.98 9.81 54.735 9.81Q56.306 9.81 57.51 10.361Q58.714 10.912 59.388 11.932Q60.061 12.952 60.061 14.361Q60.061 17.259 57.704 18.759Q55.347 20.259 51.061 20.095Z"/><path class="lg-g3" d="M74.596 18.792Q74.002 17.946 73.179 17.02Q72.356 16.095 71.419 15.215Q70.482 14.335 69.522 13.58Q68.562 12.826 67.693 12.323L70.116 10.038Q71.442 10.838 72.859 11.912Q73.796 11.112 74.882 10.106Q75.967 9.1 76.904 8.14Q75.556 8.186 73.944 8.243Q72.333 8.3 70.699 8.369Q69.064 8.438 67.613 8.506Q66.162 8.575 65.076 8.643Q63.99 8.712 63.51 8.758L63.259 5.192Q64.104 5.238 65.476 5.249Q66.847 5.26 68.516 5.249Q70.184 5.238 71.944 5.203Q73.704 5.169 75.339 5.112Q76.973 5.055 78.276 4.986Q79.579 4.918 80.333 4.849L82.39 6.723Q81.636 7.775 80.47 9.078Q79.304 10.38 77.979 11.683Q76.653 12.986 75.396 14.083Q76.584 15.203 77.407 16.3Q77.019 16.552 76.493 16.986Q75.967 17.42 75.464 17.9Q74.962 18.38 74.596 18.792Z"/><path class="lg-g4" d="M88.291 20.209Q88.062 19.592 87.628 18.849Q87.193 18.106 86.759 17.672Q90.919 16.735 93.262 14.312Q95.605 11.889 96.176 7.798L98.896 8.255Q98.348 11.706 96.953 14.026Q95.559 16.346 93.376 17.809Q91.193 19.272 88.291 20.209ZM90.485 12.163Q90.439 11.683 90.222 10.918Q90.005 10.152 89.742 9.409Q89.479 8.666 89.251 8.3L91.788 7.5Q92.016 7.935 92.279 8.678Q92.542 9.42 92.771 10.186Q92.999 10.952 93.068 11.478ZM86.645 13.032Q86.576 12.575 86.336 11.82Q86.096 11.066 85.799 10.335Q85.502 9.603 85.251 9.238L87.765 8.323Q88.016 8.758 88.302 9.489Q88.588 10.22 88.839 10.975Q89.091 11.729 89.205 12.255Z"/><path class="lg-g5" d="M106.117 19.727Q105.94 19.33 105.599 18.768Q105.257 18.206 104.838 17.655Q104.42 17.104 104.001 16.751Q108.144 15.429 110.844 13.169Q113.544 10.91 114.801 7.362Q113.721 7.384 112.409 7.439Q111.098 7.494 109.753 7.538Q108.409 7.582 107.197 7.626Q105.984 7.67 105.092 7.714Q104.199 7.758 103.802 7.802L103.604 4.122Q104.464 4.188 105.797 4.21Q107.131 4.232 108.684 4.232Q110.238 4.232 111.792 4.21Q113.346 4.188 114.658 4.133Q115.969 4.078 116.784 3.989L118.989 5.158Q118.239 8.75 116.454 11.649Q114.669 14.547 112.046 16.597Q109.423 18.647 106.117 19.727ZM120.245 4.981Q119.341 4.981 118.691 4.331Q118.041 3.681 118.041 2.777Q118.041 1.851 118.691 1.201Q119.341 0.551 120.245 0.551Q121.171 0.551 121.821 1.201Q122.471 1.851 122.471 2.777Q122.471 3.681 121.821 4.331Q121.171 4.981 120.245 4.981ZM120.245 3.923Q120.73 3.923 121.071 3.593Q121.413 3.262 121.413 2.777Q121.413 2.292 121.071 1.951Q120.73 1.609 120.245 1.609Q119.76 1.609 119.429 1.951Q119.099 2.292 119.099 2.777Q119.099 3.262 119.429 3.593Q119.76 3.923 120.245 3.923Z"/></g></svg><span class="brand-name">巣立ちマップ</span></a>
+  <div class="appbar-actions"><button type="button" class="pill pill-exit" data-act="exit" title="この画面をすぐに天気の検索に切りかえます（Escを2回でも）">すぐ閉じる</button><button type="button" class="pill pill-sos" data-act="sos" aria-label="緊急の連絡先"><svg class="icon icon-phone" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter" stroke-miterlimit="10" aria-hidden="true" focusable="false"><path d="M8.5 3.5H5L3.5 5c0 8.6 6.9 15.5 15.5 15.5l1.5-1.5v-3.5l-4-1.5-2 2c-3-1.3-5.2-3.5-6.5-6.5l2-2z"></path></svg><span>緊急</span></button><button type="button" class="icon-btn" data-act="settings" aria-label="設定"><svg class="icon icon-settings" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter" stroke-miterlimit="10" aria-hidden="true" focusable="false"><path d="M3.5 6.5H6M10 6.5h10.5M3.5 12H13M17 12h3.5M3.5 17.5H8M12 17.5h8.5"></path><path d="M6 4.5h4v4H6zM13 10h4v4h-4zM8 15.5h4v4H8z"></path></svg></button></div>
+</header>
+<!-- 緊急 before boot: opened by the head gate when the app has not started yet; boot replaces it with the full SOS
+     sheet. Numbers as in js/boot.js (checked on the official pages, 2026-10-16). Not modal: すぐ閉じる stays usable. -->
+<div id="sos-static" role="dialog" aria-labelledby="sos-st-t" tabindex="-1" hidden>
+  <div class="sos-st-in">
+    <div class="sos-st-head"><h2 id="sos-st-t" data-en="Someone to talk to, now">いま、話せるところ</h2><button type="button" id="sos-st-x" class="sos-st-x" data-en="Close">閉じる</button></div>
+    <p class="sos-st-lead" data-en="Tap a number to call. You don't have to give your name.">番号をタップすると電話がかかります。名前を言わなくても大丈夫です。</p>
+    <ul class="sos-st-list">
+      <li class="is-urgent"><a href="tel:110"><b>110</b><span data-en="Police — if you feel unsafe">警察 — 身の危険を感じたら</span></a></li>
+      <li class="is-urgent"><a href="tel:119"><b>119</b><span data-en="Ambulance / Fire">救急・消防</span></a></li>
+      <li><a href="tel:189"><b>189</b><span data-en="Child guidance center — abuse, or can't stay at home (under 18). 24 hours">児童相談所 — 虐待かも・家にいられない（18歳未満）。24時間</span></a></li>
+      <li><a href="tel:0120078310"><b>0120-0-78310</b><span data-en="24-hour Child SOS Dial — bullying, school, home">24時間子供SOSダイヤル — いじめ・学校・家のこと。24時間・無料</span></a></li>
+      <li><a href="tel:0120279338"><b>0120-279-338</b><span data-en="Yorisoi Hotline — anything at all. 24 hours · free">よりそいホットライン — どんなことでも。24時間・無料</span></a></li>
+      <li><a href="tel:0120874225"><b>0120-874-225</b><span data-en="TOKYO Challenge Net — no place to live. Mon–Sat from 10:00 (closed holidays)">TOKYOチャレンジネット — 住む所がない。月〜土 10時から（祝日休み）</span></a></li>
+    </ul>
+  </div>
+</div>
+<!-- shown in #view by the head gate if the app never started (a script failed to load) -->
+<template id="sm-fail"><section class="sm-error sm-fail" role="alert"><h1 class="sm-error-title" data-en="The app could not start">うまく読みこめませんでした</h1><p class="sm-error-body" data-en="The connection may be unstable. Please try again. The emergency numbers work without the app.">通信が不安定かもしれません。もう一度ためしてください。緊急の番号は、このままでも使えます。</p><div class="sm-error-actions"><button type="button" class="btn btn-primary btn-block sm-fail-reload" data-en="Try again">もう一度ためす</button><button type="button" class="btn btn-secondary btn-block sm-fail-sos" data-en="Emergency numbers">緊急の番号を見る</button></div></section></template>
+<script>
+/* LAUNCH: English before boot. The static bar is Japanese; give it boot's English labels now, so its width never
+   changes when boot repaints. (The Japanese lockup is hidden for English by css/launch.css until then.) */
+(function () {
+  var b = document.documentElement.classList.contains('lx-en') && document.querySelector('.appbar');
+  if (!b) return;
+  function set(sel, txt, attr, val) { var e = b.querySelector(sel); if (!e) return; if (txt !== null) e.textContent = txt; if (attr) e.setAttribute(attr, val); }
+  set('.brand', null, 'aria-label', 'Sudachi Map — Home');
+  set('.brand-name', 'Sudachi Map');
+  set('[data-act="exit"]', 'Quick exit', 'title', 'Instantly switch to a weather search (or press Esc twice)');
+  set('[data-act="sos"] > span', 'SOS');
+  set('[data-act="sos"]', null, 'aria-label', 'SOS — emergency contacts');
+  set('[data-act="settings"]', null, 'aria-label', 'Settings');
+  // the static SOS list and the failed-start notice (FIXER-robust)
+  var en = document.querySelectorAll('#sos-static [data-en]'), i;
+  for (i = 0; i < en.length; i++) en[i].textContent = en[i].getAttribute('data-en');
+  var tp = document.getElementById('sm-fail');
+  if (tp && tp.content) { en = tp.content.querySelectorAll('[data-en]'); for (i = 0; i < en.length; i++) en[i].textContent = en[i].getAttribute('data-en'); }
+})();
+</script>
+<div class="subbar" hidden></div>
+<main id="view" class="view v-home" tabindex="-1">
+  <noscript>
+    <div class="nojs">
+      <h1>JavaScriptをオンにしてください</h1>
+      <p>巣立ちマップは、ブラウザのJavaScriptを使って動きます。設定でオンにしてから、もう一度開いてください。</p>
+      <p>いますぐ話したいとき：<br>よりそいホットライン（24時間・無料）<a href="tel:0120279338">0120-279-338</a><br>
+      警察 <a href="tel:110">110</a>・救急 <a href="tel:119">119</a>・児童相談所 <a href="tel:189">189</a></p>
+    </div>
+  </noscript>
+</main>
+<nav class="tabbar" aria-label="メイン"></nav>
+<!-- The opening (css/launch.css + js/launch.js). Painted with the first frame, under the app bar (z 55 < 60).
+     aria-hidden, nothing focusable, never inert (inert is skipped by hit testing: taps would fall through). -->
+<div id="launch" aria-hidden="true">
+  <div class="lx-paper"></div>
+  <div class="lx-rule"><i class="lx-rule-hair"></i><i class="lx-rule-ink"></i></div>
+  <div class="lx-lockup"><svg class="logo-lockup has-line" viewBox="0 0 134 23" width="134" height="23" aria-hidden="true" overflow="visible" focusable="false"><defs><clipPath id="lx-clip"><rect x="-4" y="-8" width="142" height="29"/></clipPath></defs><path class="lg-box" fill="currentColor" fill-rule="evenodd" d="M0 0H20V20H0ZM9.167 16.667L9.167 13.882Q8.471 14.417 7.606 14.911Q6.741 15.405 5.826 15.816Q4.904 16.228 3.958 16.502Q3.878 16.337 3.718 16.104Q3.558 15.871 3.373 15.631Q3.197 15.391 3.045 15.254Q3.782 15.062 4.639 14.76Q5.457 14.458 6.246 14.088Q7.036 13.717 7.702 13.333L3.333 13.333L3.333 11.667L9.167 11.667L9.167 10.833L5 10.833L5 5.833L5.9 5.833Q5.575 5.408 5.133 4.899Q4.663 4.389 4.279 4.055L5.752 3.173Q6.18 3.599 6.659 4.154Q7.14 4.709 7.48 5.18Q7.288 5.286 7.007 5.476Q6.726 5.666 6.475 5.833L9.397 5.833Q9.122 5.347 8.708 4.693Q8.294 4.04 7.909 3.553L9.339 2.824Q9.756 3.341 10.18 3.994Q10.603 4.648 10.908 5.21Q10.675 5.317 10.33 5.499Q9.986 5.681 9.698 5.833L11.667 5.833Q11.949 5.484 12.284 4.997Q12.619 4.511 12.961 3.987Q13.304 3.462 13.555 3.006L15.192 3.736Q14.897 4.177 14.499 4.747Q14.1 5.317 13.702 5.833L15 5.833L15 10.833L10.833 10.833L10.833 11.667L16.667 11.667L16.667 13.333L12.277 13.333Q12.961 13.717 13.761 14.074Q14.558 14.431 15.393 14.712Q16.266 14.993 16.986 15.185Q16.834 15.336 16.651 15.59Q16.458 15.844 16.29 16.091Q16.122 16.337 16.026 16.502Q15.096 16.228 14.181 15.83Q13.274 15.432 12.411 14.938Q11.548 14.444 10.833 13.909L10.833 16.667ZM6.667 8.333L9.167 8.333L9.167 7.5L6.667 7.5ZM10.833 8.333L13.333 8.333L13.333 7.5L10.833 7.5ZM6.667 10L9.167 10L9.167 9.167L6.667 9.167ZM10.833 10L13.333 10L13.333 9.167L10.833 9.167Z"/><g class="lg-word" fill="currentColor" clip-path="url(#lx-clip)"><path class="lg-g1" d="M23.333 20L23.333 16.667L32.723 16.667Q33.105 15.812 33.487 14.724Q33.869 13.636 34.207 12.5Q34.533 11.364 34.776 10.383Q35.02 9.402 35.122 8.78L38.211 9.518Q38.028 10.237 37.734 11.169Q37.439 12.102 37.093 13.102Q36.748 14.103 36.402 15.035Q36.057 15.967 35.752 16.667L41.667 16.667L41.667 20ZM24.167 8.333L24.167 5L30.833 5L30.833 1.667L34.167 1.667L34.167 5L40.833 5L40.833 8.333ZM28.418 16.239Q28.258 15.287 27.989 14.103Q27.72 12.918 27.38 11.772Q27.041 10.625 26.702 9.829L29.416 9.052Q29.855 10.043 30.205 11.179Q30.554 12.315 30.833 13.452Q31.131 14.588 31.322 15.579Q30.897 15.618 30.334 15.734Q29.775 15.851 29.256 15.977Q28.738 16.103 28.418 16.239Z"/><path class="lg-g2" d="M51.061 20.095Q51 19.667 50.796 19.095Q50.592 18.524 50.296 17.952Q50 17.381 49.673 17.014Q53.143 17.299 55 16.565Q56.857 15.83 56.857 14.299Q56.857 13.524 56.204 13.034Q55.551 12.544 54.469 12.544Q53.204 12.544 51.98 12.963Q50.755 13.381 49.796 14.361Q49.653 14.565 49.49 14.769Q49.327 14.973 49.163 15.136L46.714 13.442Q47.673 12.483 48.337 10.973Q49 9.463 49.408 7.789Q46.653 7.891 44.796 7.789L44.612 4.83Q45.449 4.973 46.857 5.003Q48.265 5.034 49.939 4.973Q50.041 4.075 50.092 3.218Q50.143 2.361 50.122 1.667L53.265 1.667Q53.265 2.34 53.204 3.146Q53.143 3.952 53.041 4.83Q54.469 4.728 55.786 4.595Q57.102 4.463 58.163 4.289Q59.224 4.116 59.857 3.912L59.633 6.85Q58.857 7.014 57.735 7.167Q56.612 7.32 55.276 7.442Q53.939 7.565 52.531 7.646Q52.204 9.116 51.694 10.605Q52.469 10.218 53.224 10.014Q53.98 9.81 54.735 9.81Q56.306 9.81 57.51 10.361Q58.714 10.912 59.388 11.932Q60.061 12.952 60.061 14.361Q60.061 17.259 57.704 18.759Q55.347 20.259 51.061 20.095Z"/><path class="lg-g3" d="M74.596 18.792Q74.002 17.946 73.179 17.02Q72.356 16.095 71.419 15.215Q70.482 14.335 69.522 13.58Q68.562 12.826 67.693 12.323L70.116 10.038Q71.442 10.838 72.859 11.912Q73.796 11.112 74.882 10.106Q75.967 9.1 76.904 8.14Q75.556 8.186 73.944 8.243Q72.333 8.3 70.699 8.369Q69.064 8.438 67.613 8.506Q66.162 8.575 65.076 8.643Q63.99 8.712 63.51 8.758L63.259 5.192Q64.104 5.238 65.476 5.249Q66.847 5.26 68.516 5.249Q70.184 5.238 71.944 5.203Q73.704 5.169 75.339 5.112Q76.973 5.055 78.276 4.986Q79.579 4.918 80.333 4.849L82.39 6.723Q81.636 7.775 80.47 9.078Q79.304 10.38 77.979 11.683Q76.653 12.986 75.396 14.083Q76.584 15.203 77.407 16.3Q77.019 16.552 76.493 16.986Q75.967 17.42 75.464 17.9Q74.962 18.38 74.596 18.792Z"/><path class="lg-g4" d="M88.291 20.209Q88.062 19.592 87.628 18.849Q87.193 18.106 86.759 17.672Q90.919 16.735 93.262 14.312Q95.605 11.889 96.176 7.798L98.896 8.255Q98.348 11.706 96.953 14.026Q95.559 16.346 93.376 17.809Q91.193 19.272 88.291 20.209ZM90.485 12.163Q90.439 11.683 90.222 10.918Q90.005 10.152 89.742 9.409Q89.479 8.666 89.251 8.3L91.788 7.5Q92.016 7.935 92.279 8.678Q92.542 9.42 92.771 10.186Q92.999 10.952 93.068 11.478ZM86.645 13.032Q86.576 12.575 86.336 11.82Q86.096 11.066 85.799 10.335Q85.502 9.603 85.251 9.238L87.765 8.323Q88.016 8.758 88.302 9.489Q88.588 10.22 88.839 10.975Q89.091 11.729 89.205 12.255Z"/><path class="lg-g5" d="M106.117 19.727Q105.94 19.33 105.599 18.768Q105.257 18.206 104.838 17.655Q104.42 17.104 104.001 16.751Q108.144 15.429 110.844 13.169Q113.544 10.91 114.801 7.362Q113.721 7.384 112.409 7.439Q111.098 7.494 109.753 7.538Q108.409 7.582 107.197 7.626Q105.984 7.67 105.092 7.714Q104.199 7.758 103.802 7.802L103.604 4.122Q104.464 4.188 105.797 4.21Q107.131 4.232 108.684 4.232Q110.238 4.232 111.792 4.21Q113.346 4.188 114.658 4.133Q115.969 4.078 116.784 3.989L118.989 5.158Q118.239 8.75 116.454 11.649Q114.669 14.547 112.046 16.597Q109.423 18.647 106.117 19.727ZM120.245 4.981Q119.341 4.981 118.691 4.331Q118.041 3.681 118.041 2.777Q118.041 1.851 118.691 1.201Q119.341 0.551 120.245 0.551Q121.171 0.551 121.821 1.201Q122.471 1.851 122.471 2.777Q122.471 3.681 121.821 4.331Q121.171 4.981 120.245 4.981ZM120.245 3.923Q120.73 3.923 121.071 3.593Q121.413 3.262 121.413 2.777Q121.413 2.292 121.071 1.951Q120.73 1.609 120.245 1.609Q119.76 1.609 119.429 1.951Q119.099 2.292 119.099 2.777Q119.099 3.262 119.429 3.593Q119.76 3.923 120.245 3.923Z"/></g><g class="lg-line" style="fill:var(--action,#0b6e44)"><path class="lg-run1" d="M0 21H124.429V23H0Z"/><path class="lg-step" d="M124.329 23L124.379 23A2.5 2.5 0 0 0 126.146 22.268L129.268 19.146A0.5 0.5 0 0 1 129.621 19L129.671 19L129.671 17L129.621 17A2.5 2.5 0 0 0 127.854 17.732L124.732 20.854A0.5 0.5 0 0 1 124.379 21L124.329 21Z"/><path class="lg-run2" d="M129.571 17H134V19H129.571Z"/></g></svg></div>
+  <p class="lx-cap"><span class="lx-cap-ja">施設や里親家庭を出る人の支援ガイド　東京版</span><span class="lx-cap-en">Support for young people leaving care · Tokyo</span></p>
+</div>
+<div id="sheet-root"></div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script src="js/app.js"></script>
+<!-- every other view loads on first use, then in idle time (window.__smLazy above; SM.need in js/core.js):
+     find, program, tools (+ data/tools.js), map (+ data/geo.js), plan (+ data/timeline.js), learn, about -->
+</body>
+</html>
