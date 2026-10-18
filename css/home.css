@@ -1,13 +1,26 @@
 /* =====================================================================
-   巣立ちマップ v4 — css/home.css  (HOME)  ·  .v-home and .v-about
-   VISUAL-SPEC §7.2 / §7.11 · MOTION-SPEC §2.5, §4.2.
+   巣立ちマップ v5 — css/home.css  (HOME)  ·  .v-home and .v-about
+   SPEC-v5: motion people notice (Part A) + fewer words, better placed (Part B). VISUAL-SPEC §7.2 / §7.11.
    Paper, 墨 ink, one green. Ruled, typographic; pictures stand on the same ground line as the rules.
    Tokens and text styles only (base.css): no raw px font sizes, the four tracking tokens, no 900.
-   Hover tints only under (hover: hover). Motion is motion.js (data-reveal) plus a few CSS transitions on
-   transform/opacity; nothing loops, nothing moves under html.m-reduce.
+   Hover tints only under (hover: hover). Motion: the hero is a CSS choreography under .h-hero.h-play (home.js adds
+   it; without it everything stands), the rows and sections are SM.motion reveals tuned here. transform / opacity
+   only; nothing loops; under html.m-reduce nothing moves (the page cross-fades in: css/launch.css, engine).
    Layout follows the view's own width (container queries), so the same rules serve the phone column,
    tablets and the wide desktop container.
    ===================================================================== */
+
+.v-home, .v-about {
+  /* a spring with a 3% overshoot (response .42s, damping .74), and its cubic fallback */
+  --h-spring: cubic-bezier(0.25, 1.15, 0.45, 1);
+  --h-spring-dur: 500ms;
+  --h-rise: cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+@supports (animation-timing-function: linear(0, 1)) {
+  .v-home, .v-about {
+    --h-spring: linear(0, 0.024, 0.086, 0.171, 0.269, 0.372, 0.474, 0.57, 0.657, 0.735, 0.802, 0.859, 0.905, 0.943, 0.972, 0.994, 1.009, 1.02, 1.027, 1.03, 1.032, 1.031, 1.029, 1.026, 1.023, 1.02, 1.017, 1.014, 1.011, 1.009, 1.006, 1.005, 1);
+  }
+}
 
 /* a number about to roll stays blank while its host starts to rise, until the odometer has built its cells
    (never longer than the host's reveal: once .m-in drops it shows whatever happens) */
@@ -16,8 +29,8 @@ html.motion-ready:not(.m-reduce) :is(.v-home, .v-about) .x-rolls.m-in:not(:has(.
 
 /* short UI strings (≤ 2 lines) keep their phrases together (VISUAL-SPEC §2.5); base.css sets paragraphs to fill
    the line with a high-specificity rule, hence the !important on these few */
-:lang(ja) .v-home :is(.h-ln-sub, .h-tool-s, .h-cat-hint, .h-staff-b, .h-colo-note, .h-colo .kv dd, .h-offline p, .h-cover-title),
-:lang(ja) .v-about :is(.ab-lead, .ab-stat-k, .ab-note, .kv dd) {
+:lang(ja) .v-home :is(.h-staff-b, .h-colo-note, .h-colo .kv dd, .h-offline p, .h-cover-title),
+:lang(ja) .v-about :is(.ab-lead, .ab-stat-k, .ab-note, .kv dd, .ab-p) {
   word-break: auto-phrase !important; line-break: strict; overflow-wrap: anywhere; text-wrap: pretty;
 }
 
@@ -29,8 +42,9 @@ html.motion-ready:not(.m-reduce) :is(.v-home, .v-about) .x-rolls.m-in:not(:has(.
 .v-home > .jr-banner { margin-top: var(--s-7); }
 .v-home > :is(.jr-banner, .h-offline) + :is(section, footer) { margin-top: var(--sec-gap); }
 .v-home > .h-hero + .h-plan { margin-top: var(--s-8); }
+.v-home > .h-hero + .h-cats-sec { margin-top: var(--s-8); }
 .v-home > .h-later { min-height: 50vh; }
-.v-home :is(.h-cats, .h-lines, .h-shelf, .h-tools) { list-style: none; margin: 0; padding: 0; }
+.v-home :is(.h-cats, .h-lines, .h-shelf, .h-tools, .h-facts) { list-style: none; margin: 0; padding: 0; }
 
 /* rows: a flat tint that bleeds past the column on hover (no box, no shadow); press = motion.css ink wash */
 .v-home :is(.h-cat, .h-tool, .h-plan-item) { position: relative; isolation: isolate; }
@@ -46,56 +60,44 @@ html.motion-ready:not(.m-reduce) :is(.v-home, .v-about) .x-rolls.m-in:not(:has(.
 /* ================================================================ hero: new visitor */
 .v-home .h-hero { position: relative; }
 /* the picture opens the page 8px under the app bar; its ground line is the first rule of the page.
-   The 24/216 band under the ground line is cropped, so the eyebrow sits one step below the line. */
+   The 24/216 band under the ground line is cropped, so the copy sits one step below the line. */
 .v-home > .h-hero.has-art:first-child { margin-top: calc(var(--s-2) - var(--s-6)); }
 .v-home .h-art { position: relative; margin-bottom: calc(-24 / 360 * 100%); pointer-events: none; }
 .v-home .h-art .il { width: 100%; max-width: none; }
 .v-home .h-hero.has-art .h-copy { padding-top: var(--s-5); }
-/* short phones (iPhone SE class): the picture gives way so the CTA stays above the fold; a rule carries its
-   ground line on to the column edges */
-@media (max-height: 700px) and (max-width: 899px) {
-  .v-home .h-hero.has-art { --art-s: 0.78; }
+/* short phones (iPhone SE class): the picture gives way so the CTA and the crisis link stay above the fold; a rule
+   carries its ground line on to the column edges */
+@media (max-height: 760px) and (max-width: 899px) {
+  .v-home .h-hero.has-art { --art-s: 0.8; }
   .v-home .h-hero.has-art .h-art { width: calc(var(--art-s) * 100%); margin-inline: auto; margin-bottom: calc(-24 / 360 * var(--art-s) * 100%); }
   .v-home .h-hero.has-art .h-art::after {
     content: ""; position: absolute; left: calc((1 / var(--art-s) - 1) * -50%); right: calc((1 / var(--art-s) - 1) * -50%);
     bottom: calc(24 / 216 * 100%); height: 1.5px; margin-bottom: -0.75px; background: var(--ink);
   }
 }
-@media (max-height: 660px) and (max-width: 899px) { .v-home .h-hero.has-art { --art-s: 0.68; } }
-/* the shortest phones (360×640): a little more give, so 今夜いる場所がない stays above the tab bar (FIXER-robust) */
-@media (max-height: 660px) and (max-width: 899px) {
-  .v-home .h-hero.is-new.has-art { --art-s: 0.6; }
-  .v-home .h-hero.is-new .h-actions { margin-top: var(--s-4); }
-}
+@media (max-height: 680px) and (max-width: 899px) { .v-home .h-hero.has-art { --art-s: 0.64; } }
 
 .v-home .h-copy { min-width: 0; }
-.v-home .h-eyebrow {
-  margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-1) var(--s-3);
-  font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui);
-  letter-spacing: var(--ls-label); color: var(--ink-3);
-}
-.v-home .h-eyebrow-a { color: var(--ink); font-weight: 700; }
-.v-home .h-eyebrow-rule { flex: 0 0 var(--s-6); height: 1px; background: var(--ink-3); transform-origin: left center; }
-.v-home .h-eyebrow-b { min-width: 0; }
-body.lang-en .v-home .h-eyebrow { text-transform: uppercase; }
-
 .v-home .h-title {
-  margin: var(--s-3) 0 0; display: block;
+  margin: 0; display: block;
   font-family: var(--font-display); font-weight: 700; color: var(--ink);
   letter-spacing: var(--ls-0); text-wrap: initial;
 }
+/* the one sub-line: who it is for */
 .v-home .h-kicker {
   display: block;
-  font-weight: 500; font-size: var(--t-kicker); line-height: 1.5; color: var(--ink);
+  font-weight: 500; font-size: var(--t-ui); line-height: 1.5; color: var(--ink-2);
   word-break: auto-phrase; text-wrap: balance;
 }
 /* display: one line per span (the copy is written to break where the lines break); the size gives way on the
    narrowest phones instead of breaking a phrase */
 .v-home .h-main {
-  display: block;
+  display: block; margin-top: var(--s-1);
   font-size: min(var(--t-display), 10.4cqi); line-height: var(--lh-display);
   white-space: nowrap;
 }
+.v-home .h-main + .h-main { margin-top: 0; }
+.v-home .h-ln-i { display: block; }
 /* hang the opening bracket: with palt, 「 is half a em wide and its ink begins 0.125em in (measured, Plex 700) */
 .v-home .h-open { margin-left: -0.12em; }
 body.is-ruby .v-home .h-main { line-height: 1.6; }
@@ -105,65 +107,35 @@ body.lang-en .v-home .h-title { container-type: inline-size; }
 body.lang-en .v-home .h-main { white-space: normal; font-size: min(var(--t-display), 9.6cqi); line-height: 1.15; }
 body.lang-en .v-home .h-main + .h-main { margin-top: 0.08em; }
 
-/* 蛍光ペン: its own element under the phrase. It draws from the left once (data-reveal="rule" via motion.js),
-   on the marker curve of MOTION-SPEC §2.5. Static (and printed) when motion is off. */
+/* 蛍光ペン: its own element under the phrase; it sweeps from the left once its line is up (.h-play) */
 .v-home .h-mark { position: relative; z-index: 0; display: inline-block; padding: 0 0.04em; background: none; color: inherit; }
 .v-home .h-mark-t { position: relative; z-index: 1; }
 .v-home .h-mark-ink {
   position: absolute; z-index: 0; left: 0; right: 0; bottom: 0.1em; height: 0.36em;
   background: var(--marker); transform-origin: left center; pointer-events: none;
   -webkit-print-color-adjust: exact; print-color-adjust: exact;
-  transition: transform var(--dur-morph) cubic-bezier(0.65, 0, 0.35, 1) var(--mark-at, 300ms);
-}
-html.motion-ready:not(.m-reduce) .v-home .m-pending .h-mark-ink { transform: scaleX(0); transition: none; }
-.v-home :is(.m-now, .m-fast) .h-mark-ink, html.m-reduce .v-home .h-mark-ink { transition: none; }
-
-.v-home .h-lead {
-  margin: var(--s-3) 0 0; max-width: 34em;
-  font-family: var(--font-body); font-size: var(--t-lead); line-height: var(--lh); letter-spacing: var(--ls-body); color: var(--ink-2);
-  word-break: auto-phrase; line-break: strict; overflow-wrap: anywhere; text-wrap: pretty;
-}
-.v-home .h-lead-n {
-  margin: 0 0.06em;
-  font-family: var(--font-num); font-weight: 700; font-size: var(--t-num-inline); line-height: var(--lh-num);
-  letter-spacing: var(--ls-0); color: var(--ink); font-variant-numeric: tabular-nums;
 }
 
-/* actions: one green block, then a text link (fewer boxes) */
-.v-home .h-actions { margin-top: var(--s-6); display: grid; justify-items: stretch; gap: var(--s-1); }
-.v-home .h-cta { min-height: 64px; }
-.v-home .h-cta .btn-label > span:first-child { font-size: var(--fs-lg); line-height: 1.35; }
-.v-home .h-jump, .v-home .h-link { justify-self: start; gap: var(--s-2); font-size: var(--t-ui); }
-.v-home .h-jump .arrow { --arrow-s: 20px; }
-/* the urgent way in (今夜いる場所がない): a text link like 困りごとから見る, in the emergency red (FIXER-robust) */
+/* facts as signage: 東京の支援 222件 | ログインなし | 6問・3分 — one row, no sentences */
+.v-home .h-facts {
+  margin-top: var(--s-4); display: flex; flex-wrap: wrap; align-items: baseline; row-gap: var(--s-2);
+  font-family: var(--font-display); font-weight: 700; font-size: var(--t-meta); line-height: 1.3; color: var(--ink);
+}
+.v-home .h-fact { display: inline-flex; align-items: baseline; gap: 4px; padding: 0 var(--s-3); border-left: 1px solid var(--rule-2); white-space: nowrap; }
+.v-home .h-fact:first-child { padding-left: 0; border-left: 0; }
+.v-home .h-fact-k { color: var(--ink-2); font-weight: 500; }
+.v-home .h-fact:not(:first-child) .h-fact-k { color: var(--ink); font-weight: 700; }
+.v-home .h-fact-n { font-family: var(--font-num); font-weight: 700; font-size: 1.5rem; line-height: 1; letter-spacing: var(--ls-num); font-variant-numeric: tabular-nums; color: var(--ink); }
+.v-home .h-fact-u { font-weight: 500; font-size: var(--t-label); }
+body.lang-en .v-home .h-fact:first-child .h-fact-k { color: var(--ink); font-weight: 700; }
+
+/* actions: one green block, then the crisis link */
+.v-home .h-actions { margin-top: var(--s-5); display: grid; justify-items: stretch; gap: var(--s-1); }
+.v-home .h-cta { min-height: 64px; font-size: var(--fs-lg); }
+.v-home .h-cta > span:first-child { font-size: var(--fs-xl); line-height: 1.3; }
+/* the urgent way in (今夜いる場所がない): a text link in the emergency red, always on the first screen */
 .v-home .h-crisis { justify-self: start; gap: var(--s-2); font-size: var(--t-ui); color: var(--red-text); text-align: left; }
 .v-home .h-crisis .arrow { --arrow-s: 20px; }
-.v-home .h-links { display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--s-6); }
-
-/* how it works: three stations on one line — 1 答える ─ 2 保存する ─ 3 窓口で見せる */
-.v-home .h-route {
-  margin-top: var(--s-4); display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2);
-  font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui);
-  letter-spacing: var(--ls-label); color: var(--ink-2);
-}
-.v-home .h-route-st { display: inline-flex; align-items: baseline; gap: 6px; white-space: nowrap; }
-.v-home .h-route-n { font-family: var(--font-num); font-weight: 700; font-size: var(--fs-sm); line-height: 1; color: var(--ink); letter-spacing: var(--ls-0); }
-.v-home .h-route-ln { flex: 0 1 var(--s-5); min-width: var(--s-3); height: 1px; background: var(--rule-2); transform-origin: left center; }
-body.lang-en .v-home .h-route { text-transform: uppercase; }
-/* where the three stations cannot share one line (English, 大きい文字 on a small phone), the strip wraps between
-   stations; the connectors go, so no line ends on a dangling rule — the numbers carry the order */
-@container home (max-width: 419px) {
-  body.lang-en .v-home .h-route { gap: var(--s-1) var(--s-4); }
-  body.lang-en .v-home .h-route-ln { display: none; }
-}
-@container home (max-width: 319px) {
-  body.is-big .v-home .h-route { gap: var(--s-1) var(--s-4); }
-  body.is-big .v-home .h-route-ln { display: none; }
-}
-@container home (max-width: 279px) {
-  .v-home .h-route { gap: var(--s-1) var(--s-4); }
-  .v-home .h-route-ln { display: none; }
-}
 
 /* ================================================================ hero: returning visitor — the number is the headline */
 .v-home .h-hero.is-back .h-title { margin-top: var(--s-4); }
@@ -172,18 +144,50 @@ body.lang-en .v-home .h-route { text-transform: uppercase; }
 .v-home .h-big { font-weight: 700; font-size: 1em; line-height: var(--lh-num); letter-spacing: var(--ls-num); font-variant-numeric: tabular-nums; }
 .v-home .h-big-unit { margin-left: 0.08em; font-weight: 500; font-size: var(--t-unit); letter-spacing: var(--ls-0); }
 .v-home .h-mark-num .h-mark-ink { bottom: 0.02em; height: 0.2em; }
-.v-home .h-big-tail { margin-left: var(--s-2); font-family: var(--font-display); font-weight: 500; font-size: var(--t-kicker); }
-.v-home .h-title.is-none .h-kicker { font-size: var(--t-h1); font-weight: 700; line-height: var(--lh-heading); }
-.v-home .h-answers {
-  margin: var(--s-4) 0 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s-1) var(--s-3);
+.v-home .h-title.is-none .h-kicker { font-size: var(--t-h1); font-weight: 700; line-height: var(--lh-heading); color: var(--ink); }
+/* the answers as a tag row, 変える at its end */
+.v-home .h-answers { margin: var(--s-4) 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); }
+.v-home .h-ans { min-height: 28px; padding: 0 var(--s-2); font-family: var(--font-display); font-weight: 700; font-size: var(--t-meta); color: var(--ink); }
+.v-home .h-change {
+  display: inline-flex; align-items: center; min-height: var(--tap); padding: 0 var(--s-1);
+  font-family: var(--font-display); font-weight: 700; font-size: var(--t-meta); color: var(--action-text);
+  text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 0.28em;
 }
-.v-home .h-answers-k { font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); letter-spacing: var(--ls-label); color: var(--ink-3); }
-.v-home .h-answers-v { font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); line-height: var(--lh-ui); color: var(--ink); }
-.v-home .h-ans { white-space: nowrap; }
-.v-home .h-sep { margin: 0 0.3em 0 0; color: var(--ink-4); font-weight: 500; }
-body.lang-en .v-home .h-answers-k { text-transform: uppercase; }
 .v-home .h-side { min-width: 0; }
 .v-home .h-hero.has-side .h-side { margin-top: var(--s-8); }
+
+/* ================================================================ the hero choreography (SPEC-v5 Part A 1)
+   .h-play (home.js) starts every part on its own --d, × --h-k (0.55 after a skipped opening). Parts:
+   [data-h="line"]  the line rises from behind its own baseline (the outer span holds the clip)
+   [data-h="rise"]  steps up 24px              [data-h="cta"]  slides up 40px on the spring
+   [data-h="slide"] comes in from the left     .h-mark-ink    the marker sweeps once its line is up
+   .h-done drops it all (no clip, no animation) once played; .h-land lands it at once (a tap / key). */
+.v-home .h-play:not(.h-done) [data-h="line"] { clip-path: inset(-0.6em -1em 0 -1em); }
+.v-home .h-play:not(.h-done) [data-h="line"] > .h-ln-i { animation: h-line 620ms var(--h-rise) calc(var(--d, 0ms) * var(--h-k, 1)) both; }
+.v-home .h-play:not(.h-done) [data-h="rise"] { animation: h-rise 520ms var(--h-rise) calc(var(--d, 0ms) * var(--h-k, 1)) both; }
+.v-home .h-play:not(.h-done) [data-h="cta"] { animation: h-cta var(--h-spring-dur) var(--h-spring) calc(var(--d, 0ms) * var(--h-k, 1)) both; }
+.v-home .h-play:not(.h-done) [data-h="slide"] { animation: h-slide 480ms var(--h-rise) calc(var(--d, 0ms) * var(--h-k, 1)) both; }
+.v-home .h-play:not(.h-done) .h-mark-ink { animation: h-ink 460ms cubic-bezier(0.65, 0, 0.35, 1) calc(var(--mark-at, 300ms) * var(--h-k, 1)) both; }
+.v-home .h-play.h-land :is([data-h], .h-ln-i, .h-mark-ink) { animation: none !important; clip-path: none !important; }
+@keyframes h-line { from { transform: translateY(108%); } to { transform: none; } }
+@keyframes h-rise { from { opacity: 0; transform: translateY(24px); } 40% { opacity: 1; } to { opacity: 1; transform: none; } }
+@keyframes h-cta { from { opacity: 0; transform: translateY(40px); } 30% { opacity: 1; } to { opacity: 1; transform: none; } }
+@keyframes h-slide { from { opacity: 0; transform: translateX(-28px); } 50% { opacity: 1; } to { opacity: 1; transform: none; } }
+@keyframes h-ink { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+/* the picture: the young person walks out of the doorway toward the new home (a step bob, ≈34px), the staff
+   member rises in to wave. Overrides the illustration's generic rise for home's hero only; within its 600ms. */
+.v-home .h-art .il.is-play [data-il="fig"] { animation-name: h-walk; animation-duration: 470ms; animation-timing-function: cubic-bezier(0.25, 0.7, 0.3, 1); }
+.v-home .h-art .il.is-play [data-il="fig2"] { animation-name: h-wave-in; animation-duration: 440ms; animation-timing-function: var(--h-rise); }
+@keyframes h-walk {
+  0% { opacity: 0; transform: translate(-34px, 0); }
+  18% { opacity: 1; }
+  30% { transform: translate(-23px, -2.5px); }
+  55% { transform: translate(-10px, 0); }
+  78% { transform: translate(-3px, -1.5px); }
+  100% { opacity: 1; transform: translate(0, 0); }
+}
+@keyframes h-wave-in { from { opacity: 0; transform: translateY(16px); } 40% { opacity: 1; } to { opacity: 1; transform: none; } }
 
 /* ================================================================ やること preview */
 .v-home .h-days {
@@ -211,38 +215,42 @@ body.lang-en .v-home .h-days-unit { margin-left: 0.3em; }
 .v-home .h-offline p { margin: 0; font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-2); }
 .v-home .h-offline b { display: block; font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); color: var(--ink); }
 
-/* ================================================================ 01 困りごと: six kanji station rows */
+/* ================================================================ sections: the head rises as its rule draws */
+.motion-ready .v-home .h-head.m-pending { transform: translateY(20px); }
+.motion-ready .v-home .h-head.m-in { transition: opacity 360ms var(--ease-enter), transform 480ms var(--h-rise); transition-delay: var(--m-delay, 0ms); }
+
+/* ================================================================ 困りごと: six kanji station rows — mark · name · count */
 .v-home .h-cats { display: grid; grid-template-columns: minmax(0, 1fr); }
 .v-home .h-cat-li { min-width: 0; display: flex; border-bottom: 1px solid var(--rule); }
 .v-home .h-cat {
   flex: 1; min-width: 0;
-  display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto;
-  grid-template-areas: "mark name n go" "mark hint n go";
-  align-items: center; column-gap: 14px;
-  min-height: 72px; padding: var(--s-4) 0;
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; column-gap: 14px;
+  min-height: 60px; padding: var(--s-2) 0;
   color: var(--ink); text-decoration: none;
 }
-.v-home .h-cat-mark { grid-area: mark; display: flex; align-self: center; }
+.v-home .h-cat-mark { display: flex; align-self: center; }
 body.is-ruby .v-home .h-cat-mark { min-width: calc(var(--t-micro) * 4.4); justify-content: center; }
-.v-home .h-cat-name {
-  grid-area: name; align-self: end;
-  font-family: var(--font-display); font-weight: 700; font-size: var(--t-h3); line-height: var(--lh-title); letter-spacing: var(--ls-0);
-}
-.v-home .h-cat-hint { grid-area: hint; align-self: start; font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3); }
-.v-home .h-cat-n { grid-area: n; display: inline-flex; align-items: baseline; color: var(--ink-2); white-space: nowrap; font-family: var(--font-num); }
-.v-home .h-cat-n b { font-weight: 700; font-size: var(--fs-lg); line-height: 1; color: var(--ink); font-variant-numeric: tabular-nums; }
+.v-home .h-cat-name { font-family: var(--font-display); font-weight: 700; font-size: var(--t-h3); line-height: var(--lh-title); letter-spacing: var(--ls-0); }
+.v-home .h-cat-n { display: inline-flex; align-items: baseline; color: var(--ink-2); white-space: nowrap; font-family: var(--font-num); }
+.v-home .h-cat-n b { font-weight: 700; font-size: var(--fs-xl); line-height: 1; color: var(--ink); font-variant-numeric: tabular-nums; }
 .v-home .h-cat-n small { margin-left: 2px; font-family: var(--font-display); font-weight: 500; font-size: var(--fs-xs); }
-.v-home .h-cat-go { grid-area: go; display: inline-flex; color: var(--ink); }
+.v-home .h-cat-go { display: inline-flex; color: var(--ink); }
 .v-home .h-cat-go .arrow { --arrow-s: 20px; }
 @media (hover: hover) {
   .v-home .h-cat:hover .h-cat-name { text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 0.24em; }
 }
-/* the wide first screen: rows arrive in order (motion.js staggers the list's children) */
 @container home (min-width: 640px) {
   .v-home .h-cats { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--s-8); }
 }
+/* each row rises 28px in its turn; its kanji mark stamps in (a hanko: 1.5× → 1 on the spring, a few degrees of
+   turn), its count rolls (data-count). The delay is the row's own (--m-delay from SM.motion). */
+.motion-ready .v-home .h-cat-li.m-pending { transform: translateY(28px); }
+.motion-ready .v-home .h-cat-li.m-in { transition: opacity 320ms var(--ease-enter), transform var(--h-spring-dur) var(--h-spring); transition-delay: var(--m-delay, 0ms); }
+.motion-ready .v-home .h-cat-li.m-in .cat-icon { animation: h-stamp 340ms var(--h-spring) calc(var(--m-delay, 0ms) + 50ms) both; }
+.motion-ready .v-home .h-cat-li.m-late .cat-icon { animation-duration: 200ms; animation-delay: 0ms; }
+@keyframes h-stamp { from { opacity: 0; transform: scale(1.5) rotate(-8deg); } 35% { opacity: 1; } to { opacity: 1; transform: none; } }
 
-/* ================================================================ 02 今すぐ話したい: contact rows (§6.10) */
+/* ================================================================ 今すぐ話したい: contact rows (§6.10) */
 .v-home .h-lines { display: grid; grid-template-columns: minmax(0, 1fr); }
 .v-home .h-ln {
   min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); align-content: start;
@@ -251,10 +259,9 @@ body.is-ruby .v-home .h-cat-mark { min-width: calc(var(--t-micro) * 4.4); justif
 .v-home .h-ln-name { margin: 0; font-family: var(--font-display); font-weight: 700; font-size: var(--t-h3); line-height: var(--lh-title); }
 .v-home .h-ln-name a { color: var(--ink); text-decoration: none; }
 @media (hover: hover) { .v-home .h-ln-name a:hover { text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 0.24em; } }
-.v-home .h-ln-sub { margin: var(--s-1) 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-1) var(--s-2); font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3); }
+.v-home .h-ln-sub { margin: var(--s-2) 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-1); }
 .v-home .h-free { flex: none; }
-/* the number is the biggest thing (it dials on a tap too); then ONE row of equal ink-outline buttons —
-   電話する / チャットで話す / LINEで話す — the same on every line, never a green text link beside a button */
+/* the number is the biggest thing (it dials on a tap too); then ONE row of equal ink-outline buttons */
 .v-home .h-tel {
   justify-self: start; display: inline-flex; align-items: center; min-height: 48px; margin-top: var(--s-1);
   color: var(--ink); text-decoration: none;
@@ -269,7 +276,7 @@ body.is-ruby .v-home .h-cat-mark { min-width: calc(var(--t-micro) * 4.4); justif
 @media (hover: hover) { .v-home .h-tel:hover .h-tel-n { text-decoration-color: currentColor; } }
 .v-home .h-acts { display: flex; flex-wrap: wrap; gap: var(--s-2); margin-top: var(--s-1); padding-bottom: var(--s-2); }
 .v-home .h-ln-sub + .h-acts { margin-top: var(--s-3); }
-.v-home .h-act { flex: 0 0 auto; min-width: 10.5em; padding-inline: 14px; }
+.v-home .h-act { flex: 0 0 auto; min-width: 9em; padding-inline: 14px; }
 @container home (max-width: 339px) { .v-home .h-act { flex: 1 1 100%; } }
 .v-home .h-talk-foot { display: grid; margin-top: var(--s-2); }
 .v-home .h-more { justify-self: start; gap: var(--s-2); }
@@ -297,6 +304,11 @@ body.is-ruby .v-home .h-cat-mark { min-width: calc(var(--t-micro) * 4.4); justif
   .v-home .h-ln > .h-ln-sub + .h-acts { padding-top: var(--s-3); }
   .v-home .h-sos { justify-content: flex-start; gap: var(--s-1) var(--s-6); }
 }
+/* rows further down: each rises 32px in turn as it scrolls in */
+.motion-ready .v-home :is(.h-lines > .h-ln, .h-tools > li, .h-plan-list > .h-plan-item).m-pending { transform: translateY(32px); }
+.motion-ready .v-home :is(.h-lines > .h-ln, .h-tools > li, .h-plan-list > .h-plan-item).m-in { transition: opacity 320ms var(--ease-enter), transform var(--h-spring-dur) var(--h-spring); transition-delay: var(--m-delay, 0ms); }
+.motion-ready .v-home .h-shelf > li.m-pending { transform: translateX(40px); }
+.motion-ready .v-home .h-shelf > li.m-in { transition: opacity 320ms var(--ease-enter), transform var(--h-spring-dur) var(--h-spring); transition-delay: var(--m-delay, 0ms); }
 
 /* ================================================================ まなぶ: progress + a shelf of covers */
 .v-home .h-learn-body { margin-top: var(--s-4); }
@@ -310,7 +322,7 @@ body.lang-en .v-home .h-learn-prog-k { text-transform: uppercase; }
 .v-home .h-seg { position: relative; display: block; height: 6px; background: var(--paper-3); overflow: hidden; }
 .v-home .h-seg.is-done::after {
   content: ""; position: absolute; inset: 0; background: var(--action); transform-origin: left center;
-  transition: transform 300ms var(--ease-draw) calc(var(--i, 0) * 40ms + 120ms);
+  transition: transform 320ms var(--ease-draw) calc(var(--i, 0) * 50ms + 120ms);
 }
 /* the done segments fill in order as the block arrives (confirms progress; skipped under reduced motion) */
 html.motion-ready:not(.m-reduce) .v-home .h-learn-body.m-pending .h-seg.is-done::after { transform: scaleX(0); transition: none; }
@@ -334,7 +346,7 @@ html.motion-ready:not(.m-reduce) .v-home .h-learn-body.m-pending .h-seg.is-done:
 .v-home .h-cover-art { position: relative; display: block; }
 .v-home .h-cover-art .il { width: 100%; }
 .v-home .h-cover-art.is-blank { aspect-ratio: 3 / 2; border-bottom: 1.5px solid var(--ink); background: var(--paper-2); }
-/* first cover: a flat ink label on the picture's corner (まずはここから / つぎのレッスン) */
+/* first cover: a flat ink label on the picture's corner (ここから / つぎ) */
 .v-home .h-cover-flag {
   position: absolute; z-index: 1; top: 0; left: 0;
   padding: 3px 8px; background: var(--ink); color: var(--paper);
@@ -384,20 +396,18 @@ body.lang-en .v-home .h-cover-flag { text-transform: uppercase; }
   .v-home .h-shelf > li:nth-child(n+5) { display: none; }
 }
 
-/* ================================================================ 04 べんりツール: rows with 56px spot thumbs */
+/* ================================================================ べんりツール: rows with 56px spot thumbs, titles only */
 .v-home .h-tools { display: grid; grid-template-columns: minmax(0, 1fr); }
 .v-home .h-tools > li { min-width: 0; display: flex; border-bottom: 1px solid var(--rule); }
 .v-home .h-tool {
   flex: 1; min-width: 0;
   display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; align-items: center; column-gap: var(--s-4);
-  min-height: 88px; padding: var(--s-4) 0;
+  min-height: 72px; padding: var(--s-2) 0;
   color: var(--ink); text-decoration: none;
 }
 .v-home .h-tool:not(:has(.h-tool-art)) { grid-template-columns: minmax(0, 1fr) auto; }
 .v-home .h-tool-art { display: block; width: 56px; height: 56px; }
-.v-home .h-tool-body { min-width: 0; display: grid; gap: 2px; }
-.v-home .h-tool-t { font-family: var(--font-display); font-weight: 700; font-size: var(--t-h3); line-height: var(--lh-title); }
-.v-home .h-tool-s { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3); }
+.v-home .h-tool-t { min-width: 0; font-family: var(--font-display); font-weight: 700; font-size: var(--t-h3); line-height: var(--lh-title); }
 .v-home .h-tool-go { display: inline-flex; }
 .v-home .h-tool-go .arrow { --arrow-s: 20px; }
 @media (hover: hover) { .v-home .h-tool:hover .h-tool-t { text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 0.24em; } }
@@ -443,23 +453,22 @@ body.lang-en .v-home .h-colo-ed { text-transform: uppercase; }
   .v-home .h-hero.is-new.has-art {
     display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); column-gap: var(--s-8); align-items: end;
   }
-  .v-home > .h-hero.has-art:first-child { margin-top: var(--s-4); }
-  .v-home .h-hero.is-new.has-art .h-copy { display: contents; }
-  .v-home .h-hero.is-new.has-art .h-copy > * { grid-column: 1; }
-  .v-home .h-hero.is-new.has-art .h-art { grid-column: 2; grid-row: 1 / span 4; align-self: end; margin-bottom: calc(-24 / 360 * 100%); }
-  .v-home .h-hero.is-new.has-art .h-route { grid-row: 5; }
-  .v-home .h-hero.has-art .h-copy { padding-top: 0; }
-  .v-home .h-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-6); margin-top: var(--s-7); }
-  .v-home .h-cta { width: auto; min-width: 16em; }
-  .v-home .h-route { margin-top: var(--s-5); }
+  .v-home > .h-hero.has-art:first-child { margin-top: var(--s-6); }
+  .v-home .h-hero.is-new.has-art .h-copy { grid-column: 1; grid-row: 1; padding-top: 0; }
+  .v-home .h-hero.is-new.has-art .h-art { grid-column: 2; grid-row: 1; align-self: end; margin-bottom: calc(-24 / 360 * 100%); }
+  .v-home .h-kicker { font-size: var(--t-kicker); }
+  .v-home .h-facts { margin-top: var(--s-5); font-size: var(--t-ui); }
+  .v-home .h-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-6); margin-top: var(--s-6); }
+  .v-home .h-cta-w { flex: 0 1 auto; }
+  .v-home .h-cta { width: auto; min-width: 15em; }
 
   /* returning: the headline left, やること right */
   .v-home .h-hero.is-back.has-side { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); column-gap: var(--s-8); align-items: start; }
   .v-home .h-hero.has-side .h-side { margin-top: var(--s-2); }
-  .v-home .h-hero.is-back .h-actions .h-links { gap: 0 var(--s-6); }
 }
 @container home (min-width: 700px) and (max-width: 899px) {
-  .v-home .h-cta { min-width: 0; flex: 1 1 18em; }
+  .v-home .h-cta-w { flex: 1 1 18em; }
+  .v-home .h-cta { width: 100%; min-width: 0; }
 }
 /* desktop container: a little more room for the picture (≈ 420px at 1280) */
 @container home (min-width: 880px) {
@@ -467,7 +476,7 @@ body.lang-en .v-home .h-colo-ed { text-transform: uppercase; }
 }
 
 @media print {
-  .v-home :is(.h-actions, .h-route, .h-sos, .h-staff, .h-jump, .h-crisis, .h-shelf-end, .h-acts) { display: none !important; }
+  .v-home :is(.h-actions, .h-sos, .h-staff, .h-crisis, .h-shelf-end, .h-acts, .h-change) { display: none !important; }
   .v-home .h-shelf { display: grid; grid-auto-flow: row; grid-template-columns: repeat(3, minmax(0, 1fr)); overflow: visible; -webkit-mask-image: none; mask-image: none; margin-inline: 0; padding: 0; }
 }
 
@@ -483,9 +492,7 @@ body.lang-en .v-home .h-colo-ed { text-transform: uppercase; }
 
 /* head */
 .v-about .ab-hero { display: grid; justify-items: start; }
-.v-about .ab-eyebrow { margin: 0; font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui); letter-spacing: var(--ls-label); color: var(--ink-3); }
-body.lang-en .v-about .ab-eyebrow { text-transform: uppercase; }
-.v-about .ab-title { margin: var(--s-2) 0 0; font-family: var(--font-display); font-weight: 700; font-size: var(--t-h1); line-height: var(--lh-heading); letter-spacing: var(--ls-0); color: var(--ink); }
+.v-about .ab-title { margin: 0; font-family: var(--font-display); font-weight: 700; font-size: var(--t-h1); line-height: var(--lh-heading); letter-spacing: var(--ls-0); color: var(--ink); }
 .v-about .ab-title-l { display: block; }
 .v-about .ab-lead { margin: var(--s-3) 0 0; max-width: 34em; font-family: var(--font-body); font-size: var(--t-lead); line-height: var(--lh); letter-spacing: var(--ls-body); color: var(--ink-2); }
 /* the picture stands on a ground line that runs to the column edges (the picture itself stops at 560px);
@@ -540,11 +547,40 @@ body.lang-en .v-about .ab-toc-h { text-transform: uppercase; }
   .v-about .ab-toc-list { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--s-7); }
 }
 
-/* sections: the standard head, prose at 40em, one reveal per body */
+/* sections: the standard head, ONE short lead line, the structured part, the detail folded (SPEC-v5 Part B) */
 .v-about .ab-body { display: grid; gap: var(--s-3); margin-top: var(--s-4); }
 .v-about .ab-body > * { min-width: 0; margin: 0; }
 .v-about .ab-body > .kv:first-child { border-top: 0; margin-top: calc(var(--s-4) * -1); }
 .v-about .ab-body p { max-width: 40em; line-height: var(--lh); }
+.v-about .ab-lede { font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); line-height: var(--lh-ui) !important; color: var(--ink); }
+.v-about .ab-tags { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* 「くわしく」: a ruled row that opens in place. Native <details>: works with no JS; the body rises in. */
+.v-about .ab-more { border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+.v-about .ab-more-s {
+  position: relative; isolation: isolate;
+  display: flex; align-items: center; justify-content: space-between; gap: var(--s-3);
+  min-height: var(--tap); padding: var(--s-2) 0; list-style: none; cursor: pointer;
+  font-family: var(--font-display); font-weight: 700; font-size: var(--t-meta); line-height: var(--lh-ui); color: var(--action-text);
+}
+.v-about .ab-more-s::-webkit-details-marker { display: none; }
+.v-about .ab-more-s::before { content: ""; position: absolute; inset: 0 calc(var(--bleed) * -1); z-index: -1; background: var(--paper-2); opacity: 0; transition: opacity var(--dur-quick) var(--ease-standard); pointer-events: none; }
+@media (hover: hover) { .v-about .ab-more-s:hover::before { opacity: 1; } }
+.v-about .ab-more-go { display: inline-flex; transition: transform 280ms var(--ease-standard); }
+.v-about .ab-more-go .arrow { --arrow-s: 18px; }
+.v-about .ab-more[open] .ab-more-go { transform: rotate(180deg); }
+.v-about .ab-more-b { display: grid; gap: var(--s-3); padding: 0 0 var(--s-4); }
+.v-about .ab-more-b > * { min-width: 0; margin: 0; }
+.v-about .ab-more-b p { color: var(--ink-2); }
+.v-about .ab-more-b .kv { border-top: 0; }
+.v-about .ab-more[open] .ab-more-b { animation: ab-open 320ms var(--ease-enter, cubic-bezier(0.16, 1, 0.3, 1)) both; }
+@keyframes ab-open { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: none; } }
+html.m-reduce .v-about .ab-more[open] .ab-more-b { animation: ab-open-fade 180ms linear both; }
+html.m-reduce .v-about .ab-more-go { transition: none; }
+@keyframes ab-open-fade { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .v-about .ab-more[open] .ab-more-b { animation: ab-open-fade 180ms linear both; }
+}
 .v-about .ab-sub-h {
   margin-top: var(--s-4) !important; padding-bottom: var(--s-2); border-bottom: 1px solid var(--ink);
   font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); line-height: var(--lh-ui); letter-spacing: var(--ls-0); color: var(--ink);
@@ -561,7 +597,7 @@ body.lang-en .v-about .ab-toc-h { text-transform: uppercase; }
 .v-about .ab-steps { list-style: none; margin: 0; padding: 0; display: grid; border-top: 1px solid var(--rule); }
 .v-about .ab-steps > li { display: grid; grid-template-columns: 2em minmax(0, 1fr); gap: var(--s-3); padding: var(--s-3) 0; border-bottom: 1px solid var(--rule); line-height: var(--lh); }
 .v-about .ab-step-n { font-family: var(--font-num); font-weight: 700; font-size: var(--t-h3); line-height: 1.5; color: var(--ink); }
-.v-about .ab-step-t b { font-weight: 700; }
+.v-about .ab-step-t { align-self: center; font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); line-height: var(--lh-ui); }
 .v-about .ab-sources {
   list-style: none; margin: 0; padding: 0;
   display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--s-5);
@@ -591,5 +627,6 @@ body.lang-en .v-about .ab-toc-h { text-transform: uppercase; }
 .v-about .ab-foot p { margin: 0; font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); letter-spacing: var(--ls-label); color: var(--ink-3); font-variant-numeric: tabular-nums; }
 
 @media print {
-  .v-about :is(.ab-toc, .ab-actions, .ab-sos button) { display: none !important; }
+  .v-about :is(.ab-toc, .ab-actions, .ab-sos button, .ab-more-s) { display: none !important; }
+  .v-about .ab-more > .ab-more-b { display: grid !important; }
 }

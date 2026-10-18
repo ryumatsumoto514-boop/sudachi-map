@@ -674,6 +674,13 @@
 .v-map .m-foot { display: grid; gap: var(--s-3); padding-top: var(--s-4); border-top: 1px solid var(--rule); }
 .v-map .m-foot-list { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-2); }
 .v-map .m-foot-src { font-size: var(--t-label); line-height: var(--lh-meta); color: var(--ink-3); }
+/* v5: one line stays in view; the rest sits behind 「この地図について」 */
+.v-map .m-foot-call { font-family: var(--font-display); font-weight: 500; font-size: var(--t-ui); line-height: var(--lh-ui); color: var(--ink); }
+.v-map .m-about > summary { color: var(--ink-3); }
+.v-map .m-about .m-more-body { gap: var(--s-3); }
+/* rows: name, who + how far, the phone; the rest opens in place */
+.v-map .m-loc .m-more { margin-top: 2px; }
+.v-map .m-loc .m-more-body > .m-tel { margin-bottom: 2px; }
 
 /* ---------- area picker sheet (content carries .v-map) ---------- */
 .v-map.m-pk { display: grid; gap: var(--s-4); }

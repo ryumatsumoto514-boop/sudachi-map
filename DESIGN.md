@@ -1,4 +1,13 @@
-# 巣立ちマップ design system v4: 「教科書と駅サイン」, set properly
+# 巣立ちマップ design system v5: 「教科書と駅サイン」, set properly — and moving
+
+**v5 (SPEC-v5, 2026-10-18).** Two changes on top of v4, both from Ryu's review ("everything is still"; "too many words"):
+- **Motion at a visible scale** (Part A): 280–520ms, 24–48px of travel, a spring ease-out with ≤4% overshoot, stagger 50ms
+  capped at 8. Pages push in with depth, tabs cross-fade while the indicator slides, the tapped row's mark and title morph
+  into the next page's header, controls sink 2px and darken under the finger, a dot flies to やること when you save. Reduced
+  motion keeps short fades and colour changes only. See §7.
+- **Fewer words in shared components** (Part B): rows carry a title, ONE key fact and up to three fact tags — no grey
+  sub-line, no eyebrow, no labelled facts. Everything else goes on the detail page or behind 「くわしく」 (`SM.ui.more`). See §6.
+
 
 v4 keeps the v3 idea (a textbook crossed with station signage: paper, 墨 ink, one green, flat, ruled, typographic) and makes
 the craft visible. That means:
@@ -170,7 +179,7 @@ palt is off. `--ls-body` is redefined to 0, so every component that uses it lose
 - **Desktop rail (≥900).**
   - The tab bar becomes a left rail: rows are 48px, with a 20px icon and a label at 15px Plex 500 (700 when active).
   - The active row is ONE element (`.tabbar::before`): a paper-2 fill with a 3px ink bar on its left edge. It slides by `translateY(index × 100%)`, and the まなぶ row (index 4) is included.
-  - The privacy note sits at the foot under a hairline.
+  - v5: no privacy footnote at the foot of the rail (fewer words; the privacy promise lives in 設定 and the about page).
 
 ---------------------------------------------------------------------------------------------------
 ## 6. Components (`SM.ui.*` returns HTML strings; every v2/v3 signature still works, new options are additive)
@@ -227,6 +236,25 @@ palt is off. `--ls-body` is redefined to 0, so every component that uses it lose
   - `ink`, `action` and `sos`
 - Tags never wrap internally. Use at most two in a row.
 
+### Fact tags (v5): `SM.ui.factTag(kind, value?)`, `SM.ui.factTags(p | [{kind, value}], {max:3, skip})`, `SM.ui.programFacts(p, {max, skip})`
+- The short, scannable facts that replace sentences in rows: `grant` 返さなくていい · `loan` あとで返す · `cond` 返済なしの場合も ·
+  `deadline` 締切 {v} (or `deadlineAny` 締切あり) · `free` 無料 · `h24` 24時間 · `always` いつでも · `right` 申請は権利.
+- Flat, square (0 radius), 12px Plex 500, one tone per kind (green for money you keep / free, amber for loans and deadlines,
+  ink outline for 申請は権利). `factTags` returns `<span class="tags tags-fact">` so it can sit inside a link or button.
+- `programFacts(p)` derives the list from a program (repayment, deadline, cost, hours) in priority order; max 3 per row.
+
+### Key facts (v5): `SM.ui.keyFacts([{label, value | html, unit, tone}], {cls})`
+- `dl.keyfacts` of 2–4 short label/value pairs (`.kf > .kf-k + .kf-v`) for the top of a detail page: いくら · 返済 · 締切 · どこで.
+  Values are Plex 700 (numbers inside get `amt-n`); tone `free` (green) · `loan` / `deadline` (amber) · `muted`. Use it instead of a paragraph that says the same.
+
+### 「くわしく」 disclosure (v5): `SM.ui.more(label?, contentHtml, {open, id, closeLabel, cls, inline})`
+- Hides secondary text (conditions, background, long how-to) behind ONE ruled row: `button.more-btn` (label + drawn +/−,
+  44px) with `aria-expanded` / `aria-controls`, and `div.more-body[role=region][hidden]`. Default label くわしく.
+- `inline:true` renders a text trigger (`.more-inline`) for use inside a paragraph; `closeLabel` swaps the label when open.
+- `SM.ui.moreToggle(btn)` toggles it (wired via `data-act="more"`). With JS, ENGINE opens it in place (`SM.motion.expand`:
+  the block unclips, everything below slides down on one curve, the text fades and drops 12px). Without JS the body is
+  `hidden`; never put safety text (phone numbers, crisis lines, deadlines that cost money) behind it.
+
 ### Kanji marks: `SM.ui.catIcon(cat, size?, {reading, label, vt, hero})` (alias `catMark`)
 - **Sizes:** `xs` 24 (chips, legends, inline) · **`sm` 32 = default** (every list row) · `lg` 56 (program and category headers) · `xl` 80 (desktop category hero). The glyph is Plex 700 at .58 of the size.
 - **Reading:** the ふりがな reading shows under the mark with ふりがな on (or with `reading:true`). With ふりがな on, row mark columns widen to fit it, so titles stay aligned.
@@ -236,8 +264,13 @@ palt is off. `--ls-body` is redefined to 0, so every component that uses it lose
   - `hero:true` puts `data-vt-hero="cat"` on it. Destinations (program, category and lesson headers) set it.
   - The tapped row needs `data-id` (`programCard` sets it; `listItem({id})`).
 
-### Program row: `SM.ui.programCard(p, {why, compact, showSave, href, headingLevel, vt})`
-- **Layout:** a ruled row:
+### Program row: `SM.ui.programCard(p, {why, compact, showSave, href, headingLevel, vt, full, hook, whyInline, facts, tags})`
+- **v5 default (lean):** `[32 mark]  title (h3, data-vt="title")  /  ONE key fact (the amount's headline clause)  /  fact tags (max 3)  [☆ 44]`.
+  No eyebrow, no hook, no labelled facts, no visible 理由 line (the reason is read to screen readers only).
+  - `hook:true` adds the one-line hook back; `whyInline:true` shows the 理由 line; `tags:false` drops the tags;
+    `facts:[{kind, value}]` overrides them.
+  - `full:true` renders the v4 row below (for places that really need it).
+- **v4 full layout (`full:true`):** a ruled row:
   - `[32 mark]`, then eyebrow (`basis ／ category ／ 申請は権利`, label Plex 500, ink-3: basis is no longer blue)
   - title (h3, balance)
   - hook (meta 15, 2 lines)
@@ -264,9 +297,12 @@ palt is off. `--ls-body` is redefined to 0, so every component that uses it lose
 - Hand-built `.section-head` markup without a `.section-rule` child still gets the static rule from `::after`. Switch to `SM.ui.sectionHeader` when you restyle.
 - This replaces `h-sec`, `pg-sec-head`, `tl-sec-head`, `pp-sec`, `ab-sec` and `f-cat-sec`. Keep those classes only as spacing hooks via `cls`.
 
-### Lists: `SM.ui.listItem({title, sub, href, act, icon, cat, meta, unit, chevron, id, attrs})`
+### Lists: `SM.ui.listItem({title, sub, subSr, href, act, icon, cat, meta, unit, count, amount, tags, chevron, id, vt, attrs})`
 - Ruled rows, at least 56px tall.
-- Title is Plex 700 16. The count sits at the right in Plex 700 18 with a small unit (`meta: 24, unit: '件'`).
+- Title is Plex 700 16. The count sits at the right in Plex 700 18 with a small unit (`meta: 24, unit: '件'`); `count:true` rolls it.
+- v5: prefer NO grey sub-line. Put the one fact that matters in `amount` (`.list-amount`, Plex 700) or `tags` (fact tags),
+  and pass explanatory text as `subSr` (screen readers only). `sub` still works for the rare row that needs it.
+- With an `href` the title carries `data-vt="title"` (shared title morph; `vt:false` turns it off).
 - Rows have a trailing drawn arrow, with the same hover and press band as program rows.
 
 ### Questions: `SM.ui.opt(label, {hint, selected, multi, quiet, catIcon, icon, end, act, href})` and `SM.ui.progress(step, total, {style, prefix, label})`
@@ -304,7 +340,8 @@ palt is off. `--ls-body` is redefined to 0, so every component that uses it lose
 - `SM.ui.sheetFrame(body, {title, foot})`: header markup for `SM.sheet`.
 - Also: `SM.ui.deadlineShort`, `repayLabel`, `basisLabel`, `catLabel` and `listedCount`.
 - Inputs (`.input .select .textarea .field .label .help .check`): 48px, 1px rule-2, and 2px ink on focus (an inset 1px plus the border).
-- `details.disclose`: a ruled row with a drawn + / −.
+- `details.disclose`: a ruled row with a drawn + / −. ENGINE opens and closes it in place (`SM.motion.expand`); add
+  `data-native` to keep the browser's instant toggle.
 
 ### Sheets and toast (CORE markup, ENGINE motion, styled here)
 - **Phone sheet:**
@@ -322,11 +359,29 @@ palt is off. `--ls-body` is redefined to 0, so every component that uses it lose
 ---------------------------------------------------------------------------------------------------
 ## 7. Motion hooks that the system provides (the engine is `SM.motion`, MOTION-SPEC.md)
 
+**v5 scale (SPEC-v5 Part A).** Durations 280–520ms (`--dur-base` 320, `--dur-page` 440, `--dur-morph` 480, `--dur-hero` 560);
+travel 24–48px (`--m-rise` 28px, `--m-slide` 32px, page entrance 48px); `--ease-spring` / `--spring-rise` (≈3% overshoot,
+~520ms) for things that arrive, `--ease-push` for pages; stagger 50ms, cap 8. Reduced: `--dur-reduce` 180ms, opacity and
+colour only.
+
+- **Pages.** forward = the new page pushes in from the right over the old one, which shifts 30% left and dims; back = the
+  reverse. Tabs = cross-fade with a 16px rise while the indicator slides. The tapped row's `data-vt="cat"` mark and
+  `data-vt="title"` title morph into the destination's `data-vt-hero="cat"` / `data-vt-hero="title"` (or the view's `h1`).
+- **Press.** `.btn .chip .pill .icon-btn .pcard-save .seg>* .section-action .opt .contact-cta .sos-copy .back .more-btn
+  .toast-act [data-press]` sink 2px and darken on pointer-down (≤50ms), spring back on release. Rows get the ink wash;
+  tab icons squeeze and pop.
+- **Save.** `SM.motion.flyTo(fromEl, 'plan')`: a green dot arcs to the やること tab, the icon pops, a ring lands, and
+  `SM.motion.badge('plan', n)` pops / rolls the count.
+- **Scroll.** Section rules draw as they enter; heads rise 28px; lists stagger.
+
 | Hook | Where | What happens |
 |---|---|---|
 | `data-reveal="rule"` on `.section-rule` | every `SM.ui.sectionHeader` | the 2px rule draws from the left |
 | `data-vt="cat"` / `data-vt-hero="cat"` on `.cat-mark` | rows / headers (`catIcon {vt, hero}`) | the kanji tile morphs between screens |
-| `.btn`, `[data-press]` | buttons, any pressable | ENGINE press scale; the arrow nudges (base.css) |
+| `.btn`, `.chip`, `.pill`, `[data-press]` … | buttons, any pressable | ENGINE press: sink 2px + darken, spring back; the arrow nudges (base.css) |
+| `data-vt="title"` / `data-vt-hero="title"` | row titles (`programCard`, `listItem` with href) / page H1 | the title morphs between screens |
+| `.more-btn`, `details.disclose` | `SM.ui.more`, disclosures | open/close in place (`SM.motion.expand`) |
+| `.tab-badge` | tab bar | `SM.motion.badge(tab, n)`: pops in, rolls, bumps |
 | row press | `.pcard` `.list-item` `.contact-item` `details > summary` | instant 6% ink wash, fades 160ms after release (CSS only) |
 | `.seg::before` | segmented | the ink fill slides on `--spring-snappy` (CSS only) |
 | `.switch::before` | switch | the knob slides and squashes on the snappy spring (CSS only) |
@@ -367,11 +422,12 @@ palt is off. `--ls-body` is redefined to 0, so every component that uses it lose
 | Separate items with hairlines and whitespace | Put each item in a rounded box with a shadow |
 | One 2px ink rule per section start, drawn in | Stack a heavy rule on a hairline, or 3px/4px rules |
 | Make the number the biggest thing (num-hero, num-l, amt-n) | Hide amounts in small grey text |
-| Write `返済 ｜ 返さなくていい` as labelled text | Make a row of colored pills for every fact |
+| One key fact + at most 3 flat fact tags per row (`返さなくていい` `締切 3/31`) | A grey sentence under every title, or rounded colored pills for every fact |
+| Put secondary text behind 「くわしく」 (`SM.ui.more`) | Explain every button in a paragraph above it |
 | One green action per screen; partner it with a text link → | Two outlined blocks of equal weight, green call buttons in every row |
 | The kanji mark for category, travelling between screens | A house or heart icon in a pastel tile |
 | One 蛍光ペン phrase | Gradient text, glow, highlight everything |
-| Motion that answers the finger (press, slide, draw) | Bounce, shake, confetti, shimmer, loops, parallax |
+| Motion that answers the finger (press, push, slide, draw, a spring ≤4%) | Bounce, shake, confetti, shimmer, loops, parallax |
 | Left-align to the shared container edge | Center everything, or give each view its own max-width |
 
 ## 10. Voice

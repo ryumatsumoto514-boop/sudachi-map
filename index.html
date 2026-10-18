@@ -26,8 +26,9 @@
 <script>
 /* LAUNCH — head gate. Runs before first paint; small and synchronous on purpose (MOTION-SPEC §2.1, §2.6, §7).
    1. Paints the stored theme, language and reduced-motion state, so frame 1 is already right.
-   2. Picks the opening: html.lx-full (first visit to home, or ?lx=1), html.lx-short (returning, first load this
-      session), or none (deep link, reload in the session, ?lx=0, reduced motion, storage blocked).
+   2. Picks the opening (SPEC-v5 Part A 1): html.lx-full (the first load of home this session, or ?lx=1), html.lx-short
+      (every other load: a reload / return in the same session, or a deep link — a 0.5s beat in the app bar),
+      html.lx-fade (reduced motion: the page cross-fades in, nothing moves), or none (?lx=0).
    3. Makes the splash skippable and すぐ閉じる work from frame 1, before any app script has parsed;
       a 緊急 / 設定 tap made before the app starts is replayed once it has.
    4. Loads the web fonts (BIZ UDPGothic 400/700 + IBM Plex Sans JP 500/700): now on a fast connection and device,
@@ -57,12 +58,12 @@
   if (rm || s.motion === 'reduce') de.classList.add('m-reduce');
 
   var h = location.hash, q = location.search, home = !h || h === '#' || h === '#/';
-  var seen = null, again = null, stored = true, mode = '';
-  try { seen = ls.getItem('sm2:seen'); } catch (e) { stored = false; }
+  var again = null, mode = '';
   try { again = ss.getItem('sm2:ss'); ss.setItem('sm2:ss', '1'); } catch (e) { }
-  if (!/[?&]lx=0(&|$)/.test(q) && !de.classList.contains('m-reduce')) {
-    if (/[?&]lx=1(&|$)/.test(q) || (home && stored && !seen)) mode = 'full';
-    else if (home && !again) mode = 'short';
+  if (!/[?&]lx=0(&|$)/.test(q)) {
+    if (/[?&]lx=1(&|$)/.test(q) || (home && !again)) mode = 'full';
+    else mode = 'short';
+    if (de.classList.contains('m-reduce')) mode = 'fade';
   }
   var L = w.__lx = { mode: mode, t0: now(), skipped: false, out: false, done: !mode, queued: null };
   if (mode) de.classList.add('lx-' + mode);
@@ -74,7 +75,7 @@
       L.skipped = true; L.skipAt = now(); de.classList.add('lx-skip');
       try {
         var el = d.getElementById('launch'), list = el ? el.getAnimations({ subtree: true }) : [], max = 0, a, t;
-        list = list.filter(function (x) { return !/^lx-(failsafe|restore)/.test(x.animationName || ''); });
+        list = list.filter(function (x) { return !/^lx-(failsafe|restore|run)/.test(x.animationName || ''); });
         for (i = 0; i < list.length; i++) { t = list[i].effect.getComputedTiming(); max = Math.max(max, t.endTime - (list[i].currentTime || 0)); }
         if (max > 140) for (i = 0; i < list.length; i++) { a = list[i]; if (a.updatePlaybackRate) a.updatePlaybackRate(max / 140); else a.playbackRate = max / 140; }
       } catch (e) { de.classList.add('lx-skip-css'); }
@@ -165,8 +166,15 @@
       var so = v.querySelector('.sm-fail-sos');
       if (so) so.addEventListener('click', function () { sosStatic(true); });
       try { var lx = d.getElementById('launch'); if (lx && lx.parentNode) lx.parentNode.removeChild(lx); } catch (x) { }
-      de.classList.remove('lx-full', 'lx-short', 'lx-on');
+      de.classList.remove('lx-full', 'lx-short', 'lx-fade', 'lx-on');
     }, 0);
+    // the app started but js/launch.js never took the opening over (it failed to load): the splash goes now
+    setTimeout(function () {
+      if (L.taken || L.done || !started()) return;
+      try { var lx2 = d.getElementById('launch'); if (lx2 && lx2.parentNode) lx2.parentNode.removeChild(lx2); } catch (x) { }
+      de.classList.remove('lx-full', 'lx-short', 'lx-fade', 'lx-on');
+      L.done = true;
+    }, 800);
   });
   d.addEventListener('DOMContentLoaded', function () {
     var tries = 0;
@@ -353,19 +361,139 @@ html.sm-loading #view{cursor:progress}
 .nojs h1{font-size:1.25rem;margin:0 0 8px}
 .nojs a{color:#0b5c39;font-weight:700}
 </style>
-<!-- LAUNCH (critical): the splash markup stays out of the page until css/launch.css switches it on -->
-<style>#launch{display:none}</style>
-<link rel="stylesheet" href="css/base.css">
-<link rel="stylesheet" href="css/motion.css">
-<link rel="stylesheet" href="css/launch.css">
-<link rel="stylesheet" href="css/home.css">
-<link rel="stylesheet" href="css/find.css">
-<link rel="stylesheet" href="css/program.css">
-<link rel="stylesheet" href="css/map.css">
-<link rel="stylesheet" href="css/plan.css">
-<link rel="stylesheet" href="css/learn.css">
-<!-- MapLibre (js/vendor/maplibre-gl.{css,js}) and the map data (data/map/base.js, style.js) are NOT loaded here:
-     SM.loadMapLib() in js/launch.js adds them the first time the map is opened (or a map link is pressed). -->
+<!-- LAUNCH (critical, inline). The stylesheets are linked in the body, AFTER the app bar and the splash (#launch),
+     so they block only what comes after them: the bar and the opening paint on frame 1 with these rules, while
+     css/*.css is still on its way. css/base.css restates every shell rule below with the same values (tokens §1,
+     shell §6–7), so nothing moves when it arrives. The splash itself lives only here; css/launch.css has the parts
+     that come after the stylesheets (the view, the tab bar, the reduced-motion fade). -->
+<style>
+:root{--paper:#fff;--paper-2:#f5f4ef;--paper-3:#ebeae4;--ink:#1b1b19;--ink-2:#3e3d39;--rule:#e3e1da;--action:#0b6e44;--red:#c8281e;--red-hover:#a82017;--on-red:#fff;--focus:#1d5aa6;
+  --gutter:20px;--appbar-h:56px;--tap:44px;--r-ctl:2px;--t-chrome:13px;--t-chrome-s:12px;--fs-sm:.875rem;--ls-body:.02em;
+  --safe-t:env(safe-area-inset-top,0px);--safe-r:env(safe-area-inset-right,0px);--safe-l:env(safe-area-inset-left,0px);
+  --font-body:"BIZ UDPGothic","Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic UI","Yu Gothic",Meiryo,system-ui,sans-serif;
+  --font-display:"IBM Plex Sans JP","Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic UI",system-ui,sans-serif}
+@media (max-width:374px){:root{--gutter:16px}}
+@media (min-width:900px){:root{--gutter:32px}}
+@media (min-width:1100px){:root{--gutter:40px}}
+:root[data-theme="dark"]{--paper:#141413;--paper-2:#1d1d1b;--paper-3:#2a2a27;--ink:#edebe4;--ink-2:#ccc9c0;--rule:#34332f;--action:#3fb37a;--red:#d2392e;--red-hover:#e04a3f;--focus:#8db7ee}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;background:var(--paper)}
+body{margin:0;font-family:var(--font-body);color:var(--ink);background:var(--paper);-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;overflow-x:hidden}
+svg{display:block;max-width:100%}svg.icon{display:inline-block}
+button{font:inherit;color:inherit;letter-spacing:inherit;cursor:pointer;background:none;border:0;padding:0;margin:0;border-radius:0}
+[hidden]{display:none!important}
+.skip{position:fixed;left:12px;top:calc(var(--safe-t) + 8px);z-index:1000;transform:translateY(-160%);background:var(--ink);color:var(--paper);padding:10px 16px;font-family:var(--font-display);font-weight:700;text-decoration:none}
+.skip:focus{transform:none;outline:2px solid var(--focus);outline-offset:2px}
+.appbar{position:sticky;top:0;z-index:60;display:flex;align-items:center;gap:8px;min-height:calc(var(--appbar-h) + var(--safe-t));padding:var(--safe-t) max(10px,var(--safe-r)) 0 max(var(--gutter),var(--safe-l));background:var(--paper);border-bottom:1px solid var(--rule)}
+.brand{position:relative;flex:1 1 auto;min-width:0;display:inline-flex;align-items:center;gap:0;min-height:var(--tap);margin-block:-2px;color:var(--ink);text-decoration:none}
+.appbar .brand{--lk:22px}
+.appbar .brand .logo-lockup{display:block;flex:none;height:var(--lk);width:auto;max-width:none;overflow:visible}
+.appbar .brand .brand-name{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap}
+@media (max-width:379px){.appbar .brand{--lk:20px}}
+@media (max-width:339px){.appbar .brand{--lk:18px}}
+@media (min-width:900px){.appbar .brand{--lk:24px}}
+.appbar .brand:has(>.logo-lockup:not(.is-en))::after{content:"";position:absolute;pointer-events:none;left:calc(var(--lk) * 23.333 / 20);width:calc(var(--lk) * (134 - 23.333) / 20);top:calc(50% + var(--lk) / 2 - 2px);height:6px;background:var(--action);
+  -webkit-mask:linear-gradient(#000 0 0) left bottom/calc(100% - 6px) 2px no-repeat,url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M0 4H3.586L7.586 0H10V2H8.414L4.414 6H0Z'/%3E%3C/svg%3E") right top/10px 6px no-repeat;
+  mask:linear-gradient(#000 0 0) left bottom/calc(100% - 6px) 2px no-repeat,url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M0 4H3.586L7.586 0H10V2H8.414L4.414 6H0Z'/%3E%3C/svg%3E") right top/10px 6px no-repeat}
+.appbar-actions{flex:none;display:flex;align-items:center;gap:6px}
+.pill{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:4px;height:36px;padding:0 12px;border-radius:var(--r-ctl);font-family:var(--font-display);font-size:var(--t-chrome);font-weight:700;line-height:1;letter-spacing:var(--ls-body);white-space:nowrap;word-break:keep-all;flex:none}
+.pill::before{content:"";position:absolute;inset:-4px -3px}
+.pill .icon{width:14px;height:14px;stroke-width:2.5}
+.pill-exit{background:var(--paper);color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.pill-sos{background:var(--red);color:var(--on-red);padding:0 11px 0 9px}
+.icon-btn{position:relative;display:inline-grid;place-items:center;flex:none;width:40px;height:40px;border-radius:var(--r-ctl);color:var(--ink)}
+.icon-btn::before{content:"";position:absolute;inset:-2px}
+.icon-btn .icon{width:24px;height:24px;stroke-width:1.75}
+@media (max-width:379px){.appbar{gap:4px;padding-right:max(6px,var(--safe-r))}.appbar-actions{gap:4px}.pill{padding:0 9px;font-size:var(--t-chrome-s)}.pill-sos{padding:0 9px 0 7px}.icon-btn{width:36px}}
+@media (min-width:900px){.appbar{padding-left:max(24px,var(--safe-l));padding-right:max(16px,var(--safe-r))}.appbar-actions{gap:8px}.pill{padding:0 14px;font-size:var(--fs-sm)}}
+@media (min-width:1440px){.appbar{padding-left:max(var(--gutter),var(--safe-l),calc((100% - 1440px) / 2 + var(--gutter)));padding-right:max(10px,var(--safe-r),calc((100% - 1440px) / 2 + 10px))}}
+/* English before boot repaints the bar: the static bar carries the Japanese lockup; never flash it */
+html.lx-en .appbar .brand .logo-lockup:not(.is-en){visibility:hidden}
+
+/* ================= the opening (html.lx-full). t = ms after first paint. Transform / opacity only.
+   0–440   the line draws across the screen like a train line (a wipe: the clip moves in, its content counter-moves)
+   0–520   the 巣 station box slides in along it and arrives with a small settle (overshoot ≈ 4%)
+   300–780 立ちマップ ride in out of the box, one after another
+   480–780 the caption hangs from the line
+   then js/launch.js hands off: the lockup flies into the app bar, the line rises and becomes the bar's underline,
+   the tab bar rises, the home page cascades in. Slow network: from 1.25s a short ink "train" runs along the line
+   until the app is ready (the one loop: a progress indicator). Failsafes: js/launch.js missing → the head gate removes
+   the splash at window load; everything missing → the 12s CSS failsafe. */
+#launch{display:none}
+html.lx-full #launch{--lx-gx:max(20px,env(safe-area-inset-left,0px));--lx-b:min(52px,calc((100vw - 2 * var(--lx-gx)) * 20 / 134));--lx-u:calc(var(--lx-b) / 20);--lx-y:46%;
+  display:block;position:fixed;inset:0;z-index:55;pointer-events:auto;contain:strict;overflow:hidden;color:var(--ink);-webkit-tap-highlight-color:transparent;
+  animation:lx-failsafe 1ms linear 12s forwards}
+@media (min-width:900px){html.lx-full #launch{--lx-gx:max(28px,env(safe-area-inset-left,0px));--lx-b:60px;--lx-y:44%}}
+@keyframes lx-failsafe{from,to{visibility:hidden;pointer-events:none}}
+#launch .lx-paper{position:absolute;inset:0;background:var(--paper)}
+/* one frame for the lockup and the track: the lockup's own 134×23 unit box; the line's centre is on --lx-y */
+#launch .lx-frame{position:absolute;left:var(--lx-gx);top:calc(var(--lx-y) - 22 * var(--lx-u));width:calc(134 * var(--lx-u));height:calc(23 * var(--lx-u));transform-origin:0 0}
+#launch .lx-frame>svg{display:block;width:100%;height:100%;max-width:none;overflow:visible}
+#launch .lx-track,#launch .lx-track-in{position:absolute;inset:0}
+#launch .lx-track{overflow:hidden;animation:lx-wipe 440ms cubic-bezier(.5,0,.2,1) both}
+#launch .lx-track-in{animation:lx-unwipe 440ms cubic-bezier(.5,0,.2,1) both}
+#launch .lx-track svg{fill:var(--action)}
+@keyframes lx-wipe{from{transform:translateX(-100%)}to{transform:translateX(0)}}
+@keyframes lx-unwipe{from{transform:translateX(100%)}to{transform:translateX(0)}}
+#launch .lx-run{fill:var(--ink);opacity:0;transform-box:view-box;animation:lx-run 1100ms cubic-bezier(.45,0,.55,1) 1250ms infinite}
+@keyframes lx-run{0%{opacity:0;transform:translateX(0)}12%{opacity:1}88%{opacity:1}100%{opacity:0;transform:translateX(112px)}}
+#launch .lx-lockup{will-change:transform}
+#launch .lx-lockup .lg-line{opacity:0} /* the track is the line until the hand-off; same pixels */
+#launch .lg-box,#launch .lg-word path{transform-box:fill-box}
+#launch .lg-box{transform-origin:50% 100%;animation:lx-arrive 520ms linear both}
+@keyframes lx-arrive{
+  0%{transform:translateX(-160%);animation-timing-function:cubic-bezier(.35,.35,.3,1)}
+  74%{transform:translateX(8%) scaleY(.96);animation-timing-function:cubic-bezier(.4,0,.3,1)}
+  100%{transform:translateX(0) scaleY(1)}}
+#launch .lg-word path{animation:lx-ride 300ms cubic-bezier(.2,.8,.25,1) both}
+#launch .lg-word .lg-g1{animation-delay:250ms}#launch .lg-word .lg-g2{animation-delay:285ms}#launch .lg-word .lg-g3{animation-delay:320ms}#launch .lg-word .lg-g4{animation-delay:355ms}#launch .lg-word .lg-g5{animation-delay:390ms}
+@keyframes lx-ride{from{opacity:0;transform:translateX(-70%)}45%{opacity:1}to{opacity:1;transform:translateX(0)}}
+#launch .lx-cap{position:absolute;left:var(--lx-gx);right:var(--lx-gx);top:calc(var(--lx-y) + var(--lx-u));margin:0;padding:14px 0 4px;overflow:hidden;
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP","Noto Sans CJK JP","Yu Gothic UI",Meiryo,system-ui,sans-serif;
+  font-size:clamp(11px,3.35vw,13px);font-weight:500;line-height:1.6;letter-spacing:.08em;color:var(--ink-2);font-feature-settings:"palt" 1}
+#launch .lx-cap-ja,#launch .lx-cap-en{display:block;animation:lx-hang 300ms cubic-bezier(.16,1,.3,1) 400ms both}
+#launch .lx-cap-en{display:none;letter-spacing:.02em}
+html.lx-en #launch .lx-cap-ja{display:none}html.lx-en #launch .lx-cap-en{display:block}
+@keyframes lx-hang{from{transform:translateY(calc(-100% - 18px))}to{transform:translateY(0)}}
+@media (min-width:900px){#launch .lx-cap{font-size:14px;padding-top:18px}}
+/* skip without WAAPI (the head gate otherwise fast-forwards every part with one playback rate) */
+html.lx-skip-css #launch :is(.lx-track,.lx-track-in,.lg-box,.lg-word path,.lx-cap-ja,.lx-cap-en){animation-delay:0ms!important;animation-duration:120ms!important}
+html.lx-out #launch{pointer-events:none}
+/* the bar while the splash is up: its actions float on the splash paper; the brand waits (it is where the lockup
+   lands) and the bottom border is masked (the line becomes it). Restored at 12s if nothing else does it. */
+html.lx-full .appbar .brand{opacity:0;animation:lx-restore-o 1ms linear 12s forwards}
+html.lx-full .appbar .brand::after{opacity:0}
+html.lx-full .appbar::after{content:"";position:absolute;left:0;right:0;top:100%;height:0;pointer-events:none;border-bottom:inherit;border-bottom-color:var(--paper);animation:lx-restore-hide 1ms linear 12s forwards}
+html.lx-full.lx-out .appbar::after{content:none}
+@keyframes lx-restore-o{from,to{opacity:1}}
+@keyframes lx-restore-hide{from,to{opacity:0}}
+
+/* ================= returning (html.lx-short, ≈0.55s): the opening in miniature, in the app bar. The box arrives
+   along its line, the kana ride in, the brand line draws, and a green line runs the width of the bar and settles
+   into its hairline. Nothing covers content, so there is nothing to skip. */
+html.lx-short .appbar .brand .lg-box,html.lx-short .appbar .brand .lg-word path{transform-box:fill-box}
+html.lx-short .appbar .brand .lg-box{transform-origin:50% 100%;animation:lx-s-arrive 420ms linear both}
+@keyframes lx-s-arrive{
+  0%{opacity:0;transform:translateX(-110%);animation-timing-function:cubic-bezier(.3,.1,.3,1)}
+  30%{opacity:1}
+  72%{opacity:1;transform:translateX(8%) scaleY(.95);animation-timing-function:cubic-bezier(.4,0,.3,1)}
+  100%{opacity:1;transform:translateX(0) scaleY(1)}}
+html.lx-short .appbar .brand .lg-word path{animation:lx-ride 300ms cubic-bezier(.2,.8,.25,1) both}
+html.lx-short .appbar .brand .lg-word .lg-g1{animation-delay:130ms}html.lx-short .appbar .brand .lg-word .lg-g2{animation-delay:160ms}html.lx-short .appbar .brand .lg-word .lg-g3{animation-delay:190ms}html.lx-short .appbar .brand .lg-word .lg-g4{animation-delay:220ms}html.lx-short .appbar .brand .lg-word .lg-g5{animation-delay:250ms}
+html.lx-short .appbar .brand::after{transform-origin:0 50%;animation:lx-draw 380ms cubic-bezier(.5,0,.15,1) 90ms both}
+@keyframes lx-draw{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+html.lx-short .appbar::before,html.lx-short .appbar::after{content:"";position:absolute;left:0;right:0;top:100%;pointer-events:none}
+html.lx-short .appbar::before{height:0;border-bottom:1px solid var(--paper);animation:lx-soft 200ms linear 420ms both}
+html.lx-short .appbar::after{height:2px;margin-top:-.5px;background:var(--action);transform-origin:0 50%;animation:lx-draw 420ms cubic-bezier(.5,0,.15,1) both,lx-soft 200ms linear 420ms both}
+@keyframes lx-soft{from{opacity:1}to{opacity:0}}
+
+/* reduced motion and print: no opening; the fade (html.lx-fade) is opacity only (css/launch.css) */
+html.m-reduce #launch{display:none!important}
+html.m-reduce .appbar .logo-lockup *,html.m-reduce .appbar .brand::after{animation:none!important}
+html.m-reduce .appbar::before,html.m-reduce .appbar::after{content:none!important}
+@media (prefers-reduced-motion:reduce){#launch{display:none!important}.appbar .logo-lockup *,.appbar .brand::after{animation:none!important}}
+@media print{#launch{display:none!important}html.lx-full .appbar .brand{opacity:1}}
+</style>
 </head>
 <body>
 <a class="skip" href="#view">本文へ</a>
@@ -413,6 +541,27 @@ html.sm-loading #view{cursor:progress}
   if (tp && tp.content) { en = tp.content.querySelectorAll('[data-en]'); for (i = 0; i < en.length; i++) en[i].textContent = en[i].getAttribute('data-en'); }
 })();
 </script>
+<!-- The opening: painted on frame 1 by the inline rules in <head> (it sits before the stylesheets), handed off by
+     js/launch.js. Under the app bar (z 55 < 60): すぐ閉じる / 緊急 / 設定 work from frame 1. aria-hidden, nothing
+     focusable, never inert (inert is skipped by hit testing: taps would fall through). -->
+<div id="launch" aria-hidden="true">
+  <div class="lx-paper"></div>
+  <div class="lx-track"><div class="lx-track-in"><div class="lx-frame lx-track-frame"><svg viewBox="0 0 134 23" width="134" height="23" overflow="visible" aria-hidden="true" focusable="false"><path d="M-2000 21H124.429V23H-2000Z"/><path d="M124.329 23L124.379 23A2.5 2.5 0 0 0 126.146 22.268L129.268 19.146A0.5 0.5 0 0 1 129.621 19L129.671 19L129.671 17L129.621 17A2.5 2.5 0 0 0 127.854 17.732L124.732 20.854A0.5 0.5 0 0 1 124.379 21L124.329 21Z"/><path d="M129.571 17H2134V19H129.571Z"/><rect class="lx-run" x="1" y="21" width="10" height="2"/></svg></div></div></div>
+  <div class="lx-frame lx-lockup"><svg class="logo-lockup has-line" viewBox="0 0 134 23" width="134" height="23" aria-hidden="true" overflow="visible" focusable="false"><defs><clipPath id="lx-clip"><rect x="21.4" y="-8" width="116" height="29"/></clipPath></defs><path class="lg-box" fill="currentColor" fill-rule="evenodd" d="M0 0H20V20H0ZM9.167 16.667L9.167 13.882Q8.471 14.417 7.606 14.911Q6.741 15.405 5.826 15.816Q4.904 16.228 3.958 16.502Q3.878 16.337 3.718 16.104Q3.558 15.871 3.373 15.631Q3.197 15.391 3.045 15.254Q3.782 15.062 4.639 14.76Q5.457 14.458 6.246 14.088Q7.036 13.717 7.702 13.333L3.333 13.333L3.333 11.667L9.167 11.667L9.167 10.833L5 10.833L5 5.833L5.9 5.833Q5.575 5.408 5.133 4.899Q4.663 4.389 4.279 4.055L5.752 3.173Q6.18 3.599 6.659 4.154Q7.14 4.709 7.48 5.18Q7.288 5.286 7.007 5.476Q6.726 5.666 6.475 5.833L9.397 5.833Q9.122 5.347 8.708 4.693Q8.294 4.04 7.909 3.553L9.339 2.824Q9.756 3.341 10.18 3.994Q10.603 4.648 10.908 5.21Q10.675 5.317 10.33 5.499Q9.986 5.681 9.698 5.833L11.667 5.833Q11.949 5.484 12.284 4.997Q12.619 4.511 12.961 3.987Q13.304 3.462 13.555 3.006L15.192 3.736Q14.897 4.177 14.499 4.747Q14.1 5.317 13.702 5.833L15 5.833L15 10.833L10.833 10.833L10.833 11.667L16.667 11.667L16.667 13.333L12.277 13.333Q12.961 13.717 13.761 14.074Q14.558 14.431 15.393 14.712Q16.266 14.993 16.986 15.185Q16.834 15.336 16.651 15.59Q16.458 15.844 16.29 16.091Q16.122 16.337 16.026 16.502Q15.096 16.228 14.181 15.83Q13.274 15.432 12.411 14.938Q11.548 14.444 10.833 13.909L10.833 16.667ZM6.667 8.333L9.167 8.333L9.167 7.5L6.667 7.5ZM10.833 8.333L13.333 8.333L13.333 7.5L10.833 7.5ZM6.667 10L9.167 10L9.167 9.167L6.667 9.167ZM10.833 10L13.333 10L13.333 9.167L10.833 9.167Z"/><g class="lg-word" fill="currentColor" clip-path="url(#lx-clip)"><path class="lg-g1" d="M23.333 20L23.333 16.667L32.723 16.667Q33.105 15.812 33.487 14.724Q33.869 13.636 34.207 12.5Q34.533 11.364 34.776 10.383Q35.02 9.402 35.122 8.78L38.211 9.518Q38.028 10.237 37.734 11.169Q37.439 12.102 37.093 13.102Q36.748 14.103 36.402 15.035Q36.057 15.967 35.752 16.667L41.667 16.667L41.667 20ZM24.167 8.333L24.167 5L30.833 5L30.833 1.667L34.167 1.667L34.167 5L40.833 5L40.833 8.333ZM28.418 16.239Q28.258 15.287 27.989 14.103Q27.72 12.918 27.38 11.772Q27.041 10.625 26.702 9.829L29.416 9.052Q29.855 10.043 30.205 11.179Q30.554 12.315 30.833 13.452Q31.131 14.588 31.322 15.579Q30.897 15.618 30.334 15.734Q29.775 15.851 29.256 15.977Q28.738 16.103 28.418 16.239Z"/><path class="lg-g2" d="M51.061 20.095Q51 19.667 50.796 19.095Q50.592 18.524 50.296 17.952Q50 17.381 49.673 17.014Q53.143 17.299 55 16.565Q56.857 15.83 56.857 14.299Q56.857 13.524 56.204 13.034Q55.551 12.544 54.469 12.544Q53.204 12.544 51.98 12.963Q50.755 13.381 49.796 14.361Q49.653 14.565 49.49 14.769Q49.327 14.973 49.163 15.136L46.714 13.442Q47.673 12.483 48.337 10.973Q49 9.463 49.408 7.789Q46.653 7.891 44.796 7.789L44.612 4.83Q45.449 4.973 46.857 5.003Q48.265 5.034 49.939 4.973Q50.041 4.075 50.092 3.218Q50.143 2.361 50.122 1.667L53.265 1.667Q53.265 2.34 53.204 3.146Q53.143 3.952 53.041 4.83Q54.469 4.728 55.786 4.595Q57.102 4.463 58.163 4.289Q59.224 4.116 59.857 3.912L59.633 6.85Q58.857 7.014 57.735 7.167Q56.612 7.32 55.276 7.442Q53.939 7.565 52.531 7.646Q52.204 9.116 51.694 10.605Q52.469 10.218 53.224 10.014Q53.98 9.81 54.735 9.81Q56.306 9.81 57.51 10.361Q58.714 10.912 59.388 11.932Q60.061 12.952 60.061 14.361Q60.061 17.259 57.704 18.759Q55.347 20.259 51.061 20.095Z"/><path class="lg-g3" d="M74.596 18.792Q74.002 17.946 73.179 17.02Q72.356 16.095 71.419 15.215Q70.482 14.335 69.522 13.58Q68.562 12.826 67.693 12.323L70.116 10.038Q71.442 10.838 72.859 11.912Q73.796 11.112 74.882 10.106Q75.967 9.1 76.904 8.14Q75.556 8.186 73.944 8.243Q72.333 8.3 70.699 8.369Q69.064 8.438 67.613 8.506Q66.162 8.575 65.076 8.643Q63.99 8.712 63.51 8.758L63.259 5.192Q64.104 5.238 65.476 5.249Q66.847 5.26 68.516 5.249Q70.184 5.238 71.944 5.203Q73.704 5.169 75.339 5.112Q76.973 5.055 78.276 4.986Q79.579 4.918 80.333 4.849L82.39 6.723Q81.636 7.775 80.47 9.078Q79.304 10.38 77.979 11.683Q76.653 12.986 75.396 14.083Q76.584 15.203 77.407 16.3Q77.019 16.552 76.493 16.986Q75.967 17.42 75.464 17.9Q74.962 18.38 74.596 18.792Z"/><path class="lg-g4" d="M88.291 20.209Q88.062 19.592 87.628 18.849Q87.193 18.106 86.759 17.672Q90.919 16.735 93.262 14.312Q95.605 11.889 96.176 7.798L98.896 8.255Q98.348 11.706 96.953 14.026Q95.559 16.346 93.376 17.809Q91.193 19.272 88.291 20.209ZM90.485 12.163Q90.439 11.683 90.222 10.918Q90.005 10.152 89.742 9.409Q89.479 8.666 89.251 8.3L91.788 7.5Q92.016 7.935 92.279 8.678Q92.542 9.42 92.771 10.186Q92.999 10.952 93.068 11.478ZM86.645 13.032Q86.576 12.575 86.336 11.82Q86.096 11.066 85.799 10.335Q85.502 9.603 85.251 9.238L87.765 8.323Q88.016 8.758 88.302 9.489Q88.588 10.22 88.839 10.975Q89.091 11.729 89.205 12.255Z"/><path class="lg-g5" d="M106.117 19.727Q105.94 19.33 105.599 18.768Q105.257 18.206 104.838 17.655Q104.42 17.104 104.001 16.751Q108.144 15.429 110.844 13.169Q113.544 10.91 114.801 7.362Q113.721 7.384 112.409 7.439Q111.098 7.494 109.753 7.538Q108.409 7.582 107.197 7.626Q105.984 7.67 105.092 7.714Q104.199 7.758 103.802 7.802L103.604 4.122Q104.464 4.188 105.797 4.21Q107.131 4.232 108.684 4.232Q110.238 4.232 111.792 4.21Q113.346 4.188 114.658 4.133Q115.969 4.078 116.784 3.989L118.989 5.158Q118.239 8.75 116.454 11.649Q114.669 14.547 112.046 16.597Q109.423 18.647 106.117 19.727ZM120.245 4.981Q119.341 4.981 118.691 4.331Q118.041 3.681 118.041 2.777Q118.041 1.851 118.691 1.201Q119.341 0.551 120.245 0.551Q121.171 0.551 121.821 1.201Q122.471 1.851 122.471 2.777Q122.471 3.681 121.821 4.331Q121.171 4.981 120.245 4.981ZM120.245 3.923Q120.73 3.923 121.071 3.593Q121.413 3.262 121.413 2.777Q121.413 2.292 121.071 1.951Q120.73 1.609 120.245 1.609Q119.76 1.609 119.429 1.951Q119.099 2.292 119.099 2.777Q119.099 3.262 119.429 3.593Q119.76 3.923 120.245 3.923Z"/></g><g class="lg-line" style="fill:var(--action,#0b6e44)"><path class="lg-run1" d="M0 21H124.429V23H0Z"/><path class="lg-step" d="M124.329 23L124.379 23A2.5 2.5 0 0 0 126.146 22.268L129.268 19.146A0.5 0.5 0 0 1 129.621 19L129.671 19L129.671 17L129.621 17A2.5 2.5 0 0 0 127.854 17.732L124.732 20.854A0.5 0.5 0 0 1 124.379 21L124.329 21Z"/><path class="lg-run2" d="M129.571 17H134V19H129.571Z"/></g></svg></div>
+  <p class="lx-cap"><span class="lx-cap-ja">施設や里親家庭を出る人の支援ガイド　東京版</span><span class="lx-cap-en">Support for young people leaving care · Tokyo</span></p>
+</div>
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/motion.css">
+<link rel="stylesheet" href="css/launch.css">
+<link rel="stylesheet" href="css/home.css">
+<link rel="stylesheet" href="css/find.css">
+<link rel="stylesheet" href="css/program.css">
+<link rel="stylesheet" href="css/map.css">
+<link rel="stylesheet" href="css/plan.css">
+<link rel="stylesheet" href="css/learn.css">
+<!-- the stylesheets: everything above (bar, splash) has painted already; what follows waits for them.
+     MapLibre (js/vendor/maplibre-gl.{css,js}) and the map data (data/map/base.js, style.js) are NOT loaded here:
+     SM.loadMapLib() in js/launch.js adds them the first time the map is opened (or a map link is pressed). -->
 <div class="subbar" hidden></div>
 <main id="view" class="view v-home" tabindex="-1">
   <noscript>
@@ -425,14 +574,6 @@ html.sm-loading #view{cursor:progress}
   </noscript>
 </main>
 <nav class="tabbar" aria-label="メイン"></nav>
-<!-- The opening (css/launch.css + js/launch.js). Painted with the first frame, under the app bar (z 55 < 60).
-     aria-hidden, nothing focusable, never inert (inert is skipped by hit testing: taps would fall through). -->
-<div id="launch" aria-hidden="true">
-  <div class="lx-paper"></div>
-  <div class="lx-rule"><i class="lx-rule-hair"></i><i class="lx-rule-ink"></i></div>
-  <div class="lx-lockup"><svg class="logo-lockup has-line" viewBox="0 0 134 23" width="134" height="23" aria-hidden="true" overflow="visible" focusable="false"><defs><clipPath id="lx-clip"><rect x="-4" y="-8" width="142" height="29"/></clipPath></defs><path class="lg-box" fill="currentColor" fill-rule="evenodd" d="M0 0H20V20H0ZM9.167 16.667L9.167 13.882Q8.471 14.417 7.606 14.911Q6.741 15.405 5.826 15.816Q4.904 16.228 3.958 16.502Q3.878 16.337 3.718 16.104Q3.558 15.871 3.373 15.631Q3.197 15.391 3.045 15.254Q3.782 15.062 4.639 14.76Q5.457 14.458 6.246 14.088Q7.036 13.717 7.702 13.333L3.333 13.333L3.333 11.667L9.167 11.667L9.167 10.833L5 10.833L5 5.833L5.9 5.833Q5.575 5.408 5.133 4.899Q4.663 4.389 4.279 4.055L5.752 3.173Q6.18 3.599 6.659 4.154Q7.14 4.709 7.48 5.18Q7.288 5.286 7.007 5.476Q6.726 5.666 6.475 5.833L9.397 5.833Q9.122 5.347 8.708 4.693Q8.294 4.04 7.909 3.553L9.339 2.824Q9.756 3.341 10.18 3.994Q10.603 4.648 10.908 5.21Q10.675 5.317 10.33 5.499Q9.986 5.681 9.698 5.833L11.667 5.833Q11.949 5.484 12.284 4.997Q12.619 4.511 12.961 3.987Q13.304 3.462 13.555 3.006L15.192 3.736Q14.897 4.177 14.499 4.747Q14.1 5.317 13.702 5.833L15 5.833L15 10.833L10.833 10.833L10.833 11.667L16.667 11.667L16.667 13.333L12.277 13.333Q12.961 13.717 13.761 14.074Q14.558 14.431 15.393 14.712Q16.266 14.993 16.986 15.185Q16.834 15.336 16.651 15.59Q16.458 15.844 16.29 16.091Q16.122 16.337 16.026 16.502Q15.096 16.228 14.181 15.83Q13.274 15.432 12.411 14.938Q11.548 14.444 10.833 13.909L10.833 16.667ZM6.667 8.333L9.167 8.333L9.167 7.5L6.667 7.5ZM10.833 8.333L13.333 8.333L13.333 7.5L10.833 7.5ZM6.667 10L9.167 10L9.167 9.167L6.667 9.167ZM10.833 10L13.333 10L13.333 9.167L10.833 9.167Z"/><g class="lg-word" fill="currentColor" clip-path="url(#lx-clip)"><path class="lg-g1" d="M23.333 20L23.333 16.667L32.723 16.667Q33.105 15.812 33.487 14.724Q33.869 13.636 34.207 12.5Q34.533 11.364 34.776 10.383Q35.02 9.402 35.122 8.78L38.211 9.518Q38.028 10.237 37.734 11.169Q37.439 12.102 37.093 13.102Q36.748 14.103 36.402 15.035Q36.057 15.967 35.752 16.667L41.667 16.667L41.667 20ZM24.167 8.333L24.167 5L30.833 5L30.833 1.667L34.167 1.667L34.167 5L40.833 5L40.833 8.333ZM28.418 16.239Q28.258 15.287 27.989 14.103Q27.72 12.918 27.38 11.772Q27.041 10.625 26.702 9.829L29.416 9.052Q29.855 10.043 30.205 11.179Q30.554 12.315 30.833 13.452Q31.131 14.588 31.322 15.579Q30.897 15.618 30.334 15.734Q29.775 15.851 29.256 15.977Q28.738 16.103 28.418 16.239Z"/><path class="lg-g2" d="M51.061 20.095Q51 19.667 50.796 19.095Q50.592 18.524 50.296 17.952Q50 17.381 49.673 17.014Q53.143 17.299 55 16.565Q56.857 15.83 56.857 14.299Q56.857 13.524 56.204 13.034Q55.551 12.544 54.469 12.544Q53.204 12.544 51.98 12.963Q50.755 13.381 49.796 14.361Q49.653 14.565 49.49 14.769Q49.327 14.973 49.163 15.136L46.714 13.442Q47.673 12.483 48.337 10.973Q49 9.463 49.408 7.789Q46.653 7.891 44.796 7.789L44.612 4.83Q45.449 4.973 46.857 5.003Q48.265 5.034 49.939 4.973Q50.041 4.075 50.092 3.218Q50.143 2.361 50.122 1.667L53.265 1.667Q53.265 2.34 53.204 3.146Q53.143 3.952 53.041 4.83Q54.469 4.728 55.786 4.595Q57.102 4.463 58.163 4.289Q59.224 4.116 59.857 3.912L59.633 6.85Q58.857 7.014 57.735 7.167Q56.612 7.32 55.276 7.442Q53.939 7.565 52.531 7.646Q52.204 9.116 51.694 10.605Q52.469 10.218 53.224 10.014Q53.98 9.81 54.735 9.81Q56.306 9.81 57.51 10.361Q58.714 10.912 59.388 11.932Q60.061 12.952 60.061 14.361Q60.061 17.259 57.704 18.759Q55.347 20.259 51.061 20.095Z"/><path class="lg-g3" d="M74.596 18.792Q74.002 17.946 73.179 17.02Q72.356 16.095 71.419 15.215Q70.482 14.335 69.522 13.58Q68.562 12.826 67.693 12.323L70.116 10.038Q71.442 10.838 72.859 11.912Q73.796 11.112 74.882 10.106Q75.967 9.1 76.904 8.14Q75.556 8.186 73.944 8.243Q72.333 8.3 70.699 8.369Q69.064 8.438 67.613 8.506Q66.162 8.575 65.076 8.643Q63.99 8.712 63.51 8.758L63.259 5.192Q64.104 5.238 65.476 5.249Q66.847 5.26 68.516 5.249Q70.184 5.238 71.944 5.203Q73.704 5.169 75.339 5.112Q76.973 5.055 78.276 4.986Q79.579 4.918 80.333 4.849L82.39 6.723Q81.636 7.775 80.47 9.078Q79.304 10.38 77.979 11.683Q76.653 12.986 75.396 14.083Q76.584 15.203 77.407 16.3Q77.019 16.552 76.493 16.986Q75.967 17.42 75.464 17.9Q74.962 18.38 74.596 18.792Z"/><path class="lg-g4" d="M88.291 20.209Q88.062 19.592 87.628 18.849Q87.193 18.106 86.759 17.672Q90.919 16.735 93.262 14.312Q95.605 11.889 96.176 7.798L98.896 8.255Q98.348 11.706 96.953 14.026Q95.559 16.346 93.376 17.809Q91.193 19.272 88.291 20.209ZM90.485 12.163Q90.439 11.683 90.222 10.918Q90.005 10.152 89.742 9.409Q89.479 8.666 89.251 8.3L91.788 7.5Q92.016 7.935 92.279 8.678Q92.542 9.42 92.771 10.186Q92.999 10.952 93.068 11.478ZM86.645 13.032Q86.576 12.575 86.336 11.82Q86.096 11.066 85.799 10.335Q85.502 9.603 85.251 9.238L87.765 8.323Q88.016 8.758 88.302 9.489Q88.588 10.22 88.839 10.975Q89.091 11.729 89.205 12.255Z"/><path class="lg-g5" d="M106.117 19.727Q105.94 19.33 105.599 18.768Q105.257 18.206 104.838 17.655Q104.42 17.104 104.001 16.751Q108.144 15.429 110.844 13.169Q113.544 10.91 114.801 7.362Q113.721 7.384 112.409 7.439Q111.098 7.494 109.753 7.538Q108.409 7.582 107.197 7.626Q105.984 7.67 105.092 7.714Q104.199 7.758 103.802 7.802L103.604 4.122Q104.464 4.188 105.797 4.21Q107.131 4.232 108.684 4.232Q110.238 4.232 111.792 4.21Q113.346 4.188 114.658 4.133Q115.969 4.078 116.784 3.989L118.989 5.158Q118.239 8.75 116.454 11.649Q114.669 14.547 112.046 16.597Q109.423 18.647 106.117 19.727ZM120.245 4.981Q119.341 4.981 118.691 4.331Q118.041 3.681 118.041 2.777Q118.041 1.851 118.691 1.201Q119.341 0.551 120.245 0.551Q121.171 0.551 121.821 1.201Q122.471 1.851 122.471 2.777Q122.471 3.681 121.821 4.331Q121.171 4.981 120.245 4.981ZM120.245 3.923Q120.73 3.923 121.071 3.593Q121.413 3.262 121.413 2.777Q121.413 2.292 121.071 1.951Q120.73 1.609 120.245 1.609Q119.76 1.609 119.429 1.951Q119.099 2.292 119.099 2.777Q119.099 3.262 119.429 3.593Q119.76 3.923 120.245 3.923Z"/></g><g class="lg-line" style="fill:var(--action,#0b6e44)"><path class="lg-run1" d="M0 21H124.429V23H0Z"/><path class="lg-step" d="M124.329 23L124.379 23A2.5 2.5 0 0 0 126.146 22.268L129.268 19.146A0.5 0.5 0 0 1 129.621 19L129.671 19L129.671 17L129.621 17A2.5 2.5 0 0 0 127.854 17.732L124.732 20.854A0.5 0.5 0 0 1 124.379 21L124.329 21Z"/><path class="lg-run2" d="M129.571 17H134V19H129.571Z"/></g></svg></div>
-  <p class="lx-cap"><span class="lx-cap-ja">施設や里親家庭を出る人の支援ガイド　東京版</span><span class="lx-cap-en">Support for young people leaving care · Tokyo</span></p>
-</div>
 <div id="sheet-root"></div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 

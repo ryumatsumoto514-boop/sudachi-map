@@ -1,5 +1,9 @@
-/* 巣立ちマップ v4 — components.js (SYSTEM)
+/* 巣立ちマップ v5 — components.js (ENGINE; was SYSTEM)
    SM.CATS and SM.ui.* — every function returns an HTML string. See DESIGN.md §6.
+   v5 (SPEC-v5 Part B, fewer words): programCard is lean by default (mark + name + one key fact + fact tags + save;
+   {full:true} brings the v4 row back), listItem takes an amount / tags and no grey sub-line unless asked, fact tags
+   (返さなくていい・締切・無料・24時間) via SM.ui.factTags, label/value strips via SM.ui.keyFacts, and a 「くわしく」
+   expand-in-place disclosure via SM.ui.more(label, contentHtml, opts). Section heads rise and draw their rule.
    v4: one drawn arrow everywhere (SM.ui.arrow), chips that never shift when pressed (.chip-l), section heads
    whose 2px rule draws in (data-reveal="rule"), kanji marks that travel between screens (data-vt="cat"),
    spot illustrations in empty states (SM.illus, guarded), a bar progress for question flows.
@@ -84,6 +88,17 @@
     'ui.hours': { ja: '受付時間', en: 'Hours' },
     'ui.free': { ja: '無料', en: 'Free' },
     'ui.more': { ja: 'もっと見る', en: 'See all' },
+    'ui.details': { ja: 'くわしく', en: 'Details' },
+    'ui.detailsClose': { ja: 'とじる', en: 'Close' },
+    'ui.tag.grant': { ja: '返さなくていい', en: 'No payback' },
+    'ui.tag.loan': { ja: 'あとで返す', en: 'Pay back later' },
+    'ui.tag.cond': { ja: '返済なしの場合も', en: 'May be forgiven' },
+    'ui.tag.deadline': { ja: '締切 {v}', en: 'Due {v}' },
+    'ui.tag.deadlineAny': { ja: '締切あり', en: 'Deadline' },
+    'ui.tag.free': { ja: '無料', en: 'Free' },
+    'ui.tag.h24': { ja: '24時間', en: '24h' },
+    'ui.tag.always': { ja: 'いつでも', en: 'Anytime' },
+    'ui.tag.right': { ja: '申請は権利', en: 'Your right' },
     'ui.progress': { ja: '進みぐあい', en: 'Progress' }
   };
   LOCAL = STR;
@@ -454,13 +469,118 @@
     return v ? '<p class="amount' + (o.size ? ' amount-' + esc(o.size) : '') + '">' + amountHtml(v) + '</p>' : '';
   };
 
-  /* programCard(p, {why, compact, showSave, href, headingLevel, vt}) — a ruled list row:
-     [32 mark] eyebrow (who runs it ／ category) / title / one line / amount / 返済・申込 as labelled text / 理由   [☆ 44]
-     The mark is the source of the shared morph into the program page (vt:false turns that off).
+  /* factTag(kind[, value]) — one fact as a flat 22px tag, never a sentence.
+     kinds: grant (返さなくていい, green) · loan (あとで返す, amber) · cond (返済なしの場合も, amber) · deadline (締切 {value},
+     amber; no value → 締切あり) · free (無料, green) · h24 (24時間, ink outline) · always (いつでも) · right (申請は権利). */
+  var FACT_TONE = { grant: 'free', loan: 'loan', cond: 'loan', deadline: 'deadline', free: 'free', h24: 'right', always: 'neutral', right: 'right' };
+  SM.ui.factTag = function (kind, value) {
+    if (!FACT_TONE[kind]) return '';
+    var label = kind === 'deadline' ? (value ? t('ui.tag.deadline', { v: L(value) }) : t('ui.tag.deadlineAny')) : t('ui.tag.' + kind);
+    return '<span class="tag tag-' + FACT_TONE[kind] + ' tag-fact" data-fact="' + esc(kind) + '" data-noruby>' + esc(label) + '</span>';
+  };
+  /* programFacts(p, {max, skip:[kinds]}) -> [{kind, value}] — the facts a row can show as tags, most useful first:
+     返済 (grant / loan / cond), 締切 (short), 無料 (free dial), 24時間, 申請は権利. */
+  function shortDeadline(d) {
+    var x = deadlineInfo(d);
+    if (!x || x.tone !== 'deadline') return null;
+    var v = factSplit(x.value).head;
+    return v.length > (en() ? 18 : 10) ? null : v;
+  }
+  SM.ui.programFacts = function (p, o) {
+    o = o || {};
+    if (!p) return [];
+    var skip = o.skip || [], out = [];
+    var add = function (k, v) { if (skip.indexOf(k) === -1) out.push({ kind: k, value: v }); };
+    if (p.repay === 'none' || (!p.repay && p.kind === 'grant')) add('grant');
+    else if (p.repay === 'conditional' || p.kind === 'loan_forgivable') add('cond');
+    else if (p.repay === 'yes' || p.kind === 'loan') add('loan');
+    var di = deadlineInfo(p.deadline);
+    // leaveMonths is planning timing (when to start), not a cut-off: some of these can be used for years after leaving
+    if (di && di.tone === 'deadline' && typeof (p.deadline || {}).leaveMonths !== 'number') add('deadline', shortDeadline(p.deadline));
+    var c = p.contact || {};
+    var hours = L(c.hours) || '';
+    if (/24\s*時間|24\s*h|24 hours/i.test(hours)) add('h24');
+    if (c.phone && /^0120|^0800/.test(String(c.phone).replace(/\D/g, ''))) add('free');
+    if (p.right) add('right');
+    return out.slice(0, o.max || 3);
+  };
+  /* factTags(p | [{kind, value}], {max, skip}) -> '<span class="tags tags-fact">…</span>' ('' when none; a span, so it
+     is valid inside a link or button row) */
+  SM.ui.factTags = function (src, o) {
+    var list = Array.isArray(src) ? src : SM.ui.programFacts(src, o);
+    if (o && o.max) list = list.slice(0, o.max);
+    var html = list.map(function (f) { return SM.ui.factTag(f.kind, f.value); }).join('');
+    return html ? '<span class="tags tags-fact">' + html + '</span>' : '';
+  };
+
+  /* keyFacts([{label, value, tone, unit, html}], {cls}) — facts as format, not sentences: a strip of label/value cells
+     (big value, small label above), 2–3 per row on phones. value is text ({ja,en} ok; numbers inside are set big by
+     amountHtml); html: trusted value markup instead. tone: free (green) · deadline / loan (amber) · muted. */
+  SM.ui.keyFacts = function (rows, o) {
+    o = o || {};
+    var cells = (rows || []).filter(function (r) { return r && (r.html || (r.value != null && r.value !== '')); }).map(function (r) {
+      var v = r.html != null ? r.html : amountHtml(L(r.value));
+      return '<div class="kf' + (r.tone ? ' kf-' + esc(r.tone) : '') + '"><dt class="kf-k">' + esc(L(r.label)) + '</dt>' +
+        '<dd class="kf-v">' + v + (r.unit ? '<span class="unit">' + esc(L(r.unit)) + '</span>' : '') + '</dd></div>';
+    });
+    return cells.length ? '<dl class="keyfacts' + (o.cls ? ' ' + esc(o.cls) : '') + '" data-reveal-stagger="50">' + cells.join('') + '</dl>' : '';
+  };
+
+  /* more(label, contentHtml, {open, id, closeLabel, cls, inline}) — 「くわしく」: a disclosure that opens IN PLACE.
+     A real <button aria-expanded aria-controls> + a region (hidden when closed). The engine animates it (space opens,
+     the content drops in; SM.motion.expand). label defaults to くわしく / Details; closeLabel (default: the same label)
+     is shown while open. contentHtml is trusted HTML. inline:true renders a quiet text-size trigger (inside cards). */
+  var moreSeq = 0;
+  SM.ui.more = function (label, content, o) {
+    if (label && typeof label === 'object' && !label.ja && !label.en) { o = label; label = null; }
+    o = o || {};
+    var id = o.id || 'more-' + (++moreSeq) + '-' + Math.random().toString(36).slice(2, 6);
+    var lab = label ? L(label) : t('ui.details');
+    var lab2 = o.closeLabel ? L(o.closeLabel) : lab;
+    var open = !!o.open;
+    return '<div class="more' + (o.inline ? ' more-inline' : '') + (open ? ' is-open' : '') + (o.cls ? ' ' + esc(o.cls) : '') + '">' +
+      '<button type="button" class="more-btn" data-act="more" aria-expanded="' + open + '" aria-controls="' + esc(id) + '"' +
+        ' data-label="' + esc(lab) + '" data-label-open="' + esc(lab2) + '">' +
+        '<span class="more-l">' + esc(open ? lab2 : lab) + '</span><span class="more-ic" aria-hidden="true"></span></button>' +
+      '<div class="more-body" id="' + esc(id) + '" role="region" aria-label="' + esc(lab) + '"' + (open ? '' : ' hidden') + '>' + (content || '') + '</div>' +
+    '</div>';
+  };
+  function moreToggle(btn) {
+    var box = btn.closest ? btn.closest('.more') : null;
+    var body = box ? box.querySelector(':scope > .more-body') : null;
+    if (!box || !body) return;
+    var open = btn.getAttribute('aria-expanded') !== 'true';
+    var lab = btn.querySelector('.more-l');
+    var set = function (v) {
+      body.hidden = !v;
+      box.classList.toggle('is-open', v);
+      btn.setAttribute('aria-expanded', v ? 'true' : 'false');
+    };
+    var nextLabel = open ? btn.getAttribute('data-label-open') : btn.getAttribute('data-label');
+    if (lab && nextLabel && lab.textContent !== nextLabel) lab.textContent = nextLabel;
+    if (SM.motion && typeof SM.motion.expand === 'function') {
+      // the button's own state flips now (screen readers hear it at once); the region follows with the animation
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      box.classList.toggle('is-open', open);
+      SM.motion.expand(box, open, { setOpen: set, body: body });
+    } else set(open);
+    if (open && SM.applyRuby) { try { SM.applyRuby(body); } catch (e) { } }
+  }
+  SM.ui.moreToggle = moreToggle;
+  if (SM.on) SM.on('more', function (el) { moreToggle(el); });
+
+  /* programCard(p, {why, compact, showSave, href, headingLevel, vt, full, hook, whyInline, facts, tags}) — a ruled row.
+     v5 default (lean, SPEC-v5 Part B): [32 mark]  name / ONE key fact (the amount's headline) / fact tags
+     (返さなくていい・締切・無料・24時間, max 3)   [☆ 44]. No eyebrow, no grey summary line, no labelled facts: the program
+     page carries them. hook:true adds the one-line hook back; whyInline:true shows the 理由 line (otherwise the reason
+     is read to screen readers only); tags:false drops the tags; facts: [{kind,value}] overrides them.
+     full:true renders the v4 row (eyebrow / title / hook / amount / labelled facts / 理由).
+     The mark and the title are the sources of the shared morph into the program page (vt:false turns that off).
      The article carries data-id so a back navigation finds the row again. */
   SM.ui.programCard = function (p, o) {
     if (!p) return '';
     o = o || {};
+    if (!o.full) return leanCard(p, o);
     var cat = (p.cat && p.cat[0]) || 'procedures';
     var href = o.href || '#/p/' + encodeURIComponent(p.id);
     var h = 'h' + (o.headingLevel || 3);
@@ -498,7 +618,7 @@
       '<div class="pcard-mark">' + SM.ui.catIcon(cat, null, { vt: o.vt !== false }) + '</div>' +
       '<div class="pcard-main">' +
         '<p class="pcard-eyebrow">' + eyebrow.join('<span class="pcard-sep" aria-hidden="true">／</span>') + '</p>' +
-        '<' + h + ' class="pcard-title"><a class="pcard-link" href="' + esc(href) + '">' + esc(name) + '</a></' + h + '>' +
+        '<' + h + ' class="pcard-title"' + (o.vt !== false ? ' data-vt="title"' : '') + '><a class="pcard-link" href="' + esc(href) + '">' + esc(name) + '</a></' + h + '>' +
         (line ? '<p class="pcard-hook">' + esc(line) + '</p>' : '') +
         (amt && !o.compact ? '<p class="pcard-amount"><span class="sr-only">' + esc(t('ui.amount')) + ': </span>' + amountHtml(amt.text) +
           (amt.more ? '<span class="pcard-amount-more">' + esc(t('ui.amountMore')) + '</span>' : '') + '</p>' : '') +
@@ -508,6 +628,39 @@
     '</article>';
   };
 
+  function leanCard(p, o) {
+    var cat = (p.cat && p.cat[0]) || 'procedures';
+    var href = o.href || '#/p/' + encodeURIComponent(p.id);
+    var h = 'h' + (o.headingLevel || 3);
+    var saved = isSaved(p.id);
+    var name = L(p.name);
+    var showSave = o.showSave !== false;
+    var amount = L(p.amount);
+    var amt = amount ? amountClause(amount) : null;
+    var key = '';
+    if (amt && amt.text && !o.compact) {
+      key = '<p class="pcard-key pcard-amount"><span class="sr-only">' + esc(t('ui.amount')) + ': </span>' + amountHtml(amt.text) + '</p>';
+    }
+    var facts = o.facts || SM.ui.programFacts(p, { max: 3 });
+    var tags = o.tags === false ? '' : SM.ui.factTags(facts);
+    var hook = o.hook ? (L(p.hook) || L(p.summary)) : '';
+    var w = whyText(o.why);
+    var why = !w ? '' : o.whyInline ?
+      '<p class="pcard-why"><span class="pcard-why-k" aria-hidden="true">' + esc(t('ui.whyShort')) + '</span><span><span class="sr-only">' + esc(t('ui.why')) + ': </span>' + esc(w) + '</span></p>' :
+      '<p class="sr-only">' + esc(t('ui.why')) + ': ' + esc(w) + '</p>';
+    var save = showSave ?
+      '<button type="button" class="pcard-save" data-act="save" data-id="' + esc(p.id) + '" aria-pressed="' + saved + '" aria-label="' + esc(t('ui.save') + '：' + name) + '" title="' + esc(t('ui.save')) + '">' +
+      icon(saved ? 'star-fill' : 'star') + '</button>' : '';
+    return '<article class="pcard pcard-lean' + (o.compact ? ' pcard-compact' : '') + (saved ? ' is-saved' : '') + '" data-id="' + esc(p.id) + '" data-cat="' + esc(cat) + '">' +
+      '<div class="pcard-mark">' + SM.ui.catIcon(cat, null, { vt: o.vt !== false }) + '</div>' +
+      '<div class="pcard-main">' +
+        '<' + h + ' class="pcard-title"' + (o.vt !== false ? ' data-vt="title"' : '') + '><a class="pcard-link" href="' + esc(href) + '">' + esc(name) + '</a></' + h + '>' +
+        (hook ? '<p class="pcard-hook">' + esc(hook) + '</p>' : '') +
+        key + tags + why +
+      '</div>' + save +
+    '</article>';
+  }
+
   /* sectionHeader(title, {sub, action: html | {label, href, act, arrow}, level, id, num, plain, reveal, cls})
      The one section head for every view:   01  困りごとから見る                 すべて見る →
                                                 いちばん近いものをえらんでね
@@ -516,7 +669,8 @@
      3 台本). A page's sections are not a sequence, so a num without seq is ignored (v4 round 3: the "01 ──" index
      read as decoration and drifted by persona). plain: true drops the rule.
      The rule is its own element (.section-rule) and draws in from the left when revealed (data-reveal="rule");
-     reveal: false keeps it static (in-place re-renders). */
+     v5: the title block rises 28px with it (data-reveal on .section-head-text) and the rule follows 80ms later, both
+     as they scroll into view. reveal: false keeps both static (in-place re-renders). */
   SM.ui.sectionHeader = function (title, o) {
     o = o || {};
     var lv = 'h' + (o.level || 2);
@@ -526,8 +680,9 @@
         '<a class="section-action" href="' + esc(o.action.href) + '"' + (o.action.act ? ' data-act="' + esc(o.action.act) + '"' : '') + '><span>' + esc(L(o.action.label || t('ui.more'))) + '</span>' + SM.ui.arrow(o.action.arrow || 'r') + '</a>';
     }
     var num = o.seq && o.num != null && o.num !== '' ? '<span class="section-num" aria-hidden="true">' + esc(typeof o.num === 'number' ? (o.num < 10 ? '0' + o.num : String(o.num)) : o.num) + '</span>' : '';
-    var rule = o.plain ? '' : '<span class="section-rule"' + (o.reveal === false ? '' : ' data-reveal="rule"') + ' aria-hidden="true"></span>';
-    return '<div class="section-head' + (o.plain ? ' is-plain' : '') + (o.cls ? ' ' + esc(o.cls) : '') + '"><div class="section-head-text">' + num +
+    var rv = o.reveal !== false;
+    var rule = o.plain ? '' : '<span class="section-rule"' + (rv ? ' data-reveal="rule" data-reveal-delay="80"' : '') + ' aria-hidden="true"></span>';
+    return '<div class="section-head' + (o.plain ? ' is-plain' : '') + (o.cls ? ' ' + esc(o.cls) : '') + '"><div class="section-head-text"' + (rv ? ' data-reveal="up"' : '') + '>' + num +
       '<' + lv + ' class="section-title"' + (o.id ? ' id="' + esc(o.id) + '"' : '') + '>' + esc(L(title)) + '</' + lv + '>' +
       (o.sub ? '<p class="section-sub">' + esc(L(o.sub)) + '</p>' : '') + '</div>' + act + rule + '</div>';
   };
@@ -603,18 +758,29 @@
     return '<button type="button" class="' + cls + '" aria-pressed="' + (o.selected ? 'true' : 'false') + '"' + actAttrs(o) + '>' + inner + '</button>';
   };
 
-  /* listItem({title, sub, href, act, attrs, icon, cat, meta, unit, chevron, id})  — ruled row, trailing drawn arrow.
-     meta: a count or short text at the right ('12'), unit: its small unit ('件'). id: data-id (back finds the row).
-     A row with a category mark that navigates is the source of the shared category morph. */
+  /* listItem({title, sub, subSr, href, act, attrs, icon, cat, meta, unit, amount, tags, count, chevron, id, vt})
+     — ruled row, trailing drawn arrow. v5: name + count / amount, no grey sub-line unless the view passes `sub`
+     (only where two rows would be confused without it); subSr: the same explanation for screen readers only.
+     meta: a count or short text at the right ('12'), unit: its small unit ('件'); count:true rolls meta (odometer).
+     amount: a money string shown at the right with its numbers set big (月5万円). tags: [{kind,value}] fact tags or
+     an HTML string, under the title. id: data-id (back finds the row).
+     A row with a category mark that navigates is the source of the shared category morph; its title morphs into
+     the next page's heading (vt:false turns both off). */
   SM.ui.listItem = function (o) {
     o = o || {};
     var nav = !!(o.href || o.act);
     var lead = o.cat ? SM.ui.catIcon(o.cat, 'sm', { vt: !!o.href && o.vt !== false }) : o.icon ? '<span class="list-ic">' + icon(o.icon) + '</span>' : '';
     var showChev = o.chevron !== false && nav;
     var hasMeta = o.meta != null && o.meta !== '';
-    var meta = hasMeta ? '<span class="list-count">' + esc(typeof o.meta === 'object' ? L(o.meta) : String(o.meta)) + (o.unit ? '<span class="unit">' + esc(L(o.unit)) + '</span>' : '') + '</span>' : '';
-    var inner = lead + '<span class="list-body"><span class="list-title">' + esc(L(o.title)) + '</span>' +
-      (o.sub ? '<span class="list-sub">' + esc(L(o.sub)) + '</span>' : '') + '</span>' +
+    var mv = hasMeta ? (typeof o.meta === 'object' ? L(o.meta) : String(o.meta)) : '';
+    var meta = hasMeta ? '<span class="list-count"><span class="list-count-v"' + (o.count && /^\d+$/.test(mv) ? ' data-count="' + esc(mv) + '"' : '') + '>' + esc(mv) + '</span>' + (o.unit ? '<span class="unit">' + esc(L(o.unit)) + '</span>' : '') + '</span>' : '';
+    var amt = o.amount ? L(o.amount) : '';
+    if (amt) { meta = '<span class="list-amount">' + amountHtml(amt) + '</span>' + meta; hasMeta = true; }
+    var tags = !o.tags ? '' : typeof o.tags === 'string' ? o.tags : SM.ui.factTags(o.tags);
+    var vtT = !!o.href && o.vt !== false ? ' data-vt="title"' : '';
+    var inner = lead + '<span class="list-body"><span class="list-title"' + vtT + '>' + esc(L(o.title)) + '</span>' +
+      (o.sub ? '<span class="list-sub">' + esc(L(o.sub)) + '</span>' : o.subSr ? '<span class="sr-only">' + esc(L(o.subSr)) + '</span>' : '') +
+      (tags ? tags.replace('class="tags tags-fact"', 'class="tags tags-fact list-tags"') : '') + '</span>' +
       (hasMeta || showChev ? '<span class="list-meta">' + meta + (showChev ? SM.ui.arrow('r', 'list-chev') : '') + '</span>' : '');
     var id = o.id != null ? ' data-id="' + esc(o.id) + '"' : '';
     if (o.href) return '<a class="list-item" href="' + esc(o.href) + '"' + id + actAttrs(o) + '>' + inner + '</a>';

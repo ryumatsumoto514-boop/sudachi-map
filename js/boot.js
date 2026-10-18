@@ -1,4 +1,4 @@
-/* 巣立ちマップ v4 — shell & boot (ENGINE)
+/* 巣立ちマップ v5 — shell & boot (ENGINE)
  * Paints the app shell (patching the static HTML in place: nothing pops), registers built-in acts (go, save,
  * copy, sheet-close, sos, exit, settings, back), the SOS + settings sheets, keyboard handling, and starts the
  * router. Save = stamp → flight to やること → badge roll → undo toast (MOTION-SPEC §4.1). Loaded before launch.js. */
@@ -13,7 +13,7 @@
     'shell.docTitle': { ja: '巣立ちマップ｜施設や里親家庭を出る人の支援ガイド（東京）', en: 'Sudachi Map | Support for young people leaving care in Tokyo' },
     'shell.skip': { ja: '本文へ', en: 'Skip to content' },
     'shell.exit': { ja: 'すぐ閉じる', en: 'Quick exit' },
-    'shell.exitHint': { ja: 'この画面をすぐに天気の検索に切りかえます（Escを2回でも）', en: 'Instantly switch to a weather search (or press Esc twice)' },
+    'shell.exitHint': { ja: 'すぐに天気の検索に切りかえます（Esc 2回でも）', en: 'Switch to a weather search at once (or Esc twice)' },
     'shell.sos': { ja: '緊急', en: 'SOS' },
     'shell.sosLabel': { ja: '緊急の連絡先', en: 'SOS — emergency contacts' },
     'shell.settings': { ja: '設定', en: 'Settings' },
@@ -27,26 +27,26 @@
     'tab.learnSub': { ja: 'お金のきほん', en: 'Money basics' },
 
     'jr.title': { ja: 'ふりがなをつけますか？', en: 'Turn on furigana?' },
-    'jr.body': { ja: 'むずかしい漢字に読みがながつきます。設定でいつでも変えられます。', en: 'Readings appear over hard kanji. You can change this in Settings.' },
+    'jr.body': { ja: 'むずかしい漢字に読みがな。あとで設定で変えられます', en: 'Readings over hard kanji. Change it any time in Settings.' },
     'jr.yes': { ja: 'ふりがなをつける', en: 'Turn on furigana' },
     'jr.no': { ja: 'いまはいい', en: 'Not now' },
     'jr.done': { ja: 'ふりがなをつけました', en: 'Furigana is on' },
 
     'sos.title': { ja: 'いま、話せるところ', en: 'Someone to talk to, now' },
-    'sos.lead': { ja: '番号をタップすると電話がかかります。名前を言わなくても大丈夫です。', en: 'Tap a number to call. You don\'t have to give your name.' },
+    'sos.lead': { ja: 'タップで電話。名前は言わなくて大丈夫。', en: 'Tap to call. You don\'t have to give your name.' },
     'sos.g1': { ja: '命や体があぶないとき', en: 'If your life or safety is in danger' },
     'sos.g2': { ja: 'つらい・こまったを話したいとき', en: 'If you need to talk' },
     'sos.g3': { ja: 'お金・契約のトラブル', en: 'Money & contract trouble' },
     'sos.gHome': { ja: 'いる場所がない・家にいられない', en: 'Nowhere to stay / can\'t stay at home' },
     'sos.seikatsu': { ja: '生活保護（福祉事務所）', en: 'Public assistance (welfare office)' },
-    'sos.seikatsud': { ja: '住む所もお金もないとき。申請は権利です。住んでいる区や市の福祉事務所へ', en: 'No home and no money? Applying is your right. Go to your ward/city welfare office' },
-    'sos.seikatsuBtn': { ja: '生活保護のページを見る', en: 'See public assistance' },
+    'sos.seikatsud': { ja: '住む所もお金もないとき。申請は権利。窓口は区や市の福祉事務所', en: 'No home, no money: applying is your right. At your ward/city welfare office' },
+    'sos.seikatsuBtn': { ja: '生活保護（福祉事務所）', en: 'Public assistance' },
     'sos.110': { ja: '警察', en: 'Police' },
     'sos.110d': { ja: '身の危険を感じたら', en: 'If you feel unsafe' },
     'sos.119': { ja: '救急・消防', en: 'Ambulance / Fire' },
     'sos.119d': { ja: '大けが・急な病気・火事', en: 'Serious injury, sudden illness, fire' },
     'sos.yori': { ja: 'よりそいホットライン', en: 'Yorisoi Hotline' },
-    'sos.yorid': { ja: 'どんなことでも。お金・住まい・こころ', en: 'Anything at all — money, housing, feelings' },
+    'sos.yorid': { ja: 'お金・住まい・こころ、なんでも', en: 'Money, housing, feelings — anything' },
     'sos.yorih': { ja: '24時間・無料', en: '24 hours · free' },
     'sos.inochi': { ja: '#いのちSOS', en: '#Inochi SOS' },
     'sos.inochid': { ja: '「死にたい」「消えたい」と思ったら', en: 'If you feel like dying or disappearing' },
@@ -60,9 +60,9 @@
     'sos.chald': { ja: '住む所がない・ネットカフェで寝ている', en: 'No place to live, sleeping in net cafés' },
     'sos.chalh': { ja: '月水金土 10〜17時・火木 10〜20時（祝日休み）', en: 'Mon/Wed/Fri/Sat 10–17, Tue/Thu 10–20 (closed holidays)' },
     'sos.188': { ja: '消費者ホットライン', en: 'Consumer hotline' },
-    'sos.188d': { ja: '契約・お金のトラブル。近くの窓口につながります', en: 'Contract or money trouble. Connects you to a local office' },
+    'sos.188d': { ja: '契約・お金のトラブル。近くの窓口へつながる', en: 'Contract or money trouble. Connects to a local office' },
     // 中学生 sheet (body.is-junior): child lines instead of adult housing / youth services
-    'sos.jr.lead': { ja: '番号をタップすると電話がかかります。名前を言わなくても大丈夫。', en: 'Tap a number to call. You don\'t have to give your name.' },
+    'sos.jr.lead': { ja: 'タップで電話。名前は言わなくて大丈夫。', en: 'Tap to call. You don\'t have to give your name.' },
     'sos.jr.g1': { ja: '命や体があぶないとき', jr: '命や体があぶないとき', en: 'If your life or safety is in danger' },
     'sos.jr.gHome': { ja: '家にいられない・こわいとき', jr: '家にいられない・こわいとき', en: 'Can\'t stay at home, or scared' },
     'sos.jr.g2': { ja: '話を聞いてほしいとき', jr: '話を聞いてほしいとき', en: 'When you want someone to listen' },
@@ -78,37 +78,37 @@
     'sos.exitSheet': { ja: 'すぐ閉じる', en: 'Quick exit' },
     'sos.copy': { ja: '{name}の番号をコピー', en: 'Copy number for {name}' },
     'sos.copied': { ja: '番号をコピーしました', en: 'Number copied' },
-    'sos.chatTitle': { ja: '話すのがこわいときは', en: 'If calling feels too hard' },
-    'sos.chatBody': { ja: 'LINEやチャットで相談できるところもあります。', en: 'Some places let you talk by LINE or chat.' },
-    'sos.chatBtn': { ja: 'LINE・チャットの相談先を見る', en: 'See LINE & chat options' },
-    'sos.checked': { ja: '番号は {date} に公式ページで確認しました。', en: 'Numbers checked on official pages on {date}.' },
+    'sos.chatTitle': { ja: '電話がこわいときは', en: 'If calling feels too hard' },
+    'sos.chatBody': { ja: 'LINE・チャットでも相談できます。', en: 'You can also talk by LINE or chat.' },
+    'sos.chatBtn': { ja: 'LINE・チャットの相談先', en: 'LINE & chat options' },
+    'sos.checked': { ja: '番号は {date} に公式ページで確認', en: 'Numbers checked on official pages, {date}' },
 
     'set.title': { ja: '設定', en: 'Settings' },
     'set.gView': { ja: '見やすさ', en: 'Display' },
     'set.big': { ja: '文字を大きく', en: 'Larger text' },
-    'set.bigd': { ja: '画面の文字を大きくします', en: 'Make all text bigger' },
+    'set.bigd': { ja: '画面の文字を大きく', en: 'Bigger text everywhere' },
     'set.ruby': { ja: 'ふりがな', en: 'Furigana' },
-    'set.rubyd': { ja: 'むずかしい漢字に読みがなをつけます', en: 'Show readings over hard kanji (Japanese only)' },
+    'set.rubyd': { ja: 'むずかしい漢字に読みがな', en: 'Readings over hard kanji (Japanese only)' },
     'set.lang': { ja: 'English', en: 'English' },
-    'set.langd': { ja: '画面を英語にします', en: 'Show the app in English' },
+    'set.langd': { ja: '画面を英語に', en: 'Show the app in English' },
     'set.dark': { ja: '暗い画面', en: 'Dark screen' },
-    'set.darkd': { ja: '背景を黒っぽくします（ふだんは白）', en: 'Use a dark background (white by default)' },
+    'set.darkd': { ja: '背景を黒っぽく（ふだんは白）', en: 'Dark background (white by default)' },
     'set.motion': { ja: '動きを少なく', en: 'Reduce motion' },
-    'set.motiond': { ja: '画面の動きやアニメーションを止めます', en: 'Turn off movement and animation' },
+    'set.motiond': { ja: '画面は動かさず、ふっと切りかえます', en: 'No movement; screens simply fade' },
     'set.gSup': { ja: '支援する人へ', en: 'For supporters' },
     'set.sup': { ja: '支援者向けメモを表示', en: 'Show supporter notes' },
-    'set.supd': { ja: '施設の職員・先生・里親さん向けのメモを出します', en: 'Notes for care staff, teachers and foster carers' },
+    'set.supd': { ja: '職員・先生・里親さん向けのメモ', en: 'Notes for care staff, teachers and foster carers' },
     'set.gPriv': { ja: 'このスマホの記録', en: 'Data on this phone' },
     'set.priv': { ja: '名前もログインもいりません。答えや保存した支援は、このスマホの中だけにあります。どこにも送りません。', en: 'No name, no login. Your answers and saved items stay on this phone only. Nothing is sent anywhere.' },
-    'set.noStore': { ja: 'このブラウザでは記録が残りません。画面を閉じると消えます。', en: 'This browser can\'t keep data. It will be gone when you close the page.' },
+    'set.noStore': { ja: 'このブラウザでは記録が残りません。閉じると消えます。', en: 'This browser can\'t keep data. It\'s gone when you close the page.' },
     'set.erase': { ja: 'このスマホの記録をすべて消す', en: 'Erase everything on this phone' },
-    'set.eraseNote': { ja: '施設や学校の共有スマホ・パソコンを使ったときは、最後に消しておくと安心です。', en: 'Using a shared phone or computer? Erase when you\'re done.' },
+    'set.eraseNote': { ja: '共有のスマホ・パソコンでは、最後に消すと安心です。', en: 'On a shared phone or computer, erase when you\'re done.' },
     'set.about': { ja: '運営・掲載のルール・プライバシー', en: 'About, listing rules & privacy' },
     'set.learn': { ja: 'まなぶ — お金のきほん', en: 'Learn — money basics' },
     'set.gMore': { ja: 'もっと知る', en: 'More' },
     'set.version': { ja: 'バージョン {v}・情報の確認日 {d}', en: 'Version {v} · Info checked {d}' },
     'set.confirmTitle': { ja: 'ほんとうに消しますか？', en: 'Erase everything?' },
-    'set.confirmBody': { ja: '質問の答え・保存した支援・やることのチェック・巣立ちの日・まなぶの記録が、このスマホから消えます。元には戻せません。', en: 'Your answers, saved items, checked tasks, dates and lesson progress will be removed from this phone. This can\'t be undone.' },
+    'set.confirmBody': { ja: '答え・保存した支援・チェック・日付・まなぶの記録が消えます。元には戻せません。', en: 'Your answers, saved items, checks, dates and lesson progress will be removed. This can\'t be undone.' },
     'set.confirmYes': { ja: 'すべて消す', en: 'Erase all' },
     'set.confirmNo': { ja: 'やめる', en: 'Cancel' },
     'set.erased': { ja: '記録を消しました', en: 'Everything was erased' }
@@ -270,15 +270,11 @@
     var n = (SM.state.saved || []).length;
     var tab = document.querySelector('.tabbar .tab[data-tab="plan"]');
     if (!tab) return;
-    var b = tab.querySelector('.tab-badge');
-    if (b) {
-      var txt = n > 99 ? '99+' : String(n);
-      var shown = b._smOdoShown != null ? b._smOdoShown : b.textContent;
-      var was = b.hidden;
-      b.hidden = n === 0;
-      if (o && o.roll && !was && n > 0 && shown !== txt && SM.motion && SM.motion.odometer) SM.motion.odometer(b, txt, { from: shown, duration: 420 });
-      else if (shown !== txt || b.firstElementChild) { b._smOdoShown = txt; b.textContent = txt; }
-      if (o && o.roll && was && n > 0 && SM.motion && SM.motion.stamp) SM.motion.stamp(b, { ring: false });
+    var roll = !!(o && o.roll);
+    if (SM.motion && SM.motion.badge) SM.motion.badge(tab, n, { roll: roll, bump: roll });
+    else {
+      var b = tab.querySelector('.tab-badge');
+      if (b) { b.hidden = n === 0; b.textContent = n > 99 ? '99+' : String(n); }
     }
     if (n) tab.setAttribute('aria-label', t('tab.planCount', { n: n }));
     else tab.removeAttribute('aria-label');

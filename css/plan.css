@@ -79,6 +79,10 @@
 }
 .v-plan .plan-date-edit { flex: none; }
 .v-plan .plan-date-note { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3); }
+/* v5: the 仮の日付 explanation is a quiet 「くわしく」 under the date row */
+.v-plan .plan-date-more { margin-top: calc(var(--s-3) * -1); }
+.v-plan .plan-date-more > .more-btn { font-size: var(--t-meta); color: var(--ink-2); }
+.v-plan .plan-date-more > .more-body { padding: 0; }
 
 .v-plan .plan-prog { display: grid; gap: var(--s-2); }
 .v-plan .plan-prog-row { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); }
@@ -89,7 +93,7 @@
 .v-plan .plan-prog-num { white-space: nowrap; color: var(--ink); }
 .v-plan .plan-prog-num b { font-family: var(--font-num); font-weight: 700; font-size: var(--t-num-l); line-height: 1; letter-spacing: var(--ls-0); }
 .v-plan .plan-prog-of { font-family: var(--font-num); font-weight: 500; font-size: var(--t-ui); line-height: 1; color: var(--ink-3); }
-.v-plan .plan-prog-bar { position: relative; height: 6px; background: var(--paper-3); }
+.v-plan .plan-prog-bar { position: relative; height: 8px; background: var(--paper-3); }
 .v-plan .plan-prog-fill { position: absolute; inset: 0; display: block; background: var(--action); transform-origin: left center; }
 .v-plan .plan-prog-tick {
   display: none; position: absolute; top: -4px; bottom: -4px; width: 1px;
@@ -183,14 +187,14 @@ body.lang-en .v-plan .plan-now-of { margin: 0 2px 0 4px; }
   margin-top: var(--s-5);
 }
 .v-plan .tl-fill {
-  position: absolute; z-index: 1; left: calc(var(--rail) / 2 - 1px); top: 0; width: 2px; height: 0;
+  position: absolute; z-index: 1; left: calc(var(--rail) / 2 - 2px); top: 0; width: 4px; height: 0;
   transform-origin: center top; pointer-events: none;
 }
 .v-plan .tl-fill > i { display: block; height: 100%; background: var(--action); transform-origin: center top; }
 /* the road ahead inks in under the reading line (JS: top/height from いま to the last station; motion only) */
 .v-plan .tl-trace {
-  display: none; position: absolute; z-index: 1; left: calc(var(--rail) / 2 - 0.5px); top: 0; width: 1px; height: 0;
-  background: var(--ink-3); transform-origin: center top; transform: scaleY(0); pointer-events: none;
+  display: none; position: absolute; z-index: 1; left: calc(var(--rail) / 2 - 1px); top: 0; width: 2px; height: 0;
+  background: var(--ink-2); transform-origin: center top; transform: scaleY(0); pointer-events: none;
 }
 .v-plan .tl {
   --m-rise: 8px;
@@ -276,6 +280,13 @@ body.lang-en .v-plan .plan-now-of { margin: 0 2px 0 4px; }
 .v-plan .tl-items { margin: var(--s-2) 0 0; padding: 0; list-style: none; display: grid; border-top: 1px solid var(--rule); }
 .v-plan .tl > li.is-current > .tl-body > .tl-items, .v-plan .tl-fold-body > .tl-items { margin-top: var(--s-3); }
 .tl-item { position: relative; border-bottom: 1px solid var(--rule); background: var(--tl-bg, var(--paper)); }
+.tl-item > :not(.tl-wash) { position: relative; z-index: 1; }
+/* a tick: the green wash sweeps the row and fades (plan.js settleRow) */
+.tl-item > .tl-wash { position: absolute; inset: 0; z-index: 0; background: var(--action-tint); transform-origin: left center; opacity: 0; pointer-events: none; }
+/* one line per task: the action, then its （…） aside in small type */
+.tl-item .tl-item-main { font-weight: 500; }
+.tl-item .tl-item-aside { margin-left: 2px; font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3); }
+.tl-item.is-done .tl-item-main { text-decoration: line-through; text-decoration-thickness: 1.5px; text-decoration-color: var(--ink-3); }
 .tl-item .tl-task {
   position: relative;
   display: flex; align-items: flex-start; gap: var(--s-3);
@@ -352,11 +363,16 @@ body.lang-en .tl-item .tl-seal { font-size: var(--t-micro); padding: 0 4px; }
 }
 
 /* related supports: kanji mark + name, plain links */
-.v-plan .tl-related { display: grid; padding-top: var(--s-3); }
+.v-plan .tl-related { display: grid; padding-top: var(--s-2); }
 .v-plan .tl-related-k {
-  font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui);
-  letter-spacing: var(--ls-label); color: var(--ink-3);
+  display: flex; align-items: center; gap: 8px; min-height: var(--tap); cursor: pointer; list-style: none; width: max-content; max-width: 100%;
+  font-family: var(--font-display); font-weight: 700; font-size: var(--t-meta); line-height: var(--lh-ui);
+  letter-spacing: var(--ls-label); color: var(--ink-2);
 }
+.v-plan .tl-related-k::-webkit-details-marker { display: none; }
+.v-plan .tl-related-k::before { content: "＋"; font-weight: 700; color: var(--ink); }
+.v-plan .tl-related[open] > .tl-related-k::before { content: "－"; }
+.v-plan .tl-related-k:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .v-plan .tl-related-links { display: flex; flex-wrap: wrap; gap: 0 18px; margin: 0; padding: 0; list-style: none; }
 .v-plan .tl-related-links > li { min-width: 0; max-width: 100%; }
 .v-plan .tl-rel-link {

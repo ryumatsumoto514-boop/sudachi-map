@@ -40,6 +40,8 @@ for f in js:
     tag = '<script src="%s"></script>\n' % f
     out = out.replace(tag, '<script src="js/app.js"></script>\n' if first else '', 1)
     first = False
+# start fetching the script bundle together with the stylesheet instead of after it
+out = out.replace('</head>', '<link rel="preload" as="script" href="js/app.js">\n</head>', 1)
 if out.count('<link rel="stylesheet"') != 1 or out.count('<script src=') != 1:
     sys.exit('replacement failed')
 open(os.path.join(DIST, 'index.html'), 'w', encoding='utf-8').write(out)

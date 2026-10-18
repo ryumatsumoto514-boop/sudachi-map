@@ -1,4 +1,15 @@
-/* 巣立ちマップ v4 — views/find.js (FIND)
+/* 巣立ちマップ v5 — views/find.js (FIND)
+   v5 (SPEC-v5): fewer words, motion you notice.
+   - Browse: title, search, popular words, ONE compact way in (.f-way: a line + 質問に答える / 結果を見る), category rows
+     without sub-lines (marks stamp in, counts roll). Arrival cascades title → search → words → way in → rows.
+   - Questions: question ≤ 20 chars, options ≤ 10, 「なぜ聞くの」 behind SM.ui.more. Progress is a train line
+     (qProgress / playLine): the train runs from the last stop to this one, passed stations fill, it pulls in with a
+     settle. Options cascade 50ms apart; a chosen option fills with a colour sweep (CSS ::after) and ~420ms later the
+     next question slides in 48px on the rise spring (swap). Reduced motion: fades only.
+   - Results: one headline (あなたに合いそうな支援) + one caveat; the first time for an answer set a "searching" beat
+     (scanBeat, ≤ 900ms) runs a line through the six category stations, then the count rolls 0 → N; group heads
+     rise with their mark stamping, rows cascade; filters re-flow by FLIP; 保存 = stamp + flight (boot.js).
+   - Category: no eyebrow / lead paragraph (the topic note is behind くわしく).
    Routes:  #/find               browse (search, categories, all supports)
             #/find/q/N[?ret=results]  one question per screen (N = 1..6)
             #/find/results       personalised results
@@ -36,8 +47,13 @@
     'find.search.count': { ja: '「{q}」の支援', en: 'results for “{q}”' },
     'find.search.unit': { ja: '件', en: '' },
     'find.search.none': { ja: '見つかりませんでした', en: 'Nothing found' },
-    'find.search.noneBody': { ja: 'ちがう言葉でさがすか、下の困りごとから見てみてね。ひらがなでもさがせます。', en: 'Try another word, or browse by topic below.' },
+    'find.search.noneBody': { ja: 'ちがう言葉か、下の困りごとから。', en: 'Try another word, or a topic below.' },
     'find.cta.eyebrow': { ja: '質問は6つ・1分でおわります', en: '6 questions · about 1 minute' },
+    // v5: the compact way in — one line + one button (+ a 「1分」 chip beside it)
+    'find.cta.line': { ja: '6つの質問で、合う支援がわかる', jr: '6つの質問で、合う支援がわかる', en: '6 questions find what fits you' },
+    'find.cta.go': { ja: '質問に答える', en: 'Answer' },
+    'find.cta.min': { ja: '1分', en: '1 min' },
+    'find.search.tryAria': { ja: 'よくさがされる言葉', en: 'Popular searches' },
     'find.cta.title1': { ja: '答えるだけで、', en: 'Answer a few questions to find ' },
     'find.cta.mark': { ja: 'あなたに合う支援', en: 'the support that fits you' },
     'find.cta.title2': { ja: 'がわかる', en: '' },
@@ -85,6 +101,8 @@
     'find.q.quit': { ja: 'あとで', en: 'Later' },
     'find.q.multi': { ja: 'いくつでも選べます', en: 'Choose as many as you like' },
     'find.q.optional': { ja: '答えなくてOK', en: 'Optional' },
+    'find.q.whyMore': { ja: 'なぜ聞くの', en: 'Why we ask' },
+    'find.q.station': { ja: '質問{n}', en: 'Question {n}' },
     'find.q.private': { ja: '答えはこのスマホの中だけ。どこにも送られません。', en: 'Your answers stay on this phone. Nothing is sent.' },
     'find.q.g.jhs': { ja: '中学生', en: 'Junior high school' },
     'find.q.g.hs': { ja: '高校生', en: 'High school' },
@@ -96,10 +114,10 @@
     'find.area.g.tama': { ja: '多摩', en: 'Tama area' },
     'find.area.g.islands': { ja: '島しょ', en: 'Islands' },
     'find.area.special': { ja: 'まだ決まっていないとき', en: 'If you are not sure' },
-    'find.area.unsure': { ja: 'まだ決まっていない・わからない', en: 'Not decided / not sure' },
-    'find.area.unsureHint': { ja: '東京都のどこでも使える支援を出します', en: 'Shows programs for all of Tokyo' },
+    'find.area.unsure': { ja: 'まだ決まっていない', en: 'Not decided yet' },
+    'find.area.unsureHint': { ja: '都内どこでも使える支援', en: 'All-Tokyo programs' },
     'find.area.other': { ja: '東京都の外', en: 'Outside Tokyo' },
-    'find.area.otherHint': { ja: '全国の制度と相談先を出します', en: 'Shows national programs and helplines' },
+    'find.area.otherHint': { ja: '全国の制度と相談先', en: 'National programs' },
 
     'find.res.eyebrow': { ja: 'あなたの答えから', en: 'From your answers' },
     'find.res.unit': { ja: '件', en: '' },
@@ -113,7 +131,10 @@
     // 「今、住む場所がない」: a calm headline (no marker, no count roll) and tonight's numbers right under it (FIXER-robust)
     'find.res.urgentTitle': { ja: '今夜の相談先を、先に出しています', jr: '今すぐ相談できるところ', en: 'Where to go tonight comes first' },
     'find.res.urgentSub': { ja: 'ほかに使えるかもしれない支援も、下に{n}件あります。', jr: 'ほかに使えるかもしれない支援も、下に{n}件あります。', en: '{n} more programs that could help are listed below.' },
-    'find.res.sub': { ja: '合いそうな順。決めるのは窓口です。', jr: '合いそうな順。使えるかは窓口の人が決めます。', en: 'Sorted by fit. The office makes the final call.' },
+    'find.res.sub': { ja: '合いそうな順。決めるのは窓口です。', jr: '合いそうな順。決めるのは窓口の人。', en: 'By fit. The office decides.' },
+    // v5 headline (≤14 chars): 64件 / あなたに合いそうな支援
+    'find.res.h': { ja: 'あなたに合いそうな支援', jr: 'あなたに合いそうな支援', en: 'Programs that may fit you' },
+    'find.res.scan': { ja: 'さがしています', en: 'Searching' },
     'find.res.noAnswers': { ja: '質問に答えると、あなたに合う順に並びます。', en: 'Answer the questions to sort these by fit.' },
     'find.res.answers': { ja: 'あなたの答え', en: 'Your answers' },
     'find.res.answersHint': { ja: 'タップで変えられます', en: 'Tap to change' },
@@ -137,11 +158,11 @@
     'find.top.subAll': { ja: 'はじめに見てほしい3つ', en: 'Good places to start' },
     'find.group.mine': { ja: 'あなたが選んだ', en: 'You chose this' },
     'find.local.h': { ja: '区や市の支援', en: 'Ward & city programs' },
-    'find.local.sub': { ja: '住む区市町村が決まったら使えるかもしれません（{n}件）', en: 'May apply once you know where you will live ({n})' },
+    'find.local.sub': { ja: '住む場所が決まったら（{n}件）', en: 'Once you know where you live ({n})' },
     'find.local.pick': { ja: '住む場所を選ぶ', en: 'Choose your area' },
-    'find.other.note': { ja: '東京都の外の支援は、まだ少ししかのせていません。全国の制度と相談先を出しています。住んでいる市区町村の窓口でも聞いてみてね。', en: 'We only have a few programs outside Tokyo yet. Shown: national schemes and helplines. Your local city office can tell you more.' },
-    'find.notHere.title': { ja: 'ここに出ていなくても、使える支援があるかもしれません', en: 'There may be more support than shown here' },
-    'find.notHere.body': { ja: '相談窓口に聞いてみよう。いっしょに調べてくれます。', jr: '大人に聞いてみよう。いっしょに調べてくれます。', en: 'Ask a helpline. They can look into it with you.' },
+    'find.other.note': { ja: '東京都の外は、全国の制度と相談先を出しています。', en: 'Outside Tokyo: national programs and helplines.' },
+    'find.notHere.title': { ja: 'ほかにもあるかも', en: 'There may be more' },
+    'find.notHere.body': { ja: '相談窓口がいっしょに調べてくれます', jr: '大人がいっしょに調べてくれます', en: 'A helpline can look with you' },
     'find.notHere.all': { ja: '相談窓口をすべて見る', en: 'See all helplines' },
     'find.private.title': { ja: '答えはこのスマホの中だけ', en: 'Your answers stay on this phone' },
     'find.private.body': { ja: 'どこにも送られません。名前もいりません。', en: 'Nothing is sent anywhere. No name needed.' },
@@ -159,10 +180,10 @@
     'find.cat.unit': { ja: '件の支援', en: 'programs' },
     'find.cat.fit': { ja: 'あなたに合いそう', en: 'May fit you' },
     'find.cat.rest': { ja: 'そのほかの支援', en: 'Other programs' },
-    'find.cat.restSub': { ja: '答えとは合わないかもしれませんが、念のため', en: 'May not match your answers, just in case' },
+    'find.cat.restSub': { ja: '答えとは合わないかも', en: 'May not match your answers' },
     'find.cat.sos': { ja: '今すぐ話したいときは、上の「緊急」ボタンから。', en: 'If you need to talk right now, use the “Emergency” button at the top.' },
     'find.cat.localH': { ja: '区や市ごとの支援（{n}）', en: 'Ward & city programs ({n})' },
-    'find.cat.localSub': { ja: '住む所をえらぶと、あなたの区や市の支援だけが出ます', en: 'Pick where you live to see only yours' },
+    'find.cat.localSub': { ja: '住む所をえらぶと、しぼれます', en: 'Pick where you live to narrow' },
     'find.cat.localPick': { ja: '住む所をえらぶ', en: 'Choose where you live' },
     'find.cat.others': { ja: 'ほかの困りごと', en: 'Other topics' },
 
@@ -180,8 +201,8 @@
     'find.crisis.jrTitle': { ja: '家にいられない・帰れないとき', en: 'If you can\'t stay at home or go back' },
     'find.crisis.jrLead': { ja: '番号をタップすると電話がかかります。名前を言わなくても相談できます。', en: 'Tap a number to call. You don\'t have to give your name.' },
     'find.search.helpTitle': { ja: 'こんな支援が近いかもしれません', en: 'These may be what you need' },
-    'find.urgent.label': { ja: '今、住む場所がない・家にいられない', jr: '今、家にいられない・帰れない', en: 'I have nowhere to stay / can\'t stay at home now' },
-    'find.urgent.hint': { ja: '今夜の相談先を、いちばん先に出します', jr: '今すぐ相談できるところを、いちばん先に出します', en: 'We will show where to go tonight first' },
+    'find.urgent.label': { ja: '今、いる場所がない', jr: '今、家にいられない', en: 'Nowhere to stay now' },
+    'find.urgent.hint': { ja: '今夜の相談先を先に出します', jr: '今すぐ話せる所を先に出します', en: 'Tonight\'s help comes first' },
     'find.urgent.why': { ja: '今、いる場所がないと答えたので', jr: '今、家にいられないと答えたので', en: 'You said you have nowhere to stay now' },
     'find.stamp.done': { ja: '選びました', en: 'Selected' },
     // labelled rows on a program row besides 「理由」 (match.js why lines with kind 'for' / 'note')
@@ -194,7 +215,7 @@
     'find.jr.back': { ja: '中学生向けにもどす', en: 'Back to junior high only' },
     // 緊急 sheet → 「話すのがこわいときは」: only places you can reach by LINE or chat
     'find.chat.h': { ja: 'LINE・チャットで話せるところ', jr: 'チャットで話せるところ', en: 'Talk by LINE or chat' },
-    'find.chat.intro': { ja: '電話がこわいときは、文字で相談できます。名前を言わなくても大丈夫。', jr: '電話がこわいときは、文字で相談できるよ。名前を言わなくても大丈夫。', en: 'When calling feels hard, you can type instead. You don’t have to give your name.' },
+    'find.chat.intro': { ja: '文字で相談できます。名前は言わなくて大丈夫。', jr: '文字で相談できるよ。名前は言わなくて大丈夫。', en: 'Type instead of calling. No name needed.' },
     'find.chat.all': { ja: '電話の相談先もふくめて、すべて見る', en: 'See every place to talk, phone too' }
   });
   function t(k, v) { return SM.t(k, v); }
@@ -338,35 +359,37 @@
 
   /* ------------------------------------------------------------------ questions */
   function opt(v, ja, en_, hja, hen, g) { return { v: v, g: g || null, label: { ja: ja, en: en_ }, hint: hja ? { ja: hja, en: hen || '' } : null }; }
+  /* v5 (SPEC-v5 Part B 質問): a question ≤ 20 chars, options ≤ 10 chars, a short hint only where two options would
+     be confused without it. 「なぜ聞くの」 sits behind a small disclosure (it opens in place). */
   var Q = [
     { n: 1, key: 'stage',
       title: { ja: '今の状況は？', en: 'Where are you now?' },
       why: { ja: '中学生か、高校生か、もう巣立ったかで、使える支援や締切がちがうからです。', en: 'Programs and deadlines differ by school year and by whether you have left care.' },
       opts: [
-        opt('jhs12', '中1・中2', 'Junior high, year 1–2', '中学1年生・2年生', 'Junior high school, first or second year', 'jhs'),
-        opt('jhs3', '中3（高校受験の年）', 'Junior high, year 3', '高校受験をする年', 'The year of high-school entrance exams', 'jhs'),
-        opt('hs12', '高1・高2', 'High school, year 1–2', '施設や里親家庭で暮らしている', 'Still living in care', 'hs'),
-        opt('hs3', '高3（今年度に巣立つ）', 'High school, year 3', '来年の春に巣立つ予定', 'Leaving care next spring', 'hs'),
-        opt('left0', '巣立って1年以内', 'Left care less than a year ago', '施設や里親家庭を出て、まだ1年たっていない', 'Less than 12 months since leaving', 'left'),
-        opt('left1', '巣立って1年以上', 'Left care 1+ years ago', '出てから1年以上たった', 'More than 12 months since leaving', 'left'),
-        opt('nohs', '高校には通っていない', 'Not going to high school', 'やめた・行っていない・働いている', 'Left, never went, or working', 'left')
+        opt('jhs12', '中1・中2', 'Junior high 1–2', null, null, 'jhs'),
+        opt('jhs3', '中3', 'Junior high 3', '高校受験の年', 'Entrance-exam year', 'jhs'),
+        opt('hs12', '高1・高2', 'High school 1–2', null, null, 'hs'),
+        opt('hs3', '高3', 'High school 3', '来年の春に巣立つ', 'Leaving care next spring', 'hs'),
+        opt('left0', '巣立って1年以内', 'Left care <1 yr', null, null, 'left'),
+        opt('left1', '巣立って1年以上', 'Left care 1+ yrs', null, null, 'left'),
+        opt('nohs', '高校に行っていない', 'Not in high school', 'やめた・働いている', 'Left school or working', 'left')
       ] },
     { n: 2, key: 'path',
-      title: { ja: '次にしたいことは？', jr: '中学を出たら、どうしたい？', en: 'What would you like to do next?' },
+      title: { ja: '次にしたいことは？', jr: '中学を出たら、どうしたい？', en: 'What next?' },
       why: { ja: '進学と仕事では、使える奨学金や窓口がちがうからです。', jr: '高校に行くか、働くかで、使える支援がちがうからです。', en: 'Scholarships and offices differ for study and work.' },
       opts: [
-        opt('study', '進学したい', 'Study', '大学・短大・専門学校など', 'University, college, vocational school'),
-        opt('work', '働きたい・働いている', 'Work', '就職・アルバイト・職業訓練', 'A job, part-time work, training'),
-        opt('unsure', 'まだ決めていない', 'Not decided yet', 'それで大丈夫。両方の支援を出します', "That's okay. We'll show both")
+        opt('study', '進学したい', 'Study', '大学・専門学校など', 'University, college'),
+        opt('work', '働きたい', 'Work', '働いている人も', 'Or already working'),
+        opt('unsure', 'まだ決めていない', 'Not decided')
       ],
       optsJr: [
-        opt('hs', '高校に行きたい', 'Go to high school', '全日制・定時制・通信制など', 'Full-time, part-time or correspondence'),
-        opt('work', '働きたい', 'Work', '中学を出たら働きたい', 'Start working after junior high'),
-        opt('unsure', 'まだわからない', 'Not sure yet', 'それで大丈夫。高校のお金の支援も出します', "That's okay. We'll also show high-school money help")
+        opt('hs', '高校に行きたい', 'High school', '全日制・定時制・通信制', 'Any kind of high school'),
+        opt('work', '働きたい', 'Work'),
+        opt('unsure', 'まだわからない', 'Not sure yet')
       ] },
     { n: 3, key: 'area',
-      title: { ja: '住む（住む予定の）ところは？', jr: '今、住んでいるところは？', en: 'Where do you (or will you) live?' },
-      why: { ja: '区や市によって、独自の支援や窓口があるからです。', jr: '区や市によって、相談できる場所や支援がちがうからです。', en: 'Each ward or city has its own programs and offices.' } },
+      title: { ja: '住む（住む予定の）ところは？', jr: '今、住んでいるところは？', en: 'Where will you live?' },
+      why: { ja: '区や市によって、独自の支援や窓口があるからです。いまは東京都の支援を中心にのせています。', jr: '区や市によって、相談できる場所や支援がちがうからです。', en: 'Each ward or city has its own programs and offices. This version focuses on Tokyo.' } },
     { n: 4, key: 'concerns', multi: true,
       title: { ja: '今、気になることは？', en: 'What is on your mind?' },
       why: { ja: '気になることに近い支援から、先に表示します。', en: 'We show programs for these first.' } },
@@ -378,13 +401,13 @@
         opt('a20', '20〜22歳', '20–22'), opt('a23', '23歳以上', '23 or older')
       ] },
     { n: 6, key: 'care', optional: true,
-      title: { ja: 'これまで、どこで暮らしてきた？', jr: '今、どこで暮らしている？', en: 'Where have you lived until now?' },
+      title: { ja: 'どこで暮らしてきた？', jr: '今、どこで暮らしている？', en: 'Where have you lived?' },
       why: { ja: '答えなくても大丈夫。答えると、施設や里親家庭で育った人向けの支援を、あなたに合う順に上にならべます。', jr: '答えなくても大丈夫。答えると、あなたに合う支援を上にならべます。', en: 'You do not have to answer. If you do, programs for people who grew up in care are sorted to fit you better.' },
       opts: [
         opt('facility', '児童養護施設', "Children's home"),
-        opt('foster', '里親・ファミリーホーム', 'Foster family / family home'),
-        opt('jhome', '自立援助ホーム', 'Independence support home'),
-        opt('other', 'そのほか', 'Other', '一時保護所、母子生活支援施設など', 'e.g. temporary shelter')
+        opt('foster', '里親・ファミリーホーム', 'Foster / family home'),
+        opt('jhome', '自立援助ホーム', 'Independence home'),
+        opt('other', 'そのほか', 'Other', '一時保護所など', 'e.g. a shelter')
       ] }
   ];
   var TOTAL = Q.length;
@@ -452,7 +475,9 @@
     var copy = {}; for (var k in o) { if (Object.prototype.hasOwnProperty.call(o, k)) copy[k] = o[k]; }
     copy.why = plain.length ? plain : null;
     var html = SM.ui.programCard(p, copy);
-    var rows = whyRow('note', extra.note) + whyRow('for', extra['for']);
+    var noteTxt = extra.note.map(function (w) { return L(w); }).filter(Boolean).join(en() ? ' · ' : '・');
+    var note = !noteTxt ? '' : SM.ui.more ? SM.ui.more(t('find.whyNote'), '<p class="pcard-why pcard-why-note">' + esc(noteTxt) + '</p>', { inline: true, cls: 'pcard-more' }) : whyRow('note', extra.note);
+    var rows = whyRow('for', extra['for']) + note;
     // the row ends …</div>[save button]</article>: add the rows at the end of .pcard-main
     var end = html.lastIndexOf('<button type="button" class="pcard-save"');
     if (end === -1) end = html.lastIndexOf('</article>');
@@ -728,7 +753,7 @@
     if (ui.basis !== 'all') return '';
     var n = rows.filter(otherWard).length;
     if (!n) return '';
-    return rowLink({ act: 'find-basis', value: 'local', id: 'f-wardhint', title: t('find.ward.h', { n: n }), sub: t('find.ward.sub') });
+    return rowLink({ act: 'find-basis', value: 'local', id: 'f-wardhint', title: t('find.ward.h', { n: n }) });
   }
   function isExtraWhy(w) { return !!(w && (w.kind === 'for' || w.kind === 'note')); }
   /* a ruled list of program rows. o.first: rows rendered now (the rest wait for the transition: lazyRows);
@@ -756,30 +781,24 @@
 
   /* ================================================================== BROWSE */
   function resultCount() { return SM.match(answers()).filter(function (r) { return !r.local; }).length; }
-  // returning: a compact band (64件 あなたに合いそうな支援 · 結果を見る → · 答えを変える); new: the way in
+  /* the way in, one compact block (SPEC-v5 Part B さがす): one line + one button.
+     new:       6つの質問で、合う支援がわかる   [質問に答える →] 1分
+     returning: 64件 あなたに合いそうな支援       [結果を見る →]  変える
+     The block slides up after the search; its button's arrow nudges once when it has landed (mountBrowse). */
   function ctaBlock(mini) {
     var done = SM.state.answered || answeredAny();
     if (done && !mini) {
       var n = resultCount();
-      return '<section class="f-back band" aria-labelledby="f-back-t"' + R('data-reveal="fade"') + '>' +
-        '<h2 class="f-back-t" id="f-back-t"><span class="f-back-n num-xl"><span data-f-count="' + n + '" data-f-seen="find.browse.n">' + esc(fmtN(n)) + '</span>' +
+      return '<section class="f-way is-back" aria-labelledby="f-back-t"' + R('data-reveal="up" data-reveal-delay="200"') + '>' +
+        '<h2 class="f-way-t" id="f-back-t"><span class="f-back-n"><span data-f-count="' + n + '" data-f-seen="find.browse.n">' + esc(fmtN(n)) + '</span>' +
         '<span class="unit">' + esc(t('find.cta.doneUnit')) + '</span></span><span class="f-back-line">' + esc(t('find.cta.doneLine')) + '</span></h2>' +
-        '<div class="f-back-acts">' + SM.ui.button(t('find.cta.results'), { href: '#/find/results', block: true, attrs: 'data-press' }) +
-        SM.ui.button(t('find.cta.change'), { href: '#/find/q/1', variant: 'text' }) + '</div></section>';
+        '<div class="f-way-acts">' + SM.ui.button(t('find.cta.results'), { href: '#/find/results', attrs: 'data-press' }) +
+        '<a class="f-way-alt" href="#/find/q/1">' + esc(t('find.res.change')) + '</a></div></section>';
     }
-    if (mini) {
-      return '<section class="f-cta is-mini" aria-labelledby="f-cta-t2">' +
-        '<p class="eyebrow">' + esc(t('find.cta.eyebrow')) + '</p>' +
-        '<h2 class="f-cta-title" id="f-cta-t2">' + esc(t('find.cta.title')) + '</h2>' +
-        '<div class="f-cta-acts">' + SM.ui.button(t('find.cta.start'), { href: '#/find/q/1', attrs: 'data-press' }) + '</div></section>';
-    }
-    var title = esc(t('find.cta.title1')) + '<mark class="marker">' + esc(t('find.cta.mark')) + '</mark>' + (en() ? '' : esc(t('find.cta.title2')));
-    return '<section class="f-cta" aria-labelledby="f-cta-t"' + R('data-reveal="fade"') + '>' +
-      '<p class="eyebrow">' + esc(t('find.cta.eyebrow')) + '</p>' +
-      '<h2 class="f-cta-title" id="f-cta-t">' + title + '</h2>' +
-      '<p class="f-cta-body">' + esc(t('find.cta.body')) + '</p>' +
-      '<div class="f-cta-acts">' + SM.ui.button(t('find.cta.start'), { href: '#/find/q/1', size: 'lg', block: true, attrs: 'data-press' }) + '</div>' +
-    '</section>';
+    return '<section class="f-way' + (mini ? ' is-mini' : '') + '" aria-labelledby="f-way-t' + (mini ? '2' : '') + '"' + (mini ? '' : R('data-reveal="up" data-reveal-delay="200"')) + '>' +
+      '<h2 class="f-way-t" id="f-way-t' + (mini ? '2' : '') + '">' + esc(t('find.cta.line')) + '</h2>' +
+      '<div class="f-way-acts">' + SM.ui.button(t('find.cta.go'), { href: '#/find/q/1', attrs: 'data-press' }) +
+      '<span class="tag tag-neutral f-way-min">' + esc(t('find.cta.min')) + '</span></div></section>';
   }
 
   function catCounts() {
@@ -798,10 +817,16 @@
   // 01 困りごとから見る: ruled rows whose kanji mark travels into the category page (shared morph)
   function catList(numLabel) {
     var counts = catCounts();
-    return '<section class="f-cats-sec" aria-labelledby="f-cats-h">' + SM.ui.sectionHeader(t('find.cats.h'), { id: 'f-cats-h', num: numLabel, reveal: !mem.quiet }) +
-      '<ul class="f-cats list" role="list"' + R('data-reveal-stagger="40"') + '>' + catOrder().map(function (k) {
-        return '<li>' + SM.ui.listItem({ title: catName(k), sub: catHint(k), href: '#/find/cat/' + k, cat: k, id: 'cat:' + k,
-          meta: counts[k] || 0, unit: t('find.cats.unit'), attrs: 'data-press' }) + '</li>';
+    // reading order on arrival: title, search, words, the way in (+200), then this list (+280 and on)
+    var head = SM.ui.sectionHeader(t('find.cats.h'), { id: 'f-cats-h', num: numLabel, reveal: !mem.quiet });
+    if (!mem.quiet) head = head.replace('data-reveal="up"', 'data-reveal="up" data-reveal-delay="280"').replace('data-reveal="rule" data-reveal-delay="80"', 'data-reveal="rule" data-reveal-delay="360"');
+    return '<section class="f-cats-sec" aria-labelledby="f-cats-h">' + head +
+      '<ul class="f-cats list" role="list"' + R('data-reveal-stagger="50"') + '>' + catOrder().map(function (k, i) {
+        var row = SM.ui.listItem({ title: catName(k), subSr: catHint(k), href: '#/find/cat/' + k, cat: k, id: 'cat:' + k,
+          meta: counts[k] || 0, unit: t('find.cats.unit'), count: !mem.quiet, attrs: 'data-press' });
+        // the kanji mark stamps in as its row arrives (a hanko on the station sign)
+        if (!mem.quiet) row = row.replace('<span class="cat-icon', '<span data-reveal="mark" data-reveal-delay="' + (440 + i * 50) + '" class="cat-icon');
+        return '<li' + (mem.quiet ? '' : ' data-reveal-delay="320"') + '>' + row + '</li>';
       }).join('') + '</ul></section>';
   }
 
@@ -861,9 +886,7 @@
     var more = rows.length > shown.length ?
       '<div class="f-more-wrap">' + SM.ui.button(t('find.more', { n: rows.length - shown.length }), { act: 'find-browse-more', variant: 'secondary', block: true, arrow: 'down', attrs: 'id="f-browse-more"' }) + '</div>' : '';
     return '<section class="f-all" aria-labelledby="f-all-h">' +
-      SM.ui.sectionHeader(t('find.all.h'), { id: 'f-all-h', num: numLabel, reveal: !mem.quiet, sub: myWardName() ?
-        t('find.all.subArea', { area: myWardName(), n: base.filter(function (r) { return !otherWard(r); }).length, total: SM.ui.listedCount ? SM.ui.listedCount() : base.length }) :
-        t('find.all.sub', { n: base.length }) }) +
+      SM.ui.sectionHeader(t('find.all.h'), { id: 'f-all-h', num: numLabel, reveal: !mem.quiet }) +
       listTools(base, 'f-all', 'f-all-sort') +
       jrNote(hidden, 'all') + body + more + wardHint(base) + '</section>';
   }
@@ -913,16 +936,15 @@
   function renderBrowse() {
     var sug = junior() && !en() ? SUGGEST_JR : SUGGEST;
     return '<div class="f-browse wide-layout"><div class="f-side">' +
-      '<header class="f-head"><h1 class="f-h1"' + R('data-reveal="line"') + '>' + esc(t('find.browse.h1')) + '</h1>' +
-      '<p class="lead f-lead"' + R('data-reveal="fade" data-reveal-delay="80"') + '>' + esc(t('find.browse.lead')) + '</p></header>' +
+      '<header class="f-head"><h1 class="f-h1"' + R('data-reveal="line"') + '>' + esc(t('find.browse.h1')) + '</h1></header>' +
       '<div class="f-side-stick">' +
-      '<div class="f-searchbox" role="search"' + R('data-reveal="fade" data-reveal-delay="120"') + '>' +
-        '<div class="f-search-wrap">' + SM.ui.searchField({ id: 'f-q', placeholder: t('find.search.ph'), label: t('find.search.label'), value: mem.q }) +
+      '<div class="f-searchbox" role="search">' +
+        '<div class="f-search-wrap"' + R('data-reveal="up" data-reveal-delay="80"') + '>' + SM.ui.searchField({ id: 'f-q', placeholder: t('find.search.ph'), label: t('find.search.label'), value: mem.q }) +
         '<button type="button" class="search-clear" id="f-q-clear" aria-label="' + esc(t('find.search.clear')) + '"' + (mem.q ? '' : ' hidden') + '>' + ic('close') + '</button></div>' +
-        '<div class="f-suggest" role="group" aria-labelledby="f-suggest-l"><p class="f-suggest-l eyebrow" id="f-suggest-l">' + esc(t('find.search.try')) + '</p>' +
-          '<div class="chips-scroll f-suggest-row">' + sug.map(function (s) {
+        '<div class="f-suggest" role="group" aria-label="' + esc(t('find.search.tryAria')) + '">' +
+          '<div class="chips-scroll f-suggest-row"' + R('data-reveal-stagger="50"') + '>' + sug.map(function (s) {
             var w = L(s);
-            return SM.ui.chip(w, { act: 'find-suggest', pressed: mem.q.trim() === w, attrs: 'data-q="' + esc(w) + '"' });
+            return SM.ui.chip(w, { act: 'find-suggest', pressed: mem.q.trim() === w, attrs: 'data-q="' + esc(w) + '"' + (mem.quiet ? '' : ' data-reveal-delay="140"') });
           }).join('') + '</div>' +
         '</div>' +
       '</div>' +
@@ -964,7 +986,13 @@
   }
 
   function mountBrowse(root) {
-    countIn(root, 180);
+    countIn(root, 260);
+    // the way in has landed: its arrow nudges once (a hint that it moves you on)
+    if (!mem.quiet && animOn() && !(SM.route && SM.route.instant)) {
+      var way = root.querySelector('.f-way .btn .arrow');
+      if (way) anim(way, [{ translate: '0 0' }, { translate: '8px 0', offset: 0.3 }, { translate: '0 0', offset: 0.6 }, { translate: '5px 0', offset: 0.8 }, { translate: '0 0' }],
+        { duration: 900, delay: 900, easing: 'ease-in-out', key: 'nudge' });
+    }
     var input = root.querySelector('#f-q');
     var clear = root.querySelector('#f-q-clear');
     whenFlushed(root, wireTabs);
@@ -1056,7 +1084,8 @@
   function qOpts(q) { return q.optsJr && junior() ? q.optsJr : q.opts; }
   // options arrive in reading order: 30ms apart from 120ms, capped at the 6th (MOTION-SPEC §4 Questions)
   // (the title rises at +0; options from +60, 30ms apart, capped at the 4th: a question is answerable at once)
-  function rv(i) { return R('data-reveal="up" data-reveal-delay="' + (60 + Math.min(i, 3) * 30) + '"'); }
+  // v5: options cascade in 50ms apart from +120ms (cap 8), each rising 28px (SPEC-v5 Part A 5)
+  function rv(i) { return R('data-reveal="up" data-reveal-delay="' + (120 + Math.min(i, 7) * 50) + '"'); }
   function routeW(k) { return (30 + (k - 1) * 54) / 360; }       // the green route to question k (strip units / 360)
 
   function radioOpt(q, o, selected, extraCls, i) {
@@ -1071,11 +1100,10 @@
   function areaOpts(q, cur) {
     var areas = (SM.data.areas || []).slice();
     var groups = ['23ku', 'tama', 'islands'];
-    var html = '<div class="f-area-special">' +
-      '<p class="opt-group-label"' + rv(0) + '>' + esc(t('find.area.special')) + '</p>' +
+    var html = '<div class="f-area-special" role="group" aria-label="' + esc(t('find.area.special')) + '">' +
       '<div class="opts">' +
-      radioOpt(q, { v: '13', label: t('find.area.unsure'), hint: t('find.area.unsureHint') }, cur === '13', 'f-opt-special', 1) +
-      radioOpt(q, { v: 'other', label: t('find.area.other'), hint: t('find.area.otherHint') }, cur === 'other', 'f-opt-special', 2) +
+      radioOpt(q, { v: '13', label: t('find.area.unsure'), hint: t('find.area.unsureHint') }, cur === '13', 'f-opt-special', 2) +
+      radioOpt(q, { v: 'other', label: t('find.area.other'), hint: t('find.area.otherHint') }, cur === 'other', 'f-opt-special', 3) +
       '</div></div>';
     groups.forEach(function (g) {
       var list = areas.filter(function (a) { return a.group === g; });
@@ -1093,11 +1121,17 @@
     return html;
   }
 
-  // 質問 3 / 6 · あとで — and one 2px track with a green fill and hairline ticks (VISUAL-SPEC §7.4)
+  /* 質問 3 / 6 · あとで — and the progress as a train line (SPEC-v5 Part A 5): six stations on a 4px rail, the run
+     (green) from the first station to this one, passed stations filled, and the train (this question's station
+     sign) standing at its stop. Between questions the train travels along the rail from the last stop to this one
+     while the run grows behind it (playJourney); the stations it passes fill as it goes. */
+  function stX(k) { return (k - 1) / (TOTAL - 1) * 100; }       // station k along the rail (%)
   function qProgress(n, q, query) {
     var ret = query && query.ret === 'results';
-    var ticks = '';
-    for (var i = 1; i < TOTAL; i++) ticks += '<span class="f-q-tick" style="left:' + (i / TOTAL * 100).toFixed(3) + '%"></span>';
+    var st = '';
+    for (var i = 1; i <= TOTAL; i++) {
+      st += '<span class="f-q-st' + (i < n ? ' is-done' : i === n ? ' is-cur' : '') + '" data-st="' + i + '" style="left:' + stX(i).toFixed(3) + '%"></span>';
+    }
     return '<div class="f-q-top">' +
       '<div class="f-q-head">' +
         '<p class="f-q-step"><span class="f-q-k" aria-hidden="true">' + esc(t('find.q.k')) + '</span>' +
@@ -1106,8 +1140,9 @@
         (q.optional ? '<span class="tag tag-neutral f-q-opt">' + esc(t('find.q.optional')) + '</span>' : '') +
         '<a class="f-q-quit" href="' + (ret ? '#/find/results' : '#/find') + '">' + esc(t(ret ? 'find.q.toResults' : 'find.q.quit')) + '</a>' +
       '</div>' +
-      '<div class="f-q-track" role="progressbar" aria-label="' + esc(en() ? 'Progress' : '進みぐあい') + '" aria-valuemin="0" aria-valuemax="' + TOTAL + '" aria-valuenow="' + n + '" aria-valuetext="' + esc(t('find.q.of', { n: n, total: TOTAL })) + '">' +
-        '<i class="f-q-fill" style="transform:scaleX(' + (n / TOTAL).toFixed(4) + ')"></i>' + ticks + '</div>' +
+      '<div class="f-q-line" role="progressbar" aria-label="' + esc(en() ? 'Progress' : '進みぐあい') + '" aria-valuemin="0" aria-valuemax="' + TOTAL + '" aria-valuenow="' + n + '" aria-valuetext="' + esc(t('find.q.of', { n: n, total: TOTAL })) + '">' +
+        '<span class="f-q-rail" aria-hidden="true"><i class="f-q-run" style="transform:scaleX(' + (stX(n) / 100).toFixed(4) + ')"></i>' + st +
+        '<span class="f-q-trainbox" style="transform:translateX(' + stX(n).toFixed(3) + '%)"><b class="f-q-train">' + n + '</b></span></span></div>' +
     '</div>';
   }
 
@@ -1139,9 +1174,11 @@
     var ret = query && query.ret === 'results';
     var titleId = 'f-q-title';
     var title = '<h1 class="q-title f-q-title" id="' + titleId + '"' + R('data-reveal="line"') + '>' + esc(L(q.title)) + '</h1>';
-    var why = q.optional ?
-      '<p class="f-care-note"' + R('data-reveal="fade" data-reveal-delay="40"') + '>' + esc(L(q.why)) + '</p>' :
-      '<div class="f-why"' + R('data-reveal="fade" data-reveal-delay="40"') + '><p class="f-why-k">' + esc(t('find.q.whyK')) + '</p><p class="q-why f-why-t">' + esc(L(q.why)) + '</p></div>';
+    // 「なぜ聞くの」: closed by default, opens in place (SM.ui.more); the answers-stay-here line lives inside it
+    var whyBody = '<p class="q-why f-why-t">' + esc(L(q.why)) + '</p><p class="f-why-priv">' + esc(t('find.q.private')) + '</p>';
+    var why = '<div class="f-why"' + R('data-reveal="fade" data-reveal-delay="80"') + '>' +
+      (SM.ui.more ? SM.ui.more(t('find.q.whyMore'), whyBody, { inline: true, id: 'f-why-' + n }) :
+        '<details class="f-why-d"><summary>' + esc(t('find.q.whyMore')) + '</summary>' + whyBody + '</details>') + '</div>';
 
     var body = '', foot = '', k = 0;
     if (q.key === 'concerns') {
@@ -1155,13 +1192,12 @@
           var on = cs.indexOf(c) !== -1;
           return '<button type="button" class="opt opt-multi f-opt' + (on ? ' is-selected' : '') + '" role="checkbox" aria-checked="' + on + '" data-act="find-toggle" data-value="' + c + '" data-press' + rv(k++) + '>' +
             '<span class="opt-ind">' + ic('check') + '</span>' + SM.ui.catIcon(c, 'sm') +
-            '<span class="opt-body"><span class="opt-title">' + esc(catName(c)) + '</span><span class="opt-hint">' + esc(catHint(c)) + '</span></span></button>';
+            '<span class="opt-body"><span class="opt-title">' + esc(catName(c)) + '</span><span class="sr-only">' + esc(catHint(c)) + '</span></span></button>';
         }).join('') + '</div>';
       foot = '<div class="q-foot f-q-foot"><button type="button" class="btn btn-primary btn-lg btn-block f-next' + (cs.length || ret ? ' is-ready' : '') + '" id="f-next" data-act="find-next" data-press>' +
         '<span class="f-next-l">' + esc(concernBtnLabel(cs.length, ret)) + '</span>' + arrow('r') + '</button></div>';
     } else if (q.key === 'area') {
       body = '<div class="f-area-search"' + rv(k++) + '>' + SM.ui.searchField({ id: 'f-area-q', placeholder: t('find.area.search'), label: t('find.area.search') }) + '</div>' +
-        '<p class="f-area-note"' + rv(k++) + '>' + esc(t('find.area.note')) + '</p>' +
         '<div class="f-area" role="radiogroup" aria-labelledby="' + titleId + '">' +
         '<p class="f-area-none" id="f-area-none" role="status" hidden>' + esc(t('find.area.none')) + '</p>' + areaOpts(q, a.area) + '</div>';
     } else if (q.key === 'stage') {
@@ -1192,10 +1228,8 @@
       (n > 1 ? '<a class="f-q-prev" href="#/find/q/' + (n - 1) + retQ(query) + '">' + arrow('l') + '<span>' + esc(t('find.q.prev')) + '</span></a>' : '<span></span>') +
       (see ? '<a class="f-q-see" href="#/find/results" data-act="find-finish"><span>' + esc(t('find.q.seeResults')) + '</span>' + arrow('r') + '</a>' : '') +
       '</nav>';
-    var priv = '<p class="f-q-private">' + esc(t('find.q.private')) + '</p>';
-
     return '<div class="f-q f-q-' + q.key + '" data-n="' + n + '" data-next="' + esc(qNext(n, query)) + '">' + qProgress(n, q, query) + qJourney(n, q) +
-      '<div class="f-q-body">' + title + why + body + skip + '</div>' + foot + nav + priv + '</div>';
+      '<div class="f-q-body">' + title + why + body + skip + '</div>' + foot + nav + '</div>';
   }
   function concernBtnLabel(k, ret) {
     if (ret) return t('find.q.toResults');
@@ -1214,7 +1248,7 @@
       mem.leaving = true;
       // back to the results it came from: the back grammar (the results page is where we were)
       SM.go(hash, { transition: ret ? 'back' : 'forward' });
-    }, reduced() ? 60 : (delay == null ? 260 : delay));
+    }, reduced() ? Math.min(200, delay == null ? 200 : delay) : (delay == null ? 260 : delay));
   }
   function markAnsweredIfDone(hash) { if (hash === '#/find/results') { SM.state.answered = true; SM.save(); } }
 
@@ -1255,8 +1289,8 @@
     var next = box ? box.getAttribute('data-next') : '#/find/results';
     if (key === 'care') next = '#/find/results';
     markAnsweredIfDone(next);
-    // the choice is seen to register (the marker fills, the first stroke of the check), then the flow moves on
-    leaveTo(next, 140);
+    // the choice is seen to register (the colour sweeps across the option, the check draws), then the flow moves on
+    leaveTo(next, el.classList.contains('f-area-b') ? 300 : 420);
   });
   SM.on('find-skip', function (el) {
     if (mem.leaving) return;
@@ -1267,7 +1301,7 @@
     if (box) Array.prototype.forEach.call(box.querySelectorAll('[role="radio"]'), function (b) { b.setAttribute('aria-checked', 'false'); b.classList.remove('is-selected'); });
     var next = key === 'care' ? '#/find/results' : (box ? box.getAttribute('data-next') : '#/find/results');
     markAnsweredIfDone(next);
-    leaveTo(next, 120);
+    leaveTo(next, 200);
   });
   // 次へ（2つ選択中）: the label swaps, the button turns solid with the first choice and its arrow nudges once
   function setNextLabel(n) {
@@ -1323,12 +1357,10 @@
     var mode = from != null && from !== n ? 'step' : (n === 1 && mem.fromOutside ? 'enter' : (inst ? null : 'rise'));
     if (!mode) return;
     var fig = root.querySelector('.f-q-fig'), walk = root.querySelector('.f-q-walk');
-    var cur = root.querySelector('.f-q-cur'), fill = root.querySelector('.f-q-fill');
-    var p0 = (mode === 'step' ? from : n - 1) / TOTAL;
+    var cur = root.querySelector('.f-q-cur');
     // entering from outside the counter rolls in from blank, never from a 0 that reads as a value (§4.1)
     if (cur && mode !== 'rise') mcall('odometer', cur, String(n), { from: mode === 'step' ? String(from) : '', duration: 420 });
-    anim(fill, [{ transform: 'scaleX(' + p0.toFixed(4) + ')' }, { transform: 'scaleX(' + (n / TOTAL).toFixed(4) + ')' }],
-      { duration: 300, delay: 60, easing: EASE_STD, fill: 'backwards' });
+    playLine(root, n, mode === 'step' ? from : null, mode);
     if (!fig) return;
     if (mode === 'rise') {
       anim(fig, [{ opacity: 0, transform: 'translateY(8%)' }, { opacity: 1, transform: 'none' }], { duration: 360, delay: 200, easing: EASE_STD, fill: 'backwards' });
@@ -1348,6 +1380,45 @@
     anim(fig, [{ transform: 'translateX(' + dx + '%)' }, { transform: 'none' }], { duration: dur, delay: delay, easing: ease, fill: 'backwards' });
     anim(walk, [{ transform: 'scaleX(' + w0.toFixed(4) + ')' }, { transform: 'scaleX(' + routeW(n).toFixed(4) + ')' }], { duration: dur, delay: delay, easing: ease, fill: 'backwards' });
     walkCycle(root, Math.abs(dx), dur, delay, curve);
+  }
+  /* the train line: the train leaves its last stop, runs along the rail (the green run grows behind it) and pulls in
+     at this question's station with a small settle; each station it passes fills as the train reaches it, and the
+     arriving one stamps. From outside (question 1) the stations come up one by one and the train rolls in. */
+  function playLine(root, n, from, mode) {
+    var run = root.querySelector('.f-q-run'), box = root.querySelector('.f-q-trainbox'), train = root.querySelector('.f-q-train');
+    var sts = root.querySelectorAll('.f-q-st');
+    if (!run || !box) return;
+    var x1 = stX(n), r1 = 'scaleX(' + (x1 / 100).toFixed(4) + ')';
+    if (from != null && from !== n) {
+      var x0 = stX(from), d = Math.abs(n - from);
+      var dur = Math.min(760, 480 + (d - 1) * 120), delay = 80;
+      var ease = 'cubic-bezier(0.45, 0, 0.2, 1.04)';   // pulls away, runs, brakes into the stop with a ≈3% settle
+      anim(box, [{ transform: 'translateX(' + x0.toFixed(3) + '%)' }, { transform: 'translateX(' + x1.toFixed(3) + '%)' }], { duration: dur, delay: delay, easing: ease, fill: 'backwards', key: 'train' });
+      anim(run, [{ transform: 'scaleX(' + (x0 / 100).toFixed(4) + ')' }, { transform: r1 }], { duration: dur, delay: delay, easing: ease, fill: 'backwards', key: 'run' });
+      if (train) {
+        // the train's number turns over as it leaves (old stop → this one)
+        mcall('odometer', train, String(n), { from: String(from), duration: 360, delay: delay });
+        anim(train, [{ scale: '1' }, { scale: '1.18', offset: 0.5 }, { scale: '1' }], { duration: 360, delay: delay + dur - 80, easing: 'ease-out', key: 'arrive' });
+      }
+      // stations between the stops change state as the train passes them (forward: fill; back: empty)
+      Array.prototype.forEach.call(sts, function (st) {
+        var k = +st.getAttribute('data-st');
+        var lo = Math.min(from, n), hi = Math.max(from, n);
+        if (k < lo || k > hi) return;
+        var tt = delay + dur * Math.abs(k - from) / d;
+        anim(st, [{ opacity: 0.35, scale: '0.6' }, { opacity: 1, scale: '1' }], { duration: 260, delay: Math.max(0, tt - 40), spring: 'pop', fill: 'backwards', key: 'st' });
+      });
+      return;
+    }
+    if (mode === 'enter' || mode === 'rise') {
+      // the line is laid down: stations pop up left to right, then the train rolls in to the first stop
+      Array.prototype.forEach.call(sts, function (st, i) {
+        anim(st, [{ opacity: 0, scale: '0.2' }, { opacity: 1, scale: '1' }], { spring: 'pop', delay: 120 + i * 50, fill: 'backwards', key: 'st' });
+      });
+      anim(run, [{ transform: 'scaleX(0)' }, { transform: r1 }], { duration: 520, delay: 160, easing: EASE_DRAW, fill: 'backwards', key: 'run' });
+      anim(box, [{ transform: 'translateX(-12%)', opacity: 0 }, { transform: 'translateX(' + x1.toFixed(3) + '%)', opacity: 1 }],
+        { duration: 620, delay: 200, easing: 'cubic-bezier(0.2, 0, 0, 1.04)', fill: 'backwards', key: 'train' });
+    }
   }
   /* the two walk drawings alternate every quarter stride of distance travelled (not of time), so the feet
      never slide while the walk eases in and out; the last drawing is the passing one, which settles into the pose */
@@ -1528,8 +1599,8 @@
   function topItems(top) {
     var item = function (r, i, attrs) { return '<li class="f-top-item" data-rank="0' + (i + 1) + '"' + attrs + '>' + pcard(r.p, { why: r.why }) + '</li>'; };
     var now = mem.defer && !wide() ? 1 : top.length;
-    return top.slice(0, now).map(function (r, i) { return item(r, i, R('data-reveal-delay="400"')); }).join('') +
-      lazy(top.slice(now).map(function (r, i) { return item(r, i + now, ' data-reveal="fade"'); }).join(''));
+    return top.slice(0, now).map(function (r, i) { return item(r, i, R('data-reveal-delay="440"')); }).join('') +
+      lazy(top.slice(now).map(function (r, i) { return item(r, i + now, ' data-reveal="up"'); }).join(''));
   }
   function groupOrder() {
     var cs = (answers().concerns || []).filter(function (c) { return catOrder().indexOf(c) !== -1; });
@@ -1544,18 +1615,14 @@
     return out.slice(0, 3);
   }
 
-  // 64件 standing on the strip's ground line, the protagonist arriving at the house on the right
+  // 64件 standing on the strip's ground line, the protagonist arriving at the house on the right; one headline
+  // (あなたに合いそうな支援, its 蛍光ペン drawn after it rises) and one short caveat line
   function resHead(n) {
-    var phrases = [t('find.res.p1'), t('find.res.p2'), t('find.res.p3')].filter(Boolean);
-    var last = phrases.length - 1;
-    var line = phrases.map(function (ph, i) {
-      return '<span class="f-nw">' + (i === last ? '<mark class="f-mark"><span class="f-mark-ink" aria-hidden="true"></span><span class="f-mark-t">' + esc(ph) + '</span></mark>' : esc(ph)) + '</span>';
-    }).join(en() ? ' ' : '');
     return '<header class="f-res-head">' +
-      '<p class="eyebrow f-res-eyebrow"' + R('data-reveal="fade"') + '>' + esc(t('find.res.eyebrow')) + '</p>' +
       '<div class="f-res-stage" aria-hidden="true">' + ill('results-arrive', { size: 'strip', cls: 'f-res-art' }) +
         '<p class="f-res-count"><b class="f-res-n" id="f-res-n" data-n="' + n + '">' + esc(fmtN(n)) + '</b><span class="unit">' + esc(t('find.res.unit')) + '</span></p></div>' +
-      '<h1 class="f-res-title"' + R('data-reveal="line" data-reveal-delay="140"') + '><span class="sr-only">' + esc(t('find.res.srCount', { n: n })) + '</span>' + line + '</h1>' +
+      '<h1 class="f-res-title"' + R('data-reveal="line" data-reveal-delay="140"') + '><span class="sr-only">' + esc(t('find.res.srCount', { n: n })) + '</span>' +
+        '<mark class="f-mark"><span class="f-mark-ink" aria-hidden="true"></span><span class="f-mark-t">' + esc(t('find.res.h')) + '</span></mark></h1>' +
       '<p class="f-res-sub ui-wrap"' + R('data-reveal="fade" data-reveal-delay="240"') + '>' + esc(t('find.res.sub')) + '</p>' +
       '<p class="sr-only" role="status" id="f-res-status"></p></header>';
   }
@@ -1563,18 +1630,17 @@
   function resHeadUrgent(n) {
     var sub = esc(t('find.res.urgentSub', { n: '\u0000' })).replace('\u0000', '<b class="f-res-n" id="f-res-n" data-n="' + n + '">' + esc(fmtN(n)) + '</b>');
     return '<header class="f-res-head is-urgent">' +
-      '<p class="eyebrow f-res-eyebrow">' + esc(t('find.res.eyebrow')) + '</p>' +
       '<h1 class="f-res-title">' + esc(t('find.res.urgentTitle')) + '</h1>' +
       '<p class="f-res-sub ui-wrap">' + sub + '</p>' +
       '<p class="sr-only" role="status" id="f-res-status"></p></header>';
   }
 
   function groupHead(g, n, mine) {
-    return '<div class="f-group-head" data-flip-key="gh-' + g + '">' + SM.ui.catIcon(g, 'sm') +
-      // the あなたが選んだ tag rides on the title line; the hint always has a line of its own
-      '<div class="f-group-text"><div class="f-group-tl"><h2 class="f-group-title" id="f-gh-' + g + '">' + esc(catName(g)) + '</h2>' +
-      (mine ? '<span class="f-mine">' + esc(t('find.group.mine')) + '</span>' : '') + '</div>' +
-      '<p class="f-group-sub">' + esc(catHint(g)) + '</p></div>' +
+    return '<div class="f-group-head" data-flip-key="gh-' + g + '"' + R('data-reveal="up"') + '>' +
+      (mem.quiet ? SM.ui.catIcon(g, 'sm') : SM.ui.catIcon(g, 'sm').replace('<span class="cat-icon', '<span data-reveal="mark" data-reveal-delay="120" class="cat-icon')) +
+      // the あなたが選んだ tag rides on the title line
+      '<div class="f-group-text"><div class="f-group-tl"><h2 class="f-group-title" id="f-gh-' + g + '">' + esc(catName(g)) + '<span class="sr-only">（' + esc(catHint(g)) + '）</span></h2>' +
+      (mine ? '<span class="f-mine">' + esc(t('find.group.mine')) + '</span>' : '') + '</div></div>' +
       '<p class="f-group-n">' + rollNum('g-' + g, n, 'f-group-num') + '<span class="unit">' + esc(t('find.res.unit')) + '</span></p>' +
       '<span class="section-rule"' + R('data-reveal="rule"') + ' aria-hidden="true"></span></div>';
   }
@@ -1621,9 +1687,9 @@
 
       // まずはこれ: a full-bleed band, three rows ranked like stations (01 02 03 under the kanji mark)
       body.push('<section class="f-top band" aria-labelledby="f-top-h">' +
-        '<div class="f-top-head" data-flip-key="top-head"' + R('data-reveal="fade" data-reveal-delay="360"') + '><h2 class="f-top-title" id="f-top-h">' + esc(t('find.top.h')) + '</h2>' +
-        '<p class="f-top-sub">' + esc(t(any ? 'find.top.sub' : 'find.top.subAll')) + '</p></div>' +
-        '<ol class="f-top-list" role="list"' + R('data-reveal-stagger="40"') + '>' + topItems(top) + '</ol></section>');
+        '<div class="f-top-head" data-flip-key="top-head"' + R('data-reveal="up" data-reveal-delay="360"') + '><h2 class="f-top-title" id="f-top-h">' + esc(t('find.top.h')) + '</h2>' +
+        '<p class="sr-only">' + esc(t(any ? 'find.top.sub' : 'find.top.subAll')) + '</p></div>' +
+        '<ol class="f-top-list" role="list"' + R('data-reveal-stagger="60"') + '>' + topItems(top) + '</ol></section>');
 
       // the category index: sticky underline tabs with marks and counts; the indicator follows the scroll
       if (order.length > 1) {
@@ -1640,10 +1706,10 @@
         var limit = mine || !cs.length ? 3 : 2;
         var open = !!mem.expanded[g];
         var shown = open ? list : list.slice(0, limit);
-        return '<section class="f-group cat-' + g + (mine ? ' is-mine' : '') + '" id="f-g-' + g + '" aria-labelledby="f-gh-' + g + '"' + R('data-reveal="fade"') + '>' +
+        return '<section class="f-group cat-' + g + (mine ? ' is-mine' : '') + '" id="f-g-' + g + '" aria-labelledby="f-gh-' + g + '">' +
           groupHead(g, list.length, mine) +
           (g === 'housing' && !a.urgent ? crisisCard({ id: '-g' }) : '') +
-          cards(shown, { dedupWhy: true, block: true }) +
+          cards(shown, { dedupWhy: true }) +
           (list.length > limit ? '<button type="button" class="f-more" id="f-more-' + g + '" data-act="find-more" data-g="' + g + '" aria-expanded="' + open + '">' +
             '<span>' + esc(open ? t('find.less') : t('find.more', { n: list.length - limit })) + '</span>' + arrow(open ? 'u' : 'd') + '</button>' : '') +
         '</section>';
@@ -1668,14 +1734,13 @@
     tail += '<section class="f-nothere" aria-labelledby="f-nh-h"' + R('data-reveal="fade"') + '>' +
       SM.ui.sectionHeader(t('find.notHere.title'), { id: 'f-nh-h', sub: t('find.notHere.body'), reveal: !mem.quiet }) +
       (picks.length ? '<div class="list">' + picks.map(function (r) {
-        return SM.ui.listItem({ title: L(r.p.name), sub: L(r.p.hook) || L(r.p.summary), href: '#/p/' + encodeURIComponent(r.p.id), cat: 'consult', id: r.p.id });
+        return SM.ui.listItem({ title: L(r.p.name), subSr: L(r.p.hook) || L(r.p.summary), href: '#/p/' + encodeURIComponent(r.p.id), cat: 'consult', id: r.p.id });
       }).join('') + '</div>' : '') +
       SM.ui.button(t('find.notHere.all'), { href: '#/find/cat/consult', variant: 'text' }) +
     '</section>';
     // privacy
-    tail += '<section class="f-private">' +
-      '<p class="f-private-title">' + esc(t('find.private.title')) + '</p><p class="f-private-body">' + esc(t('find.private.body')) + '</p>' +
-      '<button type="button" class="f-reset" data-act="find-reset"><span>' + esc(t('find.reset')) + '</span></button></section>';
+    tail += '<div class="f-private">' +
+      '<button type="button" class="f-reset" data-act="find-reset"><span>' + esc(t('find.reset')) + '</span></button></div>';
     body.push(lazy(tail));
 
     return '<div class="f-res wide-layout"><div class="f-res-side">' + side.join('') + '</div>' +
@@ -1806,6 +1871,41 @@
     secs.forEach(function (s) { mem.spy.observe(s); });
   }
 
+  /* the "searching" beat (SPEC-v5 Part A 6, ≤ 900ms; first time for an answer set only): over the arrival strip, a
+     green line runs through the six category stations (住 金 学 働 手 話); each mark lights and stamps as the line
+     reaches it; then the strip clears and the count rolls 0 → N. Built by JS only (no JS: nothing to hide), aria-hidden
+     (the count is announced by the heading). Returns when the count should start rolling (ms), 0 when skipped. */
+  function scanBeat(root) {
+    var stage = root.querySelector('.f-res-stage');
+    if (!stage || !animOn() || lite()) return 0;
+    var keys = catOrder();
+    var box = document.createElement('div');
+    box.className = 'f-scan';
+    box.setAttribute('aria-hidden', 'true');
+    box.innerHTML = '<p class="f-scan-l">' + esc(t('find.res.scan')) + '</p><div class="f-scan-rail"><i class="f-scan-run"></i>' +
+      keys.map(function (k, i) { return '<span class="f-scan-st" style="left:' + (i / (keys.length - 1) * 100).toFixed(3) + '%">' + SM.ui.catIcon(k, 'xs') + '</span>'; }).join('') + '</div>';
+    stage.appendChild(box);
+    var RUN = 520, T0 = 140, OUT = 680;
+    anim(box.querySelector('.f-scan-run'), [{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], { duration: RUN, delay: T0, easing: 'cubic-bezier(0.4, 0, 0.6, 1)', fill: 'both' });
+    Array.prototype.forEach.call(box.querySelectorAll('.f-scan-st'), function (st, i) {
+      var at = T0 + RUN * i / (keys.length - 1);
+      anim(st, [{ opacity: 0.25, scale: '0.7', filter: 'grayscale(1)' }, { opacity: 1, scale: '1.15', filter: 'grayscale(0)', offset: 0.55 }, { opacity: 1, scale: '1', filter: 'grayscale(0)' }],
+        { duration: 300, delay: Math.max(0, at - 60), easing: 'ease-out', fill: 'both' });
+    });
+    anim(box.querySelector('.f-scan-l'), [{ opacity: 0 }, { opacity: 1 }], { duration: 160, delay: 60, fill: 'both' });
+    var out = anim(box, [{ opacity: 1 }, { opacity: 0, transform: 'translateY(-12px)' }], { duration: 220, delay: OUT, easing: 'cubic-bezier(0.3, 0, 0.8, 0.15)', fill: 'both' });
+    var gone = function () { if (box.parentNode) box.parentNode.removeChild(box); };
+    if (out && out.finished) out.finished.then(gone, gone); else gone();
+    setTimeout(gone, 1400);   // never left behind (hidden tab, cancelled animation)
+    // the strip's own figure and the rest of the head wait for the beat
+    var art = stage.querySelector('.f-res-art');
+    if (art) anim(art, [{ opacity: 0 }, { opacity: 1 }], { duration: 300, delay: OUT, fill: 'backwards' });
+    Array.prototype.forEach.call(root.querySelectorAll('[data-reveal]'), function (el) {
+      if (el.closest('.f-res-stage')) return;
+      el.setAttribute('data-reveal-delay', String((parseInt(el.getAttribute('data-reveal-delay'), 10) || 0) + 480));
+    });
+    return OUT + 20;
+  }
   function mountResults(root) {
     var fa = root.querySelector('.f-answers');
     if (fa) fa.addEventListener('toggle', function () { mem.expanded._answers = fa.open; });
@@ -1828,10 +1928,12 @@
       else if (prev.n !== n) from = prev.n;
       mem.resFrom = null;
       if (from != null && isFinite(from) && from !== n && animOn()) {
-        // the odometer reserves the final width from the first frame (nothing around the number moves) and starts
-        // rolling in the frame the page appears: never a bare 件 with an empty slot before it (≤640ms, §4.1)
+        // the odometer reserves the final width from the first frame (nothing around the number moves).
+        // The first time for an answer set, a short "searching" beat runs first (scanBeat) and the count rolls 0 → N
+        // as it clears; otherwise it rolls from the last count at once (≤640ms, §4.1)
+        var beat = !mem.quiet && from === 0 && !(SM.route && SM.route.instant) ? scanBeat(root) : 0;
         if (mem.quiet) mcall('odometer', nEl, fmtN(n), { from: fmtN(from), duration: 420 });
-        else mcall('odometer', nEl, fmtN(n), { from: from === 0 ? '' : fmtN(from), duration: 640 });
+        else mcall('odometer', nEl, fmtN(n), { from: from === 0 ? '' : fmtN(from), duration: beat ? 720 : 640, delay: beat });
       }
     }
     playRolls(root);
@@ -1840,17 +1942,21 @@
      The arrival morph lands in .f-cat-sign (the tapped row's kanji tile flies up and grows); the title line
      rises at +120ms; the topic's scene (cat-<key>) stands on the same ground line as the sign and the title. */
   function hasChat(r) { var c = r.p.contact || {}; return !!(c.line || c.chat); }
-  function catHero(key, title, eyebrow, n, intro) {
+  function catHero(key, title, eyebrow, n, intro, o) {
     return '<header class="f-cat-hero cat-' + key + '">' +
       '<div class="f-cat-stage">' +
         '<div class="f-cat-sign">' + SM.ui.catIcon(key, 'xl', { hero: true }) + '</div>' +
-        '<div class="f-cat-name"><p class="eyebrow f-cat-eyebrow"' + R('data-reveal="fade"') + '>' + esc(eyebrow) + '</p>' +
+        '<div class="f-cat-name">' + (eyebrow ? '<p class="eyebrow f-cat-eyebrow"' + R('data-reveal="fade"') + '>' + esc(eyebrow) + '</p>' : '') +
           '<h1 class="f-h1 f-cat-h1"' + R('data-reveal="line" data-reveal-delay="40"') + '>' + esc(title) + '</h1></div>' +
         '<div class="f-cat-art">' + ill('cat-' + key, { size: 'spot' }) + '</div>' +
       '</div>' +
       '<p class="f-cat-count"' + R('data-reveal="fade" data-reveal-delay="80"') + '><span class="num-xl f-cat-n"><span data-f-count="' + n + '" data-f-seen="find.cat.' + key + '">' + esc(fmtN(n)) + '</span></span>' +
         '<span class="f-cat-unit">' + esc(t('find.cat.unit')) + '</span></p>' +
-      '<p class="lead f-cat-intro"' + R('data-reveal="fade" data-reveal-delay="120"') + '>' + esc(intro) + '</p></header>';
+      // the topic's explanation is one tap away (「くわしく」 opens in place), not a lead paragraph (SPEC-v5 Part B)
+      (!intro ? '' : o && o.introOpen ? '<p class="f-cat-intro"' + R('data-reveal="fade" data-reveal-delay="120"') + '>' + esc(intro) + '</p>' :
+        '<div class="f-cat-intro"' + R('data-reveal="fade" data-reveal-delay="120"') + '>' +
+        (SM.ui.more ? SM.ui.more(null, '<p class="f-cat-intro-t">' + esc(intro) + '</p>', { inline: true, id: 'f-cat-more-' + key }) : '<p>' + esc(intro) + '</p>') + '</div>') +
+    '</header>';
   }
   function renderCat(key, query) {
     if (!SM.CATS || !SM.CATS[key]) return renderBrowse();
@@ -1886,7 +1992,7 @@
     };
     var any = SM.state.answered || answeredAny();
     var side = [], list = [];
-    side.push(catHero(key, catName(key), t('find.cat.eyebrow'), everything.length, L(INTRO[key])));
+    side.push(catHero(key, catName(key), '', everything.length, L(INTRO[key])));
     if (key === 'housing') side.push(crisisCard({ id: '-c' }));
     if (key === 'consult') side.push(SM.ui.callout(esc(t('find.cat.sos')), 'info'));
 
@@ -1906,8 +2012,8 @@
           cards(fit, { first: wide() ? 3 : 1 }) + '</section>');
       }
       if (restRows.length) {
-        tail += '<section class="f-cat-sec" aria-labelledby="f-cr-h"' + R('data-reveal="fade"') + '>' + SM.ui.sectionHeader(t('find.cat.rest'), { id: 'f-cr-h', sub: t('find.cat.restSub'), reveal: !mem.quiet }) +
-          cards(restRows, { compact: true, noWhy: true, block: true }) + '</section>';
+        tail += '<section class="f-cat-sec" aria-labelledby="f-cr-h">' + SM.ui.sectionHeader(t('find.cat.rest'), { id: 'f-cr-h', sub: t('find.cat.restSub'), reveal: !mem.quiet }) +
+          cards(restRows, { compact: true, noWhy: true }) + '</section>';
       }
       if (!fit.length && !restRows.length) list.push(SM.ui.empty(t('find.none.basis'), '', '', { illus: 'results-empty' }));
       tail += wardHint(everything);
@@ -1940,7 +2046,7 @@
     var pref = junior() ? ['anata-no-ibasho', 'childline'] : ['anata-no-ibasho'];
     var first = pref.map(function (id) { for (var i = 0; i < rows.length; i++) if (rows[i].p.id === id) return rows[i]; return null; }).filter(Boolean);
     rows = first.concat(rows.filter(function (r) { return first.indexOf(r) === -1; }));
-    var side = catHero('consult', t('find.chat.h'), catName('consult'), rows.length, t('find.chat.intro'));
+    var side = catHero('consult', t('find.chat.h'), catName('consult'), rows.length, t('find.chat.intro'), { introOpen: true });
     var list = jrNote(jrHidden, 'chat') +
       (rows.length ? cards(rows.map(function (r) { return { p: r.p }; }), { first: 3 }) : SM.ui.empty(t('find.none.basis'), '', '', { illus: 'results-empty' })) +
       '<p class="f-chat-all">' + SM.ui.button(t('find.chat.all'), { href: '#/find/cat/consult', variant: 'text' }) + '</p>';
@@ -2100,8 +2206,14 @@
           // the new question: everything but the progress group and the strip, from the other side
           Array.prototype.forEach.call(nb.children, function (c) {
             if (c.classList.contains('f-q-top') || c.classList.contains('f-q-journey')) return;
-            anim(c, [{ opacity: 0 }, { opacity: 1 }], { duration: 220, easing: 'cubic-bezier(0, 0, 0.2, 1)', fill: 'backwards', key: 'qin-o' });
-            anim(c, [{ translate: (32 * dir) + 'px 0' }, { translate: '0 0' }], { duration: 300, easing: EASE_STD, key: 'qin-t' });
+            anim(c, [{ opacity: 0 }, { opacity: 1 }], { duration: 260, easing: 'cubic-bezier(0, 0, 0.2, 1)', fill: 'backwards', key: 'qin-o' });
+            anim(c, [{ translate: (48 * dir) + 'px 0' }, { translate: '0 0' }], { spring: 'rise', key: 'qin-t' });
+          });
+        } else if (reduced()) {
+          // reduced motion: no travel, a short cross-fade (SPEC-v5 Part A)
+          Array.prototype.forEach.call(nb.children, function (c) {
+            if (c.classList.contains('f-q-top')) return;
+            mcall('animate', c, [{ opacity: 0 }, { opacity: 1 }], { duration: 180, easing: 'linear' });
           });
         }
         mountQuestion(root);
@@ -2125,7 +2237,7 @@
       Array.prototype.forEach.call(box.children, function (c) {
         if (c.classList.contains('f-q-top') || c.classList.contains('f-q-journey')) return;
         var a = anim(c, [{ opacity: 1 }, { opacity: 0 }], { duration: 80, easing: 'cubic-bezier(0.3, 0, 0.8, 0.15)', fill: 'forwards', key: 'qout-o' });
-        anim(c, [{ translate: '0 0' }, { translate: (-32 * dir) + 'px 0' }], { duration: 300, easing: EASE_STD, fill: 'forwards', key: 'qout-t' });
+        anim(c, [{ translate: '0 0' }, { translate: (-48 * dir) + 'px 0' }], { duration: 300, easing: EASE_STD, fill: 'forwards', key: 'qout-t' });
         if (a) last = a;
       });
       // the strip keeps its ground line and its walker; its props go with the question and the next strip draws its own

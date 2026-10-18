@@ -1,20 +1,26 @@
 /* =====================================================================
-   巣立ちマップ v4 — motion.js  (owner: ENGINE)  — pairs with css/motion.css
-   Implements MOTION-SPEC.md §1–§7. Print/signage motion: rules that draw, type that rises from
-   behind a rule, hanko stamps, station-board digit rolls, tiles that travel. transform/opacity
-   only, every animation interruptible, nothing loops.
+   巣立ちマップ v5 — motion.js  (owner: ENGINE)  — pairs with css/motion.css
+   Implements MOTION-SPEC.md §1–§7 at the SPEC-v5 Part A scale: 280–520ms, 24–48px of travel, a spring
+   ease-out with ≤4% overshoot, stagger 50ms (cap 8). Print/signage motion: pages that push in with depth,
+   rules that draw, type that rises from behind a rule, hanko stamps, station-board digit rolls, a dot that
+   flies to やること. transform/opacity only, every animation interruptible, nothing loops.
 
    Content is visible by default: elements are hidden only after JS has marked them pending
    (html.motion-ready + .m-pending), so a missing IntersectionObserver / a JS error never hides
-   anything. Reduced motion is ONE switch: html.m-reduce (OS setting OR 設定 › 動きを少なく).
+   anything; a sweep (~1s after mount, after transitions, on <details> open, on resize) reveals any target
+   the observer missed. Reduced motion is ONE switch: html.m-reduce (OS setting OR 設定 › 動きを少なく):
+   it keeps short opacity fades (150–200ms) and colour changes, and drops every movement.
 
    ------------------------------------------------------------------ API (all on SM.motion)
-   tokens                         {ease, dur, stagger:40, staggerMax:6, spring:{snappy,smooth,stamp,flick}}
+   tokens                         {ease, dur, stagger:50, staggerMax:8, rise:28, spring:{snappy,smooth,stamp,flick,rise,pop}}
    reduced() -> bool              OS reduce OR settings.motion==='reduce' (html.m-reduce). Use this, never matchMedia.
    syncReduce() -> bool           re-read the OS + settings and toggle html.m-reduce (core.applySettings calls it)
-   tier() -> 'full'|'lite'|'off'  off = reduced; lite = save-data / <2GB / two slow transitions this session
+   tier() -> 'full'|'lite'|'off'  off = reduced; lite = save-data / deviceMemory <1GB at start, or (after the
+                                  first 2 navigations) a median of 8 transitions >450ms on a <4GB device. Lite
+                                  still moves (shorter travel, cap 5 stagger); it never turns motion off.
    spring(preset|{response,damping,velocity}) -> {easing, duration}
-   animate(el, keyframes, {duration, easing, spring, delay, fill, key, commit, clear}) -> Animation|null
+   animate(el, keyframes, {duration, easing, spring, delay, fill, key, commit, clear, reduceOk}) -> Animation|null
+                                  reduced: movement props are stripped, opacity/colour fade in 120–180ms
    sequence(steps, {ignoreHold}) -> {play(), skip(), cancel(), finished}
    hold(reason, maxMs=2400) -> release()      whenReleased(fn)      held() -> bool
    finishAll([root], {all, instant, noFlush})
@@ -22,11 +28,19 @@
    odometer(el, value, {from, format, duration, delay, direction, instant}) -> Promise
    count(el, to, {from, decimals, format, finalText, duration, tween})
    stamp(el, {ring}) -> Promise    check(el, {color, keep}) -> Promise   nudge(el)   pulse(el)
-   flyTo(fromEl, toEl, {duration, onArrive}) -> Promise
+   flyTo(fromEl, toEl|tabKey, {duration, onArrive, ghost}) -> Promise
+                                  a 14px green dot arcs to the target (tab), the tab icon pops, a ring lands,
+                                  the badge bumps. ghost:true flies a clone of fromEl instead.
+   badge(tabKey|.tab|.tab-badge, value, {roll, bump}) -> el   tab badge: pops in, rolls, fades out at 0
+   bump(el, {scale})               a one-shot spring scale (≤1.12)
+   expand(container, open, {setOpen, body, closedHeight}) -> Promise   in-place open/close (clip + followers);
+                                  SM.ui.more() and every details.disclose / details.more summary use it
    swapText(el, text) -> Promise   press(el)
    sheet(dialogEl, scrimEl, {drag, fast, onDismiss}) -> {open(), close(velocity), destroy(), isDialog()}
    shared(name, el)                sharedTarget(name, el)
    transition(kind, update, {from, to, shared}) -> Promise   kinds: forward|back|tab|none|theme|fade
+                                  forward/back = push with depth (old page shifts 30% and dims), tab = cross-fade
+                                  + indicator slide; shared names 'cat' (mark) and 'title' morph between pages
    afterTransition(fn[, {keep}])   skipTransition()      inTransition() -> bool
    scrollLinked(el, {prop, from, to, source, range}) -> {destroy()}
    indicator(bar, target, {vertical})
@@ -35,10 +49,10 @@
 
    Attributes wired by mount():
      data-reveal[=""|up|slide|fade|rule|underline|line|mark]   data-reveal-delay="ms"
-     data-reveal-stagger[="40"] (cap 6; lite 3)   data-count="222" (rolls; data-count-style="tween" = v3 tween,
+     data-reveal-stagger[="50"] (cap 8; lite 5)   data-count="222" (rolls; data-count-style="tween" = v3 tween,
      data-count-from, data-count-seen="key" → rolls only when changed since the last visit)
-     data-draw (SVG stroke draw)   data-press[="ink"] (also .btn and .tabbar .tab automatically)
-     data-scroll="fill-y|fill-x|fade"   data-vt="cat" / data-vt-hero="cat" / data-vt-scope (shared morphs)
+     data-draw (SVG stroke draw)   data-press[="ink"] (sink 2px + darken; also .btn/.chip/.tab… automatically)
+     data-scroll="fill-y|fill-x|fade"   data-vt="cat title" / data-vt-hero="cat title" / data-vt-scope (shared morphs)
    ===================================================================== */
 (function () {
   'use strict';
@@ -64,8 +78,13 @@
     rise: 'cubic-bezier(0.25, 1, 0.5, 1)',
     expo: 'cubic-bezier(0.16, 1, 0.3, 1)'
   };
-  var DUR = { instant: 90, quick: 160, base: 240, page: 300, morph: 420, draw: 440, hero: 520 };
-  var STAGGER = 40, STAGGER_MAX = 6;
+  /* v5 scale (SPEC-v5 Part A): 280–520ms, travel 24–48px, spring-like ease-out with a tiny overshoot, staggers
+     40–60ms capped at 8. v4 (90–300ms, 8–16px) read as "everything is still" on a phone. */
+  EASE.spring = 'cubic-bezier(0.22, 1.12, 0.36, 1)';   // ≈3% overshoot: the fallback where linear() is missing
+  EASE.push = 'cubic-bezier(0.16, 1, 0.3, 1)';         // page push: fast off the mark, long soft landing
+  var DUR = { instant: 100, quick: 200, base: 320, page: 440, morph: 480, draw: 560, hero: 560, reduce: 180 };
+  var STAGGER = 50, STAGGER_MAX = 8;
+  var RISE = 28;                                       // default reveal travel (px)
 
   /* ---------------------------------------------------------------- springs
      SwiftUI semantics: response = one undamped period (s), damping = damping fraction.
@@ -75,13 +94,19 @@
     snappy: { response: 0.30, damping: 0.86 },
     smooth: { response: 0.42, damping: 1.00 },
     stamp: { response: 0.32, damping: 0.62 },
-    flick: { response: 0.36, damping: 0.92 }
+    flick: { response: 0.36, damping: 0.92 },
+    // v5: reveals, press release, indicators — ≈3% overshoot, settles in ≈520ms
+    rise: { response: 0.48, damping: 0.76, velocity: 6 },
+    // v5: badge bump, tab icon pop — a little more bounce, short
+    pop: { response: 0.34, damping: 0.6 }
   };
   var SPRING_FALLBACK = {
     snappy: { easing: EASE.standard, duration: 320 },
     smooth: { easing: EASE.standard, duration: 400 },
     stamp: { easing: 'cubic-bezier(0.34, 1.4, 0.64, 1)', duration: 420 },
-    flick: { easing: EASE.standard, duration: 300 }
+    flick: { easing: EASE.standard, duration: 300 },
+    rise: { easing: EASE.spring, duration: 520 },
+    pop: { easing: 'cubic-bezier(0.34, 1.5, 0.64, 1)', duration: 420 }
   };
   function springPos(t, w0, z, v0) {
     if (z < 1) {
@@ -148,28 +173,31 @@
       var forced = ssGet('sm2:tier');
       if (forced === 'lite' || forced === 'full') tierVal = forced;
       else {
+        // lite from the start only on data saver or a device that reports under 1GB (deviceMemory 0.25 / 0.5)
         var c = navigator.connection, mem = navigator.deviceMemory;
-        tierVal = (c && c.saveData) || (mem && mem < 2) ? 'lite' : 'full';
+        tierVal = (c && c.saveData) || (mem && mem < 1) ? 'lite' : 'full';
       }
       docEl.classList.toggle('m-lite', tierVal === 'lite');
     }
     return tierVal;
   }
-  /* Downgrade on the MEDIAN of the last five update callbacks (MOTION-SPEC §6 rule 10), never on two single
-     samples: one cold route or a font arriving mid-session must not cost a phone its transitions for the whole
-     session. Samples that say nothing about the device are skipped: the first navigation after launch (cold code,
-     the first Intl / font work) and any taken while web fonts are still loading (each arriving face relayouts the
-     whole document inside the update). */
-  var navSeen = 0;
+  /* Demotion to 'lite' is for truly slow devices only (v5). v4 demoted a whole session after a median of 160ms over
+     five route renders, which a real phone reaches on the long lists (results, map) and then lost most of its
+     motion. Now: samples skip the first two navigations after launch (cold code, Intl, fonts) and any taken while
+     web fonts load; a session is demoted only when the MEDIAN of the last eight update callbacks is over 450ms, and
+     never on a device that reports 4GB of memory or more. sessionStorage 'sm2:tier' = 'full' | 'lite' forces it. */
+  var navSeen = 0, SAMPLES = 8, SLOW_MS = 450;
   function noteUpdate(ms) {
     navSeen++;
-    if (navSeen === 1) return;
+    if (navSeen <= 2) return;
     try { if (document.fonts && document.fonts.status === 'loading') return; } catch (e) { }
     vtTimes.push(ms);
-    if (vtTimes.length > 5) vtTimes.shift();
-    if (tierVal === 'lite' || ssGet('sm2:tier') === 'full' || vtTimes.length < 5) return;
-    var med = vtTimes.slice().sort(function (a, b) { return a - b; })[2];
-    if (med > 160) { tierVal = 'lite'; ssSet('sm2:tier', 'lite'); docEl.classList.add('m-lite'); }
+    if (vtTimes.length > SAMPLES) vtTimes.shift();
+    if (tierVal === 'lite' || ssGet('sm2:tier') === 'full' || vtTimes.length < SAMPLES) return;
+    var mem = navigator.deviceMemory;
+    if (mem && mem >= 4) return;
+    var med = vtTimes.slice().sort(function (a, b) { return a - b; })[SAMPLES >> 1];
+    if (med > SLOW_MS) { tierVal = 'lite'; ssSet('sm2:tier', 'lite'); docEl.classList.add('m-lite'); }
   }
   function lite() { return tier() === 'lite'; }
 
@@ -194,12 +222,44 @@
   function clearProps(el, props) { props.forEach(function (p) { try { el.style.removeProperty(cssName(p)); } catch (e) { } }); }
   function fillsForward(f) { return f === 'forwards' || f === 'both'; }
 
+  /* Reduced motion (OS or 設定) keeps short opacity cross-fades and colour changes and drops movement (SPEC-v5
+     Part A): a keyframe set is cut down to its opacity / colour properties and played in ≤DUR.reduce, linear-ish,
+     with any delay capped. A set with nothing but movement lands on its end state at once (as v4 did). */
+  var REDUCE_KEEP = { opacity: 1, color: 1, backgroundColor: 1, borderColor: 1, fill: 1, stroke: 1, offset: 1, easing: 1, composite: 1 };
+  function reduceFrames(kf) {
+    var out, keep = false;
+    if (Array.isArray(kf)) {
+      out = kf.map(function (f) {
+        var g = {};
+        Object.keys(f || {}).forEach(function (k) { if (REDUCE_KEEP[k]) { g[k] = f[k]; if (!META[k]) keep = true; } });
+        return g;
+      });
+    } else {
+      out = {};
+      Object.keys(kf || {}).forEach(function (k) { if (REDUCE_KEEP[k]) { out[k] = kf[k]; if (!META[k]) keep = true; } });
+    }
+    return keep ? out : null;
+  }
   function animate(el, kf, o) {
     if (!el || !kf) return null;
     o = o || {};
-    if (!hasWAAPI || reduced()) {
+    if (!hasWAAPI) {
       if (fillsForward(o.fill) || o.commit) applyFrame(el, lastFrame(kf));
       return null;
+    }
+    if (reduced() && !o.reduceOk) {
+      var rk = o.pseudoElement ? null : reduceFrames(kf);
+      // the moving parts still land where they end (fill forwards / commit), without travelling
+      if (fillsForward(o.fill) || o.commit) applyFrame(el, lastFrame(kf));
+      if (!rk) return null;
+      var ro = {};
+      Object.keys(o).forEach(function (k) { ro[k] = o[k]; });
+      ro.spring = null;
+      ro.duration = Math.max(120, Math.min(DUR.reduce, o.duration || DUR.reduce));
+      ro.delay = Math.min(o.delay || 0, 150);
+      ro.easing = 'linear';
+      ro.reduceOk = true;
+      kf = rk; o = ro;
     }
     var timing = {
       duration: o.duration != null ? o.duration : DUR.base,
@@ -434,7 +494,7 @@
     var dir = o.direction && o.direction !== 'auto' ? o.direction : null;
     if (!dir) { var na = parseNum(from), nb = parseNum(to); dir = (isFinite(na) && isFinite(nb) && nb < na) ? 'down' : 'up'; }
     var up = dir !== 'down';
-    var base = o.duration || 560;
+    var base = o.duration || 720;
     var frag = document.createElement('span');
     frag.className = 'm-odo-w';
     frag.setAttribute('aria-hidden', 'true');
@@ -487,9 +547,9 @@
        legible) and a short tail; the rows are spaced apart (motion.css), so while the strip settles no ink of the
        neighbouring digit is inside the cell. Columns start right to left like a station board, closer together
        when they roll in from blank. */
-    var colStep = blankStart ? 20 : 32;
+    var colStep = blankStart ? 28 : 44;
     rolling.forEach(function (r) {
-      var timing = { duration: Math.min(640, base + r.n * 12), delay: (o.delay || 0) + (L - 1 - r.idx) * colStep, easing: ODO_EASE, fill: 'both' };
+      var timing = { duration: Math.min(920, base + r.n * 14), delay: (o.delay || 0) + (L - 1 - r.idx) * colStep, easing: ODO_EASE, fill: 'both' };
       anims.push(animate(r.strip, [{ transform: 'translateY(' + r.from + '%)' }, { transform: 'translateY(' + r.to + '%)' }], timing));
     });
     var finished = false;
@@ -542,7 +602,7 @@
       tweenCount(el, from, to, finalText, Math.min(600, opts.duration || 500), fmt, dec);
       return Promise.resolve();
     }
-    var o = { duration: opts.duration ? Math.max(400, Math.min(800, opts.duration)) : undefined, instant: opts.instant };
+    var o = { duration: opts.duration ? Math.max(400, Math.min(900, opts.duration)) : undefined, instant: opts.instant };
     if (opts.from != null) o.from = typeof opts.from === 'string' ? opts.from : fmt(Number(opts.from));
     return odometer(el, finalText, o);
   }
@@ -566,12 +626,12 @@
       if (prev === a.to) { el._smOdoShown = finalText; return; }
       if (typeof prev === 'number' && isFinite(prev)) from = prev;
     }
-    var dur = parseInt(el.getAttribute('data-count-dur') || '', 10) || 640;
+    var dur = parseInt(el.getAttribute('data-count-dur') || '', 10) || 820;
     if (el.getAttribute('data-count-style') === 'tween') {
       count(el, a.to, { from: from == null ? 0 : from, decimals: a.dec, duration: dur, finalText: finalText, tween: true });
       return;
     }
-    odometer(el, finalText, { from: from == null ? '' : fmtNum(from, a.dec), duration: Math.min(800, dur), delay: delay || 0 });
+    odometer(el, finalText, { from: from == null ? '' : fmtNum(from, a.dec), duration: Math.min(900, dur), delay: delay || 0 });
   }
   function scheduleCount(el, delay) {
     if (el._smCountT) clearTimeout(el._smCountT);
@@ -601,24 +661,26 @@
      capped stagger), so a block reached by scrolling, a call button above all, is never missing when it arrives. */
   var winOpen = 0, winArm = 0;
   function armWindow() { winArm = now(); winOpen = winArm; }
-  function lateReveal() { return now() - winOpen > 600; }
+  function lateReveal() { return now() - winOpen > 900; }
 
   function setDelay(el, ms) { if (ms) el.style.setProperty('--m-delay', ms + 'ms'); else el.style.removeProperty('--m-delay'); }
 
   function revealEl(el, delay, late) {
     if (!el.classList.contains('m-pending')) return;
-    if (late) { delay = Math.min(delay || 0, 60); el.classList.add('m-late'); }
+    var red = reduced();
+    if (red) { delay = 0; late = true; }
+    if (late) { delay = Math.min(delay || 0, 160); el.classList.add('m-late'); }
     else delay = (delay || 0) + (parseInt(el.getAttribute('data-reveal-delay') || '0', 10) || 0);
     var kind = el.getAttribute('data-reveal');
     setDelay(el, delay);
-    if (kind === 'mark') {
+    if (kind === 'mark' && !red) {
       el.classList.remove('m-pending');
       setTimeout(function () { stamp(el, { ring: false }); }, delay);
     } else {
       el.classList.add('m-in');
       el.classList.remove('m-pending');
     }
-    var life = delay + (late ? (kind === 'line' ? 280 : 200) : kind === 'line' ? 560 : kind === 'rule' ? 480 : 340);
+    var life = delay + (red ? 200 : late ? (kind === 'rule' || kind === 'underline' ? 600 : 420) : kind === 'line' || kind === 'rule' ? 640 : 560);
     if (!late) entranceUntil = Math.max(entranceUntil, now() + life);
     // drop the reveal transition afterwards so the view's own transitions/hover rules win again
     clearTimeout(el._smInT);
@@ -660,13 +722,13 @@
       if (!groups[key]) { groups[key] = []; order.push(key); }
       groups[key].push(el);
     });
-    var cap = late ? 3 : lite() ? 3 : STAGGER_MAX;
+    var cap = late ? 4 : lite() ? 5 : STAGGER_MAX;
     order.forEach(function (k) {
       var list = groups[k];
       if (k === '_solo') { list.forEach(function (el) { revealEl(el, 0, late); }); return; }
       list.sort(function (a, b) { return a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1; });
-      var step = late ? Math.min(list[0]._smStagger, 30) : list[0]._smStagger;
-      // items 7+ arrive with item 6 (cap); a long list reveals as a block after that
+      var step = late ? Math.min(list[0]._smStagger, 40) : list[0]._smStagger;
+      // items 9+ arrive with item 8 (cap); a long list reveals as a block after that
       list.forEach(function (el, i) { revealEl(el, Math.min(i, cap - 1) * step, late); });
     });
   }
@@ -676,7 +738,8 @@
     return io;
   }
 
-  function enabled() { return hasIO && !reduced(); }
+  /* reveals run in every mode: reduced motion keeps them as short opacity fades (motion.css, html.m-reduce) */
+  function enabled() { return hasIO; }
   function syncReady() {
     if (enabled()) docEl.classList.add('motion-ready');
     else { docEl.classList.remove('motion-ready'); revealAll(document); }
@@ -690,6 +753,34 @@
     io.observe(el);
   }
   function claim(el) { el._smWatched = true; }
+
+  /* sweep: a safety net under IntersectionObserver. A target that is moved in the DOM after it was observed
+     (a view regrouping its columns), or that was inside a closed <details> / hidden block when observed, can
+     miss its intersection callback and stay at opacity 0. A sweep re-reads every pending target: one on screen
+     is revealed now (late: a short fade), the rest are re-observed so the next scroll catches them.
+     It runs ~1s after each view mount, after every afterTransition flush, when a <details> opens and on resize. */
+  var sweepT = 0;
+  function sweep(root) {
+    if (!io || !document.querySelectorAll) return;
+    root = root && root.querySelectorAll ? root : document;
+    var list = root.querySelectorAll('.m-pending'), vh = window.innerHeight || 800, on = [], off = [];
+    for (var i = 0; i < list.length && i < 400; i++) {
+      var el = list[i];
+      if (!el._smWatched) continue;
+      var r = el.getBoundingClientRect();
+      if (r.width + r.height > 0 && r.bottom > 0 && r.top < vh) on.push(el); else off.push(el);
+    }
+    on.forEach(function (el, k) { try { io.unobserve(el); } catch (e) { } revealEl(el, Math.min(k, 3) * 40, true); });
+    off.forEach(function (el) { try { io.unobserve(el); io.observe(el); } catch (e) { } });
+  }
+  function sweepSoon(ms) { clearTimeout(sweepT); sweepT = setTimeout(function () { if (!holds) sweep(); else whenReleased(function () { sweepSoon(300); }); }, ms || 0); }
+  if (typeof document !== 'undefined' && document.addEventListener) {
+    document.addEventListener('toggle', function (ev) {
+      var t = ev.target;
+      if (t && t.tagName === 'DETAILS' && t.open) raf(function () { sweep(t); });
+    }, true);
+    window.addEventListener('resize', function () { sweepSoon(250); }, { passive: true });
+  }
 
   function revealAll(root) {
     root = root || document;
@@ -749,12 +840,13 @@
     for (i = 0; i < list.length; i++) wireScroll(list[i]);
     reserveSwaps(root);
     // illustrations
-    if (SM.illus && typeof SM.illus.mount === 'function') { try { SM.illus.mount(root, { instant: instant || !enabled() }); } catch (e) { } }
+    if (SM.illus && typeof SM.illus.mount === 'function') { try { SM.illus.mount(root, { instant: instant || !enabled() || reduced() }); } catch (e) { } }
     if (!enabled()) return;
     ensureIO();
     var watch = instant ? claim : watchEl;
     // a view (or a block a view swaps in) arriving: its data-reveal-delay choreography plays (see armWindow)
     if (!instant) armWindow();
+    sweepSoon(1100);
 
     list = root.querySelectorAll('[data-reveal-stagger]');
     for (i = 0; i < list.length; i++) {
@@ -837,27 +929,44 @@
   ['pointerdown', 'keydown', 'wheel'].forEach(function (t) { window.addEventListener(t, onInput, { capture: true, passive: true }); });
 
   /* ---------------------------------------------------------------- press */
-  var PRESS_SEL = '[data-press], .btn, .tabbar .tab';
+  /* v5 (SPEC-v5 Part A.4): every tap answers within 50ms. pointerdown adds .m-pressed at once (css/motion.css
+     darkens the fill / washes the row) and the control SINKS 2px; release springs back past its rest by 1px and
+     settles. A press is held on screen for at least 110ms, so a quick tap still shows. Rows (list rows, sheet
+     rows, summaries) only wash: a whole row moving under the finger reads as a layout shift. Tabs pop their icon.
+     data-press="none" opts out; data-press="ink" = wash only; data-press (bare) = sink. */
+  var SINK_SEL = '.btn, .chip, .pill, .icon-btn, .pcard-save, .seg > button, .seg > a, .section-action, .opt, .contact-cta, ' +
+    '.sos-copy, .sos-li.is-urgent > .sos-row, .back, .more-btn, .toast-act, [data-press]:not([data-press="ink"])';
+  var WASH_SEL = 'a.list-item, button.list-item, .contact-item, .sos-row, .set-link, .sos-home-link, .sos-chat-link, ' +
+    'details.disclose > summary, [data-press="ink"]';
+  var PRESS_SEL = SINK_SEL + ', ' + WASH_SEL + ', .tabbar .tab';
+  var PRESS_MIN = 110;
   var pressed = null;
   function pressTarget(ev) {
     var t = ev.target;
     if (!t || !t.closest) return null;
     var el = t.closest(PRESS_SEL);
     if (!el || el.disabled || el.getAttribute('aria-disabled') === 'true' || el.getAttribute('data-press') === 'none') return null;
+    if (el.closest('[data-press="none"]')) return null;
     return el;
   }
   function pressPart(el) {
-    if (el.classList.contains('tab')) return { node: el.querySelector('svg') || el, scale: '0.92' };
-    if (el.getAttribute('data-press') === 'ink') return null;           // rows: ink wash only (CSS)
-    return { node: el, scale: '0.97' };
+    if (el._smPart !== undefined) return el._smPart;
+    var part = null;
+    if (el.classList.contains('tab') && el.closest('.tabbar')) part = { node: el.querySelector('svg') || el, tab: true };
+    else if (el.matches(SINK_SEL)) part = { node: el, tab: false };
+    el._smPart = part;
+    return part;
   }
   function pressOn(el) {
     if (pressed && pressed !== el) pressOff(true);
     pressed = el;
+    el._smPT = now();
     el.classList.add('m-pressed');
     if (reduced()) return;
     var p = pressPart(el);
-    if (p) animate(p.node, [{ scale: p.scale }], { duration: DUR.instant, easing: EASE.standard, fill: 'forwards', key: 'press' });
+    if (!p) return;
+    if (p.tab) { prepSvg(p.node); animate(p.node, [{ scale: '0.86' }], { duration: DUR.instant, easing: EASE.enter, fill: 'forwards', key: 'press' }); }
+    else animate(p.node, [{ translate: '0 2px' }], { duration: 70, easing: EASE.enter, fill: 'forwards', key: 'press' });
   }
   function pressOff(immediate) {
     if (!pressed) return;
@@ -866,9 +975,12 @@
       if (pressed === el) return;
       el.classList.remove('m-pressed');
       var p = pressPart(el);
-      if (p && p.node._smA && p.node._smA.press) animate(p.node, [{ scale: '1' }], { spring: 'snappy', key: 'press', fill: 'forwards', clear: true });
+      if (!p || !p.node._smA || !p.node._smA.press) return;
+      if (p.tab) animate(p.node, [{ scale: '0.86' }, { scale: '1.12', offset: 0.42 }, { scale: '1' }], { duration: 360, easing: 'ease-out', key: 'press', clear: true });
+      else animate(p.node, [{ translate: '0 2px' }, { translate: '0 -1px', offset: 0.42 }, { translate: '0 0' }], { duration: 300, easing: 'ease-out', key: 'press', clear: true });
     };
-    if (immediate) go(); else setTimeout(go, 40);
+    var held = now() - (el._smPT || 0);
+    if (immediate) go(); else setTimeout(go, Math.max(30, PRESS_MIN - held));
   }
   function press(el) {
     if (!el) return;
@@ -879,7 +991,9 @@
     if (ev.button !== undefined && ev.button !== 0) return;
     var el = pressTarget(ev); if (el) pressOn(el);
   }, { passive: true });
-  ['pointerup', 'pointercancel', 'dragstart'].forEach(function (t) { window.addEventListener(t, function () { pressOff(); }, { passive: true, capture: true }); });
+  ['pointerup', 'dragstart'].forEach(function (t) { window.addEventListener(t, function () { pressOff(); }, { passive: true, capture: true }); });
+  // a scroll that starts on a control cancels its press at once (no held minimum: the finger is scrolling)
+  window.addEventListener('pointercancel', function () { pressOff(true); }, { passive: true, capture: true });
   window.addEventListener('blur', function (ev) { if (ev.target === window) pressOff(true); });
   document.addEventListener('pointerleave', function (ev) { if (pressed && ev.target === pressed) pressOff(); }, { passive: true, capture: true });
   document.addEventListener('keydown', function (ev) {
@@ -991,7 +1105,7 @@
     var stillHere = typeof Set === 'function' ? new Set(after) : null;
     var afterKeys = {};
     after.forEach(function (el) { var k = flipKey(el); if (k) afterKeys[k] = 1; });
-    var dur = Math.min(400, opts.duration || 400);
+    var dur = Math.min(480, opts.duration || 460);
     var newCount = 0, gone = 0;
     /* opts.hop: rows that change place in the list (a 済み row going to the end, an undo bringing it back) never
        slide THROUGH their neighbours (opaque rows passing over each other slice each other's text). The row fades
@@ -1033,12 +1147,96 @@
       } else {
         el._smWatched = true;
         if (el.classList.contains('m-pending')) { el.classList.remove('m-pending'); if (io) try { io.unobserve(el); } catch (e) { } }
-        animate(el, [{ opacity: 0, translate: '0 12px' }, { opacity: 1, translate: '0 0' }],
-          { duration: 300, delay: Math.min(newCount++, STAGGER_MAX - 1) * 30 + 60, easing: EASE.standard, fill: 'backwards', key: 'flip' });
+        animate(el, [{ opacity: 0, translate: '0 24px' }, { opacity: 1, translate: '0 0' }],
+          { spring: 'rise', delay: Math.min(newCount++, STAGGER_MAX - 1) * 40 + 60, fill: 'backwards', key: 'flip' });
       }
     });
     return out;
   }
+
+  /* ---------------------------------------------------------------- expand (くわしく, details.disclose) */
+  /* expand(container, open[, {setOpen(bool), body, closedHeight}]) -> Promise
+     Opens or closes a block IN PLACE with transform / opacity only (no height animation): the block's new height
+     appears at once in layout, but it is clipped back to its old height and everything below it on screen is
+     translated back to where it was; then the clip opens and the blocks below slide down together, on one curve,
+     while the new content fades and drops 12px into place. Closing runs the same in reverse and commits at the end.
+     setOpen(v) performs the real state change (hidden / open / aria-expanded); body is the part that fades.
+     SM.ui.more() blocks and every details.disclose use it automatically (click on the button / summary). */
+  var EXP_DUR = 380, EXP_EASE = 'cubic-bezier(0.2, 0, 0, 1)';
+  function followers(container) {
+    var out = [], stop = (container.closest && container.closest('#view, .sheet-body')) || document.body;
+    for (var n = container; n && n !== stop && n !== document.body && out.length < 60; n = n.parentElement) {
+      for (var sib = n.nextElementSibling; sib && out.length < 60; sib = sib.nextElementSibling) out.push(sib);
+    }
+    return out;
+  }
+  function expand(container, open, o) {
+    o = o || {};
+    var setOpen = o.setOpen || function () { };
+    if (!container) return Promise.resolve();
+    if (container._smExpEnd) container._smExpEnd();
+    var bodies = o.body ? (o.body.length != null ? Array.prototype.slice.call(o.body) : [o.body]) : [];
+    if (!hasWAAPI || !container.isConnected) { setOpen(open); return Promise.resolve(); }
+    if (reduced()) {
+      setOpen(open);
+      if (open) bodies.forEach(function (b) { animate(b, [{ opacity: 0 }, { opacity: 1 }], { duration: DUR.reduce, key: 'expand' }); });
+      return Promise.resolve();
+    }
+    var vh = window.innerHeight || 800;
+    // reads first
+    var h0 = container.getBoundingClientRect().height;
+    var fol = followers(container).filter(function (el) {
+      if (el.offsetParent === null) return false;
+      var r = el.getBoundingClientRect();
+      return r.bottom > -40 && r.top < vh + 40;
+    });
+    var d, anims = [], ended = false;
+    var clipOf = function (px) { return 'inset(-8px -24px ' + Math.max(0, px) + 'px -24px)'; };
+    if (open) {
+      setOpen(true);
+      d = container.getBoundingClientRect().height - h0;
+      if (d > 1) {
+        anims.push(animate(container, [{ clipPath: clipOf(d) }, { clipPath: clipOf(0) }], { duration: EXP_DUR, easing: EXP_EASE, key: 'expand-c' }));
+        fol.forEach(function (el) { anims.push(animate(el, [{ translate: '0 ' + (-d) + 'px' }, { translate: '0 0' }], { duration: EXP_DUR, easing: EXP_EASE, key: 'expand' })); });
+      }
+      bodies.forEach(function (b) {
+        anims.push(animate(b, [{ opacity: 0, translate: '0 -12px' }, { opacity: 1, translate: '0 0' }], { duration: 320, delay: 60, easing: EASE.enter, fill: 'backwards', key: 'expand' }));
+      });
+    } else {
+      var hc = o.closedHeight;
+      if (hc == null) { setOpen(false); hc = container.getBoundingClientRect().height; setOpen(true); }
+      d = h0 - hc;
+      if (!(d > 1)) { setOpen(false); return Promise.resolve(); }
+      anims.push(animate(container, [{ clipPath: clipOf(0) }, { clipPath: clipOf(d) }], { duration: 300, easing: EXP_EASE, fill: 'forwards', key: 'expand-c' }));
+      fol.forEach(function (el) { anims.push(animate(el, [{ translate: '0 0' }, { translate: '0 ' + (-d) + 'px' }], { duration: 300, easing: EXP_EASE, fill: 'forwards', key: 'expand' })); });
+      bodies.forEach(function (b) { anims.push(animate(b, [{ opacity: 1 }, { opacity: 0 }], { duration: 160, easing: EASE.exit, fill: 'forwards', key: 'expand' })); });
+    }
+    var finish = function () {
+      if (ended) return;
+      ended = true;
+      container._smExpEnd = null;
+      if (!open) setOpen(false);
+      anims.forEach(function (a) { if (a) try { a.cancel(); } catch (e) { } });
+    };
+    container._smExpEnd = finish;
+    return settled(anims).then(finish);
+  }
+  // details.disclose (and details.more): the summary opens / closes them through expand()
+  document.addEventListener('click', function (ev) {
+    if (ev.defaultPrevented || !hasWAAPI) return;
+    var t = ev.target, sum = t && t.closest ? t.closest('summary') : null;
+    if (!sum) return;
+    var det = sum.parentElement;
+    if (!det || det.tagName !== 'DETAILS' || !(det.classList.contains('disclose') || det.classList.contains('more')) || det.hasAttribute('data-native')) return;
+    if (t.closest('a, button, input, select, textarea') && t.closest('a, button, input, select, textarea') !== sum) return;
+    ev.preventDefault();
+    var open = !det.open;
+    var kids = Array.prototype.filter.call(det.children, function (c) { return c !== sum; });
+    var bs = getComputedStyle(det);
+    var closedH = sum.getBoundingClientRect().height + (parseFloat(bs.borderTopWidth) || 0) + (parseFloat(bs.borderBottomWidth) || 0) +
+      (parseFloat(bs.paddingTop) || 0) + (parseFloat(bs.paddingBottom) || 0);
+    expand(det, open, { setOpen: function (v) { det.open = v; }, body: kids, closedHeight: closedH });
+  });
 
   /* ---------------------------------------------------------------- stamp / check / nudge / pulse */
   function isSvgEl(el) { return typeof SVGElement !== 'undefined' && el instanceof SVGElement; }
@@ -1261,41 +1459,135 @@
      never crosses the toast's 元に戻す on its way down to the tab */
   var flightEnd = 0;
   function flightLeft() { return Math.max(0, flightEnd - now()); }
+  /* flyTo(fromEl, toEl, {duration, onArrive, ghost}) -> Promise
+     v5 save feedback (SPEC-v5 Part A.7): a green station dot leaves the save button, lifts clear of it, arcs down into
+     the やること tab and lands there: the tab icon pops, its badge bumps (onArrive usually rolls the count) and a
+     thin ring spreads from the tab. ghost:true flies a copy of fromEl instead of the dot (v4 behaviour).
+     Reduced motion / hidden ends: onArrive runs at once. The toast waits for the landing (flightLeft()). */
   function flyTo(from, to, o) {
     o = o || {};
+    if (typeof to === 'string') to = document.querySelector('.tabbar .tab[data-tab="' + to + '"]');
     var arrive = function () { if (o.onArrive) { try { o.onArrive(); } catch (e) { console.error(e); } } };
-    if (reduced() || !hasWAAPI || !visible(from) || !visible(to)) { arrive(); return Promise.resolve(); }
+    if (!from || !to || reduced() || !hasWAAPI || !visible(from) || !visible(to)) { arrive(); return Promise.resolve(); }
     var a = from.getBoundingClientRect();
     var target = to.querySelector ? (to.querySelector('svg') || to) : to;
     var tb = target.getBoundingClientRect();
-    var g = from.cloneNode(true);
-    if (g.removeAttribute) g.removeAttribute('id');
+    var g, size;
+    if (o.ghost) {
+      g = from.cloneNode(true);
+      if (g.removeAttribute) g.removeAttribute('id');
+      var col = '';
+      try { col = getComputedStyle(from).color; } catch (e) { }
+      g.style.cssText = 'color:' + col + ';position:fixed;left:' + a.left + 'px;top:' + a.top + 'px;width:' + a.width + 'px;height:' + a.height +
+        'px;margin:0;z-index:110;pointer-events:none;transform-origin:50% 50%;overflow:visible;';
+      size = a.height || 1;
+    } else {
+      size = 14;
+      g = document.createElement('span');
+      g.className = 'm-fly-dot';
+      g.style.cssText = 'left:' + (a.left + a.width / 2 - size / 2) + 'px;top:' + (a.top + a.height / 2 - size / 2) + 'px;';
+    }
     g.setAttribute('aria-hidden', 'true');
-    var col = '';
-    try { col = getComputedStyle(from).color; } catch (e) { }
-    g.style.cssText = 'color:' + col + ';position:fixed;left:' + a.left + 'px;top:' + a.top + 'px;width:' + a.width + 'px;height:' + a.height +
-      'px;margin:0;z-index:110;pointer-events:none;transform-origin:50% 50%;overflow:visible;';
     document.body.appendChild(g);
-    var dx = (tb.left + tb.width / 2) - (a.left + a.width / 2), dy = (tb.top + tb.height / 2) - (a.top + a.height / 2);
-    var s = Math.max(0.3, Math.min(1, (tb.height * 0.8) / (a.height || 1)));
-    var dur = o.duration || 520;
+    var cx = o.ghost ? a.left + a.width / 2 : a.left + a.width / 2, cy = a.top + a.height / 2;
+    var dx = (tb.left + tb.width / 2) - cx, dy = (tb.top + tb.height / 2) - cy;
+    var s = o.ghost ? Math.max(0.3, Math.min(1, (tb.height * 0.8) / size)) : 0.7;
+    var dur = o.duration || 600;
+    var lift = Math.min(64, Math.max(36, Math.abs(dy) * 0.18));
     flightEnd = Math.max(flightEnd, now() + dur);
-    // the arc, on two properties: it lifts first (rises 28px clear of its own label while x barely moves), then
-    // travels and falls into the tab like a thrown object. x is balanced (slow start, slow end) so the lift reads
-    // as a toss, not a drag across the button's text.
-    var ax = animate(g, [{ translate: '0 0' }, { translate: dx + 'px 0' }], { duration: dur, easing: 'cubic-bezier(0.4, 0, 0.6, 1)', fill: 'forwards' });
+    // the arc on two properties: x travels balanced (slow start, slow end), y lifts first then falls into the tab
+    var ax = animate(g, [{ translate: '0 0' }, { translate: dx + 'px 0' }], { duration: dur, easing: 'cubic-bezier(0.45, 0, 0.55, 1)', fill: 'forwards' });
     var ay = animate(g, [
-      { transform: 'translateY(0) scale(1)', easing: 'cubic-bezier(0.2, 0, 0.4, 1)' },
-      { transform: 'translateY(-28px) scale(1.05)', offset: 0.25, easing: 'cubic-bezier(0.55, 0, 0.9, 0.5)' },
+      { transform: 'translateY(0) scale(' + (o.ghost ? 1 : 0.4) + ')', easing: 'cubic-bezier(0.2, 0, 0.4, 1)' },
+      { transform: 'translateY(' + (-lift) + 'px) scale(' + (o.ghost ? 1.05 : 1.15) + ')', offset: 0.28, easing: 'cubic-bezier(0.55, 0, 0.85, 0.4)' },
       { transform: 'translateY(' + dy + 'px) scale(' + s + ')' }
     ], { duration: dur, easing: 'linear', fill: 'forwards' });
-    animate(g, [{ opacity: 1 }, { opacity: 1, offset: 0.8 }, { opacity: 0.85 }], { duration: dur, easing: 'linear', fill: 'forwards' });
     return settled([ax, ay]).then(function () {
       if (g.parentNode) g.parentNode.removeChild(g);
-      if (isSvgEl(target)) prepSvg(target);
-      animate(target, [{ scale: '0.86' }, { scale: '1' }], { spring: 'stamp', key: 'arrive' });
+      landOn(to, target);
       arrive();
     });
+  }
+  /* the landing: tab icon pops, a ring spreads from the tab, the badge bumps */
+  function landOn(to, target) {
+    if (isSvgEl(target)) prepSvg(target);
+    animate(target, [{ scale: '0.8' }, { scale: '1.18', offset: 0.4 }, { scale: '1' }], { duration: 420, easing: 'ease-out', key: 'arrive' });
+    var host = to;
+    if (host && host.appendChild && !isSvgEl(host)) {
+      var ring = document.createElement('span');
+      ring.className = 'm-land';
+      ring.setAttribute('aria-hidden', 'true');
+      try {
+        var hr = host.getBoundingClientRect(), r = target.getBoundingClientRect();
+        if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
+        var d = Math.max(r.width, r.height) + 10;
+        ring.style.cssText = 'left:' + (r.left + r.width / 2 - hr.left - d / 2) + 'px;top:' + (r.top + r.height / 2 - hr.top - d / 2) + 'px;width:' + d + 'px;height:' + d + 'px;';
+      } catch (e) { }
+      host.appendChild(ring);
+      var ra = animate(ring, [{ transform: 'scale(0.6)', opacity: 0.9 }, { transform: 'scale(1.9)', opacity: 0 }], { duration: 520, easing: EASE.enter, fill: 'forwards' });
+      var rm = function () { if (ring.parentNode) ring.parentNode.removeChild(ring); };
+      if (ra) done(ra).then(rm); else rm();
+    }
+    var b = to && to.querySelector ? to.querySelector('.tab-badge:not([hidden])') : null;
+    if (b) bump(b);
+  }
+
+  /* bump(el[, {scale}]) -> Promise: a short pop (1 → 1.3 → 1 on the pop spring). Badges, counters. */
+  function bump(el, o) {
+    if (!el || reduced()) return Promise.resolve();
+    o = o || {};
+    prepSvg(el);
+    var k = o.scale || 1.32;
+    return done(animate(el, [{ scale: '1' }, { scale: String(k), offset: 0.3 }, { scale: '0.96', offset: 0.65 }, { scale: '1' }], { duration: 460, easing: 'ease-out', key: 'bump' }));
+  }
+
+  /* badge(target, value[, {roll, bump, label}]) — the tab badge API.
+     target: a tab key ('plan', 'find' …), a .tab element or a .tab-badge element. value: a number or short text;
+     0 / '' / null hides it. roll: true rolls the digits (odometer) when the value changes; bump: true pops it.
+     A badge that appears pops in; one that goes fades out. Returns the badge element (or null). Views call it
+     guarded: if (SM.motion.badge) SM.motion.badge('plan', n, {roll:true, bump:true}). */
+  function badge(target, value, o) {
+    o = o || {};
+    var tab = null, b = null;
+    if (typeof target === 'string') tab = document.querySelector('.tabbar .tab[data-tab="' + attrEsc(target) + '"]');
+    else if (target && target.classList && target.classList.contains('tab-badge')) { b = target; tab = b.parentNode; }
+    else tab = target;
+    if (!b && tab) {
+      b = tab.querySelector('.tab-badge');
+      if (!b) {
+        b = document.createElement('span');
+        b.className = 'tab-badge';
+        b.setAttribute('aria-hidden', 'true');
+        b.hidden = true;
+        tab.appendChild(b);
+      }
+    }
+    if (!b) return null;
+    var txt = value == null || value === 0 || value === '' ? '' : (typeof value === 'number' && value > 99 ? '99+' : String(value));
+    var shown = b._smOdoShown != null ? b._smOdoShown : b.textContent;
+    var wasHidden = b.hidden;
+    if (!txt) {
+      if (wasHidden) return b;
+      if (o.roll || o.bump) {
+        var fa = animate(b, [{ opacity: 1, scale: '1' }, { opacity: 0, scale: '0.5' }], { duration: 200, easing: EASE.exit, key: 'badge' });
+        var hide = function () { if (!b._smOdoShown) { b.hidden = true; } };
+        b._smOdoShown = '';
+        if (fa) done(fa).then(hide); else hide();
+      } else { b.hidden = true; b._smOdoShown = ''; b.textContent = ''; }
+      return b;
+    }
+    b.hidden = false;
+    if (wasHidden) {
+      b._smOdoShown = txt; b.textContent = txt;
+      if (o.roll || o.bump) animate(b, [{ opacity: 0, scale: '0.3' }, { opacity: 1, scale: '1.25', offset: 0.55 }, { scale: '1' }], { duration: 420, easing: 'ease-out', key: 'badge' });
+      return b;
+    }
+    if (shown !== txt) {
+      if (o.roll && !reduced()) odometer(b, txt, { from: shown, duration: 480 });
+      else { odoFinish(b); b._smOdoShown = txt; b.textContent = txt; }
+    } else if (b.firstElementChild && !b._smOdo) { b.textContent = txt; }
+    if (o.bump) bump(b);
+    return b;
   }
 
   /* ---------------------------------------------------------------- swapText */
@@ -1346,8 +1638,8 @@
       host._smSwapT = setTimeout(function () { host.classList.remove('m-swapping'); }, 320);
     }
     // one keyframe: the old label leaves from wherever it is (it may still be rising from the last swap)
-    var a = animate(oldS, [{ opacity: 0, translate: '0 -6px' }], { duration: flipMode ? 80 : DUR.instant, easing: flipMode ? 'linear' : EASE.exit, fill: 'forwards', key: 'swap' });
-    var b = animate(newS, [{ opacity: 0, translate: '0 8px' }, { opacity: 1, translate: '0 0' }], { duration: 200, delay: flipMode ? 90 : 60, easing: EASE.enter, fill: 'backwards', key: 'swap' });
+    var a = animate(oldS, [{ opacity: 0, translate: '0 -10px' }], { duration: flipMode ? 80 : DUR.instant, easing: flipMode ? 'linear' : EASE.exit, fill: 'forwards', key: 'swap' });
+    var b = animate(newS, [{ opacity: 0, translate: '0 12px' }, { opacity: 1, translate: '0 0' }], { duration: 260, delay: flipMode ? 90 : 60, easing: EASE.enter, fill: 'backwards', key: 'swap' });
     var drop = function () { if (oldS.parentNode) oldS.parentNode.removeChild(oldS); };
     if (a) done(a).then(drop); else drop();
     return settled([a, b]);
@@ -1568,13 +1860,24 @@
     return { open: open, close: close, destroy: destroy, resize: resize, isDialog: isDialog, dragging: function () { return dragging; } };
   }
 
-  /* ---------------------------------------------------------------- view transitions */
+  /* ---------------------------------------------------------------- view transitions
+     v5 grammar (SPEC-v5 Part A.2), css/motion.css §10:
+       forward  the new page slides in from the right edge over the old one (EASE.push, 440ms); the old page shifts
+                30% left and dims under it — depth, like a stack of pages
+       back     the reverse: the old page slides off to the right, the page under it comes back from -30%
+       tab      a cross-fade with a 16px rise; the tab bar's indicator slides on the pop spring
+       shared   the tapped row's kanji mark (sm-cat) and its TITLE (sm-title) morph into the next page's mark and
+                heading; the page itself does not slide then, it rises into place under them
+     Without the View Transitions API (or on the 'lite' tier) the new page enters with a WAAPI slide (plainEntrance)
+     and the mark / title fly as ghosts (flipShared). */
   var VT_CLASSES = ['vt-forward', 'vt-back', 'vt-tab', 'vt-shared', 'vt-theme', 'vt-fade', 'vt-same-title'];
   var cur = null;            // { vt, kind, named:[], done:Promise }
   var navGen = 0;
-  var morphMem = {};         // destination hash -> { key, id, from }
-  var tap = null, explicitSrc = null, explicitDst = null;
+  var morphMem = {};         // destination hash -> { keys:[], id, from }
+  var tap = null, explicitSrc = null, explicitDst = {};
+  var SHARED_KEYS = ['cat', 'title'];
   var LEGACY_HERO = { cat: '.pg-mast .cat-icon, .f-cat-sign .cat-icon, .f-cat-hero .cat-icon, .ln-head .cat-icon' };
+  var TITLE_SRC = '.pcard-title, .list-title';
 
   document.addEventListener('click', function (ev) {
     var t = ev.target;
@@ -1585,7 +1888,7 @@
   }, true);
 
   function share(name, el) { explicitSrc = el ? { key: name || 'cat', el: el, t: now() } : null; }
-  function shareTarget(name, el) { explicitDst = el ? { key: name || 'cat', el: el } : null; }
+  function shareTarget(name, el) { if (el) explicitDst[name || 'cat'] = el; else delete explicitDst[name || 'cat']; }
 
   function ratioInView(el) {
     if (!el || !el.isConnected) return 0;
@@ -1596,14 +1899,27 @@
     var iw = Math.max(0, Math.min(r.right, vw) - Math.max(r.left, 0));
     return (ih * iw) / (r.width * r.height);
   }
-  function srcIn(scope, key) {
+  function srcIn(scope, key, link) {
     if (!scope || !scope.querySelector) return null;
     if (scope.matches && scope.matches('[data-vt~="' + key + '"]')) return scope;
-    return scope.querySelector('[data-vt~="' + key + '"]') || (key === 'cat' ? scope.querySelector('.cat-icon') : null);
+    var el = scope.querySelector('[data-vt~="' + key + '"]');
+    if (el) return el;
+    if (key === 'cat') return scope.querySelector('.cat-icon');
+    if (key === 'title') {
+      el = scope.querySelector(TITLE_SRC);
+      // only the title of the row that was tapped (a link inside a list item may be something else entirely)
+      if (el && link && !(el.contains(link) || link.contains(el))) return null;
+      return el;
+    }
+    return null;
   }
   function heroIn(root, key) {
     var list = root.querySelectorAll('[data-vt-hero~="' + key + '"]');
     for (var i = 0; i < list.length; i++) if (ratioInView(list[i]) > 0.5) return list[i];
+    if (key === 'title') {
+      var h = root.querySelector('h1');
+      return h && ratioInView(h) > 0.5 ? h : null;
+    }
     if (LEGACY_HERO[key]) {
       list = root.querySelectorAll(LEGACY_HERO[key]);
       for (var j = 0; j < list.length; j++) if (ratioInView(list[j]) > 0.5) return list[j];
@@ -1614,65 +1930,100 @@
     var n = scope && scope.getAttribute && scope.getAttribute('data-id') ? scope : (el && el.closest ? el.closest('[data-id]') : null);
     return n ? n.getAttribute('data-id') : '';
   }
+  // a title only morphs into a heading that says the same thing (住まい → 住まい, a program name → its page)
+  function normText(el) { return String(el && el.textContent || '').replace(/[\s　（）()「」・、。,.]/g, ''); }
+  function sameText(a, b) {
+    var x = normText(a), y = normText(b);
+    if (!x || !y) return false;
+    var k = Math.min(4, x.length, y.length);
+    return y.indexOf(x.slice(0, k)) !== -1 || x.indexOf(y.slice(0, k)) !== -1;
+  }
   function pickShared(kind, o) {
     var view = document.getElementById('view') || document;
     var out = null, t = now();
     if (kind === 'forward') {
       if (explicitSrc && t - explicitSrc.t < 1500 && ratioInView(explicitSrc.el) >= 0.5) {
-        out = { key: explicitSrc.key, from: explicitSrc.el, id: idOf(null, explicitSrc.el) };
+        out = { back: false, id: idOf(null, explicitSrc.el), list: [{ key: explicitSrc.key, from: explicitSrc.el }] };
       } else if (tap && t - tap.t < 1500 && tap.scope.isConnected) {
-        var key = o.shared || 'cat';
-        var el = srcIn(tap.scope, key);
-        if (el && ratioInView(el) >= 0.5) out = { key: key, from: el, id: idOf(tap.scope, el) };
+        var keys = o.shared ? [o.shared] : SHARED_KEYS, list = [], id = '';
+        keys.forEach(function (key) {
+          var el = srcIn(tap.scope, key, tap.link);
+          if (el && ratioInView(el) >= 0.5) { list.push({ key: key, from: el }); id = id || idOf(tap.scope, el); }
+        });
+        if (list.length) out = { back: false, id: id, list: list };
       }
     } else if (kind === 'back' && o.from && morphMem[o.from] && morphMem[o.from].from === o.to) {
-      var m = morphMem[o.from];
-      var hero = heroIn(view, m.key);
-      if (hero && m.id) out = { key: m.key, from: hero, id: m.id, back: true };
+      var m = morphMem[o.from], back = [];
+      (m.keys || []).forEach(function (key) {
+        var hero = heroIn(view, key);
+        if (hero && m.id) back.push({ key: key, from: hero });
+      });
+      if (back.length) out = { back: true, id: m.id, list: back };
     }
     tap = null; explicitSrc = null;
     return out;
   }
-  function destFor(s) {
+  function destFor(s, it) {
     var view = document.getElementById('view') || document;
-    if (explicitDst && explicitDst.key === s.key && ratioInView(explicitDst.el) > 0.5) return explicitDst.el;
-    if (!s.back) return heroIn(view, s.key);
-    var row = null;
-    try { row = view.querySelector('[data-id="' + attrEsc(s.id) + '"]'); } catch (e) { row = null; }
-    var el = row ? srcIn(row, s.key) : null;
-    return el && ratioInView(el) > 0.5 ? el : null;
+    var ex = explicitDst[it.key];
+    if (ex && ratioInView(ex) > 0.5) return ex;
+    var el = null;
+    if (!s.back) el = heroIn(view, it.key);
+    else {
+      var row = null;
+      try { row = view.querySelector('[data-id="' + attrEsc(s.id) + '"]'); } catch (e) { row = null; }
+      el = row ? srcIn(row, it.key, null) : null;
+      if (el && ratioInView(el) <= 0.5) el = null;
+    }
+    if (el && it.key === 'title' && !sameText(it.from, el)) el = null;
+    return el;
+  }
+  /* a destination that is still waiting on its entrance (data-reveal) must be visible in the new snapshot: it is
+     claimed as shown, so the morph lands on real text and the reveal does not replay inside the moving group */
+  function unpend(el) {
+    var view = document.getElementById('view');
+    for (var n = el; n && n !== view && n !== document.body; n = n.parentElement) {
+      if (n.classList && n.classList.contains('m-pending')) {
+        n.classList.remove('m-pending');
+        n._smWatched = true;
+        if (io) try { io.unobserve(n); } catch (e) { }
+      }
+    }
   }
   function clearNames(list) { list.forEach(function (el) { try { el.style.viewTransitionName = ''; } catch (e) { } }); }
   function setKind(kind) {
     VT_CLASSES.forEach(function (c) { docEl.classList.remove(c); });
     if (kind && kind !== 'none') docEl.classList.add('vt-' + kind);
   }
-
-  /* The page entrance used when there is no view transition (lite tier, or the API is missing). */
+  /* The page entrance used when there is no view transition (lite tier, or the API is missing). Reduced motion:
+     animate() keeps only the opacity (a short cross-fade). */
   function plainEntrance(kind, isLite) {
     var v = document.getElementById('view');
-    if (!v || reduced() || kind === 'none') return null;
-    var travel = isLite ? 12 : 32;
+    if (!v || kind === 'none') return null;
+    var travel = isLite ? 32 : 48;
     var x = kind === 'forward' ? travel : kind === 'back' ? -travel : 0;
-    var yy = kind === 'tab' ? 8 : 0;
+    var yy = kind === 'tab' ? 16 : 0;
     if (kind === 'theme' || kind === 'fade') { x = 0; yy = 0; }
     return animate(v, [{ opacity: 0, translate: x + 'px ' + yy + 'px' }, { opacity: 1, translate: '0 0' }],
-      { duration: isLite ? 160 : DUR.page, easing: EASE.standard, key: 'enter' });
+      { duration: isLite ? 300 : 400, easing: EASE.push, key: 'enter' });
   }
-  /* FLIP fallback for the shared tile when the View Transitions API is missing: a fixed ghost of the
-     source flies to the destination's box; the destination is hidden until the ghost lands. */
-  function flipShared(srcRect, srcEl, dst) {
+  /* FLIP fallback for the shared mark / title when the View Transitions API is missing: a fixed ghost of the source
+     flies to the destination's box (a title scales uniformly, so its letters are never stretched); the destination
+     fades in under the ghost as it lands. */
+  function flipShared(srcRect, srcEl, dst, key) {
     if (!srcRect || !dst) return;
     var b = dst.getBoundingClientRect();
     if (!b.width || !srcRect.width) return;
     var g = ghostOf(srcEl, srcRect);
     g.style.transformOrigin = '0 0';
     document.body.appendChild(g);
-    dst.style.visibility = 'hidden';
-    var a = animate(g, [{ transform: 'none' }, {
-      transform: 'translate(' + (b.left - srcRect.left) + 'px,' + (b.top - srcRect.top) + 'px) scale(' + (b.width / srcRect.width) + ',' + (b.height / srcRect.height) + ')'
-    }], { duration: DUR.morph, easing: EASE.standard, fill: 'forwards' });
-    done(a).then(function () { dst.style.visibility = ''; if (g.parentNode) g.parentNode.removeChild(g); });
+    var sx = b.width / srcRect.width, sy = b.height / srcRect.height;
+    if (key === 'title') { sx = sy; g.style.whiteSpace = 'nowrap'; }
+    var tf = 'translate(' + (b.left - srcRect.left) + 'px,' + (b.top - srcRect.top) + 'px) scale(' + sx + ',' + sy + ')';
+    var a = animate(g, [{ transform: 'none', opacity: 1 }, { transform: tf, opacity: 1, offset: 0.7 }, { transform: tf, opacity: 0 }],
+      { duration: DUR.morph, easing: EASE.push, fill: 'forwards' });
+    animate(dst, [{ opacity: 0 }, { opacity: 0, offset: 0.55 }, { opacity: 1 }], { duration: DUR.morph, easing: 'linear', key: 'shared' });
+    done(a).then(function () { if (g.parentNode) g.parentNode.removeChild(g); });
   }
 
   function transition(kind, update, o) {
@@ -1683,13 +2034,12 @@
     // a new transition always supersedes a running one: rapid taps never queue
     skipTransition();
     var useVT = hasVT && kind !== 'none' && (reduced() || !lite());
-    var allowShared = !reduced() && !lite() && (kind === 'forward' || kind === 'back');
+    var allowShared = !reduced() && (kind === 'forward' || kind === 'back');
     var shared = allowShared ? pickShared(kind, o) : (tap = null, explicitSrc = null, null);
-    explicitDst = null;
+    var keep = [];
     if (!useVT) {
-      if (kind === 'none') { run(); return Promise.resolve(); }
-      var srcRect = shared && !hasVT ? shared.from.getBoundingClientRect() : null;
-      var srcEl = shared ? shared.from.cloneNode(true) : null;
+      if (kind === 'none') { explicitDst = {}; run(); return Promise.resolve(); }
+      var ghosts = shared && !shared.back ? shared.list.map(function (it) { return { it: it, r: it.from.getBoundingClientRect(), el: it.from.cloneNode(true) }; }) : [];
       // a provisional record, so afterTransition() calls made by the view during run() wait for the entrance
       var resolveP, rec0 = { vt: null, kind: kind, named: [], anim: null };
       rec0.done = new Promise(function (r) { resolveP = r; });
@@ -1699,18 +2049,20 @@
       noteUpdate(now() - t0);
       var ent = plainEntrance(kind, lite());
       rec0.anim = ent;
-      if (shared && !hasVT) {
-        var dst = destFor(shared);
-        if (dst) {
-          flipShared(srcRect, srcEl, dst);
-          if (!shared.back) morphMem[o.to] = { key: shared.key, id: shared.id, from: o.from };
-        }
-      }
+      ghosts.forEach(function (gh) {
+        var dst = destFor(shared, gh.it);
+        if (!dst) return;
+        unpend(dst);
+        flipShared(gh.r, gh.el, dst, gh.it.key);
+        keep.push(gh.it.key);
+      });
+      if (shared && !shared.back && keep.length) morphMem[o.to] = { keys: keep, id: shared.id, from: o.from };
+      explicitDst = {};
       done(ent).then(function () { if (cur === rec0) cur = null; resolveP(); });
       return rec0.done;
     }
     var named = [];
-    if (shared) { shared.from.style.viewTransitionName = 'sm-' + shared.key; named.push(shared.from); }
+    if (shared) shared.list.forEach(function (it) { it.from.style.viewTransitionName = 'sm-' + it.key; named.push(it.from); });
     setKind(kind);
     // same subbar title on both pages (core predicts it before the transition, so no class change lands inside
     // the update, where it would restyle the whole document): the title holds still
@@ -1721,15 +2073,19 @@
       run();
       if (kind !== 'theme' && kind !== 'fade') noteUpdate(now() - t1);
       if (shared) {
-        var d = destFor(shared);
-        if (d) {
-          d.style.viewTransitionName = 'sm-' + shared.key;
+        shared.list.forEach(function (it) {
+          var d = destFor(shared, it);
+          if (!d) return;
+          unpend(d);
+          d.style.viewTransitionName = 'sm-' + it.key;
           named.push(d);
-          docEl.classList.add('vt-shared');
-        }
-        if (!shared.back) morphMem[o.to] = { key: shared.key, id: shared.id, from: o.from };
+          keep.push(it.key);
+        });
+        if (keep.length) docEl.classList.add('vt-shared');
+        if (!shared.back) { if (keep.length) morphMem[o.to] = { keys: keep, id: shared.id, from: o.from }; }
         else if (o.from) delete morphMem[o.from];
       }
+      explicitDst = {};
     };
     /* a WebGL map on the page that is leaving: the snapshot would read its drawing buffer back (on a software GPU
        that alone was a 1.4s task). The canvas steps out of the capture (hidden: the map's own land colour shows
@@ -1774,6 +2130,7 @@
       if (!it.keep && it.gen !== navGen) return;
       try { it.fn(); } catch (e) { console.error('[SM] afterTransition failed', e); }
     });
+    sweepSoon(400);
   }
   function scheduleAfter() {
     if (afterScheduled || !afterQ.length) return;
@@ -1967,7 +2324,7 @@
       var prev = bar.style.transform;
       bar.style.transform = t;
       if (!bar._smPlaced || reduced() || !prev || prev === t) { bar._smPlaced = true; return; }
-      animate(bar, [{ transform: prev }, { transform: t }], { spring: 'snappy', key: 'ind' });
+      animate(bar, [{ transform: prev }, { transform: t }], { spring: 'rise', key: 'ind' });
     });
   }
 
@@ -1984,7 +2341,7 @@
   Object.keys(SPRINGS).forEach(function (k) { springTokens[k] = spring(k); });
 
   SM.motion = {
-    tokens: { ease: EASE, dur: DUR, stagger: STAGGER, staggerMax: STAGGER_MAX, spring: springTokens },
+    tokens: { ease: EASE, dur: DUR, stagger: STAGGER, staggerMax: STAGGER_MAX, rise: RISE, spring: springTokens },
     reduced: reduced,
     syncReduce: syncReduce,
     tier: tier,
@@ -2006,6 +2363,8 @@
     pulse: pulse,
     flyTo: flyTo,
     flightLeft: flightLeft,
+    badge: badge,
+    bump: bump,
     swapText: swapText,
     press: press,
     sheet: sheet,
@@ -2019,6 +2378,7 @@
     indicator: indicator,
     mount: mount,
     flip: flip,
+    expand: expand,
     drawLine: drawLine,
     lineProgress: lineProgress,
     revealAll: revealAll,

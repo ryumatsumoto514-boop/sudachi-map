@@ -242,18 +242,18 @@
       { k: 'util', label: { ja: '電気・ガス・水道', en: 'Utilities' }, short: { ja: '光熱費', en: 'Utilities' }, max: 40000, tone: 'work' },
       { k: 'phone', label: { ja: 'スマホ・ネット', en: 'Phone & internet' }, short: { ja: '通信', en: 'Phone' }, max: 20000, tone: 'education' },
       { k: 'trans', label: { ja: '交通', en: 'Transport' }, max: 40000, tone: 'procedures' },
-      { k: 'ins', label: { ja: '保険・年金', en: 'Insurance & pension' }, short: { ja: '保険・年金', en: 'Insurance' }, hint: { ja: '国民健康保険＋年金。免除なら0に近い', en: 'Health insurance + pension; near 0 if exempt' }, max: 40000, tone: 'consult' },
-      { k: 'other', label: { ja: 'そのほか', en: 'Other' }, hint: { ja: '日用品・服・病院・友だち・貯金', en: 'Daily goods, clothes, doctor, friends, savings' }, max: 80000, tone: 'neutral' }
+      { k: 'ins', label: { ja: '保険・年金', en: 'Insurance & pension' }, short: { ja: '保険・年金', en: 'Insurance' }, hint: { ja: '国保＋年金。免除なら0に近い', en: 'Health + pension; ~0 if exempt' }, max: 40000, tone: 'consult' },
+      { k: 'other', label: { ja: 'そのほか', en: 'Other' }, hint: { ja: '日用品・服・病院・貯金など', en: 'Goods, clothes, doctor, savings' }, max: 80000, tone: 'neutral' }
     ],
     incomes: [
-      { k: 'income', label: { ja: '給料・バイト代（手取り）', en: 'Take-home pay' }, hint: { ja: '税金や保険を引いたあとの金額', en: 'After tax and insurance' }, max: 400000, lesson: 'tedori' },
+      { k: 'income', label: { ja: '給料・バイト代（手取り）', en: 'Take-home pay' }, hint: { ja: '税金などを引いたあと', en: 'After tax' }, max: 400000, lesson: 'tedori' },
       { k: 'scholarship', label: { ja: '奨学金・仕送りなど', en: 'Scholarship / other support' }, max: 200000 }
     ],
     /* optional support from 自立支援資金貸付 (see program jiritsu-shikin: 生活費 月5万円 for students, 家賃 up to a local cap) */
     shienAmount: 50000,
     shienId: 'jiritsu-shikin',
     lessons: ['seikatsuhi', 'tedori', 'komattara'],
-    note: { ja: '目安の数字は、ひとり暮らしの「ざっくり」の金額です。実際は人によって大きくちがいます。自分の数字に変えて使ってください。', en: 'The presets are rough numbers for living alone. Change them to your own.' }
+    note: { ja: '目安は「ざっくり」の金額です。自分の数字に変えてください。', en: 'Rough numbers. Change them to your own.' }
   };
 
   /* ===================================================================== money simulator: おこづかい・バイト
@@ -269,8 +269,8 @@
     defaults: {},
     incomes: [
       { k: 'allowance', label: { ja: 'おこづかい', en: 'Allowance' }, max: 20000, step: 500 },
-      { k: 'gift', label: { ja: 'お年玉・お祝い（1か月分）', jr: 'お年玉・お祝い（1か月分）', en: 'Gifts (per month)' }, hint: { ja: '1年でもらう分を12で割った金額', jr: '1年でもらう分を、12でわった金額', en: 'A year’s total divided by 12' }, max: 20000, step: 500 },
-      { k: 'baito', label: { ja: 'バイト代（高校生から）', en: 'Part-time pay (from high school)' }, hint: { ja: '中学生のあいだは、ふつうはアルバイトできません', jr: '中学生のあいだは、ふつうはバイトできません', en: 'Junior high students generally can’t work part-time' }, max: 150000, step: 1000, wageCalc: true }
+      { k: 'gift', label: { ja: 'お年玉・お祝い（1か月分）', jr: 'お年玉・お祝い（1か月分）', en: 'Gifts (per month)' }, hint: { ja: '1年分を12で割った額', jr: '1年分を12でわった額', en: 'A year’s total ÷ 12' }, max: 20000, step: 500 },
+      { k: 'baito', label: { ja: 'バイト代（高校生から）', en: 'Part-time pay (from high school)' }, hint: { ja: '中学生は、ふつうアルバイトできません', jr: '中学生は、ふつうバイトできません', en: 'Junior high: usually not allowed' }, max: 150000, step: 1000, wageCalc: true }
     ],
     expenses: [
       { k: 'snack', label: { ja: '食べもの・おやつ', en: 'Snacks & food' }, short: { ja: '食べもの', en: 'Food' }, max: 30000, step: 500 },

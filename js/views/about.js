@@ -1,9 +1,11 @@
 /* 巣立ちマップ v4 — js/views/about.js (HOME)
    About (#/about): who makes this, 中学生のみなさんへ, まなぶ, listing standards, how info is checked,
    privacy, disclaimer, contact, map data and credits. VISUAL-SPEC §7.11.
-   Top: eyebrow + h1 (line reveal) + lead, the `about-team` illustration, a 2×2 numbers grid (num-xl, rolling once
-   on reveal like a station board, again only when a number changed), the 最終確認 date, then the contents as
-   numbered ruled rows. Sections use the one section head (§6.6) and one generic reveal per body.
+   v5 (SPEC-v5 Part B: fewer words on screen, full detail kept): h1 (rises) + a one-line lead, the `about-team`
+   illustration, a 2×2 numbers grid (num-xl, rolling like a station board), the 最終確認 date, then the contents
+   as numbered ruled rows. Every section = its head + ONE short lead line + the structured part (lists, steps,
+   facts as tags) + the long explanation folded behind 「くわしく」 (<details>, so it opens with no JS and is found
+   by in-page search). Safety lines (erase, shared device, すぐ閉じる, 110/119) are never folded.
    The page ends with the full lockup, whose green line draws once — the same signature as home's colophon.
    First screen first (MOTION-SPEC §6 rule 4): the sections render after the transition, into the same place.
    Fully bilingual. */
@@ -35,8 +37,10 @@
     'about.title': { ja: 'このサイトについて', en: 'About' },
     'about.eyebrow': { ja: 'Economix JP がつくっています', en: 'Made by Economix JP' },
     'about.h1': { ja: '巣立ちマップについて', en: 'About Sudachi Map' },
-    'about.lead': { ja: '施設や里親家庭から巣立つ人が、使える支援にちゃんとたどりつけるように。だれが、どんな基準で作っているかをまとめました。', jr: '施設や里親家庭でくらす人が、使える支援にちゃんとたどりつけるように。だれが、どうやって作っているかを書きました。', en: 'So that people leaving care can actually reach the support that is theirs. Here is who makes this site and how.' },
-    'about.toc': { ja: 'このページの目次', en: 'On this page' },
+    'about.lead': { ja: 'だれが、どんな基準で作っているか。', jr: 'だれが、どうやって作っているか。', en: 'Who makes this site, and how.' },
+    'about.toc': { ja: '目次', en: 'On this page' },
+    'about.more': { ja: 'くわしく', en: 'More' },
+    'about.moreSrc': { ja: '出典の一覧', en: 'List of sources' },
     'about.nav.who': { ja: '作っている人', en: 'Who we are' },
     'about.nav.junior': { ja: '中学生のみなさんへ', en: 'For junior high students' },
     'about.nav.learn': { ja: 'まなぶ — お金のきほん', en: 'Learn — money basics' },
@@ -57,12 +61,16 @@
     'about.unitLesson': { ja: '本', en: '' },
 
     'about.who.h': { ja: '誰が作っているか', en: 'Who makes this' },
+    'about.who.lead': { ja: '東京の高校生の団体「Economix JP」が作っています。', en: 'Made by Economix JP, a group run by high-school students in Tokyo.' },
+    'about.who.tags': { ja: '高校生が運営・NPOと作ったガイドがもと・まちがいはすぐ直す', en: 'Run by students・Built on a guide made with nonprofits・Mistakes fixed fast' },
     'about.who.p1': { ja: '巣立ちマップは、東京の高校生が運営する団体「Economix JP」が作っています。Economix JP は、日本の若い人にお金の知識（金融リテラシー）を届ける活動をしています。', en: 'Sudachi Map is made by Economix JP, a group run by high-school students in Tokyo. Economix JP works to bring financial literacy to young people in Japan.' },
     'about.who.p2': { ja: 'もとになっているのは、NPOのみなさんと一緒に作った自立支援ガイドです。支援の現場で働く人の知恵を、同じ世代の目線で、わかりやすく届けることが私たちの役割です。', en: 'It is based on an independence-support guide we made together with nonprofit partners. Our job is to take what people on the front line know, and make it easy to understand from the eyes of the same generation.' },
     'about.who.p3': { ja: 'まちがいを見つけたら、すぐ直します。出典と確認日は、それぞれの支援のページの下にあります。', en: 'If we find a mistake, we fix it right away. The source and the date we checked are at the bottom of every program page.' },
     'about.who.link': { ja: 'Economix JP の公式サイト', en: 'Economix JP website' },
 
     'about.junior.h': { ja: '中学生のみなさんへ', en: 'For junior high students' },
+    'about.junior.lead': { ja: '中学生から使えます。こんなことがわかります。', en: 'Works from junior high. You will find:' },
+    'about.junior.note': { ja: '1問目で「中1・中2」か「中3」をえらぶと、やさしいことばになります。', en: 'Pick your junior-high year in question 1 for simpler wording.' },
     'about.junior.p1': { ja: '巣立ちマップは、中学生から使えます。施設や里親家庭でくらす中1〜中3の人も、質問に答えると、いま使える支援と、これから必要になる支援がわかります。', jr: '巣立ちマップは、中学生から使えます。質問に答えると、いま使える支援と、これから使える支援がわかります。', en: 'Sudachi Map works from junior high. If you live in a children\'s home or with a foster family and are in junior high, answer the questions to see support you can use now and later.' },
     'about.junior.l1': { ja: '高校受験や入学にかかるお金の支援', en: 'Help with the costs of high-school entrance exams and starting school' },
     'about.junior.l2': { ja: 'いじめ・学校・家のことを話せる相談先', en: 'Places to talk about bullying, school or home' },
@@ -72,6 +80,8 @@
     'about.junior.btn': { ja: '質問に答えてさがす', en: 'Answer the questions' },
 
     'about.learn.h': { ja: 'まなぶ — お金のきほん', en: 'Learn — money basics' },
+    'about.learn.lead': { ja: '1つ2〜3分のお金のレッスン。クイズや計算もあります。', jr: '1つ2〜3分で学べるお金のレッスン。クイズもあります。', en: '2–3 minute money lessons, with quizzes and calculators.' },
+    'about.learn.tags': { ja: '給付と貸付・利息・手取り・契約・家賃', jr: '返すお金・返さなくていいお金・利息・バイトと税金', en: 'Grants vs loans・Interest・Take-home pay・Contracts・Rent' },
     'about.learn.p1': { ja: 'Economix JP は、若い人にお金の知識を届けるために活動しています。「まなぶ」では、給付と貸付のちがい、利息、手取り、契約、家賃など、巣立つ前に知っておくと安心なことを、1つ2〜3分のレッスンにまとめました。クイズや計算もあります。', jr: '「まなぶ」では、返すお金・返さなくていいお金、利息、バイトと税金など、知っておくと安心なお金のことを、1つ2〜3分で学べます。クイズもあります。', en: 'Economix JP exists to bring money knowledge to young people. "Learn" has 2–3 minute lessons on grants vs. loans, interest, take-home pay, contracts, rent and more — with quizzes and calculators.' },
     'about.learn.p2': { ja: 'レッスンの数字や決まりは、公式のページで確かめ、それぞれのレッスンに出典をのせています。どこまで進んだかは、このスマホの中だけに記録されます。', en: 'Numbers and rules in the lessons are checked against official pages, and each lesson lists its sources. Your progress is saved only on this device.' },
     'about.learn.srcH': { ja: 'レッスンのおもな出典', en: 'Main sources for lessons' },
@@ -90,6 +100,10 @@
     'about.rules.right': { ja: '法律や制度で決まっていて、条件に合えばだれでも申し込めるものです。', en: 'It is set by law or a public system — if you meet the conditions, you can apply. No need to hold back.' },
 
     'about.check.h': { ja: '情報の確認方法', en: 'How we check information' },
+    'about.check.s1h': { ja: '公式のページを読む', en: 'We read the official page' },
+    'about.check.s2h': { ja: '出典と確認日をのせる', en: 'We show the source and the date' },
+    'about.check.s3h': { ja: '年に1回以上、見直す', en: 'We review at least once a year' },
+    'about.check.s4h': { ja: 'まちがいは直す', en: 'We fix mistakes' },
     'about.check.s1': { ja: '<b>公式のページを読む。</b>国・都・区市町村・運営団体の、その支援のページそのものを読んで書いています。', en: '<b>We read the official page</b> for each program — the exact page, not just a homepage.' },
     'about.check.s2': { ja: '<b>出典と確認日をのせる。</b>どの支援のページにも、読んだページへのリンクと、確認した日があります。', en: '<b>We show the source and the date.</b> Every program page links to its source and shows when we checked it.' },
     'about.check.s3': { ja: '<b>年に1回以上、見直す。</b>金額や条件は4月（新年度）に変わることが多いので、その前後は特にていねいに確認します。', en: '<b>We review at least once a year,</b> with extra care around April, when amounts and rules often change.' },
@@ -109,6 +123,7 @@
     'about.privacy.eraseBtn': { ja: 'このスマホの記録を消す', en: 'Erase data on this device' },
 
     'about.disc.h': { ja: '免責', en: 'Disclaimer' },
+    'about.disc.lead': { ja: '申し込む前に、かならず公式ページや窓口で最新の内容を確認してください。', en: 'Before you apply, always check the official page or office for the latest.' },
     'about.disc.p1': { ja: '金額・条件・受付時間などは変わることがあります。申し込む前に、かならず公式ページや窓口で最新の内容を確認してください。', en: 'Amounts, conditions and hours can change. Before you apply, always check the official page or office.' },
     'about.disc.p2': { ja: '使えるかどうかを決めるのは、それぞれの窓口です。巣立ちマップは「入口」で、法律の相談の代わりにはなりません。', en: 'Each office decides who can use their program. This site is a starting point and is not legal advice.' },
     'about.disc.p3': { ja: 'このサイトの情報だけをもとにして不利益があっても、Economix JP は責任を負うことができません。ご理解ください。', en: 'Economix JP cannot be responsible for any loss based only on this site\'s information.' },
@@ -116,6 +131,7 @@
     'about.disc.sosBtn': { ja: '緊急の連絡先を見る', en: 'Emergency numbers' },
 
     'about.contact.h': { ja: 'お問い合わせ', en: 'Contact' },
+    'about.contact.lead': { ja: 'まちがい、のせてほしい支援、使いにくい所を教えてください。', en: 'Tell us about mistakes, programs to add, or anything hard to use.' },
     'about.contact.p1': { ja: 'まちがいの報告、のせてほしい支援、使いにくい所など、なんでも教えてください。Economix JP の公式サイトから連絡できます。', en: 'Tell us about mistakes, programs we should add, or anything hard to use. You can reach us through the Economix JP website.' },
     'about.contact.p2': { ja: 'ここは相談窓口ではありません。困っていることの相談は「相談・こころ」の窓口へどうぞ。', en: 'This is not a helpline. To talk about a problem, please use the "Talk to someone" list.' },
     'about.contact.btn': { ja: 'Economix JP に連絡する', en: 'Contact Economix JP' },
@@ -195,14 +211,14 @@
     ];
     if (nl) cells.push(['lessons', nl, t('about.unitLesson')]);
     // dt first (screen readers: "のせている支援 222件"); the grid shows the number on top
-    var grid = cells.map(function (c) {
-      return '<div class="ab-stat"><dt class="ab-stat-k">' + esc(t('about.stat.' + c[0])) + '</dt>' +
-        '<dd class="ab-stat-v"><b class="num' + rollCls('about.' + c[0], c[1]) + '" data-count="' + c[1] + '" data-count-seen="about.' + c[0] + '" data-count-dur="720">' + c[1] + '</b>' +
+    var grid = cells.map(function (c, i) {
+      return '<div class="ab-stat"' + rv('up', 200 + i * 60) + '><dt class="ab-stat-k">' + esc(t('about.stat.' + c[0])) + '</dt>' +
+        '<dd class="ab-stat-v"><b class="num' + rollCls('about.' + c[0], c[1]) + '" data-count="' + c[1] + '" data-count-seen="about.' + c[0] + '" data-count-dur="900">' + c[1] + '</b>' +
         (c[2] ? '<span class="ab-stat-u">' + esc(c[2]) + '</span>' : '') + '</dd></div>';
     }).join('');
     return '<section class="ab-numbers' + (cells.length === 3 ? ' is-3' : '') + '" aria-labelledby="ab-num-h">' +
       '<h2 class="sr-only" id="ab-num-h">' + esc(t('about.statsLabel')) + '</h2>' +
-      '<dl class="ab-stats"' + rv('', 280) + '>' + grid + '</dl>' +
+      '<dl class="ab-stats">' + grid + '</dl>' +
       '<p class="ab-checked"' + rv('fade', 360) + '><span class="ab-checked-k">' + esc(t('about.stat.date')) + '</span>' +
         '<span class="ab-checked-v num">' + esc(fmtDate(SM.updated || '2026-10-17')) + '</span></p>' +
     '</section>';
@@ -237,11 +253,32 @@
   var NAV = ['who', 'junior', 'learn', 'rules', 'check', 'privacy', 'disclaimer', 'contact', 'credits'];
   function navList() { return NAV.filter(function (id) { return id !== 'learn' || lessons().length > 0; }); }
 
-  function sec(id, title, body) {
+  // facts as a row of small neutral tags ("a・b・c"), the way home shows them
+  function tags(str) {
+    return '<ul class="ab-tags" role="list">' + String(str || '').split('・').map(function (x) {
+      return '<li class="tag tag-neutral">' + esc(x) + '</li>';
+    }).join('') + '</ul>';
+  }
+  // the long explanation, folded: a native <details> (opens with no JS, found by in-page search, screen readers
+  // announce it as collapsed / expanded). label: the summary's words (default 「くわしく」).
+  function more(html, label) {
+    if (!html) return '';
+    return '<details class="ab-more"><summary class="ab-more-s" data-press="ink"><span>' + esc(label || t('about.more')) + '</span>' +
+      '<span class="ab-more-go" aria-hidden="true">' + arrow('d') + '</span></summary>' +
+      '<div class="ab-more-b">' + html + '</div></details>';
+  }
+  function p(k, cls) { return '<p' + (cls ? ' class="' + cls + '"' : '') + '>' + esc(t(k)) + '</p>'; }
+
+  /* one section: head, one short lead line, the structured part, the folded detail, the actions */
+  function sec(id, title, o) {
     var n = navList().indexOf(id) + 1;
     return '<section class="ab-sec" id="ab-' + id + '" aria-labelledby="ab-' + id + '-h" tabindex="-1">' +
       section(title, { id: 'ab-' + id + '-h', num: pad2(n) }) +
-      '<div class="ab-body"' + rv('') + '>' + body + '</div></section>';
+      '<div class="ab-body"' + rv('up') + '>' +
+        (o.lead ? '<p class="ab-lede">' + o.lead + '</p>' : '') +
+        (o.body || '') + more(o.more, o.moreLabel) +
+        (o.actions ? '<div class="ab-actions">' + o.actions + '</div>' : '') + (o.tail || '') +
+      '</div></section>';
   }
 
   function sections() {
@@ -250,75 +287,90 @@
     var mapVal = meta ? (en() ? meta.en : meta.ja) : '';
     if (!mapVal) mapVal = t('about.credits.mapVal');
 
-    var who = sec('who', t('about.who.h'),
-      '<p>' + esc(t('about.who.p1')) + '</p>' +
-      '<p>' + esc(t('about.who.p2')) + '</p>' +
-      '<p>' + esc(t('about.who.p3')) + '</p>' +
-      '<div class="ab-actions">' + btn(t('about.who.link'), { href: SITE, variant: 'secondary', size: 'sm' }) + '</div>');
+    var who = sec('who', t('about.who.h'), {
+      lead: esc(t('about.who.lead')),
+      body: tags(t('about.who.tags')),
+      more: p('about.who.p1') + p('about.who.p2') + p('about.who.p3'),
+      actions: btn(t('about.who.link'), { href: SITE, variant: 'secondary', size: 'sm' })
+    });
 
-    var junior = sec('junior', t('about.junior.h'),
-      '<p>' + esc(t('about.junior.p1')) + '</p>' +
-      bullets([esc(t('about.junior.l1')), esc(t('about.junior.l2')), esc(t('about.junior.l3')), esc(t('about.junior.l4'))]) +
-      '<p class="ab-note">' + esc(t('about.junior.p2')) + '</p>' +
-      '<div class="ab-actions">' + btn(t('about.junior.btn'), { href: '#/find/q/1', variant: 'primary', attrs: 'data-press' }) + '</div>');
+    var junior = sec('junior', t('about.junior.h'), {
+      lead: esc(t('about.junior.lead')),
+      body: bullets([esc(t('about.junior.l1')), esc(t('about.junior.l2')), esc(t('about.junior.l3')), esc(t('about.junior.l4'))]) +
+        p('about.junior.note', 'ab-note'),
+      more: p('about.junior.p1') + p('about.junior.p2'),
+      actions: btn(t('about.junior.btn'), { href: '#/find/q/1', variant: 'primary', attrs: 'data-press' })
+    });
 
     var ls = hasLearn ? lessonSources() : '';
-    var learn = hasLearn ? sec('learn', t('about.learn.h'),
-      '<p>' + esc(t('about.learn.p1')) + '</p>' +
-      '<p>' + esc(t('about.learn.p2')) + '</p>' +
-      (ls ? '<p class="ab-sub-h">' + esc(t('about.learn.srcH')) + '</p>' + ls : '') +
-      '<div class="ab-actions">' + btn(t('about.learn.btn'), { href: '#/learn', variant: 'secondary', size: 'sm', arrow: true, attrs: 'data-press' }) + '</div>') : '';
+    var learn = hasLearn ? sec('learn', t('about.learn.h'), {
+      lead: esc(t('about.learn.lead')),
+      body: tags(t('about.learn.tags')),
+      more: p('about.learn.p1') + p('about.learn.p2') +
+        (ls ? '<p class="ab-sub-h">' + esc(t('about.learn.srcH')) + '</p>' + ls : ''),
+      actions: btn(t('about.learn.btn'), { href: '#/learn', variant: 'secondary', size: 'sm', arrow: true, attrs: 'data-press' })
+    }) : '';
 
-    var rules = sec('rules', t('about.rules.h'),
-      '<div class="cols ab-cols">' +
-        '<div><p class="ab-sub-h is-first">' + esc(t('about.rules.yesH')) + '</p>' + bullets([t('about.rules.y1'), t('about.rules.y2'), t('about.rules.y3')]) + '</div>' +
-        '<div><p class="ab-sub-h is-first is-no">' + esc(t('about.rules.noH')) + '</p>' + bullets([t('about.rules.n1'), esc(t('about.rules.n2')), esc(t('about.rules.n3'))]) + '</div>' +
-      '</div>' +
-      '<div class="ab-right"><span class="tag tag-right">' + esc(t('about.rules.rightH')) + '</span><p>' + esc(t('about.rules.right')) + '</p></div>');
+    var rules = sec('rules', t('about.rules.h'), {
+      body: '<div class="cols ab-cols">' +
+          '<div><p class="ab-sub-h is-first">' + esc(t('about.rules.yesH')) + '</p>' + bullets([t('about.rules.y1'), t('about.rules.y2'), t('about.rules.y3')]) + '</div>' +
+          '<div><p class="ab-sub-h is-first is-no">' + esc(t('about.rules.noH')) + '</p>' + bullets([t('about.rules.n1'), esc(t('about.rules.n2')), esc(t('about.rules.n3'))]) + '</div>' +
+        '</div>' +
+        '<div class="ab-right"><span class="tag tag-right">' + esc(t('about.rules.rightH')) + '</span><p>' + esc(t('about.rules.right')) + '</p></div>'
+    });
 
+    // how we check: four short steps on screen; what each means, and the source list, folded
     var ps = programSources();
-    var check = sec('check', t('about.check.h'),
-      '<ol class="ab-steps" role="list">' + ['s1', 's2', 's3', 's4'].map(function (k, i) {
-        return '<li><span class="ab-step-n num" aria-hidden="true">' + (i + 1) + '</span><span class="ab-step-t">' + t('about.check.' + k) + '</span></li>';
-      }).join('') + '</ol>' +
-      (ps ? '<p class="ab-sub-h">' + esc(t('about.check.srcH')) + '</p>' + ps : ''));
+    var check = sec('check', t('about.check.h'), {
+      body: '<ol class="ab-steps" role="list"' + (D ? '' : ' data-reveal-stagger="60"') + '>' + ['s1', 's2', 's3', 's4'].map(function (k, i) {
+        return '<li><span class="ab-step-n num" aria-hidden="true">' + (i + 1) + '</span><span class="ab-step-t">' + esc(t('about.check.' + k + 'h')) + '</span></li>';
+      }).join('') + '</ol>',
+      more: '<ul class="bullets ab-bullets">' + ['s1', 's2', 's3', 's4'].map(function (k) { return '<li>' + t('about.check.' + k) + '</li>'; }).join('') + '</ul>' +
+        (ps ? '<p class="ab-sub-h">' + esc(t('about.check.srcH')) + '</p>' + ps : '')
+    });
 
-    var privacy = sec('privacy', t('about.privacy.h'),
-      bullets([t('about.privacy.p1'), t('about.privacy.p2'), esc(t('about.privacy.p3')), esc(t('about.privacy.p4'))]) +
-      '<p class="ab-sub-h">' + esc(t('about.privacy.eraseH')) + '</p>' +
-      '<p>' + esc(t('about.privacy.erase')) + '</p>' +
+    // privacy: the three promises on screen; the font / Google Maps note folded; erase + safety never folded
+    var privacy = sec('privacy', t('about.privacy.h'), {
+      body: bullets([t('about.privacy.p1'), t('about.privacy.p2'), esc(t('about.privacy.p3'))]),
+      more: p('about.privacy.p4'),
+      tail: '<p class="ab-sub-h">' + esc(t('about.privacy.eraseH')) + '</p>' +
+      p('about.privacy.erase') +
       (SM.ui && SM.ui.callout ? SM.ui.callout(esc(t('about.privacy.shared')), 'warn') : '<p class="ab-note">' + esc(t('about.privacy.shared')) + '</p>') +
-      '<p class="ab-note">' + esc(t('about.privacy.exit')) + '</p>' +
-      '<div class="ab-actions">' + btn(t('about.privacy.eraseBtn'), { act: 'erase', variant: 'danger', size: 'sm' }) + '</div>');
+      p('about.privacy.exit', 'ab-note') +
+      '<div class="ab-actions">' + btn(t('about.privacy.eraseBtn'), { act: 'erase', variant: 'danger', size: 'sm' }) + '</div>'
+    });
 
-    var disc = sec('disclaimer', t('about.disc.h'),
-      '<p>' + esc(t('about.disc.p1')) + '</p>' +
-      '<p>' + esc(t('about.disc.p2')) + '</p>' +
-      '<p>' + esc(t('about.disc.p3')) + '</p>' +
-      '<div class="ab-sos">' +
+    var disc = sec('disclaimer', t('about.disc.h'), {
+      lead: esc(t('about.disc.lead')),
+      more: p('about.disc.p1') + p('about.disc.p2') + p('about.disc.p3'),
+      tail: '<div class="ab-sos">' +
         '<p>' + esc(t('about.disc.sos')) + '</p>' +
         '<button type="button" class="btn btn-sos btn-sm" data-act="sos">' + ic('phone') + '<span>' + esc(t('about.disc.sosBtn')) + '</span></button>' +
-      '</div>');
+      '</div>'
+    });
 
-    var contact = sec('contact', t('about.contact.h'),
-      '<p>' + esc(t('about.contact.p1')) + '</p>' +
-      '<p class="ab-note">' + esc(t('about.contact.p2')) + '</p>' +
-      '<div class="ab-actions">' +
-        btn(t('about.contact.btn'), { href: SITE, variant: 'secondary', size: 'sm' }) +
-        btn(t('about.contact.consult'), { href: '#/find/cat/consult', variant: 'text', arrow: true }) +
-      '</div>');
+    var contact = sec('contact', t('about.contact.h'), {
+      lead: esc(t('about.contact.lead')),
+      body: p('about.contact.p2', 'ab-note'),
+      more: p('about.contact.p1'),
+      actions: btn(t('about.contact.btn'), { href: SITE, variant: 'secondary', size: 'sm' }) +
+        btn(t('about.contact.consult'), { href: '#/find/cat/consult', variant: 'text', arrow: true })
+    });
 
-    var credits = sec('credits', t('about.credits.h'),
-      kv([
+    var credits = sec('credits', t('about.credits.h'), {
+      body: kv([
         [t('about.credits.map'), '<span class="ab-cr">' + esc(mapVal) + '</span><span class="ab-cr-links">' +
           ext(GSI_URL, t('about.credits.mapLinks')) + ext(KSJ_URL, t('about.credits.mapLinks2')) + '</span>'],
-        [t('about.credits.engine'), '<span class="ab-cr">' + esc(t('about.credits.engineVal')) + '</span><span class="ab-cr-links">' + ext(MAPLIBRE_URL, 'MapLibre GL JS') + '</span>'],
+        [t('about.credits.engine'), '<span class="ab-cr">' + esc(t('about.credits.engineVal')) + '</span><span class="ab-cr-links">' + ext(MAPLIBRE_URL, 'MapLibre GL JS') + '</span>']
+      ]),
+      more: kv([
         [t('about.credits.geo'), esc(t('about.credits.geoVal'))],
         [t('about.credits.data'), esc(t('about.credits.dataVal'))],
         [t('about.credits.fonts'), esc(t('about.credits.fontsVal'))],
         [t('about.credits.logo'), esc(t('about.credits.logoVal'))],
         [t('about.credits.illus'), esc(t('about.credits.illusVal'))]
-      ]));
+      ])
+    });
 
     // the signature: the full lockup, its green line drawn once (ja; English uses the plain lockup)
     var mark = '';
@@ -339,9 +391,8 @@
 
     var head =
       '<header class="ab-hero">' +
-        '<p class="ab-eyebrow"' + rv('fade', 0) + '>' + esc(t('about.eyebrow')) + '</p>' +
-        '<h1 class="ab-title" tabindex="-1"><span class="ab-title-l"' + rv('line', 40) + '>' + esc(t('about.h1')) + '</span></h1>' +
-        '<p class="ab-lead"' + rv('', 160) + '>' + esc(t('about.lead')) + '</p>' +
+        '<h1 class="ab-title" tabindex="-1"><span class="ab-title-l"' + rv('line', 0) + '>' + esc(t('about.h1')) + '</span></h1>' +
+        '<p class="ab-lead"' + rv('up', 120) + '>' + esc(t('about.lead')) + '</p>' +
       '</header>' +
       (art ? '<div class="ab-art">' + art + '</div>' : '');
 

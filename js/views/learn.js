@@ -69,6 +69,32 @@
     return vis >= r.height * (frac || 0.5);
   }
 
+  /* SPEC-v5 Part B: one idea per step, ≤60 characters of text on screen (en ≤120: same reading time). Whole
+     sentences are kept (never cut mid-sentence); what does not fit waits behind 「くわしく」. data/learn.js is frozen:
+     this only chooses what to show first. */
+  function budget() { return en() ? 120 : 60; }
+  function sentences(text) {
+    var out = String(text || '').match(en() ? /[^.!?]+[.!?]+["”’)]*\s*|[^.!?]+$/g : /[^。！？]+[。！？]+[」』）)]*|[^。！？]+$/g);
+    return out ? out.map(function (x) { return x; }) : [];
+  }
+  function clip(text, max) {
+    max = max || budget();
+    var ss = sentences(text), shown = '', i = 0;
+    for (; i < ss.length; i++) {
+      if (i > 0 && (shown + ss[i]).trim().length > max) break;
+      shown += ss[i];
+    }
+    return { shown: shown.trim(), rest: ss.slice(i).join('').trim() };
+  }
+  /* 「くわしく」: the quiet inline disclosure (SM.ui.more, expand in place) */
+  function moreHtml(inner, cls) {
+    if (!inner) return '';
+    if (SM.ui && SM.ui.more) return SM.ui.more(null, inner, { inline: true, cls: 'ln-more-in' + (cls ? ' ' + cls : '') });
+    return '<details class="disclose ln-more-in"><summary>' + esc(t('ui.details')) + '</summary>' + inner + '</details>';
+  }
+  /* a note under a step / calculator: always behind 「くわしく」 */
+  function noteMore(text) { return text ? moreHtml('<p class="ln-note">' + esc(text) + '</p>', 'ln-note-more') : ''; }
+
   /* emphasise digits in a short amount string: 月5万円 → 月<b>5</b>万円 */
   function digits(s, cls) {
     return esc(s).replace(/([0-9０-９][0-9０-９,，.．]*)/g, '<b class="' + (cls || 'ln-dg') + '">$1</b>');
@@ -348,10 +374,8 @@
       '<p class="ln-feature-k">' + esc(key) + '</p>' +
       (art ? '<a class="ln-feature-art" href="' + esc(lessonHref(l)) + '" tabindex="-1" aria-hidden="true">' + art + '</a>' : '') +
       '<div class="ln-feature-main">' +
-        '<p class="ln-meta">' + numMeta(l) + '<span>' + esc(SM.ui.catLabel(l.cat)) + '</span>' +
-          '<span class="ln-sep" aria-hidden="true">／</span><span class="num">' + esc(t('ln.min', { n: l.minutes || 2 })) + '</span></p>' +
         '<h2 class="ln-feature-h" id="ln-feature-h">' + esc(L(l.title)) + '</h2>' +
-        (l.lead ? '<p class="ln-feature-lead">' + esc(L(l.lead)) + '</p>' : '') +
+        '<p class="ln-meta"><span class="ln-min num">' + esc(t('ln.min', { n: l.minutes || 2 })) + '</span></p>' +
         (s.resume ? lineHtml(pos, l.steps.length) : '') +
       '</div>' +
       '<a class="btn btn-primary ln-feature-go" href="' + esc(lessonHref(l)) + '" data-press><span>' + esc(s.resume ? t('ln.resume') : t('ln.start')) + '</span>' + arrow() + '</a>' +
@@ -370,18 +394,16 @@
   }
   function rowHtml(l, just) {
     var done = isDone(l.id), pos = getPos(l.id), q = quizCount(l);
-    var meta = numMeta(l) + '<span>' + esc(SM.ui.catLabel(l.cat)) + '</span>' +
-      '<span class="ln-sep" aria-hidden="true">／</span><span class="num">' + esc(t('ln.min', { n: l.minutes || 2 })) + '</span>' +
-      (q ? '<span class="ln-sep" aria-hidden="true">／</span><span>' + esc(t('ln.quizN', { n: q })) + '</span>' : '');
+    void q;
+    var meta = '<span class="ln-min num">' + esc(t('ln.min', { n: l.minutes || 2 })) + '</span>';
     var art = cover(l, { vt: true });
     return '<li class="ln-li" data-flip-key="' + esc(l.id) + '" data-id="' + esc(l.id) + '">' +
       '<a class="ln-row' + (done ? ' is-done' : '') + (pos && !done ? ' is-going' : '') + '" href="' + esc(lessonHref(l)) + '" data-press="ink">' +
         '<span class="ln-thumb' + (art ? '' : ' is-blank') + '">' + (art || SM.ui.catIcon(l.cat || 'money', 'lg')) +
           (done ? doneMark(just === l.id && !reduced()) : '') + '</span>' +
         '<span class="ln-row-body">' +
-          '<span class="ln-meta">' + meta + '</span>' +
           '<h3 class="ln-row-title">' + esc(L(l.title)) + '</h3>' +
-          (l.lead ? '<span class="ln-row-lead">' + esc(L(l.lead)) + '</span>' : '') +
+          '<span class="ln-meta">' + meta + '</span>' +
           (pos && !done ? lineHtml(pos, l.steps.length) : '') +
         '</span>' +
         '<span class="ln-row-go">' + arrow() + '</span>' +
@@ -398,7 +420,7 @@
       if (!items.length) return;
       n++;
       out.push('<section class="ln-group' + (items.length === 1 ? ' is-single' : '') + (o.cvFrom && n > o.cvFrom ? ' cv' : '') + '" data-flip-key="g-' + lv + '" aria-labelledby="ln-g-' + lv + '">' +
-        SM.ui.sectionHeader(t('ln.g.' + lv), { id: 'ln-g-' + lv, num: n, sub: t('ln.g.' + lv + 'Sub') }) +
+        SM.ui.sectionHeader(t('ln.g.' + lv), { id: 'ln-g-' + lv, num: n }) +
         '<ul class="ln-rows" data-reveal-stagger="40">' + items.map(function (l) { return rowHtml(l, o.just); }).join('') + '</ul></section>');
     });
     return out;
@@ -437,14 +459,11 @@
     var first = groups.length ? groups.slice(0, nowN).join('') : emptyGroups();
     var later = defer && groups.length > nowN ? '<div class="ln-later" id="ln-later"></div>' : '';
     listFx.rest = later ? groups.slice(nowN) : null;
-    var mark = t('ln.leadMark');
-    var lead = esc(t('ln.lead', { m: '\u0000' })).split('\u0000').join('<mark class="marker">' + esc(mark) + '</mark>');
     return '<div class="ln-index wide-layout">' +
       '<div class="ln-aside">' +
         '<header class="ln-top">' +
           '<p class="eyebrow">' + esc(t('ln.title')) + '</p>' +
           '<h1 class="ln-h1" data-reveal="line">' + esc(t('ln.h1')) + '</h1>' +
-          '<p class="ln-lead" data-reveal data-reveal-delay="80">' + lead + '</p>' +
         '</header>' +
         progressBlock(done, shown, total) +
         '<div id="ln-feature">' + nextBlock(f) + '</div>' +
@@ -600,7 +619,9 @@
         (s.big.label ? '<p class="ln-big-k">' + esc(L(s.big.label)) + '</p>' : '') +
         '<p class="ln-big-v">' + digits(L(s.big)) + '</p></div>';
     }
-    return head(s.head, L(l.title)) + big + '<p class="ln-text">' + withMarker(body, mark) + '</p>';
+    var c = clip(body);
+    return head(s.head, L(l.title)) + big + '<p class="ln-text">' + withMarker(c.shown, mark) + '</p>' +
+      (c.rest ? moreHtml('<p class="ln-text ln-text-rest">' + withMarker(c.rest, c.shown.indexOf(mark) === -1 ? mark : '') + '</p>') : '');
   }
 
   function side(x, which) {
@@ -612,13 +633,18 @@
       '<h3 class="ln-side-t">' + esc(L(x.title)) + '</h3>' +
       (x.big ? '<p class="ln-side-big">' + digits(L(x.big)) + '</p>' : '') +
       (x.body ? '<p class="ln-side-body">' + esc(L(x.body)) + '</p>' : '') +
-      (pts ? '<ul class="bullets ln-side-pts">' + pts + '</ul>' : '') +
     '</div>';
   }
   function compareStep(s) {
+    var pts = function (x) {
+      if (!x || !(x.points || []).length) return '';
+      return '<div class="ln-cmp-pts"><p class="ln-cmp-pts-h">' + esc(L(x.title)) + '</p><ul class="bullets">' +
+        x.points.map(function (p) { return '<li>' + esc(L(p)) + '</li>'; }).join('') + '</ul></div>';
+    };
+    var extra = pts(s.left) + pts(s.right) + (s.note ? '<p class="ln-note">' + esc(L(s.note)) + '</p>' : '');
     return kindLabel('compare') + head(s.head, t('ln.k.compare')) +
       '<div class="ln-cmp" data-reveal-stagger="90">' + side(s.left, 'l') + side(s.right, 'r') + '</div>' +
-      (s.note ? '<p class="ln-note">' + esc(L(s.note)) + '</p>' : '');
+      (extra ? moreHtml('<div class="ln-cmp-more">' + extra + '</div>') : '');
   }
 
   function cleanWhy(s) { return String(s || '').replace(/^\s*(そのとおり|正解|Right|Correct|Yes)[。．.!！、,]?\s*/, ''); }
@@ -683,7 +709,7 @@
     }).join('');
     return kindLabel('quiz') +
       '<h2 class="ln-step-h ln-q" id="ln-sh" tabindex="-1">' + esc(L(s.q)) + '</h2>' +
-      '<p class="ln-quiz-hint"' + (answered || tried.length ? ' hidden' : '') + '>' + esc(t('ln.quizHint')) + '</p>' +
+
       '<div class="ln-opts' + (answered ? ' is-answered' : '') + '" role="group" aria-labelledby="ln-sh"' + (answered || lite() ? '' : ' data-reveal-stagger="40"') + '>' + opts + '</div>' +
       '<div class="ln-fb" id="ln-fb" aria-live="polite">' + (answered ? feedbackHtml(s, ans) : tried.length ? retryHtml(s, tried[tried.length - 1]) : '') + '</div>';
   }
@@ -691,9 +717,9 @@
   function retryHtml(s, i) {
     var o = (s.options || [])[i];
     if (!o) return '';
+    var w = clip(L(o.why));
     return '<div class="ln-fb-box is-ng"><p class="ln-fb-h">' + esc(t('ln.ng')) + '</p>' +
-      (o.why ? '<p>' + esc(L(o.why)) + '</p>' : '') +
-      '<p class="ln-fb-try">' + esc(t('ln.tryBody')) + '</p>' +
+      (w.shown ? '<p>' + esc(w.shown) + '</p>' : '') + (w.rest ? moreHtml('<p>' + esc(w.rest) + '</p>') : '') +
       '<div class="btn-row ln-fb-acts">' +
         '<button type="button" class="btn btn-ink btn-sm" data-act="ln-retry" data-press><span>' + esc(t('ln.retry')) + '</span></button>' +
         '<button type="button" class="btn btn-text btn-sm" data-act="ln-reveal"><span>' + esc(t('ln.reveal')) + '</span></button>' +
@@ -703,13 +729,18 @@
     var o = (s.options || [])[ans];
     if (!o) return '';
     if (o.correct) {
-      return '<div class="ln-fb-box is-ok"><p class="ln-fb-h">' + esc(t('ln.ok')) + '</p><p>' + esc(L(o.why)) + '</p></div>';
+      var cw = clip(cleanWhy(L(o.why)));
+      return '<div class="ln-fb-box is-ok"><p class="ln-fb-h">' + esc(t('ln.ok')) + '</p>' + (cw.shown ? '<p>' + esc(cw.shown) + '</p>' : '') +
+        (cw.rest ? moreHtml('<p>' + esc(cw.rest) + '</p>') : '') + '</div>';
     }
     var c = null;
     (s.options || []).forEach(function (x) { if (x.correct) c = x; });
+    // the answer first (big), its reason in one line; why the pick was off waits behind 「くわしく」
+    var aw = c && c.why ? clip(cleanWhy(L(c.why))) : { shown: '', rest: '' };
+    var later = (aw.rest ? '<p>' + esc(aw.rest) + '</p>' : '') + (o.why ? '<p>' + esc(L(o.why)) + '</p>' : '');
     return '<div class="ln-fb-box is-ng"><p class="ln-fb-h">' + esc(t('ln.ng')) + '</p>' +
-      (o.why ? '<p>' + esc(L(o.why)) + '</p>' : '') +
-      (c ? '<p class="ln-fb-a">' + esc(t('ln.answerIs', { a: L(c) })) + '</p>' + (c.why ? '<p>' + esc(cleanWhy(L(c.why))) + '</p>' : '') : '') +
+      (c ? '<p class="ln-fb-a">' + esc(t('ln.answerIs', { a: L(c) })) + '</p>' : '') +
+      (aw.shown ? '<p>' + esc(aw.shown) + '</p>' : '') + moreHtml(later) +
     '</div>';
   }
 
@@ -854,7 +885,7 @@
         legend('amber', t('ln.c.interest'), r.never ? '—' : yen(r.interest), 'k-interest') +
         (st.mode === 'y' ? legend('none', t('ln.c.perMonth'), yen(r.monthly), 'k-month') : legend('none', t('ln.c.months'), monthsHtml(r), 'k-months')) +
         legend('none', t('ln.c.total'), r.never ? '—' : yen(r.total), 'k-total is-total')) +
-      (s.note ? '<p class="ln-note">' + esc(L(s.note)) + '</p>' : '') +
+      noteMore(s.note ? L(s.note) : '') +
     calcClose(idx);
   }
 
@@ -894,7 +925,7 @@
         legend('blue', t('ln.c.incomeTax'), '−' + yen(r.incomeTax), 'k-incomeTax') +
         legend('blue', t('ln.c.residentTax'), '−' + yen(r.residentTax), 'k-residentTax') +
         legend('action', t('ln.c.net'), yen(r.net), 'k-net is-total')) +
-      '<p class="ln-note ln-note-est"><span class="ln-est">' + esc(t('ln.estimate')) + '</span><span>' + esc(s.note ? L(s.note) : t('ln.c.estNote')) + '</span></p>' +
+      noteMore(s.note ? L(s.note) : t('ln.c.estNote')) +
     calcClose(idx);
   }
 
@@ -937,7 +968,7 @@
         field(idx, 'rent', t('ln.c.rent'), st.rent) +
       '</div>' +
       detail(legend('none', t('ln.c.income'), yen(r.income), 'k-income') + rows + legend('none', t('ln.c.spend'), yen(r.total), 'k-total is-total')) +
-      (s.note ? '<p class="ln-note">' + esc(L(s.note)) + '</p>' : '') +
+      noteMore(s.note ? L(s.note) : '') +
       '<a class="ln-sim-link btn btn-text" href="#/tools/money" data-press><span>' + esc(t('ln.c.toSim')) + '</span>' + arrow() + '</a>' +
     calcClose(idx);
   }
@@ -1176,7 +1207,7 @@
     var card = function (p) { return SM.ui.programCard(p, { compact: true, headingLevel: 3 }); };
     // below the fold on the finish: content-visibility keeps its layout out of the step swap
     return '<section class="ln-related cv" aria-labelledby="ln-rel-h">' +
-      SM.ui.sectionHeader(t('ln.fin.related'), { id: 'ln-rel-h', sub: t('ln.fin.relatedSub') }) +
+      SM.ui.sectionHeader(t('ln.fin.related'), { id: 'ln-rel-h' }) +
       '<div class="pcards" data-reveal-stagger="60">' + first.map(card).join('') + '</div>' +
       (rest.length ? '<details class="disclose ln-more"><summary><span>' + esc(t('ln.fin.more', { n: rest.length })) + '</span></summary>' +
         '<div class="pcards">' + rest.map(card).join('') + '</div></details>' : '') +
@@ -1231,7 +1262,7 @@
           '<p class="ln-kind">' + esc(t('ln.fin.k')) + '</p>' +
           '<h2 class="ln-step-h" id="ln-sh" tabindex="-1">' + esc(t('ln.fin.h')) + '</h2>' +
           (sc.n ? '<p class="ln-fin-score">' + esc(t(sc.c === sc.n ? 'ln.fin.scoreAll' : 'ln.fin.score', { n: sc.n, c: sc.c })) + '</p>' : '') +
-          (sc.n && sc.c < sc.n ? '<p class="ln-fin-tip">' + esc(t('ln.fin.tip')) + '</p>' : '') +
+
         '</div>' +
         // the learned count, as on the list: the number rolls on, the new segment draws in
         '<div class="ln-fin-count">' +
@@ -1528,25 +1559,61 @@
     };
 
     var m = M();
-    var dx = dir < 0 ? 24 : -24;
-    var out = !reduced() && m ? anim(stage, [{ opacity: 1, translate: '0 0' }, { opacity: 0, translate: dx + 'px 0' }], { duration: 80, easing: 'linear', fill: 'forwards' }) : null;
+    var red = reduced();
     updateProg(l, n);
-    if (!out) { commit(); return; }
+    if (!m || typeof m.animate !== 'function') { commit(); return; }
+    /* v5: the steps are a deck of flat panels. The old panel is lifted off as a fixed copy that recedes (shrinks a
+       little, slides 18% the way it came from and fades) while the new panel slides over it from the other side
+       (48px on the rise spring). The copy and its animation start on the tap's own frame; the new step's markup is
+       built one frame later, so a slow phone never sits on a frozen screen. A tap during the swap lands it first.
+       Reduced motion: no travel, the new panel cross-fades in (180ms). */
+    var fwd = dir >= 0;
+    var ghost = null, gA = null;
+    if (!red) {
+      var r0 = stage.getBoundingClientRect(), vh = window.innerHeight || 800;
+      if (r0.width && r0.bottom > 0 && r0.top < vh) {
+        ghost = stage.cloneNode(true);
+        ghost.removeAttribute('id');
+        each(ghost.querySelectorAll('[id]'), function (x) { x.removeAttribute('id'); });
+        ghost.classList.add('ln-ghost');
+        ghost.setAttribute('aria-hidden', 'true');
+        ghost.setAttribute('inert', '');
+        var top = Math.max(r0.top, 0), h = Math.min(r0.bottom, vh) - top;
+        ghost.style.cssText = 'position:fixed;left:' + r0.left + 'px;top:' + r0.top + 'px;width:' + r0.width + 'px;height:' + Math.max(0, Math.min(r0.height, vh - r0.top)) +
+          'px;margin:0;min-height:0;overflow:hidden;pointer-events:none;z-index:0;transform-origin:' + (fwd ? '0% ' : '100% ') + Math.round(top - r0.top + h / 2) + 'px;';
+        stage.parentNode.insertBefore(ghost, stage);
+        gA = anim(ghost, [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateX(' + (fwd ? -18 : 18) + '%) scale(0.92)' }],
+          { duration: 420, easing: E('standard'), fill: 'forwards' });
+        var drop = function () { if (ghost && ghost.parentNode) ghost.parentNode.removeChild(ghost); };
+        if (gA && gA.finished) gA.finished.then(drop, drop); else setTimeout(drop, 450);
+        setTimeout(drop, 900);
+      }
+      // the live stage holds still and blank until its new panel arrives (one frame)
+      stage.style.opacity = '0';
+    }
     var me = { landed: false };
     me.land = function () {
       if (me.landed) return;
       me.landed = true;
       if (swap === me) swap = null;
       commit();
-      try { out.cancel(); } catch (e) { }
-      anim(stage, [{ opacity: 0 }, { opacity: 1 }], { duration: 220, easing: E('enter'), key: 'ln-op' });
-      anim(stage, [{ translate: (-dx) + 'px 0' }, { translate: '0 0' }], { duration: 300, easing: E('standard'), key: 'ln-tr' });
+      stage.style.opacity = '';
+      if (red) { anim(stage, [{ opacity: 0 }, { opacity: 1 }], { duration: 180, easing: 'linear', key: 'ln-op' }); return; }
+      anim(stage, [{ opacity: 0 }, { opacity: 1 }], { duration: 200, easing: E('enter'), key: 'ln-op' });
+      anim(stage, [{ transform: 'translateX(' + (fwd ? 48 : -48) + 'px)' }, { transform: 'none' }], { spring: 'rise', key: 'ln-tr' });
+      // the step's parts follow the panel in, one after another (heading, body, options)
+      var kids = stage.firstElementChild ? stage.firstElementChild.children : [];
+      var k = 0;
+      each(kids, function (c) {
+        if (k > 5 || c.classList.contains('ln-cover')) return;
+        anim(c, [{ opacity: 0, transform: 'translateX(' + (fwd ? 24 : -24) + 'px)' }, { opacity: 1, transform: 'none' }],
+          { duration: 420, delay: 60 + k * 50, easing: E('expo') || E('standard'), fill: 'backwards', key: 'ln-kid' });
+        k++;
+      });
     };
     swap = me;
-    out.addEventListener('finish', me.land);
-    out.addEventListener('cancel', me.land);
-    // build after the frame that starts the fade has been handed to the compositor
-    requestAnimationFrame(function () { setTimeout(function () { if (!me.landed) build(); }, 0); });
+    // build after the frame that starts the old panel's exit has been handed to the compositor
+    requestAnimationFrame(function () { setTimeout(function () { if (!me.landed) { build(); me.land(); } }, 0); });
   }
 
   SM.on('ln-next', function () {
@@ -1580,7 +1647,8 @@
   function fbIn(fb, delay) {
     var box = fb && fb.firstElementChild;
     if (!box) return;
-    anim(box, [{ opacity: 0, translate: '0 10px' }, { opacity: 1, translate: '0 0' }], { duration: 300, delay: delay || 0, easing: E('standard'), fill: 'backwards', key: 'fb' });
+    anim(box, [{ opacity: 0 }, { opacity: 1 }], { duration: 260, delay: delay || 0, easing: E('enter'), fill: 'backwards', key: 'fbo' });
+    anim(box, [{ translate: '0 28px' }, { translate: '0 0' }], { spring: 'rise', delay: delay || 0, fill: 'backwards', key: 'fb' });
   }
   /* new explanation: the one on screen (a retry hint) steps out in 90ms first, then the new one rises in */
   function setFb(html, delay) {
@@ -1628,7 +1696,10 @@
     applyRuby(fb);
     var d = Math.max(60, delay || 0);
     var out = anim(old, [{ opacity: 1 }, { opacity: 0 }], { duration: 90, delay: Math.max(0, d - 70), easing: 'linear', fill: 'both' });
-    if (nb) anim(nb, [{ opacity: 0, translate: '0 10px' }, { opacity: 1, translate: '0 0' }], { duration: 300, delay: d, easing: E('standard'), fill: 'backwards', key: 'fb' });
+    if (nb) {
+      anim(nb, [{ opacity: 0 }, { opacity: 1 }], { duration: 260, delay: d, easing: E('enter'), fill: 'backwards', key: 'fbo' });
+      anim(nb, [{ translate: '0 28px' }, { translate: '0 0' }], { spring: 'rise', delay: d, fill: 'backwards', key: 'fb' });
+    }
     var drop = function () {
       if (old.parentNode) old.parentNode.removeChild(old);
       if (fb._lnTok !== mine) return;
@@ -1666,6 +1737,7 @@
       tried.push(i);
       el.classList.add('is-chosen', 'is-wrong', 'is-tried');
       el.setAttribute('aria-disabled', 'true');
+      sweepOpt(el, 'ng', 0, reduced() || !m);
       addRes(el, yoursHtml(), 40);
       var hint0 = el.parentNode.parentNode.querySelector('.ln-quiz-hint');
       if (hint0) hint0.classList.add('is-gone');   // fades, keeps its line: the options never move under the finger
@@ -1691,6 +1763,18 @@
     var h = document.querySelector('#ln-fb .ln-fb-h');
     if (h) { h.setAttribute('tabindex', '-1'); try { h.focus({ preventScroll: true }); } catch (e) { } }
   });
+  function sweepOpt(btn, tone, delay, calm) {
+    if (!btn) return;
+    var old = btn.querySelector('.ln-opt-sweep');
+    if (old) { if (old.classList.contains('is-' + tone)) return; old.parentNode.removeChild(old); }
+    var sw = document.createElement('span');
+    sw.className = 'ln-opt-sweep is-' + tone;
+    sw.setAttribute('aria-hidden', 'true');
+    btn.insertBefore(sw, btn.firstChild);
+    btn.classList.add('has-sweep');
+    if (calm) { anim(sw, [{ opacity: 0 }, { opacity: 1 }], { duration: 180, easing: 'linear' }); return; }
+    anim(sw, [{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], { duration: 440, delay: delay || 0, easing: E('draw'), fill: 'backwards' });
+  }
   /* the answer is in. Right: the ○ draws round the key letter (en: the key fills, ✓ draws), the 正解 seal stamps
      across the frame's edge (ring), the other options step back. Wrong: your key is a quiet amber ✕; the answer gets
      its green frame, the ○ and a 正解 tag. Then the explanation rises in and つぎへ turns primary. */
@@ -1707,6 +1791,8 @@
         b.classList.remove('is-tried', 'is-chosen', 'is-wrong');
         var r0 = b.querySelector('.ln-opt-res');
         if (r0) r0.innerHTML = '';
+        var s0 = b.querySelector('.ln-opt-sweep');
+        if (s0 && j !== i) { s0.parentNode.removeChild(s0); b.classList.remove('has-sweep'); }
       }
       b.setAttribute('aria-disabled', 'true');
       b.setAttribute('aria-pressed', j === i ? 'true' : 'false');
@@ -1717,6 +1803,12 @@
     });
     var hint = box.parentNode.querySelector('.ln-quiz-hint');
     if (hint) hint.classList.add('is-gone');
+    /* big, clear feedback: the colour sweeps across the option from its key (green for the answer, a pale amber for
+       a wrong pick), and the right pick gives a small spring "pop". Reduced motion: the colour simply fades in. */
+    var sweep = function (btn, tone, delay) { sweepOpt(btn, tone, delay, calm); };
+    if (chosen && !right) sweep(chosen, 'ng', 0);
+    sweep(answer, 'ok', right ? 0 : 200);
+    if (right && chosen && !calm) anim(chosen, [{ scale: '1' }, { scale: '1.035', offset: 0.35 }, { scale: '1' }], { duration: 460, easing: E('standard'), key: 'pop' });
     var keyA = answer ? answer.querySelector('.ln-opt-key') : null;
     /* the answer's mark: ja — the maru draws round the key letter; en — the key fills and the ✓ draws (engine
        check: stamp spring + two rect segments, no clip-path) */

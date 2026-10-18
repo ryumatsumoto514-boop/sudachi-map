@@ -111,6 +111,9 @@
     'map.islandsBody': { ja: '{name}は地図の外にあります。下のリストと、電話・LINEで話せる窓口を使ってね。', en: '{name} is outside the map. Use the list below, or talk by phone or LINE.' },
     'map.islandsNote': { ja: '大島・八丈島・小笠原などの島しょ部は、地図にはのせていません。「変える」から選べます。', en: 'Islands (Oshima, Hachijo, Ogasawara…) are not drawn. You can still pick them with "Change".' },
     'map.call1': { ja: '行く前に電話で確かめよう。予約がいる場所もあります。', en: 'Call before you go — some places need a booking.' },
+    'map.callShort': { ja: '行く前に電話で確かめよう。', en: 'Call before you go.' },
+    'map.about': { ja: 'この地図について', en: 'About this map' },
+    'map.more2': { ja: 'くわしく', en: 'Details' },
     'map.privacy': { ja: '現在地は使いません。選んだ区市町村も、このスマホの中だけに残ります。', en: 'We never use your location. Your choice stays on this phone only.' },
     // "|" = where the credit may wrap (never inside 加工, map.css .m-attr)
     'map.attr': { ja: '地理院ベクトルタイル・国土数値情報を|加工して作成', en: 'Processed from GSI Vector Tiles |& MLIT National Land Info' },
@@ -366,9 +369,9 @@
     // phone: a compact title + one-line lead, the picker, then the map; the list sheet opens with its count row
     // (「01 新宿区の中 8か所」 is what its peek shows). Desktop: the grid puts them in the right column (map.css)
     var mhead = '<header class="m-head">' +
-        '<h1 class="m-title">' + esc(t('map.h1')) + '</h1>' +
-        '<p class="m-lead ui-wrap">' + esc(t('map.lead1')) + (U.marker ? U.marker(t('map.leadMark')) : esc(t('map.leadMark'))) + esc(t('map.lead2')) + '</p>' +
+        '<h1 class="m-title" data-reveal="line">' + esc(t('map.h1')) + '</h1>' +
       '</header>';
+    void U;
     return '' +
       '<div class="m-layout">' +
         '<div class="m-side">' +
@@ -502,7 +505,7 @@
     if (!glReady && g) {
       var paths = '', ph = S.engine !== 'svg';
       // the placeholder only needs the wards around the area it is framed on (less to parse in the update)
-      var vb = ph && S.code && !isIsland(S.code) && g.boxes && g.boxes[S.code], m = vb ? Math.max(vb[2], vb[3]) * 1.2 : 0;
+      var vb = ph && !willFly() && S.code && !isIsland(S.code) && g.boxes && g.boxes[S.code], m = vb ? Math.max(vb[2], vb[3]) * 1.2 : 0;
       Object.keys(g.paths).forEach(function (c) {
         var bx = vb && g.boxes[c];
         if (bx && (bx[0] > vb[0] + vb[2] + m || bx[0] + bx[2] < vb[0] - m || bx[1] > vb[1] + vb[3] + m || bx[1] + bx[3] < vb[1] - m)) return;
@@ -555,8 +558,22 @@
   }
   /* the placeholder is framed like the camera that is coming: the area's box (or all of Tokyo), fitted inside
      the same padding as the GL camera (the svg box is inset by CSS) — xMidYMid meet = fitBounds. */
+  /* the first live map of a visit opens on all of Tokyo and flies to the area (SPEC-v5: the map arrives,
+     it does not just appear); the placeholder is framed on that overview too, so the fade lines up */
+  /* (all of Tokyo is the widest view already: with no area chosen there is nothing to fly to, the pins drop) */
+  function flyable() { return !!(S.code && !isIsland(S.code) && !S.focus && !reduced()); }
+  function willFly() { return S.engine === 'gl' && !GL.map && !GL.flewIn && flyable(); }
+  /* the simple map: the first frame is where its flight starts (all of Tokyo first, a little further out later) */
+  function svgFrom() {
+    var g = geo(); if (S.engine !== 'svg' || !flyable() || !g.boxes || !g.boxes[S.code]) return null;
+    if (!V.flown) return g.vb;
+    var b = g.boxes[S.code], k = 1.6;
+    return [b[0] - b[2] * (k - 1) / 2, b[1] - b[3] * (k - 1) / 2, b[2] * k, b[3] * k];
+  }
   function phViewBox() {
     var g = geo(); if (!g) return '0 0 100 100';
+    var fb = willFly() ? g.vb : svgFrom();
+    if (fb) return fb.map(function (v) { return (+v).toFixed(1); }).join(' ');
     var b = (S.code && !isIsland(S.code) && g.boxes && g.boxes[S.code]) ? g.boxes[S.code] : g.vb;
     return b.map(function (v) { return (+v).toFixed(1); }).join(' ');
   }
@@ -575,20 +592,23 @@
     var ar = loc.area ? areaBy(loc.area) : null;
     var name = loc.name || L(p.name);
     var meta = [];
-    if (ar) meta.push('<span>' + esc(areaName(ar)) + '</span>');
-    meta.push('<span>' + esc(catLabel(fcat(r))) + '</span>');
+    // v5: the kanji mark already says the kind; the section says the area. Only facts that change the choice stay:
+    // who it is for (age) and how far it is.
+    void ar;
     var aud = audOf(r);
     if (aud) meta.push('<span class="m-loc-aud' + (aud.off ? ' is-off' : '') + '">' + esc(aud.text) + '</span>');
     if (dist != null) meta.push('<span class="m-loc-dist">' + esc(t('map.dist', { d: dist < 10 ? dist.toFixed(1) : Math.round(dist) })) + '</span>');
     var prog = name.indexOf(L(p.name)) === -1 ? '<a class="m-loc-prog" href="#/p/' + esc(encodeURIComponent(p.id)) + '"><span class="sr-only">' + esc(t('map.program')) + ': </span><span>' + esc(L(p.name)) + '</span>' + arrow('r') + '</a>' : '';
     var head = '<div class="m-loc-head"><div class="m-loc-titles">' +
       '<h3 class="m-loc-name"' + (loc.name && lang() === 'en' ? ' lang="ja"' : '') + '>' + esc(name) + '</h3>' +
-      '<p class="m-loc-meta">' + meta.join('') + '</p>' + prog + '</div>' +
+      (meta.length ? '<p class="m-loc-meta">' + meta.join('') + '</p>' : '') + '</div>' +
       (r.hasGeo ? '<button type="button" class="m-loc-pin" data-act="map-show" data-key="' + esc(r.key) + '" aria-label="' + esc(t('map.onMap') + '：' + name) + '">' + icon('pin') + '<span class="m-lp-l" aria-hidden="true">' + esc(t('map.onMap')) + '</span><span class="m-lp-s" aria-hidden="true">' + esc(t('map.onMapShort')) + '</span></button>' : '') +
       '</div>';
     var tels = loc.phone ? telHtml(loc.phone, null, false) : '';
-    var c = p.contact;
-    if (c && c.phone && digits(c.phone) !== digits(loc.phone) && isFree(c.phone)) tels += telHtml(c.phone, L(c.phoneLabel), true);
+    var c = p.contact, subTel = '';
+    if (c && c.phone && digits(c.phone) !== digits(loc.phone) && isFree(c.phone)) subTel = telHtml(c.phone, L(c.phoneLabel), true);
+    // no phone of its own: the free line is the row's phone button
+    if (!tels && subTel) { tels = subTel; subTel = ''; }
     var hours = loc.hours ? '<p class="m-loc-kv"><span class="m-k">' + esc(t('map.hoursK')) + '</span><span>' + esc(L(loc.hours)) + '</span></p>' : '';
     var addr = loc.addr ? '<p class="m-loc-kv"><span class="m-k">' + esc(t('map.addrK')) + '</span><span' + (lang() === 'en' ? ' lang="ja"' : '') + '>' + esc(loc.addr) + '</span></p>' : '';
     var note = loc.note ? '<p class="m-loc-kv"><span class="m-k">' + esc(t('map.noteK')) + '</span><span>' + esc(L(loc.note)) + '</span></p>' : '';
@@ -596,11 +616,11 @@
       (r.hasLL && U.button ? U.button(t('map.gmaps'), { href: gmaps(loc), variant: 'secondary', size: 'sm', external: true }) : '') +
       (U.button ? U.button(t('map.detail'), { href: '#/p/' + encodeURIComponent(p.id), variant: 'text', size: 'sm', arrow: true }) : '') +
       '</div>';
-    var more = '<details class="m-more"' + (S.focus === r.key ? ' open' : '') + '><summary><span>' + esc(t('map.howto')) + '</span></summary>' +
-      '<div class="m-more-body">' + addr + note + acts + '</div></details>';
+    var more = '<details class="m-more"' + (S.focus === r.key ? ' open' : '') + '><summary><span>' + esc(t('map.more2')) + '</span></summary>' +
+      '<div class="m-more-body">' + subTel + hours + addr + note + prog + acts + '</div></details>';
     return '<article class="m-loc' + (S.focus === r.key ? ' is-focus' : '') + '" id="' + rowId(r.key) + '" data-key="' + esc(r.key) + '" data-id="' + esc(r.key) + '" data-flip-key="' + esc(r.key) + '">' +
       (U.catIcon ? U.catIcon(r.cat, 'sm', { vt: true }) : '') +
-      '<div class="m-loc-main">' + head + tels + hours + more + '</div></article>';
+      '<div class="m-loc-main">' + head + tels + more + '</div></article>';
   }
 
   function countHtml(n, roll) {
@@ -652,7 +672,7 @@
         var limit = 6, focusIdx = -1;
         others.forEach(function (o, i) { if (o.r.key === S.focus) focusIdx = i; });
         var showN = S.showAll ? others.length : Math.max(limit, focusIdx + 1);
-        html += '<section class="m-group" aria-labelledby="m-g2">' + head('02', t('map.near'), others.length, t('map.nearSub', { name: areaName(a) })).replace('<h2 class="section-title"', '<h2 class="section-title" id="m-g2"') +
+        html += '<section class="m-group" aria-labelledby="m-g2">' + head('02', t('map.near'), others.length, null).replace('<h2 class="section-title"', '<h2 class="section-title" id="m-g2"') +
           '<div class="m-locs">' + others.slice(0, showN).map(function (o) { return rowHtml(o.r, o.d); }).join('') + '</div>' +
           (others.length > showN ? '<div class="m-more-wrap">' + U.button(t('map.more', { n: others.length - showN }), { act: 'map-more', variant: 'secondary', block: true, icon: 'chevron-down' }) + '</div>' : '') +
           '</section>';
@@ -664,7 +684,7 @@
       var picked = S.focus ? list.filter(function (r) { return r.key === S.focus; })[0] : null;
       html += note;
       if (picked) html += '<section class="m-group">' + head('', t('map.picked'), null) + '<div class="m-locs">' + rowHtml(picked, null) + '</div></section>';
-      html += '<section class="m-group">' + head('01', t('map.areas'), list.length, t('map.areasSub'), roll);
+      html += '<section class="m-group">' + head('01', t('map.areas'), list.length, null, roll);
       if (first) return html + '</section>';
       ['23ku', 'tama', 'islands'].forEach(function (gk) {
         var codes = areas().filter(function (x) { return x.group === gk && ag[x.code]; });
@@ -694,9 +714,13 @@
   }
   function footHtml() {
     var date = SM.updated ? (SM.fmtDate ? SM.fmtDate(SM.updated) : SM.updated) : '';
+    // one short line stays; the rest (privacy, islands, sources) is behind 「この地図について」
     return '<footer class="m-foot">' +
+      '<p class="m-foot-call">' + esc(t('map.callShort')) + '</p>' +
+      '<details class="m-more m-about"><summary><span>' + esc(t('map.about')) + '</span></summary><div class="m-more-body">' +
       '<ul class="bullets m-foot-list"><li>' + esc(t('map.call1')) + '</li><li>' + esc(t('map.privacy')) + '</li><li>' + esc(t('map.islandsNote')) + '</li></ul>' +
       '<p class="m-foot-src">' + esc(S.engine === 'svg' ? t('map.sourceSimple') : t('map.source')) + (date ? '<br>' + esc(t('map.addrCheck', { date: date })) : '') + '</p>' +
+      '</div></details>' +
       '</footer>';
   }
 
@@ -807,13 +831,18 @@
     if (compact && !reg) return Math.ceil(w + n + 20);
     return Math.ceil(w + n + (reg ? 39 : 27));
   }
-  /* pins drop in from above, north to south: stamp spring, 24ms stagger, cap 12 (the rest land with the 12th) */
-  function dropPins(list) {
-    if (reduced() || !list || !list.length) return;
+  /* pins drop in from above, north to south: 36px of fall on the stamp spring (a small bounce on landing), 45ms
+     stagger, cap 12 (the rest land with the 12th). v4's 12px / 24ms read as a flicker on a phone.
+     Reduced motion: they fade in (no fall). */
+  function dropPins(list, base) {
+    if (!list || !list.length) return;
     list.sort(function (a, b) { return a.y - b.y; });
+    var red = reduced();
     list.forEach(function (it, i) {
       var inner = it.el && it.el.firstElementChild; if (!inner) return;
-      anim(inner, [{ translate: '0 -12px', opacity: 0 }, { translate: '0 0', opacity: 1 }], { spring: 'stamp', delay: Math.min(i, 11) * 24, fill: 'backwards', key: 'pin' });
+      if (red) { anim(inner, [{ opacity: 0 }, { opacity: 1 }], { duration: 160, easing: 'linear', fill: 'backwards', key: 'pin' }); return; }
+      anim(inner, [{ translate: '0 -36px', scale: '0.7', opacity: 0 }, { translate: '0 0', scale: '1', opacity: 1 }],
+        { spring: 'stamp', delay: (base || 0) + Math.min(i, 11) * 45, fill: 'backwards', key: 'pin' });
     });
   }
 
@@ -932,7 +961,7 @@
       if (l.id === 'area-sel-line') { l.paint['line-opacity'] = 0; at = i + 1; }   // we draw the outline ourselves
     });
     if (at < 0) at = st.layers.length;
-    st.layers.splice(at, 0, layer);
+    st.layers.splice(at, 0, liftLayer(th), layer);
     /* the HTML pins sit above the canvas, so MapLibre's label placement cannot see them: an invisible symbol per
        pin (the top layer, so it is placed first) makes station and place names step aside instead of hiding
        under a flag. Images are transparent boxes of the pin's size (styleimagemissing, glBind). */
@@ -947,6 +976,29 @@
     return st;
   }
 
+  /* the chosen area lifts off the page: a soft shadow under its border slides down a few px once the pen has
+     drawn it (flat paper, one shadow, no glow). GL.lifted survives setStyle (theme / language) */
+  function liftO(th) { return th === 'dark' ? 0.7 : 0.34; }
+  function liftLayer(th) {
+    var on = !!(GL.lifted && GL.drawCode);
+    return {
+      id: 'm-sel-lift', type: 'line', source: 'm-sel', layout: { 'line-join': 'round' },
+      paint: { 'line-color': th === 'dark' ? '#000000' : '#16241d', 'line-width': ['interpolate', ['linear'], ['zoom'], 8, 5, 14, 8],
+        'line-blur': ['interpolate', ['linear'], ['zoom'], 8, 3, 14, 5], 'line-opacity': on ? liftO(th) : 0,
+        'line-translate': on ? [0, 5] : [0, 0], 'line-translate-anchor': 'viewport' }
+    };
+  }
+  function glLift(on, animate) {
+    var map = GL.map; if (!map) return;
+    GL.lifted = !!on;
+    var d = animate && !reduced() ? 560 : 0;
+    try {
+      map.setPaintProperty('m-sel-lift', 'line-opacity-transition', { duration: on ? d : 0, delay: 0 });
+      map.setPaintProperty('m-sel-lift', 'line-translate-transition', { duration: on ? d + 160 : 0, delay: 0 });
+      map.setPaintProperty('m-sel-lift', 'line-opacity', on ? liftO(GL.theme) : 0);
+      map.setPaintProperty('m-sel-lift', 'line-translate', on && !reduced() ? [0, 5] : (on ? [0, 3] : [0, 0]));
+    } catch (e) { }
+  }
   function glVisible() { return GL.state === 'ready' && GL.el && GL.el.isConnected; }
 
   /* camera: the visible part of the frame (phone: the sheet overlaps the frame's foot; the zoom stack sits
@@ -1014,7 +1066,7 @@
       dur = o.duration || clamp(320 + px * 0.25 + dz * 160, 420, 700);
       map.easeTo({ center: center, zoom: zoom, duration: dur, easing: EASE_STD, essential: true });
     } else {
-      dur = clamp(520 + dz * 120 + px * 0.45, 600, 1200);
+      dur = o.duration || clamp(520 + dz * 120 + px * 0.45, 600, 1200);
       map.flyTo({ center: center, zoom: zoom, duration: dur, curve: 1.42, essential: true });
     }
     return dur;
@@ -1056,6 +1108,8 @@
       SM.mapStyle.prepare(window.maplibregl);
       SM.mapStyle.setTheme(GL.theme);
       var tb = targetBounds();
+      GL.flyIn = willFly();
+      if (GL.flyIn) { var mb = SM.data.mapMeta.bounds; tb = { b: [[mb[0], mb[1]], [mb[2], mb[3]]], max: 12 }; }
       var opts = {
         container: el, style: fullStyle(GL.theme, GL.lang, !reduced()),
         localIdeographFontFamily: SM.mapStyle.fontFamily, maxBounds: SM.data.mapMeta.maxBounds,
@@ -1118,7 +1172,30 @@
           setTimeout(function () { try { SM.mapStyle.start(); } catch (e) { } }, reduced() ? 300 : 1300);
         };
         if (S.focus) glFocusCamera(S.focus, { instant: true });
+        if (GL.flyIn && !S.focus && !reduced()) { GL.flewIn = true; setTimeout(flyIn, 260); return; }
+        GL.flewIn = true;
         setTimeout(land, reduced() ? 0 : 200);
+      };
+      /* opening flight: all of Tokyo → the area (no area: a short push in). The border starts drawing at 60%
+         of the flight and the pins drop at 85%, as an area change does; a drag or a tap takes the camera over */
+      var flyIn = function () {
+        if (!GL.map || !GL.el || !GL.el.isConnected) { land(); return; }
+        var cam = cameraFor(targetBounds());
+        if (!cam) { land(); return; }
+        var drew = false, dropped = false;
+        var landDraw = function () { if (drew) return; drew = true; glDraw(GL.drawCode, true); };
+        var landPins = function () { if (dropped) return; dropped = true; glPins('drop'); glFocusRoute(); };
+        var dur = glMove(cam.center, cam.zoom, {
+          duration: 1500, hidePins: true,
+          abort: function () { GL.flying = false; landDraw(); landPins(); },
+          done: function () { landDraw(); if (dropped) glPins('instant'); else landPins(); }
+        });
+        var fid = GL.flight;
+        if (dur > 0) {
+          setTimeout(function () { if (fid === GL.flight) landDraw(); }, Math.round(dur * 0.6));
+          setTimeout(function () { if (fid === GL.flight) landPins(); }, Math.round(dur * 0.85));
+        }
+        setTimeout(function () { try { SM.mapStyle.start(); } catch (e) { } }, (dur || 0) + 400);
       };
       // wait for the first full frame so the fade shows a finished map (labels in), not a half-drawn one
       var fired = false, go = function () { if (fired) return; fired = true; reveal(); };
@@ -1394,6 +1471,7 @@
     var map = GL.map; if (!map) return;
     caf(GL.draw); GL.draw = 0;
     try { map.setPaintProperty('m-sel-draw', 'line-gradient', gradient(0, GL.theme)); } catch (e) { }
+    glLift(false, false);
     var src = map.getSource('m-sel'); if (!src) return;
     if (GL.selCode !== (code || null)) { src.setData(code ? ringsOf(code) : EMPTY); GL.selCode = code || null; }
   }
@@ -1403,17 +1481,17 @@
     caf(GL.draw); GL.draw = 0;
     var src = map.getSource('m-sel');
     if (!src) return;
-    if (!code) { src.setData(EMPTY); GL.selCode = null; return; }
+    if (!code) { src.setData(EMPTY); GL.selCode = null; glLift(false, false); return; }
     GL.drawCode = code;
     if (GL.selCode !== code) { src.setData(ringsOf(code)); GL.selCode = code; }
     var th = GL.theme;
-    if (!animate || reduced()) { try { map.setPaintProperty('m-sel-draw', 'line-gradient', gradient(1, th)); } catch (e) { } return; }
+    if (!animate || reduced()) { try { map.setPaintProperty('m-sel-draw', 'line-gradient', gradient(1, th)); } catch (e) { } glLift(true, false); return; }
     var t0 = now(), dur = 760;
     try { map.setPaintProperty('m-sel-draw', 'line-gradient', gradient(0, th)); } catch (e) { }
     (function step() {
       var k = Math.min(1, (now() - t0) / dur);
       try { map.setPaintProperty('m-sel-draw', 'line-gradient', gradient(EASE_DRAW(k), th)); } catch (e) { return; }
-      if (k < 1) GL.draw = raf(step); else GL.draw = 0;
+      if (k < 1) GL.draw = raf(step); else { GL.draw = 0; glLift(true, true); }
     })();
   }
 
@@ -1830,13 +1908,14 @@
     if (V.svg) V.svg.setAttribute('viewBox', v[0].toFixed(2) + ' ' + v[1].toFixed(2) + ' ' + v[2].toFixed(2) + ' ' + v[3].toFixed(2));
     svgPosition();
   }
-  function svgAnimateTo(v, done) {
+  function svgAnimateTo(v, done, ms) {
     v = clampVB(v);
     caf(V.anim);
+    if (V.layer && V.layer.style.visibility) V.layer.style.visibility = '';
     var from = V.vb;
     var same = from && Math.abs(from[0] - v[0]) + Math.abs(from[1] - v[1]) + Math.abs(from[2] - v[2]) < 0.05;
     if (!from || same || reduced()) { applyVB(v); svgLayout(); if (done) done(); return; }
-    var t0 = now(), dur = 560, box = V.box;
+    var t0 = now(), dur = ms || 560, box = V.box;
     function step() {
       if (V.box !== box) return;
       var k = Math.min(1, (now() - t0) / dur), e = EASE_STD(k);
@@ -1987,8 +2066,25 @@
     }
     svgWaterFill(root);
     svgPaint(false);
-    applyVB(clampVB(targetVB()));
-    svgLayout(true);
+    var tv = clampVB(targetVB());
+    // the simple map arrives too: from all of Tokyo (first open) or from a little further out (return)
+    // the flight starts where the first frame was drawn (svgFrom, framed by phViewBox; xMidYMid meet = fitAspect 0)
+    var fly = !!svgFrom() && svgBoxSize().w > 1;
+    var cur = fly && String(V.svg.getAttribute('viewBox') || '').split(/\s+/).map(Number);
+    if (fly && (!cur || cur.length !== 4 || cur.some(isNaN))) fly = false;
+    if (fly) {
+      var first = !V.flown, from = clampVB(fitAspect(cur, 0));
+      applyVB(from);
+      svgLayout(false);
+      V.flown = true;
+      var lay = V.layer, bx = V.box, landed = false;
+      svgAnimateTo(tv, function () { landed = true; if (V.box !== bx) return; if (lay) lay.style.visibility = ''; svgLayout(true); }, first ? 1100 : 640);
+      if (!landed && lay) lay.style.visibility = 'hidden';
+    } else {
+      V.flown = true;
+      applyVB(tv);
+      svgLayout(true);
+    }
     frameShort(svgBoxSize().h);
     if (S.focus) { var f = svgPinFor(S.focus); if (f) peekShow(f.c.m.length > 1 ? f.c.m : f.c.m, { key: S.focus }); }
     var gen = S.gen;
@@ -2121,15 +2217,13 @@
       var r = m[0], loc = r.loc, nm = loc.name || L(r.p.name);
       var ar = loc.area ? areaBy(loc.area) : null;
       var meta = [];
-      if (ar) meta.push(esc(areaName(ar)));
-      meta.push(esc(catLabel(fcat(r))));
+      void ar;   // v5: name + phone; the mark says the kind, the age line stays (it decides who can go)
       var aud = audOf(r); if (aud) meta.push('<span class="' + (aud.off ? 'is-off' : '') + '">' + esc(aud.text) + '</span>');
       return '<div class="m-peek-grip" aria-hidden="true"></div>' +
         '<div class="m-peek-row">' + (U.catIcon ? U.catIcon(r.cat, 'sm') : '') +
-        '<div class="m-peek-text"><p class="m-peek-meta">' + meta.join('<i aria-hidden="true"></i>') + '</p>' +
+        '<div class="m-peek-text">' + (meta.length ? '<p class="m-peek-meta">' + meta.join('<i aria-hidden="true"></i>') + '</p>' : '') +
         '<h3 class="m-peek-name"><button type="button" class="m-peek-go" data-act="map-tolist" data-key="' + esc(r.key) + '" aria-label="' + esc(nm + (lang() === 'en' ? ': ' : '：') + t('map.toList')) + '">' + esc(nm) + '</button></h3>' +
-        (nm.indexOf(L(r.p.name)) === -1 ? '<div class="m-peek-sub">' + esc(L(r.p.name)) + '</div>' : '') +
-        (loc.hours ? '<p class="m-peek-hours"><span class="m-k">' + esc(t('map.hoursK')) + '</span><span>' + esc(L(loc.hours)) + '</span></p>' : '') + '</div>' + x + '</div>' +
+        '</div>' + x + '</div>' +
         (loc.phone ? '<a class="m-peek-tel" href="' + esc(telHref(loc.phone)) + '" data-press><span class="m-peek-num">' + esc(loc.phone) + '</span><span class="call-go">' + icon('phone') + '<span class="call-go-t">' + esc(t('map.call')) + '</span></span></a>' : '') +
         '<div class="m-peek-acts">' +
           '<button type="button" class="m-peek-link" data-act="map-tolist" data-key="' + esc(r.key) + '"><span>' + esc(t('map.toList')) + '</span>' + arrow('d') + '</button>' +
@@ -2155,7 +2249,7 @@
     var card = el.firstElementChild;
     if (!was) {
       if (reduced()) anim(card, [{ opacity: 0 }, { opacity: 1 }], { duration: 120, easing: 'linear', key: 'peek' });
-      else anim(card, [{ translate: '0 calc(100% + 24px)' }, { translate: '0 0' }], { spring: 'smooth', key: 'peek' });
+      else anim(card, [{ translate: '0 calc(100% + 24px)' }, { translate: '0 0' }], { spring: 'rise', key: 'peek' });   // v5: springs (≈3% overshoot)
     } else if (!reduced()) {
       anim(card, [{ opacity: 0.4 }, { opacity: 1 }], { duration: 160, easing: 'cubic-bezier(0, 0, 0.2, 1)', key: 'peekx' });
     }
@@ -2813,6 +2907,14 @@
   }
 
   /* ------------------------------------------------------------------ mount */
+  /* the list arrives after the map: phone, the sheet springs up from under the frame; desktop, the column
+     slides in. Transform + opacity only, fill backwards (no JS: nothing is ever hidden) */
+  function sheetIn(root) {
+    var el = stage() ? root.querySelector('.m-panel') : root.querySelector('#m-list');
+    if (!el) return;
+    if (stage()) anim(el, [{ transform: 'translateY(72px)', opacity: 0.4 }, { transform: 'none', opacity: 1 }], { spring: 'rise', delay: 240, fill: 'backwards', key: 'sheet-in' });
+    else anim(el, [{ transform: 'translateX(24px)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 460, easing: (SM.motion.tokens && SM.motion.tokens.ease && SM.motion.tokens.ease.expo) || 'cubic-bezier(0.16, 1, 0.3, 1)', delay: 200, fill: 'backwards', key: 'sheet-in' });
+  }
   function mount(root) {
     if (S.off) { try { S.off(); } catch (e) { } S.off = null; }
     var gen = ++S.gen;
@@ -2827,6 +2929,7 @@
       list.addEventListener('mouseleave', function () { hotPin(null); });
     }
     stageBind(root);
+    sheetIn(root);
     // the rest of the list (render() returned its first screen only)
     after(function () {
       if (gen !== S.gen || !root.isConnected) return;
@@ -2865,11 +2968,21 @@
         GL.w = slot.clientWidth; GL.h = slot.clientHeight;
         frameShort(GL.h);
         try { GL.map.resize(); } catch (e) { }
+        // the page transition hides the canvas while the old page is captured (motion.js); it was detached at
+        // that moment, so nothing brought it back: a return visit showed pins on a blank map
+        try { GL.map.getCanvas().style.visibility = ''; GL.map.triggerRepaint(); } catch (e) { }
         GL.scaleZ = -1; paintScale();
         if (GL.pinsEl) GL.pinsEl.classList.remove('is-away');
         S.focus = routeFocus;
-        glSync({ route: true });
+        // back on the map: the pins drop again and the camera settles in from a little further out
+        var settle = !routeFocus && GL.code === S.code && !reduced() && !(S.root && S.root.querySelector('.m-loc.is-focus'));
+        glSync({ route: true, drop: !routeFocus });
         if (!routeFocus) markSel();
+        if (settle) {
+          var m0 = GL.map, c0 = m0.getCenter(), z0 = m0.getZoom();
+          m0.jumpTo({ center: c0, zoom: Math.max(m0.getMinZoom(), z0 - 0.4) });
+          glMove(c0, z0, { ease: true, duration: 700, hidePins: true, done: function () { glPins('instant'); } });
+        }
       } else if (GL.state === 'failed') {
         S.engine = 'svg'; glFail();
       } else {

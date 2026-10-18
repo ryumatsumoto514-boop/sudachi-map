@@ -1,6 +1,6 @@
 /* ---- css/base.css ---- */
 /* =====================================================================
-   巣立ちマップ v4 — base.css  (owner: SYSTEM)
+   巣立ちマップ v5 — base.css  (owner: ENGINE; was SYSTEM)
    "教科書と駅サイン" — textbook × station signage, v4 craft pass (VISUAL-SPEC.md).
    Paper + 墨 ink + ONE action colour. Flat, ruled, typographic.
    Type: IBM Plex Sans JP 500/700 (display, numbers) + BIZ UDPGothic 400/700 (body). No 900, no 300.
@@ -132,10 +132,13 @@
   --ease-draw: cubic-bezier(0.5, 0, 0.15, 1);
   --ease-rise: cubic-bezier(0.25, 1, 0.5, 1);
   --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
-  --dur-instant: 90ms; --dur-quick: 160ms; --dur-base: 240ms; --dur-page: 300ms; --dur-morph: 420ms; --dur-draw: 440ms; --dur-hero: 520ms;
+  --ease-push: cubic-bezier(0.16, 1, 0.3, 1); --ease-spring: cubic-bezier(0.22, 1.12, 0.36, 1);
+  --dur-instant: 100ms; --dur-quick: 200ms; --dur-base: 320ms; --dur-page: 440ms; --dur-morph: 480ms; --dur-draw: 560ms; --dur-hero: 560ms; --dur-reduce: 180ms;
   --spring-snappy: var(--ease-standard); --spring-snappy-dur: 320ms;
   --spring-smooth: var(--ease-standard); --spring-smooth-dur: 400ms;
   --spring-stamp: cubic-bezier(0.34, 1.4, 0.64, 1); --spring-stamp-dur: 420ms;
+  --spring-rise: var(--ease-spring); --spring-rise-dur: 520ms;
+  --spring-pop: cubic-bezier(0.34, 1.5, 0.64, 1); --spring-pop-dur: 420ms;
   --ease: var(--ease-standard); --ease-out: var(--ease-standard);
   --dur-1: var(--dur-quick); --dur-2: var(--dur-base); --dur-3: var(--dur-page);
 
@@ -753,15 +756,7 @@ body.is-big .tab { font-size: var(--fs-micro); }
   .tabbar .tab .tab-sub { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-family: var(--font-display); font-size: var(--t-micro); font-weight: 500; color: var(--ink-3); letter-spacing: var(--ls-0); line-height: 1.3; }
   .tab-badge { position: static; margin-left: auto; min-width: 20px; height: 20px; font-size: var(--t-badge-rail); box-shadow: none; }
   body.is-big .tab { font-size: var(--fs-md); }
-  /* privacy note at the foot of the rail */
-  .tabbar::after {
-    content: "答えはこの端末の中だけに保存されます。「すぐ閉じる」で一瞬で画面を切りかえられます。";
-    margin: auto 20px 0 24px; padding-top: 12px; border-top: 1px solid var(--rule);
-    color: var(--ink-3);
-    font-family: var(--font-body); font-size: var(--fs-xs); line-height: var(--lh-meta); font-weight: 400; letter-spacing: var(--ls-body);
-    word-break: auto-phrase; line-break: strict;
-  }
-  body.lang-en .tabbar::after { content: "Your answers stay on this device only. \201CQuick exit\201D  leaves the page instantly."; letter-spacing: 0; }
+  /* (v5: the rail's privacy footnote is gone — "no login, nothing sent" is said once, on home and in 設定 / about) */
 
   /* the content container sits in the space right of the rail: 1120px max, centred; reading views use its
      first 8 columns (≈720px), so every view shares one left edge */
@@ -1166,6 +1161,14 @@ body.lang-en .pcard :is(.pcard-facts dt, .pcard-why-k) { min-width: 4.3em; }
 .pcard-compact .pcard-facts { margin-top: 2px; }
 .pcard-compact .pcard-save { margin-top: -10px; }
 @media (min-width: 600px) { .pcard { column-gap: 16px; } }
+/* v5 lean row (the default programCard): name / one key fact / fact tags — nothing to read twice */
+.pcard-lean { padding: var(--s-4) 0; align-items: start; }
+.pcard-lean .pcard-main { gap: 6px; }
+.pcard-lean .pcard-title { padding-top: 2px; }
+.pcard-lean .pcard-key { margin-top: 0; line-height: 1.5; }
+.pcard-lean .tags-fact { margin-top: 2px; }
+.pcard-lean .pcard-save { margin-top: -8px; }
+.pcard-lean.pcard-compact { padding: var(--s-3) 0; }
 
 /* hover / press band for ruled rows: a flat tint that bleeds 12px past the column (no box, no shadow).
    Press = an instant 6% ink wash that fades out over 160ms after release (MOTION-SPEC §4.1).
@@ -1386,6 +1389,31 @@ input[type="date"].input { min-height: 48px; }
 .list-count .unit { font-size: var(--fs-xs); font-weight: 500; margin-left: 2px; color: var(--ink-2); }
 .list-meta .icon, .list-chev { width: 20px; height: 20px; color: var(--ink-3); }
 .list-chev.arrow { --arrow-s: 20px; color: var(--ink-2); }
+
+/* v5: a row's amount at the right (月5万円: numbers big) and fact tags under its title */
+.list-amount { font-family: var(--font-body); font-size: var(--fs-sm); color: var(--ink); white-space: nowrap; }
+.list-amount .amt-n { font-size: 1.5em; }
+.list-tags { margin-top: 4px; }
+.list-count-v { display: inline-block; }
+
+/* ---------- 23b. Facts as format (v5): fact tags and the key-facts strip ----------
+   SM.ui.factTags → .tags.tags-fact (返さなくていい・締切・無料・24時間); SM.ui.keyFacts → dl.keyfacts:
+   label (12px, ink-3) over a big value, cells split by hairlines, 2–3 per row on phones. */
+.tags-fact { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag-fact { min-height: 24px; padding: 0 7px; font-weight: 700; letter-spacing: var(--ls-0); }
+.keyfacts { display: flex; flex-wrap: wrap; margin: 0 -12px; overflow: hidden; }
+.kf {
+  flex: 1 1 28%; min-width: 6.5em; margin: 0 0 0 -1px; padding: 10px 12px 12px;
+  border-left: 1px solid var(--rule); border-top: 1px solid var(--rule);
+  display: grid; gap: 2px; align-content: start;
+}
+.kf-k { font-family: var(--font-display); font-size: var(--t-label); font-weight: 500; letter-spacing: var(--ls-label); line-height: 1.3; color: var(--ink-3); }
+.kf-v { margin: 0; font-family: var(--font-display); font-size: var(--fs-lg); font-weight: 700; letter-spacing: var(--ls-0); line-height: 1.35; color: var(--ink); overflow-wrap: anywhere; }
+.kf-v .amt-n { font-size: 1.5em; letter-spacing: var(--ls-num); }
+.kf-v .unit { font-size: var(--fs-xs); font-weight: 500; margin-left: 2px; color: var(--ink-2); }
+.kf-free .kf-v { color: var(--action-text); }
+.kf-deadline .kf-v, .kf-loan .kf-v { color: var(--amber-text); }
+.kf-muted .kf-v { color: var(--ink-2); font-weight: 500; }
 
 /* ---------- 24. Contact rows: the number is the biggest thing; call = ink outline (not green) ---------- */
 .contact { display: grid; border-top: 1px solid var(--rule); }
@@ -1672,6 +1700,42 @@ details.disclose > summary::after {
 }
 details.disclose[open] > summary::after { background: linear-gradient(currentColor, currentColor) center / 14px 2px no-repeat; }
 details.disclose > :not(summary) { padding: 0 0 16px; }
+/* 「くわしく」 — SM.ui.more(label, html, opts): a ruled row button with a drawn + that turns into −, and a region
+   that opens in place (SM.motion.expand: the space opens, the rows below slide down, the content drops in).
+   .more-inline: a quiet text trigger inside a card or under a fact. */
+.more { position: relative; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+.more + .more { border-top: 0; }
+.more-btn {
+  position: relative; isolation: isolate;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%;
+  min-height: 48px; padding: 10px 0; text-align: left; color: var(--ink);
+  font-family: var(--font-display); font-size: var(--t-ui); font-weight: 700; letter-spacing: var(--ls-0); line-height: var(--lh-ui);
+}
+.more-btn::before {
+  content: ""; position: absolute; inset: 0 calc(var(--bleed) * -1); z-index: -1;
+  background: var(--paper-2); opacity: 0; pointer-events: none; transition: opacity var(--dur-quick) var(--ease-standard);
+}
+@media (hover: hover) { .more-btn:hover::before { opacity: 1; } }
+.more-btn.m-pressed::before, .more-btn:active::before { opacity: 1; background: color-mix(in srgb, var(--paper-2), var(--ink) 6%); transition: none; }
+.more > .more-btn.m-pressed { background: none; }
+.more-ic { position: relative; flex: none; width: 16px; height: 16px; }
+.more-ic::before, .more-ic::after { content: ""; position: absolute; left: 1px; right: 1px; top: 7px; height: 2px; background: currentColor; }
+.more-ic::after { transition: transform var(--spring-rise-dur) var(--spring-rise), opacity var(--dur-quick) linear; transform: rotate(90deg); }
+.more-btn[aria-expanded="true"] .more-ic::after { transform: rotate(180deg); opacity: 0; }
+.more-body { padding: 0 0 16px; display: grid; gap: var(--s-3); font-size: var(--fs-md); line-height: var(--lh); color: var(--ink-2); }
+.more-body[hidden] { display: none; }
+.more-inline { border: 0; }
+.more-inline > .more-btn {
+  width: auto; min-height: var(--tap); padding: 0; gap: 6px; justify-content: flex-start;
+  color: var(--action-text); font-size: var(--fs-sm);
+}
+.more-inline > .more-btn .more-l { text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 0.28em; }
+.more-inline > .more-btn::before { display: none; }
+.more-inline .more-ic { width: 12px; height: 12px; }
+.more-inline .more-ic::before, .more-inline .more-ic::after { top: 5px; left: 0; right: 0; height: 1.5px; }
+.more-inline > .more-body { padding: 4px 0 8px; }
+.section-head + .more { border-top: 0; }
+
 kbd { font-family: var(--font-num); font-size: var(--t-kbd); padding: 1px 6px; background: var(--paper-2); box-shadow: inset 0 0 0 1px var(--rule-2); }
 
 /* supporter-only blocks */
@@ -1689,7 +1753,8 @@ body.supporter .for-supporter { display: block; }
 }
 /* ---- css/motion.css ---- */
 /* =====================================================================
-   巣立ちマップ v4 — motion.css  (owner: ENGINE) — pairs with js/motion.js, implements MOTION-SPEC.md
+   巣立ちマップ v5 — motion.css  (owner: ENGINE) — pairs with js/motion.js, implements MOTION-SPEC.md + SPEC-v5 Part A
+   v5 scale: 280–520ms, travel 24–48px, spring-like ease-out (≈3% overshoot), staggers 50ms capped at 8.
    transform / opacity only. Nothing loops. Hidden states apply ONLY to .m-pending under
    html.motion-ready (set by JS), so content is always visible without JS / IntersectionObserver.
    Reduced motion is one switch: html.m-reduce (OS setting or 設定 › 動きを少なく), never the media query.
@@ -1703,18 +1768,23 @@ body.supporter .for-supporter { display: block; }
   --ease-draw: cubic-bezier(0.5, 0, 0.15, 1);
   --ease-rise: cubic-bezier(0.25, 1, 0.5, 1);
   --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
-  --dur-instant: 90ms;
-  --dur-quick: 160ms;
-  --dur-base: 240ms;
-  --dur-page: 300ms;
-  --dur-morph: 420ms;
-  --dur-draw: 440ms;
-  --dur-hero: 520ms;
+  --ease-push: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.22, 1.12, 0.36, 1);
+  --dur-instant: 100ms;
+  --dur-quick: 200ms;
+  --dur-base: 320ms;
+  --dur-page: 440ms;
+  --dur-morph: 480ms;
+  --dur-draw: 560ms;
+  --dur-hero: 560ms;
+  --dur-reduce: 180ms;
   /* springs: cubic-bezier fallbacks; the @supports block below swaps in the real linear() curves */
   --spring-snappy: var(--ease-standard);              --spring-snappy-dur: 320ms;
   --spring-smooth: var(--ease-standard);              --spring-smooth-dur: 400ms;
   --spring-stamp: cubic-bezier(0.34, 1.4, 0.64, 1);   --spring-stamp-dur: 420ms;
   --spring-flick: var(--ease-standard);               --spring-flick-dur: 300ms;
+  --spring-rise: var(--ease-spring);                  --spring-rise-dur: 520ms;
+  --spring-pop: cubic-bezier(0.34, 1.5, 0.64, 1);     --spring-pop-dur: 420ms;
   /* old names (v3) → the new tokens, so every view's CSS speaks one easing language */
   --ease: var(--ease-standard);
   --ease-out: var(--ease-standard);
@@ -1724,7 +1794,8 @@ body.supporter .for-supporter { display: block; }
   --m-fast: 90ms;
   --m-mid: 160ms;
   --m-slow: 300ms;
-  --m-rise: 12px;
+  --m-rise: 28px;
+  --m-slide: 32px;
   --m-ink: var(--ink, #1b1b19);
 }
 @supports (animation-timing-function: linear(0, 1)) {
@@ -1737,6 +1808,10 @@ body.supporter .for-supporter { display: block; }
     --spring-stamp-dur: 485ms;
     --spring-flick: linear(0, 0.026, 0.089, 0.174, 0.267, 0.362, 0.453, 0.538, 0.614, 0.681, 0.739, 0.789, 0.83, 0.865, 0.894, 0.917, 0.936, 0.951, 0.963, 0.972, 0.98, 0.985, 0.99, 0.993, 0.995, 1);
     --spring-flick-dur: 352ms;
+    --spring-rise: linear(0, 0.089, 0.183, 0.279, 0.372, 0.461, 0.545, 0.621, 0.69, 0.752, 0.805, 0.851, 0.891, 0.924, 0.951, 0.973, 0.99, 1.004, 1.014, 1.021, 1.026, 1.029, 1.03, 1.03, 1.029, 1.028, 1.026, 1.023, 1.021, 1.019, 1.016, 1.014, 1.012, 1.01, 1.008, 1.007, 1.005, 1);
+    --spring-rise-dur: 522ms;
+    --spring-pop: linear(0, 0.03, 0.108, 0.217, 0.341, 0.471, 0.596, 0.711, 0.811, 0.896, 0.964, 1.016, 1.053, 1.077, 1.09, 1.095, 1.093, 1.086, 1.076, 1.064, 1.052, 1.04, 1.029, 1.019, 1.011, 1.004, 0.999, 0.995, 0.993, 0.992, 0.991, 0.991, 0.992, 0.993, 0.994, 0.995, 1);
+    --spring-pop-dur: 506ms;
   }
 }
 
@@ -1747,11 +1822,11 @@ body.supporter .for-supporter { display: block; }
    (measured: ~10% of the style time inside a page transition at 4x CPU). */
 .motion-ready .m-pending:is([data-reveal], [data-count]),
 .motion-ready .m-in:is([data-reveal], [data-count]) {
-  transition: opacity 300ms var(--ease-enter), transform 300ms var(--ease-standard);
+  transition: opacity 360ms var(--ease-enter), transform var(--spring-rise-dur) var(--spring-rise);
   transition-delay: var(--m-delay, 0ms);
 }
 .motion-ready :is([data-reveal=""], [data-reveal="up"]).m-pending { transform: translateY(var(--m-rise)); }
-.motion-ready [data-reveal="slide"].m-pending { transform: translateX(-16px); }
+.motion-ready [data-reveal="slide"].m-pending { transform: translateX(calc(var(--m-slide) * -1)); }
 .motion-ready [data-reveal="fade"].m-pending { transform: none; }
 /* rule: draws from the left like a pen stroke */
 .motion-ready [data-reveal="rule"].m-pending { opacity: 1; transform: scaleX(0); transform-origin: left center; }
@@ -1763,15 +1838,16 @@ body.supporter .for-supporter { display: block; }
 .motion-ready [data-reveal="line"]:is(.m-pending, .m-in) { clip-path: inset(-0.9em -1em 0 -1em); }
 .motion-ready [data-reveal="line"].m-pending > .m-line-in { transform: translateY(108%); }
 .motion-ready [data-reveal="line"].m-in { transition: none; }
-.motion-ready [data-reveal="line"].m-in > .m-line-in { transition: transform var(--dur-hero) var(--ease-rise); transition-delay: var(--m-delay, 0ms); }
+.motion-ready [data-reveal="line"].m-in > .m-line-in { transition: transform 620ms var(--ease-expo); transition-delay: var(--m-delay, 0ms); }
 /* mark: hidden until it stamps (the stamp itself is WAAPI) */
 .motion-ready [data-reveal="mark"].m-pending { transform: none; }
 /* SVG lines drawn via stroke-dashoffset: never fade them */
 .motion-ready [data-draw].m-pending { opacity: 1; transform: none; }
-/* a reveal reached by scrolling (after the arrival window): no delay, a quick fade, so it is there when it arrives */
-.motion-ready .m-late:is([data-reveal], [data-count]) { transition-duration: 160ms, 200ms; }
-.motion-ready [data-reveal="line"].m-late > .m-line-in { transition-duration: 260ms; }
-.motion-ready [data-reveal="rule"].m-late, .motion-ready [data-reveal="underline"].m-late::after { transition-duration: 240ms; }
+/* a reveal reached by scrolling (after the arrival window): it starts at once (no choreography delay) and travels
+   less, but it is still a visible rise — v4's 160ms fade read as no motion at all */
+.motion-ready .m-late:is([data-reveal], [data-count]) { transition-duration: 280ms, 420ms; }
+.motion-ready [data-reveal="line"].m-late > .m-line-in { transition-duration: 420ms; }
+.motion-ready [data-reveal="rule"].m-late, .motion-ready [data-reveal="underline"].m-late::after { transition-duration: 520ms; }
 /* finishAll(): pending entrances land within 120ms (m-fast) or now (m-now) */
 .motion-ready .m-fast, .motion-ready .m-fast > .m-line-in { transition-duration: 120ms !important; transition-delay: 0ms !important; }
 .motion-ready .m-now, .motion-ready .m-now > .m-line-in { transition: none !important; }
@@ -1812,7 +1888,8 @@ body.supporter .for-supporter { display: block; }
 .m-cnt { display: inline-block; text-align: right; white-space: nowrap; }
 .m-cnt::before { content: attr(data-v); }
 
-/* ---------- 4. press (§4.1): buttons scale .97 (WAAPI); rows get an instant 6% ink wash ---------- */
+/* ---------- 4. press (SPEC-v5 A.4): .m-pressed lands on pointerdown (≤50ms). Controls sink 2px (WAAPI) and
+   darken here; rows wash. Colour only, applied with no transition so it is there on the first frame. ---------- */
 :where([data-press]), :where(.btn), :where(.tabbar .tab) { -webkit-tap-highlight-color: transparent; }
 :where([data-press="ink"]) { position: relative; }
 [data-press="ink"]::after {
@@ -1821,6 +1898,23 @@ body.supporter .for-supporter { display: block; }
   transition: opacity var(--dur-quick) var(--ease-standard);
 }
 [data-press="ink"]:active::after, [data-press="ink"].m-pressed::after { opacity: 0.06; transition: none; }
+/* darken: solid fills go one step darker, outlines and text controls take a paper-3 fill / the press colour */
+.btn.m-pressed { transition: none; }
+.btn-primary.m-pressed { background: var(--action-fill-press); border-color: var(--action-fill-press); }
+.btn-ink.m-pressed { background: var(--ink-2); border-color: var(--ink-2); }
+.btn-secondary.m-pressed, .btn-soft.m-pressed { background: var(--paper-3); }
+:is(.btn-ghost, .btn-text).m-pressed, .section-action.m-pressed, .sos-chat-link.m-pressed { color: var(--action-press); }
+.btn-danger.m-pressed { background: var(--red-tint); }
+.btn-sos.m-pressed, .pill-sos.m-pressed, .sos-li.is-urgent > .sos-row.m-pressed { background: var(--red-hover); border-color: var(--red-hover); }
+:is(.chip, .pill:not(.pill-sos), .icon-btn, .pcard-save, .sos-copy, .back).m-pressed { background-color: var(--paper-3); transition: none; }
+.chip[aria-pressed="true"].m-pressed { background: var(--ink-2); border-color: var(--ink-2); }
+.opt.m-pressed { background: var(--paper-2); transition: none; }
+/* rows: the 6% ink wash shows on pointerdown (the :active rules in base.css wait for the browser's own timing) */
+:is(a.list-item, button.list-item, .contact-item, details.disclose > summary, .sos-home-link).m-pressed::before {
+  opacity: 1; background: color-mix(in srgb, var(--paper-2), var(--ink) 6%); transition: none;
+}
+:is(.set-link, .sos-row:not(.is-urgent .sos-row)).m-pressed { background: color-mix(in srgb, var(--paper), var(--ink) 6%); }
+.tabbar .tab.m-pressed { color: var(--ink); }
 /* the trailing arrow nudges 4px on the snappy spring while pressed */
 :is([data-press], .btn) .arrow { transition: translate var(--spring-snappy-dur) var(--spring-snappy); }
 :is([data-press], .btn).m-pressed .arrow { translate: 4px 0; }
@@ -1832,6 +1926,16 @@ body.supporter .for-supporter { display: block; }
   pointer-events: none; opacity: 0;
 }
 .m-check { position: absolute; inset: 0; pointer-events: none; }
+/* flyTo: the station dot that carries a save to the やること tab, and the ring where it lands */
+.m-fly-dot {
+  position: fixed; z-index: 110; width: 14px; height: 14px; margin: 0; pointer-events: none;
+  border-radius: 50%; background: var(--action, #0b6e44); box-shadow: 0 0 0 2.5px var(--paper, #fff);
+  transform-origin: 50% 50%;
+}
+.m-land {
+  position: absolute; pointer-events: none; border-radius: 50%;
+  border: 2px solid var(--action, #0b6e44); opacity: 0;
+}
 .m-check > i { position: absolute; display: block; background: var(--m-check-color, var(--paper, #fff)); transform-origin: 0 50%; }
 .m-checking > svg { opacity: 0 !important; }
 /* check(): a checkbox square's fill presses in by itself (the edge stays put, in the fill colour); uncheck(): the
@@ -1866,8 +1970,11 @@ body.supporter .for-supporter { display: block; }
 
 /* ---------- 7. tab indicator: base.css draws it (.tabbar::before); it moves on the snappy spring ---------- */
 .tabbar.ind-ready::before {
-  transition: transform var(--spring-snappy-dur) var(--spring-snappy), opacity var(--dur-quick) var(--ease-standard);
+  transition: transform var(--spring-rise-dur) var(--spring-rise), opacity var(--dur-quick) var(--ease-standard);
 }
+/* the tab that becomes active pops its icon once (class change → animation; not on the first paint) */
+@keyframes m-tab-pop { 0% { transform: scale(0.82); } 45% { transform: scale(1.14); } 100% { transform: none; } }
+.tabbar.ind-ready .tab.is-active > svg { animation: m-tab-pop 420ms var(--ease-standard) both; transform-origin: 50% 60%; }
 
 /* ---------- 8. toast (§4.1): WAAPI in (snappy) / out (160ms exit); the CSS transitions step aside ---------- */
 .toast.m-toast { transition: none !important; }
@@ -1940,40 +2047,66 @@ html::view-transition-old(sm-subbar-title) { animation: m-fade-out var(--dur-ins
 @keyframes m-x-in-l   { from { transform: translateX(-32px); } to { transform: none; } }
 @keyframes m-y-in-8   { from { transform: translateY(8px); } to { transform: none; } }
 @keyframes m-y-in-16  { from { transform: translateY(16px); } to { transform: none; } }
+@keyframes m-y-in-32  { from { transform: translateY(32px); } to { transform: none; } }
+/* v5 push / pop: the page on top travels the full width, the page under it shifts 30% and dims */
+@keyframes m-push-in  { from { transform: translateX(100%); } to { transform: none; } }
+@keyframes m-push-under { from { transform: none; opacity: 1; } to { transform: translateX(-30%); opacity: 0.7; } }
+@keyframes m-pop-under { from { transform: translateX(-30%); opacity: 0.7; } to { transform: none; opacity: 1; } }
+@keyframes m-pop-out  { from { transform: none; } to { transform: translateX(100%); } }
 
-/* forward / back: shared axis X without ghosting. The old page's fade is LINEAR over 80ms (front-loaded compared
-   with --ease-exit, which held it near 90% for its first 50ms), and the new page starts at 60–70ms on --ease-enter:
-   the crossing sits near 15%, so no frame shows both pages above 30% (§6/§8), and there is never more than one
-   frame where neither is visible. Both travel 32px on the same curve, so they read as one surface sliding. */
-html.vt-forward::view-transition-old(root) { animation: m-fade-out 80ms linear both, m-x-out-l var(--dur-page) var(--ease-standard) both; }
-html.vt-forward::view-transition-new(root) { animation: m-fade-in 220ms var(--ease-enter) 70ms both, m-x-in-r var(--dur-page) var(--ease-standard) both; }
-html.vt-back::view-transition-old(root)    { animation: m-fade-out 80ms linear both, m-x-out-r var(--dur-page) var(--ease-standard) both; }
-html.vt-back::view-transition-new(root)    { animation: m-fade-in 220ms var(--ease-enter) 70ms both, m-x-in-l var(--dur-page) var(--ease-standard) both; }
-/* tab: fade through with a small rise (tabs are siblings, not a path) */
-html.vt-tab::view-transition-old(root)     { animation: m-fade-out 80ms linear both; }
-html.vt-tab::view-transition-new(root)     { animation: m-fade-in 200ms var(--ease-enter) 64ms both, m-y-in-8 280ms var(--ease-standard) 60ms both; }
-/* shared tile present: the page does not slide sideways (the tile carries the direction); content rises toward it */
-html.vt-shared::view-transition-old(root)  { animation: m-fade-out 80ms linear both; }
-html.vt-shared::view-transition-new(root)  { animation: m-fade-in var(--dur-base) var(--ease-enter) 66ms both, m-y-in-16 380ms var(--ease-standard) 20ms both; }
+/* forward: the new page slides in from the right edge OVER the old one (--ease-push: most of the way in ≈180ms, then
+   a long soft landing, 440ms in all); the old page shifts 30% left and dims under it. The pair sits on a dark
+   ground, so the old page's opacity reads as dimming (not as a fade to white); the new page is opaque (the root
+   snapshot carries the canvas background) and casts one soft edge shadow while it travels. */
+html.vt-forward::view-transition-image-pair(root),
+html.vt-back::view-transition-image-pair(root) { background: #000; }
+html.vt-forward::view-transition-old(root) { animation: m-push-under var(--dur-page) var(--ease-push) both; }
+html.vt-forward::view-transition-new(root) {
+  animation: m-push-in var(--dur-page) var(--ease-push) both;
+  box-shadow: -1px 0 0 rgba(20, 20, 18, 0.10), -18px 0 36px rgba(20, 20, 18, 0.16);
+}
+/* back: the old page (on top) slides off to the right; the page under it comes back from -30% and brightens */
+html.vt-back::view-transition-old(root) {
+  z-index: 1;
+  animation: m-pop-out 380ms var(--ease-push) both;
+  box-shadow: -1px 0 0 rgba(20, 20, 18, 0.10), -18px 0 36px rgba(20, 20, 18, 0.16);
+}
+html.vt-back::view-transition-new(root) { animation: m-pop-under 380ms var(--ease-push) both; }
+/* tab: siblings, not a path — the old content fades out fast, the new one fades in rising 16px */
+html.vt-tab::view-transition-old(root)     { animation: m-fade-out 110ms linear both; }
+html.vt-tab::view-transition-new(root)     { animation: m-fade-in 260ms var(--ease-enter) 60ms both, m-y-in-16 var(--spring-rise-dur) var(--spring-rise) 40ms both; }
+/* shared mark / title present: the page does not slide sideways (the morphs carry the direction); it rises */
+html.vt-shared::view-transition-image-pair(root) { background: none; }
+html.vt-shared::view-transition-old(root)  { animation: m-fade-out 120ms linear both; box-shadow: none; z-index: auto; }
+html.vt-shared::view-transition-new(root)  { animation: m-fade-in 280ms var(--ease-enter) 80ms both, m-y-in-32 var(--spring-rise-dur) var(--spring-rise) 40ms both; box-shadow: none; }
 /* the subbar title travels with the page direction */
-html.vt-forward::view-transition-new(sm-subbar-title) { animation: m-fade-in 220ms var(--ease-enter) 70ms both, m-x-in-r var(--dur-page) var(--ease-standard) both; }
-html.vt-back::view-transition-new(sm-subbar-title)    { animation: m-fade-in 220ms var(--ease-enter) 70ms both, m-x-in-l var(--dur-page) var(--ease-standard) both; }
-html.vt-tab::view-transition-new(sm-subbar-title)     { animation: m-fade-in 200ms var(--ease-enter) 60ms both; }
+html.vt-forward::view-transition-new(sm-subbar-title) { animation: m-fade-in 240ms var(--ease-enter) 80ms both, m-x-in-r var(--dur-page) var(--ease-push) both; }
+html.vt-back::view-transition-new(sm-subbar-title)    { animation: m-fade-in 240ms var(--ease-enter) 80ms both, m-x-in-l var(--dur-page) var(--ease-push) both; }
+html.vt-tab::view-transition-new(sm-subbar-title)     { animation: m-fade-in 220ms var(--ease-enter) 60ms both; }
 /* the same title on both pages (しつもん q1 → q2 …): it holds still — no blink, no slide (core.js sets the class) */
 html.vt-same-title::view-transition-old(sm-subbar-title) { animation: none; opacity: 0; }
 html.vt-same-title::view-transition-new(sm-subbar-title) { animation: none; }
 /* the travelling category tile: the NEW image at full opacity for the whole flight (a cross-fade looks muddy) */
-html::view-transition-group(sm-cat) { animation-duration: var(--dur-morph); animation-timing-function: var(--ease-standard); }
+html::view-transition-group(sm-cat) { animation-duration: var(--dur-morph); animation-timing-function: var(--ease-push); }
 html::view-transition-old(sm-cat) { animation: m-fade-out 60ms linear both; }
 html::view-transition-new(sm-cat) { animation: none; }
 html::view-transition-image-pair(sm-cat) { isolation: auto; }
+/* the row title becomes the page heading: the group travels and grows; both images keep their aspect (height-led,
+   anchored top-left, so the letters scale evenly instead of stretching) and cross-fade in the middle third */
+html::view-transition-group(sm-title) { animation-duration: var(--dur-morph); animation-timing-function: var(--ease-push); }
+html::view-transition-old(sm-title),
+html::view-transition-new(sm-title) { height: 100%; width: auto; inset: 0 auto auto 0; }
+html::view-transition-old(sm-title) { animation: m-fade-out 220ms linear 60ms both; }
+html::view-transition-new(sm-title) { animation: m-fade-in 260ms linear 80ms both; }
+/* a named source with no destination (it was not on the new page): it leaves at once */
+html::view-transition-old(sm-title):only-child, html::view-transition-old(sm-cat):only-child { animation: m-fade-out 80ms linear both; }
 /* theme (light ↔ dark): a 200ms cross-fade of everything, nothing moves */
 html.vt-theme::view-transition-group(*) { animation: none; }
 html.vt-theme::view-transition-old(*) { animation: none; display: block; }
-html.vt-theme::view-transition-new(*) { animation: m-fade-in 200ms linear both; }
-/* fade: a plain 120ms cross-fade of the page (language change etc.) */
-html.vt-fade::view-transition-old(root) { animation: m-fade-out 120ms linear both; }
-html.vt-fade::view-transition-new(root) { animation: m-fade-in 120ms linear both; }
+html.vt-theme::view-transition-new(*) { animation: m-fade-in 220ms linear both; }
+/* fade: a plain cross-fade of the page (language change etc.) */
+html.vt-fade::view-transition-old(root) { animation: m-fade-out 160ms linear both; }
+html.vt-fade::view-transition-new(root) { animation: m-fade-in 200ms linear both; }
 
 /* ---------- 11. print: everything visible, final values ---------- */
 @media print {
@@ -1983,238 +2116,115 @@ html.vt-fade::view-transition-new(root) { animation: m-fade-in 120ms linear both
   .motion-ready [data-reveal="line"] { clip-path: none !important; }
 }
 
-/* ---------- 12. reduced motion (§7): ≤120ms opacity cross-fades only; no movement anywhere ---------- */
-html.m-reduce *, html.m-reduce *::before, html.m-reduce *::after {
+/* ---------- 12. reduced motion (SPEC-v5 Part A): short opacity cross-fades (≤200ms) and colour changes stay;
+   every movement goes (translate / scale / rotate, springs, staggers, morphs, rolls, draws, stamps). v4 turned
+   everything off and the app felt dead. One switch: html.m-reduce (OS setting or 設定 › 動きを少なく).
+   The transition rule has zero specificity (:where) but !important, so it beats every normal rule and loses to
+   the engine's own !important ones (m-fast, m-now, m-swapping …). ---------- */
+:where(html.m-reduce) :where(*), :where(html.m-reduce) :where(*)::before, :where(html.m-reduce) :where(*)::after {
   animation-duration: 1ms !important; animation-delay: 0ms !important; animation-iteration-count: 1 !important;
-  transition-duration: 0ms !important; transition-delay: 0ms !important; scroll-behavior: auto !important;
+  transition-property: opacity, color, background-color, border-color, outline-color, fill, stroke, text-decoration-color !important;
+  transition-duration: 160ms !important; transition-delay: 0ms !important; transition-timing-function: linear !important;
+  scroll-behavior: auto !important;
 }
-html.m-reduce .m-fade-ok { transition: opacity 120ms linear !important; }
-html.m-reduce .m-pending, html.m-reduce .m-in { opacity: 1 !important; transform: none !important; }
+html.m-reduce .m-fade-ok { transition: opacity var(--dur-reduce) linear !important; }
+/* reveals: a plain fade, no travel, no delay */
+html.m-reduce.motion-ready .m-pending:is([data-reveal], [data-count]) { opacity: 0; transform: none !important; }
+html.m-reduce.motion-ready .m-in:is([data-reveal], [data-count]) { transform: none !important; transition: opacity var(--dur-reduce) linear !important; }
 html.m-reduce .m-line-in { transform: none !important; }
 html.m-reduce [data-reveal="line"] { clip-path: none !important; }
+html.m-reduce.motion-ready [data-reveal="line"].m-pending,
+html.m-reduce.motion-ready [data-reveal="rule"].m-pending,
+html.m-reduce.motion-ready [data-reveal="mark"].m-pending { opacity: 0; transform: none !important; }
 html.m-reduce [data-reveal="underline"]::after { transform: none !important; }
-html.m-reduce .m-ink { display: none; }
+html.m-reduce .m-ink, html.m-reduce .m-land, html.m-reduce .m-fly-dot { display: none; }
 html.m-reduce [data-m-sl] { animation: none !important; }
+html.m-reduce .tabbar .tab.is-active > svg { animation: none !important; }
+/* page changes: a 180ms cross-fade of the page, nothing slides; shell bars hold still */
 html.m-reduce::view-transition-group(*) { animation: none !important; }
 html.m-reduce::view-transition-old(*) { animation: none !important; }
 html.m-reduce::view-transition-new(*) { animation: none !important; }
-html.m-reduce::view-transition-old(root) { animation: m-fade-out 120ms linear both !important; }
-html.m-reduce::view-transition-new(root) { animation: m-fade-in 120ms linear both !important; }
+html.m-reduce::view-transition-image-pair(root) { background: none !important; }
+html.m-reduce::view-transition-old(root) { animation: m-fade-out 140ms linear both !important; box-shadow: none !important; z-index: auto !important; }
+html.m-reduce::view-transition-new(root) { animation: m-fade-in var(--dur-reduce) linear both !important; box-shadow: none !important; }
+html.m-reduce::view-transition-old(sm-subbar):only-child { animation: m-fade-out 140ms linear both !important; }
+html.m-reduce::view-transition-new(sm-subbar):only-child { animation: m-fade-in var(--dur-reduce) linear both !important; }
 /* ---- css/launch.css ---- */
-/* 巣立ちマップ v4 — launch.css (LAUNCH). The opening, the returning-visit beat and their failsafes.
-   MOTION-SPEC §2, LOGO.md §7. Loaded after motion.css.
+/* 巣立ちマップ v5 — launch.css (LAUNCH). SPEC-v5 Part A 1 · MOTION-SPEC §2.
+   The opening itself (the splash, the app bar while it is up, the returning beat in the bar) is INLINE in
+   index.html <head>: it has to paint on frame 1, before any stylesheet arrives. This file holds only what
+   comes after the stylesheets in the page (the view and the tab bar), so it is never late for them.
 
-   Which opening plays is decided by the inline head script in index.html before first paint:
-     html.lx-full   first visit to home (or ?lx=1): the splash below plays "the line"
-     html.lx-short  returning visit, first load this session: masthead rule draws + the box beat
-     (none)         deep link, reload in the session, ?lx=0, or reduced motion (html.m-reduce)
-   The intro is pure CSS (transform/opacity), so it runs from first paint while the scripts parse.
-   js/launch.js does the hand-off (the lockup FLIPs into the app bar) and removes the splash.
+   Which opening plays (decided by the head gate in index.html before first paint):
+     html.lx-full   the first load of home this session (or ?lx=1): the line, the station box, the hand-off
+     html.lx-short  every other load (reload / return in the same session, a deep link): a 0.55s beat in the bar
+     html.lx-fade   reduced motion (OS or 設定): the page cross-fades in (opacity only, 200ms), nothing moves
+     (none)         ?lx=0
+   js/launch.js runs the hand-off and tidies every mode up; each hidden state below has a failsafe. */
 
-   Hard rules
-   - #launch sits at z 55, under .appbar (60): すぐ閉じる / 緊急 / 設定 are tappable from frame 1.
-   - #launch is never `inert` (inert is skipped by hit testing, so taps would fall through) and never takes focus.
-   - Every keyframe that must land on an end state sets BOTH `from` and `to` (a 1ms animation after a long
-     delay ends at progress 0.99999…, so a lone `to` never fully applies).
-   - If launch.js never runs, everything the splash hid comes back at 3.2s (lx-failsafe / lx-restore-*). */
-
-/* ------------------------------------------------------------------ splash frame */
-#launch { display: none; }
-html.lx-full #launch {
-  /* geometry (phone): lockup left on the gutter, box B ≤ 52px and never wider than the screen allows */
-  --lx-gx: max(20px, env(safe-area-inset-left, 0px));
-  --lx-b: min(52px, calc((100vw - 2 * var(--lx-gx)) * 20 / 134));
-  --lx-u: calc(var(--lx-b) / 20);            /* one lockup unit (the box is 20 units) */
-  --lx-y: 46%;                                /* the rule's centre line: optical centre, a little above half */
-  --lx-ink: var(--ink, #1b1b19);
-  --lx-paper: var(--paper, #ffffff);
-  display: block; position: fixed; inset: 0; z-index: 55;
-  pointer-events: auto; contain: strict; overflow: hidden;
-  color: var(--lx-ink);
-  -webkit-tap-highlight-color: transparent;
-  animation: lx-failsafe 1ms linear 3200ms forwards;
-}
-@media (min-width: 900px) {
-  /* desktop: the same poster, aligned with the app bar's brand; box 60 = 3px units, so every edge is a whole pixel */
-  html.lx-full #launch { --lx-gx: max(28px, env(safe-area-inset-left, 0px)); --lx-b: 60px; --lx-y: 44%; }
-}
-@keyframes lx-failsafe { from, to { visibility: hidden; pointer-events: none; } }
-
-#launch .lx-paper { position: absolute; inset: 0; background: var(--lx-paper); }
-
-/* the rule: 2px ink, full bleed. Its centre sits on the centre of the logo's green line (lockup y = 22 units). */
-#launch .lx-rule {
-  position: absolute; left: 0; right: 0; height: 2px;
-  top: calc(var(--lx-y) - 1px);
-  top: round(nearest, calc(var(--lx-y) - 1px), 1px);
-  transform-origin: 0 0;
-}
-#launch .lx-rule > i { position: absolute; inset: 0; display: block; }
-#launch .lx-rule-ink { background: var(--lx-ink); transform-origin: 0 50%; animation: lx-draw 400ms cubic-bezier(0.5, 0, 0.15, 1) 0ms both; }
-#launch .lx-rule-hair { opacity: 0; } /* launch.js gives it the app bar's border colour for the landing */
-@keyframes lx-draw { from { transform: scaleX(0); } to { transform: scaleX(1); } }
-
-/* the lockup: BRAND-FINAL's line lockup (same SVG, same paths as the static logo). Box top-left = lockup top-left,
-   which is also the FLIP origin for the hand-off. */
-#launch .lx-lockup {
-  position: absolute; left: var(--lx-gx);
-  top: calc(var(--lx-y) - 22 * var(--lx-u));
-  width: calc(134 * var(--lx-u)); height: calc(23 * var(--lx-u));
-  transform-origin: 0 0;
-  will-change: transform;
-}
-#launch .lx-lockup svg { display: block; width: 100%; height: 100%; max-width: none; overflow: visible; }
-
-/* caption: hangs from the rule (clipped at the line's foot, so it slides out from behind it). System fonts on
-   purpose: it never waits for or swaps to the web font. */
-#launch .lx-cap {
-  position: absolute; left: var(--lx-gx); right: var(--lx-gx);
-  top: calc(var(--lx-y) + var(--lx-u));
-  margin: 0; padding: 14px 0 4px; overflow: hidden;
-  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Noto Sans CJK JP", "Yu Gothic UI", Meiryo, system-ui, sans-serif;
-  font-size: clamp(11px, 3.35vw, 13px); font-weight: 500; line-height: 1.6; letter-spacing: 0.08em;
-  color: var(--ink-2, #3a3a36);
-  font-feature-settings: "palt" 1;
-}
-#launch .lx-cap-ja, #launch .lx-cap-en { display: block; animation: lx-hang 320ms cubic-bezier(0.16, 1, 0.3, 1) 440ms both; }
-/* the clip edge is the line's foot, 14px above the text: travel the text's height plus that gap */
-#launch .lx-cap .lx-cap-en { display: none; letter-spacing: 0.02em; }
-html.lx-en #launch .lx-cap .lx-cap-ja { display: none; }
-html.lx-en #launch .lx-cap .lx-cap-en { display: block; }
-@keyframes lx-hang { from { transform: translateY(calc(-100% - 18px)); } to { transform: translateY(0); } }
-@media (min-width: 900px) { #launch .lx-cap { font-size: 14px; padding-top: 18px; } #launch .lx-cap-ja, #launch .lx-cap-en { animation-name: lx-hang-wide; } }
-@keyframes lx-hang-wide { from { transform: translateY(calc(-100% - 22px)); } to { transform: translateY(0); } }
-
-/* ------------------------------------------------------------------ the mark slot (LOGO.md §7, brand-snippets §4)
-   120–520ms: the box stamps (the one accent beat), the line leaves the box like a train, each kana of 立ちマップ rises
-   from behind the line as its head passes, the 45° step comes last. Settles at 662ms. Transform/opacity only.
-   fill-mode stays `backwards`: with `both` the identity transform stays on and re-antialiases the settled frame. */
-#launch .lg-box, #launch .lg-line path, #launch .lg-word path { transform-box: fill-box; }
-#launch .lg-box { transform-origin: 50% 100%; animation: lg-stamp 300ms 120ms backwards; }
-#launch .lg-run1 { transform-origin: 0 50%; animation: lg-draw-x 200ms cubic-bezier(.45,0,.55,1) 200ms backwards; }
-#launch .lg-step { transform-origin: 0 100%; animation: lg-draw-xy 50ms cubic-bezier(.4,0,1,1) 400ms backwards; }
-#launch .lg-run2 { transform-origin: 0 50%; animation: lg-draw-x 70ms cubic-bezier(0,0,.2,1) 450ms backwards; }
-#launch .lg-g1 { animation: lg-rise 340ms cubic-bezier(.16,1,.3,1) 240ms backwards; }
-#launch .lg-g2 { animation: lg-rise 340ms cubic-bezier(.16,1,.3,1) 262ms backwards; }
-#launch .lg-g3 { animation: lg-rise 340ms cubic-bezier(.16,1,.3,1) 282ms backwards; }
-#launch .lg-g4 { animation: lg-rise 340ms cubic-bezier(.16,1,.3,1) 302ms backwards; }
-#launch .lg-g5 { animation: lg-rise 340ms cubic-bezier(.16,1,.3,1) 322ms backwards; }
-@keyframes lg-stamp {
-  0%   { opacity: 0; transform: scale(1.14); animation-timing-function: cubic-bezier(.55,0,.9,.45); }
-  20%  { opacity: 1; }
-  55%  { opacity: 1; transform: scale(.975); animation-timing-function: cubic-bezier(.2,0,.2,1); }
-  100% { opacity: 1; transform: scale(1); }
-}
-@keyframes lg-draw-x  { from { transform: scaleX(0); } to { transform: scaleX(1); } }
-@keyframes lg-draw-xy { from { transform: scale(0); }  to { transform: scale(1); } }
-@keyframes lg-rise    { from { transform: translateY(24px); } to { transform: translateY(0); } }
-
-/* ------------------------------------------------------------------ chrome while the splash is up
-   The app bar keeps only its actions, floating on the splash paper: the brand waits (it is the FLIP target) and
-   the bottom rule is masked (the splash rule becomes it). The tab bar waits off-screen and rises in the hand-off.
-   Each has a 3.2s restore, so a dead launch.js can never hide them. */
-html.lx-full .appbar .brand { opacity: 0; animation: lx-restore-o 1ms linear 3200ms forwards; }
-/* the bar's own green line (base.css .brand::after) stays hidden while the splash's line flies in; it takes over in
-   the landing frame, when launch.js removes lx-full together with #launch (no frame without a line) */
-html.lx-full .appbar .brand::after { opacity: 0; }
-html.lx-full .appbar::after {
-  content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 0; pointer-events: none;
-  border-bottom: inherit; border-bottom-color: var(--paper, #fff);
-  animation: lx-restore-hide 1ms linear 3200ms forwards;
-}
-html.lx-full.lx-out .appbar::after { content: none; } /* hand-off: launch.js clears the bar's own paper + border */
-html.lx-full .tabbar { transform: translateY(100%); animation: lx-restore-t 1ms linear 3200ms forwards; }
-/* the view under the splash: nothing may show through the fading paper (MOTION-SPEC §2.5). Whatever the view does
-   not hold itself stays invisible until launch.js releases the entrance (html.lx-in, at H+140). */
-html.lx-full:not(.lx-in) #view { opacity: 0; animation: lx-restore-o 1ms linear 3200ms forwards; }
-/* desktop: the rail slides in from the left, right through the lockup's path to the brand, so during the opening
-   it sits just under the splash (54 < 55): the logo flies over it and the fading paper reveals it */
+/* ------------------------------------------------------------------ full opening: the page under the splash
+   Nothing may show through the fading paper: the view stays invisible until launch.js releases the entrance
+   (html.lx-in, as the logo docks); home's own cascade then brings each part in. */
+html.lx-full:not(.lx-in) #view { opacity: 0; animation: lx-restore-o 1ms linear 12s forwards; }
+html.lx-full .tabbar { transform: translateY(100%); animation: lx-restore-t 1ms linear 12s forwards; }
+/* desktop: the rail slides in from the left under the splash (54 < 55): the logo flies over it */
 @media (min-width: 900px) { html.lx-full .tabbar { transform: translateX(-100%); z-index: 54; } }
 @keyframes lx-restore-o { from, to { opacity: 1; } }
-@keyframes lx-restore-hide { from, to { opacity: 0; } }
 @keyframes lx-restore-t { from, to { transform: none; } }
 
-/* skip: a tap / key / wheel fast-forwards the intro (head script: one playback rate for every part, so the
-   choreography stays intact and lands within 140ms). This class is only the fallback where WAAPI is missing. */
-/* every animated part by class (a rightmost `*` would be checked against every element of every page, forever) */
-html.lx-skip-css #launch .lx-rule-ink, html.lx-skip-css #launch .lx-cap-ja, html.lx-skip-css #launch .lx-cap-en,
-html.lx-skip-css #launch .lg-box, html.lx-skip-css #launch .lg-run1, html.lx-skip-css #launch .lg-step,
-html.lx-skip-css #launch .lg-run2, html.lx-skip-css #launch .lg-g1, html.lx-skip-css #launch .lg-g2,
-html.lx-skip-css #launch .lg-g3, html.lx-skip-css #launch .lg-g4, html.lx-skip-css #launch .lg-g5 {
-  animation-delay: 0ms !important; animation-duration: 120ms !important;
-}
-
-/* hand-off running: the splash no longer takes taps (the view underneath is arriving) */
-html.lx-out #launch { pointer-events: none; }
-
-/* ------------------------------------------------------------------ returning visit: the short beat
-   0–360ms the masthead rule draws: a 2px INK rule (MOTION-SPEC §2.7), scaleX from the left, over a paper mask that
-   hides the bar's own hairline. It holds, then from 520ms the ink softens into the hairline underneath (ink and
-   mask fade out together over 240ms). 60–320ms the box plays its accent. Nothing covers content, so there is
-   nothing to skip. launch.js tidies up when the softening ends. */
-html.lx-short .appbar::before,
-html.lx-short .appbar::after {
-  content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 0; pointer-events: none;
-  border-bottom: inherit;
-}
-html.lx-short .appbar::before { border-bottom-color: var(--paper, #fff); animation: lx-soft 240ms linear 520ms both; }
-html.lx-short .appbar::after {
-  border-bottom: 2px solid var(--ink, #1b1b19); transform-origin: 0 0;
-  animation: lx-draw 360ms cubic-bezier(0.5, 0, 0.15, 1) both, lx-soft 240ms linear 520ms both;
-}
-@keyframes lx-soft { from { opacity: 1; } to { opacity: 0; } }
-html.lx-short .appbar .brand .lg-box,
-html.lx-short .appbar .brand .lg-line path,
-html.lx-short .appbar .brand .lg-word path { transform-box: fill-box; }
-html.lx-short .appbar .brand .lg-box { transform-origin: 50% 100%; animation: lg-beat 260ms 60ms backwards; }
-@keyframes lg-beat {
-  0%   { transform: scale(1.08); animation-timing-function: cubic-bezier(.55,0,.9,.45); }
-  50%  { transform: scale(.975); animation-timing-function: cubic-bezier(.2,0,.2,1); }
-  100% { transform: scale(1); }
-}
-
-/* the tab bar is written by boot (the static <nav> is empty): an empty bar never shows, and the filled one rises
-   in once (phone: from below, 280ms --ease-enter; desktop rail: a 200ms fade) instead of popping in */
+/* ------------------------------------------------------------------ returning beat: the tab bar rises once
+   (boot writes it; the static <nav> is empty and never shows empty) */
 html.lx-short .tabbar:empty { visibility: hidden; }
-html.lx-short .tabbar:not(:empty) { animation: lx-tab-rise 280ms cubic-bezier(0, 0, 0.2, 1) both; }
+html.lx-short .tabbar:not(:empty) { animation: lx-tab-rise 360ms cubic-bezier(0.2, 0.9, 0.3, 1) 80ms both; }
 @keyframes lx-tab-rise { from { transform: translateY(100%); } to { transform: none; } }
 @media (min-width: 900px) {
-  html.lx-short .tabbar:not(:empty) { animation: lx-tab-fade 200ms cubic-bezier(0, 0, 0.2, 1) both; }
-  @keyframes lx-tab-fade { from { opacity: 0; } to { opacity: 1; } }
+  html.lx-short .tabbar:not(:empty) { animation: lx-rail-in 360ms cubic-bezier(0.2, 0.9, 0.3, 1) 80ms both; }
+  @keyframes lx-rail-in { from { opacity: 0; transform: translateX(-24px); } to { opacity: 1; transform: none; } }
 }
 
-/* English, before boot repaints the shell: the static HTML carries the Japanese lockup; never flash it */
-html.lx-en .appbar .brand .logo-lockup:not(.is-en) { visibility: hidden; }
+/* ------------------------------------------------------------------ reduced motion: a cross-fade, not nothing
+   The view waits (blank paper under the bar) until the first render, then fades in over 200ms; the tab bar fades
+   with it. launch.js adds .lx-fade-go after the first render and clears both classes when it ends. */
+html.lx-fade:not(.lx-fade-go) #view { opacity: 0; animation: lx-restore-o 1ms linear 4s forwards; }
+html.lx-fade .tabbar:empty { visibility: hidden; }
+html.lx-fade.lx-fade-go #view,
+html.lx-fade.lx-fade-go .tabbar { animation: lx-fade-in 200ms cubic-bezier(0, 0, 0.2, 1) both; }
+@keyframes lx-fade-in { from { opacity: 0; } to { opacity: 1; } }
 
-/* ------------------------------------------------------------------ reduced motion, print */
-html.m-reduce #launch { display: none !important; }
-html.m-reduce .logo-lockup, html.m-reduce .logo-lockup .lg-box, html.m-reduce .logo-lockup .lg-run1,
-html.m-reduce .logo-lockup .lg-run2, html.m-reduce .logo-lockup .lg-step, html.m-reduce .logo-lockup .lg-g1,
-html.m-reduce .logo-lockup .lg-g2, html.m-reduce .logo-lockup .lg-g3, html.m-reduce .logo-lockup .lg-g4,
-html.m-reduce .logo-lockup .lg-g5 { animation: none !important; }
-html.m-reduce.lx-short .appbar::before, html.m-reduce.lx-short .appbar::after { content: none; }
+/* reduced motion switched on while a moving opening plays (設定 › 動きを少なく): end it without movement */
 html.m-reduce.lx-short .tabbar:not(:empty) { animation: none; }
 @media (prefers-reduced-motion: reduce) {
-  #launch { display: none !important; }
-  html.lx-short .tabbar:not(:empty) { animation: none; }
-  .logo-lockup, .logo-lockup * { animation: none !important; }
+  html.lx-short .tabbar:not(:empty) { animation: lx-fade-in 200ms linear both; }
 }
+
 @media print {
-  #launch { display: none !important; }
-  html.lx-full .appbar .brand { opacity: 1; }
   html.lx-full .tabbar { transform: none; }
+  html.lx-full:not(.lx-in) #view, html.lx-fade #view { opacity: 1; animation: none; }
 }
 /* ---- css/home.css ---- */
 /* =====================================================================
-   巣立ちマップ v4 — css/home.css  (HOME)  ·  .v-home and .v-about
-   VISUAL-SPEC §7.2 / §7.11 · MOTION-SPEC §2.5, §4.2.
+   巣立ちマップ v5 — css/home.css  (HOME)  ·  .v-home and .v-about
+   SPEC-v5: motion people notice (Part A) + fewer words, better placed (Part B). VISUAL-SPEC §7.2 / §7.11.
    Paper, 墨 ink, one green. Ruled, typographic; pictures stand on the same ground line as the rules.
    Tokens and text styles only (base.css): no raw px font sizes, the four tracking tokens, no 900.
-   Hover tints only under (hover: hover). Motion is motion.js (data-reveal) plus a few CSS transitions on
-   transform/opacity; nothing loops, nothing moves under html.m-reduce.
+   Hover tints only under (hover: hover). Motion: the hero is a CSS choreography under .h-hero.h-play (home.js adds
+   it; without it everything stands), the rows and sections are SM.motion reveals tuned here. transform / opacity
+   only; nothing loops; under html.m-reduce nothing moves (the page cross-fades in: css/launch.css, engine).
    Layout follows the view's own width (container queries), so the same rules serve the phone column,
    tablets and the wide desktop container.
    ===================================================================== */
+
+.v-home, .v-about {
+  /* a spring with a 3% overshoot (response .42s, damping .74), and its cubic fallback */
+  --h-spring: cubic-bezier(0.25, 1.15, 0.45, 1);
+  --h-spring-dur: 500ms;
+  --h-rise: cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+@supports (animation-timing-function: linear(0, 1)) {
+  .v-home, .v-about {
+    --h-spring: linear(0, 0.024, 0.086, 0.171, 0.269, 0.372, 0.474, 0.57, 0.657, 0.735, 0.802, 0.859, 0.905, 0.943, 0.972, 0.994, 1.009, 1.02, 1.027, 1.03, 1.032, 1.031, 1.029, 1.026, 1.023, 1.02, 1.017, 1.014, 1.011, 1.009, 1.006, 1.005, 1);
+  }
+}
 
 /* a number about to roll stays blank while its host starts to rise, until the odometer has built its cells
    (never longer than the host's reveal: once .m-in drops it shows whatever happens) */
@@ -2223,8 +2233,8 @@ html.motion-ready:not(.m-reduce) :is(.v-home, .v-about) .x-rolls.m-in:not(:has(.
 
 /* short UI strings (≤ 2 lines) keep their phrases together (VISUAL-SPEC §2.5); base.css sets paragraphs to fill
    the line with a high-specificity rule, hence the !important on these few */
-:lang(ja) .v-home :is(.h-ln-sub, .h-tool-s, .h-cat-hint, .h-staff-b, .h-colo-note, .h-colo .kv dd, .h-offline p, .h-cover-title),
-:lang(ja) .v-about :is(.ab-lead, .ab-stat-k, .ab-note, .kv dd) {
+:lang(ja) .v-home :is(.h-staff-b, .h-colo-note, .h-colo .kv dd, .h-offline p, .h-cover-title),
+:lang(ja) .v-about :is(.ab-lead, .ab-stat-k, .ab-note, .kv dd, .ab-p) {
   word-break: auto-phrase !important; line-break: strict; overflow-wrap: anywhere; text-wrap: pretty;
 }
 
@@ -2236,8 +2246,9 @@ html.motion-ready:not(.m-reduce) :is(.v-home, .v-about) .x-rolls.m-in:not(:has(.
 .v-home > .jr-banner { margin-top: var(--s-7); }
 .v-home > :is(.jr-banner, .h-offline) + :is(section, footer) { margin-top: var(--sec-gap); }
 .v-home > .h-hero + .h-plan { margin-top: var(--s-8); }
+.v-home > .h-hero + .h-cats-sec { margin-top: var(--s-8); }
 .v-home > .h-later { min-height: 50vh; }
-.v-home :is(.h-cats, .h-lines, .h-shelf, .h-tools) { list-style: none; margin: 0; padding: 0; }
+.v-home :is(.h-cats, .h-lines, .h-shelf, .h-tools, .h-facts) { list-style: none; margin: 0; padding: 0; }
 
 /* rows: a flat tint that bleeds past the column on hover (no box, no shadow); press = motion.css ink wash */
 .v-home :is(.h-cat, .h-tool, .h-plan-item) { position: relative; isolation: isolate; }
@@ -2253,56 +2264,44 @@ html.motion-ready:not(.m-reduce) :is(.v-home, .v-about) .x-rolls.m-in:not(:has(.
 /* ================================================================ hero: new visitor */
 .v-home .h-hero { position: relative; }
 /* the picture opens the page 8px under the app bar; its ground line is the first rule of the page.
-   The 24/216 band under the ground line is cropped, so the eyebrow sits one step below the line. */
+   The 24/216 band under the ground line is cropped, so the copy sits one step below the line. */
 .v-home > .h-hero.has-art:first-child { margin-top: calc(var(--s-2) - var(--s-6)); }
 .v-home .h-art { position: relative; margin-bottom: calc(-24 / 360 * 100%); pointer-events: none; }
 .v-home .h-art .il { width: 100%; max-width: none; }
 .v-home .h-hero.has-art .h-copy { padding-top: var(--s-5); }
-/* short phones (iPhone SE class): the picture gives way so the CTA stays above the fold; a rule carries its
-   ground line on to the column edges */
-@media (max-height: 700px) and (max-width: 899px) {
-  .v-home .h-hero.has-art { --art-s: 0.78; }
+/* short phones (iPhone SE class): the picture gives way so the CTA and the crisis link stay above the fold; a rule
+   carries its ground line on to the column edges */
+@media (max-height: 760px) and (max-width: 899px) {
+  .v-home .h-hero.has-art { --art-s: 0.8; }
   .v-home .h-hero.has-art .h-art { width: calc(var(--art-s) * 100%); margin-inline: auto; margin-bottom: calc(-24 / 360 * var(--art-s) * 100%); }
   .v-home .h-hero.has-art .h-art::after {
     content: ""; position: absolute; left: calc((1 / var(--art-s) - 1) * -50%); right: calc((1 / var(--art-s) - 1) * -50%);
     bottom: calc(24 / 216 * 100%); height: 1.5px; margin-bottom: -0.75px; background: var(--ink);
   }
 }
-@media (max-height: 660px) and (max-width: 899px) { .v-home .h-hero.has-art { --art-s: 0.68; } }
-/* the shortest phones (360×640): a little more give, so 今夜いる場所がない stays above the tab bar (FIXER-robust) */
-@media (max-height: 660px) and (max-width: 899px) {
-  .v-home .h-hero.is-new.has-art { --art-s: 0.6; }
-  .v-home .h-hero.is-new .h-actions { margin-top: var(--s-4); }
-}
+@media (max-height: 680px) and (max-width: 899px) { .v-home .h-hero.has-art { --art-s: 0.64; } }
 
 .v-home .h-copy { min-width: 0; }
-.v-home .h-eyebrow {
-  margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-1) var(--s-3);
-  font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui);
-  letter-spacing: var(--ls-label); color: var(--ink-3);
-}
-.v-home .h-eyebrow-a { color: var(--ink); font-weight: 700; }
-.v-home .h-eyebrow-rule { flex: 0 0 var(--s-6); height: 1px; background: var(--ink-3); transform-origin: left center; }
-.v-home .h-eyebrow-b { min-width: 0; }
-body.lang-en .v-home .h-eyebrow { text-transform: uppercase; }
-
 .v-home .h-title {
-  margin: var(--s-3) 0 0; display: block;
+  margin: 0; display: block;
   font-family: var(--font-display); font-weight: 700; color: var(--ink);
   letter-spacing: var(--ls-0); text-wrap: initial;
 }
+/* the one sub-line: who it is for */
 .v-home .h-kicker {
   display: block;
-  font-weight: 500; font-size: var(--t-kicker); line-height: 1.5; color: var(--ink);
+  font-weight: 500; font-size: var(--t-ui); line-height: 1.5; color: var(--ink-2);
   word-break: auto-phrase; text-wrap: balance;
 }
 /* display: one line per span (the copy is written to break where the lines break); the size gives way on the
    narrowest phones instead of breaking a phrase */
 .v-home .h-main {
-  display: block;
+  display: block; margin-top: var(--s-1);
   font-size: min(var(--t-display), 10.4cqi); line-height: var(--lh-display);
   white-space: nowrap;
 }
+.v-home .h-main + .h-main { margin-top: 0; }
+.v-home .h-ln-i { display: block; }
 /* hang the opening bracket: with palt, 「 is half a em wide and its ink begins 0.125em in (measured, Plex 700) */
 .v-home .h-open { margin-left: -0.12em; }
 body.is-ruby .v-home .h-main { line-height: 1.6; }
@@ -2312,65 +2311,35 @@ body.lang-en .v-home .h-title { container-type: inline-size; }
 body.lang-en .v-home .h-main { white-space: normal; font-size: min(var(--t-display), 9.6cqi); line-height: 1.15; }
 body.lang-en .v-home .h-main + .h-main { margin-top: 0.08em; }
 
-/* 蛍光ペン: its own element under the phrase. It draws from the left once (data-reveal="rule" via motion.js),
-   on the marker curve of MOTION-SPEC §2.5. Static (and printed) when motion is off. */
+/* 蛍光ペン: its own element under the phrase; it sweeps from the left once its line is up (.h-play) */
 .v-home .h-mark { position: relative; z-index: 0; display: inline-block; padding: 0 0.04em; background: none; color: inherit; }
 .v-home .h-mark-t { position: relative; z-index: 1; }
 .v-home .h-mark-ink {
   position: absolute; z-index: 0; left: 0; right: 0; bottom: 0.1em; height: 0.36em;
   background: var(--marker); transform-origin: left center; pointer-events: none;
   -webkit-print-color-adjust: exact; print-color-adjust: exact;
-  transition: transform var(--dur-morph) cubic-bezier(0.65, 0, 0.35, 1) var(--mark-at, 300ms);
-}
-html.motion-ready:not(.m-reduce) .v-home .m-pending .h-mark-ink { transform: scaleX(0); transition: none; }
-.v-home :is(.m-now, .m-fast) .h-mark-ink, html.m-reduce .v-home .h-mark-ink { transition: none; }
-
-.v-home .h-lead {
-  margin: var(--s-3) 0 0; max-width: 34em;
-  font-family: var(--font-body); font-size: var(--t-lead); line-height: var(--lh); letter-spacing: var(--ls-body); color: var(--ink-2);
-  word-break: auto-phrase; line-break: strict; overflow-wrap: anywhere; text-wrap: pretty;
-}
-.v-home .h-lead-n {
-  margin: 0 0.06em;
-  font-family: var(--font-num); font-weight: 700; font-size: var(--t-num-inline); line-height: var(--lh-num);
-  letter-spacing: var(--ls-0); color: var(--ink); font-variant-numeric: tabular-nums;
 }
 
-/* actions: one green block, then a text link (fewer boxes) */
-.v-home .h-actions { margin-top: var(--s-6); display: grid; justify-items: stretch; gap: var(--s-1); }
-.v-home .h-cta { min-height: 64px; }
-.v-home .h-cta .btn-label > span:first-child { font-size: var(--fs-lg); line-height: 1.35; }
-.v-home .h-jump, .v-home .h-link { justify-self: start; gap: var(--s-2); font-size: var(--t-ui); }
-.v-home .h-jump .arrow { --arrow-s: 20px; }
-/* the urgent way in (今夜いる場所がない): a text link like 困りごとから見る, in the emergency red (FIXER-robust) */
+/* facts as signage: 東京の支援 222件 | ログインなし | 6問・3分 — one row, no sentences */
+.v-home .h-facts {
+  margin-top: var(--s-4); display: flex; flex-wrap: wrap; align-items: baseline; row-gap: var(--s-2);
+  font-family: var(--font-display); font-weight: 700; font-size: var(--t-meta); line-height: 1.3; color: var(--ink);
+}
+.v-home .h-fact { display: inline-flex; align-items: baseline; gap: 4px; padding: 0 var(--s-3); border-left: 1px solid var(--rule-2); white-space: nowrap; }
+.v-home .h-fact:first-child { padding-left: 0; border-left: 0; }
+.v-home .h-fact-k { color: var(--ink-2); font-weight: 500; }
+.v-home .h-fact:not(:first-child) .h-fact-k { color: var(--ink); font-weight: 700; }
+.v-home .h-fact-n { font-family: var(--font-num); font-weight: 700; font-size: 1.5rem; line-height: 1; letter-spacing: var(--ls-num); font-variant-numeric: tabular-nums; color: var(--ink); }
+.v-home .h-fact-u { font-weight: 500; font-size: var(--t-label); }
+body.lang-en .v-home .h-fact:first-child .h-fact-k { color: var(--ink); font-weight: 700; }
+
+/* actions: one green block, then the crisis link */
+.v-home .h-actions { margin-top: var(--s-5); display: grid; justify-items: stretch; gap: var(--s-1); }
+.v-home .h-cta { min-height: 64px; font-size: var(--fs-lg); }
+.v-home .h-cta > span:first-child { font-size: var(--fs-xl); line-height: 1.3; }
+/* the urgent way in (今夜いる場所がない): a text link in the emergency red, always on the first screen */
 .v-home .h-crisis { justify-self: start; gap: var(--s-2); font-size: var(--t-ui); color: var(--red-text); text-align: left; }
 .v-home .h-crisis .arrow { --arrow-s: 20px; }
-.v-home .h-links { display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--s-6); }
-
-/* how it works: three stations on one line — 1 答える ─ 2 保存する ─ 3 窓口で見せる */
-.v-home .h-route {
-  margin-top: var(--s-4); display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2);
-  font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui);
-  letter-spacing: var(--ls-label); color: var(--ink-2);
-}
-.v-home .h-route-st { display: inline-flex; align-items: baseline; gap: 6px; white-space: nowrap; }
-.v-home .h-route-n { font-family: var(--font-num); font-weight: 700; font-size: var(--fs-sm); line-height: 1; color: var(--ink); letter-spacing: var(--ls-0); }
-.v-home .h-route-ln { flex: 0 1 var(--s-5); min-width: var(--s-3); height: 1px; background: var(--rule-2); transform-origin: left center; }
-body.lang-en .v-home .h-route { text-transform: uppercase; }
-/* where the three stations cannot share one line (English, 大きい文字 on a small phone), the strip wraps between
-   stations; the connectors go, so no line ends on a dangling rule — the numbers carry the order */
-@container home (max-width: 419px) {
-  body.lang-en .v-home .h-route { gap: var(--s-1) var(--s-4); }
-  body.lang-en .v-home .h-route-ln { display: none; }
-}
-@container home (max-width: 319px) {
-  body.is-big .v-home .h-route { gap: var(--s-1) var(--s-4); }
-  body.is-big .v-home .h-route-ln { display: none; }
-}
-@container home (max-width: 279px) {
-  .v-home .h-route { gap: var(--s-1) var(--s-4); }
-  .v-home .h-route-ln { display: none; }
-}
 
 /* ================================================================ hero: returning visitor — the number is the headline */
 .v-home .h-hero.is-back .h-title { margin-top: var(--s-4); }
@@ -2379,18 +2348,50 @@ body.lang-en .v-home .h-route { text-transform: uppercase; }
 .v-home .h-big { font-weight: 700; font-size: 1em; line-height: var(--lh-num); letter-spacing: var(--ls-num); font-variant-numeric: tabular-nums; }
 .v-home .h-big-unit { margin-left: 0.08em; font-weight: 500; font-size: var(--t-unit); letter-spacing: var(--ls-0); }
 .v-home .h-mark-num .h-mark-ink { bottom: 0.02em; height: 0.2em; }
-.v-home .h-big-tail { margin-left: var(--s-2); font-family: var(--font-display); font-weight: 500; font-size: var(--t-kicker); }
-.v-home .h-title.is-none .h-kicker { font-size: var(--t-h1); font-weight: 700; line-height: var(--lh-heading); }
-.v-home .h-answers {
-  margin: var(--s-4) 0 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s-1) var(--s-3);
+.v-home .h-title.is-none .h-kicker { font-size: var(--t-h1); font-weight: 700; line-height: var(--lh-heading); color: var(--ink); }
+/* the answers as a tag row, 変える at its end */
+.v-home .h-answers { margin: var(--s-4) 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); }
+.v-home .h-ans { min-height: 28px; padding: 0 var(--s-2); font-family: var(--font-display); font-weight: 700; font-size: var(--t-meta); color: var(--ink); }
+.v-home .h-change {
+  display: inline-flex; align-items: center; min-height: var(--tap); padding: 0 var(--s-1);
+  font-family: var(--font-display); font-weight: 700; font-size: var(--t-meta); color: var(--action-text);
+  text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 0.28em;
 }
-.v-home .h-answers-k { font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); letter-spacing: var(--ls-label); color: var(--ink-3); }
-.v-home .h-answers-v { font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); line-height: var(--lh-ui); color: var(--ink); }
-.v-home .h-ans { white-space: nowrap; }
-.v-home .h-sep { margin: 0 0.3em 0 0; color: var(--ink-4); font-weight: 500; }
-body.lang-en .v-home .h-answers-k { text-transform: uppercase; }
 .v-home .h-side { min-width: 0; }
 .v-home .h-hero.has-side .h-side { margin-top: var(--s-8); }
+
+/* ================================================================ the hero choreography (SPEC-v5 Part A 1)
+   .h-play (home.js) starts every part on its own --d, × --h-k (0.55 after a skipped opening). Parts:
+   [data-h="line"]  the line rises from behind its own baseline (the outer span holds the clip)
+   [data-h="rise"]  steps up 24px              [data-h="cta"]  slides up 40px on the spring
+   [data-h="slide"] comes in from the left     .h-mark-ink    the marker sweeps once its line is up
+   .h-done drops it all (no clip, no animation) once played; .h-land lands it at once (a tap / key). */
+.v-home .h-play:not(.h-done) [data-h="line"] { clip-path: inset(-0.6em -1em 0 -1em); }
+.v-home .h-play:not(.h-done) [data-h="line"] > .h-ln-i { animation: h-line 620ms var(--h-rise) calc(var(--d, 0ms) * var(--h-k, 1)) both; }
+.v-home .h-play:not(.h-done) [data-h="rise"] { animation: h-rise 520ms var(--h-rise) calc(var(--d, 0ms) * var(--h-k, 1)) both; }
+.v-home .h-play:not(.h-done) [data-h="cta"] { animation: h-cta var(--h-spring-dur) var(--h-spring) calc(var(--d, 0ms) * var(--h-k, 1)) both; }
+.v-home .h-play:not(.h-done) [data-h="slide"] { animation: h-slide 480ms var(--h-rise) calc(var(--d, 0ms) * var(--h-k, 1)) both; }
+.v-home .h-play:not(.h-done) .h-mark-ink { animation: h-ink 460ms cubic-bezier(0.65, 0, 0.35, 1) calc(var(--mark-at, 300ms) * var(--h-k, 1)) both; }
+.v-home .h-play.h-land :is([data-h], .h-ln-i, .h-mark-ink) { animation: none !important; clip-path: none !important; }
+@keyframes h-line { from { transform: translateY(108%); } to { transform: none; } }
+@keyframes h-rise { from { opacity: 0; transform: translateY(24px); } 40% { opacity: 1; } to { opacity: 1; transform: none; } }
+@keyframes h-cta { from { opacity: 0; transform: translateY(40px); } 30% { opacity: 1; } to { opacity: 1; transform: none; } }
+@keyframes h-slide { from { opacity: 0; transform: translateX(-28px); } 50% { opacity: 1; } to { opacity: 1; transform: none; } }
+@keyframes h-ink { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+/* the picture: the young person walks out of the doorway toward the new home (a step bob, ≈34px), the staff
+   member rises in to wave. Overrides the illustration's generic rise for home's hero only; within its 600ms. */
+.v-home .h-art .il.is-play [data-il="fig"] { animation-name: h-walk; animation-duration: 470ms; animation-timing-function: cubic-bezier(0.25, 0.7, 0.3, 1); }
+.v-home .h-art .il.is-play [data-il="fig2"] { animation-name: h-wave-in; animation-duration: 440ms; animation-timing-function: var(--h-rise); }
+@keyframes h-walk {
+  0% { opacity: 0; transform: translate(-34px, 0); }
+  18% { opacity: 1; }
+  30% { transform: translate(-23px, -2.5px); }
+  55% { transform: translate(-10px, 0); }
+  78% { transform: translate(-3px, -1.5px); }
+  100% { opacity: 1; transform: translate(0, 0); }
+}
+@keyframes h-wave-in { from { opacity: 0; transform: translateY(16px); } 40% { opacity: 1; } to { opacity: 1; transform: none; } }
 
 /* ================================================================ やること preview */
 .v-home .h-days {
@@ -2418,38 +2419,42 @@ body.lang-en .v-home .h-days-unit { margin-left: 0.3em; }
 .v-home .h-offline p { margin: 0; font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-2); }
 .v-home .h-offline b { display: block; font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); color: var(--ink); }
 
-/* ================================================================ 01 困りごと: six kanji station rows */
+/* ================================================================ sections: the head rises as its rule draws */
+.motion-ready .v-home .h-head.m-pending { transform: translateY(20px); }
+.motion-ready .v-home .h-head.m-in { transition: opacity 360ms var(--ease-enter), transform 480ms var(--h-rise); transition-delay: var(--m-delay, 0ms); }
+
+/* ================================================================ 困りごと: six kanji station rows — mark · name · count */
 .v-home .h-cats { display: grid; grid-template-columns: minmax(0, 1fr); }
 .v-home .h-cat-li { min-width: 0; display: flex; border-bottom: 1px solid var(--rule); }
 .v-home .h-cat {
   flex: 1; min-width: 0;
-  display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto;
-  grid-template-areas: "mark name n go" "mark hint n go";
-  align-items: center; column-gap: 14px;
-  min-height: 72px; padding: var(--s-4) 0;
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; column-gap: 14px;
+  min-height: 60px; padding: var(--s-2) 0;
   color: var(--ink); text-decoration: none;
 }
-.v-home .h-cat-mark { grid-area: mark; display: flex; align-self: center; }
+.v-home .h-cat-mark { display: flex; align-self: center; }
 body.is-ruby .v-home .h-cat-mark { min-width: calc(var(--t-micro) * 4.4); justify-content: center; }
-.v-home .h-cat-name {
-  grid-area: name; align-self: end;
-  font-family: var(--font-display); font-weight: 700; font-size: var(--t-h3); line-height: var(--lh-title); letter-spacing: var(--ls-0);
-}
-.v-home .h-cat-hint { grid-area: hint; align-self: start; font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3); }
-.v-home .h-cat-n { grid-area: n; display: inline-flex; align-items: baseline; color: var(--ink-2); white-space: nowrap; font-family: var(--font-num); }
-.v-home .h-cat-n b { font-weight: 700; font-size: var(--fs-lg); line-height: 1; color: var(--ink); font-variant-numeric: tabular-nums; }
+.v-home .h-cat-name { font-family: var(--font-display); font-weight: 700; font-size: var(--t-h3); line-height: var(--lh-title); letter-spacing: var(--ls-0); }
+.v-home .h-cat-n { display: inline-flex; align-items: baseline; color: var(--ink-2); white-space: nowrap; font-family: var(--font-num); }
+.v-home .h-cat-n b { font-weight: 700; font-size: var(--fs-xl); line-height: 1; color: var(--ink); font-variant-numeric: tabular-nums; }
 .v-home .h-cat-n small { margin-left: 2px; font-family: var(--font-display); font-weight: 500; font-size: var(--fs-xs); }
-.v-home .h-cat-go { grid-area: go; display: inline-flex; color: var(--ink); }
+.v-home .h-cat-go { display: inline-flex; color: var(--ink); }
 .v-home .h-cat-go .arrow { --arrow-s: 20px; }
 @media (hover: hover) {
   .v-home .h-cat:hover .h-cat-name { text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 0.24em; }
 }
-/* the wide first screen: rows arrive in order (motion.js staggers the list's children) */
 @container home (min-width: 640px) {
   .v-home .h-cats { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--s-8); }
 }
+/* each row rises 28px in its turn; its kanji mark stamps in (a hanko: 1.5× → 1 on the spring, a few degrees of
+   turn), its count rolls (data-count). The delay is the row's own (--m-delay from SM.motion). */
+.motion-ready .v-home .h-cat-li.m-pending { transform: translateY(28px); }
+.motion-ready .v-home .h-cat-li.m-in { transition: opacity 320ms var(--ease-enter), transform var(--h-spring-dur) var(--h-spring); transition-delay: var(--m-delay, 0ms); }
+.motion-ready .v-home .h-cat-li.m-in .cat-icon { animation: h-stamp 340ms var(--h-spring) calc(var(--m-delay, 0ms) + 50ms) both; }
+.motion-ready .v-home .h-cat-li.m-late .cat-icon { animation-duration: 200ms; animation-delay: 0ms; }
+@keyframes h-stamp { from { opacity: 0; transform: scale(1.5) rotate(-8deg); } 35% { opacity: 1; } to { opacity: 1; transform: none; } }
 
-/* ================================================================ 02 今すぐ話したい: contact rows (§6.10) */
+/* ================================================================ 今すぐ話したい: contact rows (§6.10) */
 .v-home .h-lines { display: grid; grid-template-columns: minmax(0, 1fr); }
 .v-home .h-ln {
   min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); align-content: start;
@@ -2458,10 +2463,9 @@ body.is-ruby .v-home .h-cat-mark { min-width: calc(var(--t-micro) * 4.4); justif
 .v-home .h-ln-name { margin: 0; font-family: var(--font-display); font-weight: 700; font-size: var(--t-h3); line-height: var(--lh-title); }
 .v-home .h-ln-name a { color: var(--ink); text-decoration: none; }
 @media (hover: hover) { .v-home .h-ln-name a:hover { text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 0.24em; } }
-.v-home .h-ln-sub { margin: var(--s-1) 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-1) var(--s-2); font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3); }
+.v-home .h-ln-sub { margin: var(--s-2) 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-1); }
 .v-home .h-free { flex: none; }
-/* the number is the biggest thing (it dials on a tap too); then ONE row of equal ink-outline buttons —
-   電話する / チャットで話す / LINEで話す — the same on every line, never a green text link beside a button */
+/* the number is the biggest thing (it dials on a tap too); then ONE row of equal ink-outline buttons */
 .v-home .h-tel {
   justify-self: start; display: inline-flex; align-items: center; min-height: 48px; margin-top: var(--s-1);
   color: var(--ink); text-decoration: none;
@@ -2476,7 +2480,7 @@ body.is-ruby .v-home .h-cat-mark { min-width: calc(var(--t-micro) * 4.4); justif
 @media (hover: hover) { .v-home .h-tel:hover .h-tel-n { text-decoration-color: currentColor; } }
 .v-home .h-acts { display: flex; flex-wrap: wrap; gap: var(--s-2); margin-top: var(--s-1); padding-bottom: var(--s-2); }
 .v-home .h-ln-sub + .h-acts { margin-top: var(--s-3); }
-.v-home .h-act { flex: 0 0 auto; min-width: 10.5em; padding-inline: 14px; }
+.v-home .h-act { flex: 0 0 auto; min-width: 9em; padding-inline: 14px; }
 @container home (max-width: 339px) { .v-home .h-act { flex: 1 1 100%; } }
 .v-home .h-talk-foot { display: grid; margin-top: var(--s-2); }
 .v-home .h-more { justify-self: start; gap: var(--s-2); }
@@ -2504,6 +2508,11 @@ body.is-ruby .v-home .h-cat-mark { min-width: calc(var(--t-micro) * 4.4); justif
   .v-home .h-ln > .h-ln-sub + .h-acts { padding-top: var(--s-3); }
   .v-home .h-sos { justify-content: flex-start; gap: var(--s-1) var(--s-6); }
 }
+/* rows further down: each rises 32px in turn as it scrolls in */
+.motion-ready .v-home :is(.h-lines > .h-ln, .h-tools > li, .h-plan-list > .h-plan-item).m-pending { transform: translateY(32px); }
+.motion-ready .v-home :is(.h-lines > .h-ln, .h-tools > li, .h-plan-list > .h-plan-item).m-in { transition: opacity 320ms var(--ease-enter), transform var(--h-spring-dur) var(--h-spring); transition-delay: var(--m-delay, 0ms); }
+.motion-ready .v-home .h-shelf > li.m-pending { transform: translateX(40px); }
+.motion-ready .v-home .h-shelf > li.m-in { transition: opacity 320ms var(--ease-enter), transform var(--h-spring-dur) var(--h-spring); transition-delay: var(--m-delay, 0ms); }
 
 /* ================================================================ まなぶ: progress + a shelf of covers */
 .v-home .h-learn-body { margin-top: var(--s-4); }
@@ -2517,7 +2526,7 @@ body.lang-en .v-home .h-learn-prog-k { text-transform: uppercase; }
 .v-home .h-seg { position: relative; display: block; height: 6px; background: var(--paper-3); overflow: hidden; }
 .v-home .h-seg.is-done::after {
   content: ""; position: absolute; inset: 0; background: var(--action); transform-origin: left center;
-  transition: transform 300ms var(--ease-draw) calc(var(--i, 0) * 40ms + 120ms);
+  transition: transform 320ms var(--ease-draw) calc(var(--i, 0) * 50ms + 120ms);
 }
 /* the done segments fill in order as the block arrives (confirms progress; skipped under reduced motion) */
 html.motion-ready:not(.m-reduce) .v-home .h-learn-body.m-pending .h-seg.is-done::after { transform: scaleX(0); transition: none; }
@@ -2541,7 +2550,7 @@ html.motion-ready:not(.m-reduce) .v-home .h-learn-body.m-pending .h-seg.is-done:
 .v-home .h-cover-art { position: relative; display: block; }
 .v-home .h-cover-art .il { width: 100%; }
 .v-home .h-cover-art.is-blank { aspect-ratio: 3 / 2; border-bottom: 1.5px solid var(--ink); background: var(--paper-2); }
-/* first cover: a flat ink label on the picture's corner (まずはここから / つぎのレッスン) */
+/* first cover: a flat ink label on the picture's corner (ここから / つぎ) */
 .v-home .h-cover-flag {
   position: absolute; z-index: 1; top: 0; left: 0;
   padding: 3px 8px; background: var(--ink); color: var(--paper);
@@ -2591,20 +2600,18 @@ body.lang-en .v-home .h-cover-flag { text-transform: uppercase; }
   .v-home .h-shelf > li:nth-child(n+5) { display: none; }
 }
 
-/* ================================================================ 04 べんりツール: rows with 56px spot thumbs */
+/* ================================================================ べんりツール: rows with 56px spot thumbs, titles only */
 .v-home .h-tools { display: grid; grid-template-columns: minmax(0, 1fr); }
 .v-home .h-tools > li { min-width: 0; display: flex; border-bottom: 1px solid var(--rule); }
 .v-home .h-tool {
   flex: 1; min-width: 0;
   display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; align-items: center; column-gap: var(--s-4);
-  min-height: 88px; padding: var(--s-4) 0;
+  min-height: 72px; padding: var(--s-2) 0;
   color: var(--ink); text-decoration: none;
 }
 .v-home .h-tool:not(:has(.h-tool-art)) { grid-template-columns: minmax(0, 1fr) auto; }
 .v-home .h-tool-art { display: block; width: 56px; height: 56px; }
-.v-home .h-tool-body { min-width: 0; display: grid; gap: 2px; }
-.v-home .h-tool-t { font-family: var(--font-display); font-weight: 700; font-size: var(--t-h3); line-height: var(--lh-title); }
-.v-home .h-tool-s { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3); }
+.v-home .h-tool-t { min-width: 0; font-family: var(--font-display); font-weight: 700; font-size: var(--t-h3); line-height: var(--lh-title); }
 .v-home .h-tool-go { display: inline-flex; }
 .v-home .h-tool-go .arrow { --arrow-s: 20px; }
 @media (hover: hover) { .v-home .h-tool:hover .h-tool-t { text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 0.24em; } }
@@ -2650,23 +2657,22 @@ body.lang-en .v-home .h-colo-ed { text-transform: uppercase; }
   .v-home .h-hero.is-new.has-art {
     display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); column-gap: var(--s-8); align-items: end;
   }
-  .v-home > .h-hero.has-art:first-child { margin-top: var(--s-4); }
-  .v-home .h-hero.is-new.has-art .h-copy { display: contents; }
-  .v-home .h-hero.is-new.has-art .h-copy > * { grid-column: 1; }
-  .v-home .h-hero.is-new.has-art .h-art { grid-column: 2; grid-row: 1 / span 4; align-self: end; margin-bottom: calc(-24 / 360 * 100%); }
-  .v-home .h-hero.is-new.has-art .h-route { grid-row: 5; }
-  .v-home .h-hero.has-art .h-copy { padding-top: 0; }
-  .v-home .h-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-6); margin-top: var(--s-7); }
-  .v-home .h-cta { width: auto; min-width: 16em; }
-  .v-home .h-route { margin-top: var(--s-5); }
+  .v-home > .h-hero.has-art:first-child { margin-top: var(--s-6); }
+  .v-home .h-hero.is-new.has-art .h-copy { grid-column: 1; grid-row: 1; padding-top: 0; }
+  .v-home .h-hero.is-new.has-art .h-art { grid-column: 2; grid-row: 1; align-self: end; margin-bottom: calc(-24 / 360 * 100%); }
+  .v-home .h-kicker { font-size: var(--t-kicker); }
+  .v-home .h-facts { margin-top: var(--s-5); font-size: var(--t-ui); }
+  .v-home .h-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-6); margin-top: var(--s-6); }
+  .v-home .h-cta-w { flex: 0 1 auto; }
+  .v-home .h-cta { width: auto; min-width: 15em; }
 
   /* returning: the headline left, やること right */
   .v-home .h-hero.is-back.has-side { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); column-gap: var(--s-8); align-items: start; }
   .v-home .h-hero.has-side .h-side { margin-top: var(--s-2); }
-  .v-home .h-hero.is-back .h-actions .h-links { gap: 0 var(--s-6); }
 }
 @container home (min-width: 700px) and (max-width: 899px) {
-  .v-home .h-cta { min-width: 0; flex: 1 1 18em; }
+  .v-home .h-cta-w { flex: 1 1 18em; }
+  .v-home .h-cta { width: 100%; min-width: 0; }
 }
 /* desktop container: a little more room for the picture (≈ 420px at 1280) */
 @container home (min-width: 880px) {
@@ -2674,7 +2680,7 @@ body.lang-en .v-home .h-colo-ed { text-transform: uppercase; }
 }
 
 @media print {
-  .v-home :is(.h-actions, .h-route, .h-sos, .h-staff, .h-jump, .h-crisis, .h-shelf-end, .h-acts) { display: none !important; }
+  .v-home :is(.h-actions, .h-sos, .h-staff, .h-crisis, .h-shelf-end, .h-acts, .h-change) { display: none !important; }
   .v-home .h-shelf { display: grid; grid-auto-flow: row; grid-template-columns: repeat(3, minmax(0, 1fr)); overflow: visible; -webkit-mask-image: none; mask-image: none; margin-inline: 0; padding: 0; }
 }
 
@@ -2690,9 +2696,7 @@ body.lang-en .v-home .h-colo-ed { text-transform: uppercase; }
 
 /* head */
 .v-about .ab-hero { display: grid; justify-items: start; }
-.v-about .ab-eyebrow { margin: 0; font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui); letter-spacing: var(--ls-label); color: var(--ink-3); }
-body.lang-en .v-about .ab-eyebrow { text-transform: uppercase; }
-.v-about .ab-title { margin: var(--s-2) 0 0; font-family: var(--font-display); font-weight: 700; font-size: var(--t-h1); line-height: var(--lh-heading); letter-spacing: var(--ls-0); color: var(--ink); }
+.v-about .ab-title { margin: 0; font-family: var(--font-display); font-weight: 700; font-size: var(--t-h1); line-height: var(--lh-heading); letter-spacing: var(--ls-0); color: var(--ink); }
 .v-about .ab-title-l { display: block; }
 .v-about .ab-lead { margin: var(--s-3) 0 0; max-width: 34em; font-family: var(--font-body); font-size: var(--t-lead); line-height: var(--lh); letter-spacing: var(--ls-body); color: var(--ink-2); }
 /* the picture stands on a ground line that runs to the column edges (the picture itself stops at 560px);
@@ -2747,11 +2751,40 @@ body.lang-en .v-about .ab-toc-h { text-transform: uppercase; }
   .v-about .ab-toc-list { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--s-7); }
 }
 
-/* sections: the standard head, prose at 40em, one reveal per body */
+/* sections: the standard head, ONE short lead line, the structured part, the detail folded (SPEC-v5 Part B) */
 .v-about .ab-body { display: grid; gap: var(--s-3); margin-top: var(--s-4); }
 .v-about .ab-body > * { min-width: 0; margin: 0; }
 .v-about .ab-body > .kv:first-child { border-top: 0; margin-top: calc(var(--s-4) * -1); }
 .v-about .ab-body p { max-width: 40em; line-height: var(--lh); }
+.v-about .ab-lede { font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); line-height: var(--lh-ui) !important; color: var(--ink); }
+.v-about .ab-tags { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* 「くわしく」: a ruled row that opens in place. Native <details>: works with no JS; the body rises in. */
+.v-about .ab-more { border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+.v-about .ab-more-s {
+  position: relative; isolation: isolate;
+  display: flex; align-items: center; justify-content: space-between; gap: var(--s-3);
+  min-height: var(--tap); padding: var(--s-2) 0; list-style: none; cursor: pointer;
+  font-family: var(--font-display); font-weight: 700; font-size: var(--t-meta); line-height: var(--lh-ui); color: var(--action-text);
+}
+.v-about .ab-more-s::-webkit-details-marker { display: none; }
+.v-about .ab-more-s::before { content: ""; position: absolute; inset: 0 calc(var(--bleed) * -1); z-index: -1; background: var(--paper-2); opacity: 0; transition: opacity var(--dur-quick) var(--ease-standard); pointer-events: none; }
+@media (hover: hover) { .v-about .ab-more-s:hover::before { opacity: 1; } }
+.v-about .ab-more-go { display: inline-flex; transition: transform 280ms var(--ease-standard); }
+.v-about .ab-more-go .arrow { --arrow-s: 18px; }
+.v-about .ab-more[open] .ab-more-go { transform: rotate(180deg); }
+.v-about .ab-more-b { display: grid; gap: var(--s-3); padding: 0 0 var(--s-4); }
+.v-about .ab-more-b > * { min-width: 0; margin: 0; }
+.v-about .ab-more-b p { color: var(--ink-2); }
+.v-about .ab-more-b .kv { border-top: 0; }
+.v-about .ab-more[open] .ab-more-b { animation: ab-open 320ms var(--ease-enter, cubic-bezier(0.16, 1, 0.3, 1)) both; }
+@keyframes ab-open { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: none; } }
+html.m-reduce .v-about .ab-more[open] .ab-more-b { animation: ab-open-fade 180ms linear both; }
+html.m-reduce .v-about .ab-more-go { transition: none; }
+@keyframes ab-open-fade { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .v-about .ab-more[open] .ab-more-b { animation: ab-open-fade 180ms linear both; }
+}
 .v-about .ab-sub-h {
   margin-top: var(--s-4) !important; padding-bottom: var(--s-2); border-bottom: 1px solid var(--ink);
   font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); line-height: var(--lh-ui); letter-spacing: var(--ls-0); color: var(--ink);
@@ -2768,7 +2801,7 @@ body.lang-en .v-about .ab-toc-h { text-transform: uppercase; }
 .v-about .ab-steps { list-style: none; margin: 0; padding: 0; display: grid; border-top: 1px solid var(--rule); }
 .v-about .ab-steps > li { display: grid; grid-template-columns: 2em minmax(0, 1fr); gap: var(--s-3); padding: var(--s-3) 0; border-bottom: 1px solid var(--rule); line-height: var(--lh); }
 .v-about .ab-step-n { font-family: var(--font-num); font-weight: 700; font-size: var(--t-h3); line-height: 1.5; color: var(--ink); }
-.v-about .ab-step-t b { font-weight: 700; }
+.v-about .ab-step-t { align-self: center; font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); line-height: var(--lh-ui); }
 .v-about .ab-sources {
   list-style: none; margin: 0; padding: 0;
   display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--s-5);
@@ -2798,10 +2831,14 @@ body.lang-en .v-about .ab-toc-h { text-transform: uppercase; }
 .v-about .ab-foot p { margin: 0; font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); letter-spacing: var(--ls-label); color: var(--ink-3); font-variant-numeric: tabular-nums; }
 
 @media print {
-  .v-about :is(.ab-toc, .ab-actions, .ab-sos button) { display: none !important; }
+  .v-about :is(.ab-toc, .ab-actions, .ab-sos button, .ab-more-s) { display: none !important; }
+  .v-about .ab-more > .ab-more-b { display: grid !important; }
 }
 /* ---- css/find.css ---- */
-/* 巣立ちマップ v4 — find.css (FIND)
+/* 巣立ちマップ v5 — find.css (FIND)
+   v5 (SPEC-v5): the way in is one compact block (.f-way); question progress is a train line (.f-q-line); a chosen
+   option fills with a colour sweep (::after); results open with a "searching" beat (.f-scan). Reduced motion keeps
+   the colour changes as short fades (html.m-reduce), never movement.
    Browse (#/find), questions (#/find/q/N), results (#/find/results), category (#/find/cat/KEY).
    VISUAL-SPEC §7.3–7.5: ruled rows, kanji station marks, big tabular numbers, one 蛍光ペン phrase per screen,
    pictures and numbers standing on one ground line. Tokens only (type roles, the four tracking tokens), hairlines
@@ -2875,6 +2912,25 @@ body.lang-en .v-about .ab-toc-h { text-transform: uppercase; }
 .v-find .f-suggest { display: grid; gap: var(--s-2); }
 .v-find .f-suggest-row { padding-block: 2px; }
 
+/* the way in (v5): one line + one button. new: 6つの質問で、合う支援がわかる [質問に答える →] 1分
+   returning: 64件 あなたに合いそうな支援 [結果を見る →] 変える. A 2px ink rule on top, no band, no card. */
+.v-find .f-way { display: grid; gap: var(--s-3); padding-top: var(--s-4); border-top: 2px solid var(--ink); }
+.v-find .f-way-t {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s-1) var(--s-3);
+  font-family: var(--font-display); font-size: var(--t-h3); font-weight: 700; line-height: var(--lh-title); letter-spacing: var(--ls-0); text-wrap: balance;
+}
+.v-find .f-way.is-back .f-back-n { font: 700 var(--t-num-l)/1 var(--font-num); letter-spacing: var(--ls-num); font-variant-numeric: tabular-nums; }
+.v-find .f-way.is-back .f-back-n .unit { font-family: var(--font-display); font-size: var(--t-label); font-weight: 500; }
+.v-find .f-way.is-back .f-back-line { font-size: var(--t-ui); }
+.v-find .f-way-acts { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-4); }
+.v-find .f-way-acts > .btn { flex: 1 1 200px; justify-content: space-between; }
+.v-find .f-way-min { flex: none; }
+.v-find .f-way-alt {
+  flex: none; display: inline-flex; align-items: center; min-height: var(--tap); padding: 0 var(--s-1);
+  font-family: var(--font-display); font-size: var(--t-ui); font-weight: 700; color: var(--action-text);
+  text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 0.28em;
+}
+.v-find .f-way.is-mini { margin-top: var(--s-8); }
 /* returning: one compact band — 64件 あなたに合いそうな支援 · 結果を見る → · 答えを変える */
 .v-find .f-back { display: grid; gap: var(--s-4); }
 .v-find .f-back-t { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s-1) var(--s-3); font-family: var(--font-display); font-weight: 700; }
@@ -2934,12 +2990,30 @@ body.lang-en .v-find .f-back-n .unit { margin-left: 0.25em; }
 .v-find .f-crisis-rows > :last-child { border-bottom: 0; }
 
 /* ================================================================ questions */
-.v-find .f-q { --m-rise: 8px; display: grid; gap: var(--s-5); max-width: var(--read-w); }
+.v-find .f-q { display: grid; gap: var(--s-5); max-width: var(--read-w); }
 .v-find .f-q > * { min-width: 0; }
 .v-find .f-q-body { display: grid; gap: var(--s-5); }
 .v-find .f-q-body > * { min-width: 0; }
 
-/* progress: 質問 3 / 6 · あとで, one 2px track with a green fill and hairline ticks */
+/* progress (v5): 質問 3 / 6 · あとで, then a train line — a 4px rail, six stations, the green run up to this stop and
+   the train (a station sign with this question's number) standing at it. The train box spans the rail so a
+   translateX in % of it is a distance along the rail (playLine in find.js). */
+.v-find .f-q-line { position: relative; height: 34px; overflow: hidden; }   /* the train box travels inside it */
+.v-find .f-q-rail { position: absolute; left: 16px; right: 16px; top: 15px; height: 4px; background: var(--paper-3); }
+.v-find .f-q-run { position: absolute; inset: 0; display: block; background: var(--action); transform-origin: left center; }
+.v-find .f-q-st {
+  position: absolute; top: 50%; width: 10px; height: 10px; margin: -5px 0 0 -5px;
+  background: var(--paper); box-shadow: inset 0 0 0 2px var(--rule-2);
+}
+.v-find .f-q-st.is-done { background: var(--action); box-shadow: inset 0 0 0 2px var(--action); }
+.v-find .f-q-trainbox { position: absolute; inset: 0; display: block; pointer-events: none; }
+.v-find .f-q-train {
+  position: absolute; left: 0; top: 50%; display: grid; place-items: center;
+  width: 26px; height: 26px; margin: -13px 0 0 -13px; border-radius: var(--r-ctl);
+  background: var(--action-fill); color: var(--on-action-fill); box-shadow: 0 0 0 3px var(--paper);
+  font: 700 14px/1 var(--font-num); font-variant-numeric: tabular-nums;
+}
+/* 質問 3 / 6 · あとで */
 .v-find .f-q-top { display: grid; gap: var(--s-2); }
 .v-find .f-q-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-1) var(--s-3); min-height: var(--tap); }
 .v-find .f-q-step { display: flex; align-items: baseline; gap: var(--s-2); margin: 0; }
@@ -2954,9 +3028,6 @@ body.lang-en .v-find .f-back-n .unit { margin-left: 0.25em; }
   text-decoration: underline; text-decoration-color: var(--rule-2); text-decoration-thickness: 1px; text-underline-offset: 0.3em;
 }
 @media (hover: hover) { .v-find .f-q-quit:hover { color: var(--ink); text-decoration-color: currentColor; } }
-.v-find .f-q-track { position: relative; height: 2px; background: var(--paper-3); }
-.v-find .f-q-fill { position: absolute; inset: 0; display: block; background: var(--action); transform-origin: left center; }
-.v-find .f-q-tick { position: absolute; top: -3px; bottom: -3px; width: 1px; margin-left: -0.5px; background: var(--rule-2); }
 
 /* the journey strip: this question's scene on the ground line; the green route and the protagonist are ours,
    laid over it in strip units (360 × 120, ground at y 108 = 10% from the bottom) */
@@ -2979,6 +3050,11 @@ body.lang-en .v-find .f-back-n .unit { margin-left: 0.25em; }
 /* the question */
 .v-find .f-q-title { margin-top: var(--s-1); }
 .v-find .f-q-title:focus { outline: none; }
+/* 「なぜ聞くの」: a quiet text trigger right under the question; it opens in place */
+.v-find .f-q-body > .f-why { margin-top: calc(var(--s-4) * -1); }
+.v-find .f-why .more-inline > .more-btn { min-height: var(--tap); color: var(--ink-2); font-size: var(--t-meta); }
+.v-find .f-why .more-body { padding-bottom: var(--s-2); font-size: var(--t-meta); }
+.v-find .f-why-priv { color: var(--ink-3); }
 .v-find .f-why { display: grid; gap: 2px; margin-top: calc(var(--s-3) * -1); }
 .v-find .f-why-k { font-family: var(--font-display); font-size: var(--t-label); font-weight: 500; letter-spacing: var(--ls-label); color: var(--ink-3); line-height: var(--lh-ui); }
 .v-find .f-why-t { display: block; max-width: 40em; }
@@ -2989,6 +3065,28 @@ body.lang-en .v-find .f-back-n .unit { margin-left: 0.25em; }
 }
 .v-find .f-q-hint { margin-top: calc(var(--s-2) * -1); font-family: var(--font-display); font-size: var(--t-label); font-weight: 500; letter-spacing: var(--ls-label); color: var(--ink-3); }
 
+/* the chosen option fills with a colour sweep (SPEC-v5 Part A 5): a fill layer runs in from the left edge, then the
+   text turns over; single choice = solid green (it is the moment you move on), multi-select = the green tint (several
+   stay chosen). Reduced motion: the fill fades instead of travelling. */
+.v-find .f-opt { isolation: isolate; overflow: hidden; }
+.v-find .f-opt::after {
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: var(--action-fill); transform: scaleX(0); transform-origin: left center;
+  transition: transform 380ms cubic-bezier(0.3, 0, 0.1, 1);
+}
+.v-find .f-opt.opt-multi::after { inset: 2px; background: var(--action-tint); }
+.v-find .f-opt[aria-checked="true"]::after { transform: scaleX(1); }
+.v-find .f-opt[role="radio"][aria-checked="true"] { background: var(--paper); box-shadow: inset 0 0 0 2px var(--action-fill); color: var(--on-action-fill); }
+.v-find .f-opt[role="radio"] :is(.opt-title, .opt-hint) { transition: color 160ms linear 120ms; }
+.v-find .f-opt[role="radio"][aria-checked="true"] .opt-hint { color: var(--on-action-fill); opacity: 0.88; }
+.v-find .f-opt[role="radio"][aria-checked="true"] .opt-ind { background: var(--on-action-fill); color: var(--action-fill); --m-check-color: var(--action-fill); }
+.v-find .f-opt.opt-multi[aria-checked="true"] { background: var(--paper); box-shadow: inset 0 0 0 2px var(--action); }
+.v-find .f-opt.opt-multi[aria-checked="true"] .opt-ind { background: var(--action); color: var(--on-action); --m-check-color: var(--on-action); }
+.v-find .f-opt-urgent::after { background: var(--red-tint); }
+.v-find .f-opt-urgent[aria-checked="true"] { box-shadow: inset 0 0 0 2px var(--red); }
+.v-find .f-opt-urgent[aria-checked="true"] .opt-ind { background: var(--red); color: var(--on-red); }
+html.m-reduce .v-find .f-opt::after { transform: none; opacity: 0; transition: opacity 160ms linear; }
+html.m-reduce .v-find .f-opt[aria-checked="true"]::after { opacity: 1; }
 /* options (base §6.9). After an answer the others step back to 50% (.has-choice, 160ms) */
 .v-find .f-opts-grouped { display: grid; }
 .v-find .f-opts-grouped > .opt-group-label:first-child { padding-top: 0; }
@@ -3089,6 +3187,18 @@ html.f-qq .v-find .f-q-journey { view-transition-name: f-q-journey; }
 .v-find .f-res-main > .f-jump { margin-top: 0; }
 .v-find .f-res-main > .f-jump + * { margin-top: var(--s-6); }
 
+/* the "searching" beat (built by find.js on the first arrival for an answer set, then removed): a rail through the six
+   category stations over the arrival strip; a green line runs along it and each mark lights as it is reached */
+.v-find .f-scan {
+  position: absolute; inset: 0; z-index: 3; display: grid; align-content: center; gap: var(--s-3);
+  padding: 0 4px; background: var(--paper); pointer-events: none;
+}
+.v-find .f-scan-l { font-family: var(--font-display); font-size: var(--t-label); font-weight: 500; letter-spacing: var(--ls-label); color: var(--ink-3); }
+.v-find .f-scan-rail { position: relative; height: 32px; margin: 0 14px; }
+.v-find .f-scan-rail::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 4px; margin-top: -2px; background: var(--paper-3); }
+.v-find .f-scan-run { position: absolute; left: 0; right: 0; top: 50%; height: 4px; margin-top: -2px; display: block; background: var(--action); transform-origin: left center; }
+.v-find .f-scan-st { position: absolute; top: 50%; width: 28px; height: 28px; margin: -14px 0 0 -14px; display: grid; place-items: center; background: var(--paper); }
+.v-find .f-scan-st .cat-icon { --mark: 24px; }
 /* the arrival: 64件 stands on the strip's ground line (left), the protagonist reaches the house (right) */
 .v-find .f-res-head { display: grid; gap: var(--s-2); }
 .v-find .f-res-stage { position: relative; container-type: inline-size; max-width: 520px; margin-top: var(--s-1); }
@@ -3230,7 +3340,7 @@ body.is-ruby .v-find .f-top-item .pcard-mark { justify-content: flex-start; }   
 .v-find .f-nothere { display: grid; gap: var(--s-3); }
 .v-find .f-nothere .section-head + .list { border-top: 0; }
 .v-find .f-nothere > .btn { justify-self: start; }
-.v-find .f-private { display: grid; gap: 2px; padding-top: var(--s-4); border-top: 1px solid var(--rule); }
+.v-find .f-private { display: grid; padding-top: var(--s-3); border-top: 1px solid var(--rule); }
 .v-find .f-private-title { font-family: var(--font-display); font-weight: 700; }
 .v-find .f-private-body { font-size: var(--t-meta); color: var(--ink-2); }
 .v-find .f-reset {
@@ -3267,7 +3377,12 @@ body.is-ruby .v-find .f-top-item .pcard-mark { justify-content: flex-start; }   
 .v-find .f-cat-count { display: flex; align-items: baseline; gap: var(--s-1); margin: 0; }
 .v-find .f-cat-n { line-height: 1; }
 .v-find .f-cat-unit { font-family: var(--font-display); font-size: var(--t-ui); font-weight: 500; color: var(--ink-2); }
-.v-find .f-cat-intro { max-width: 40em; }
+.v-find .f-cat-intro { max-width: 40em; margin-top: calc(var(--s-2) * -1); }
+.v-find p.f-cat-intro { margin-top: 0; font-size: var(--t-ui); color: var(--ink-2); }
+.v-find .f-cat-intro .more-inline > .more-btn { min-height: var(--tap); }
+/* a card's 「ポイント」 tip opens in place under its facts */
+.v-find .pcard .pcard-more { margin-top: 2px; }
+.v-find .pcard .pcard-more > .more-btn { min-height: 36px; font-size: var(--t-meta); }
 .v-find .f-cat-sec { display: grid; }
 .v-find .f-cat-sec + .f-cat-sec { margin-top: var(--f-gap); }
 .v-find .f-cat-local { margin-top: var(--s-6); }
@@ -3388,12 +3503,13 @@ html.m-reduce .v-find .f-q-fig-m { display: none; }
    hidden "waiting" states exist only under html.motion-ready, so the page is complete without JS.
    ===================================================================== */
 
-/* =================================================================== PROGRAM PAGE */
-.v-program .pg { display: grid; gap: var(--s-8); }
+/* =================================================================== PROGRAM PAGE (v5: read at a glance)
+   name · 3 key facts · one action · collapsed sections. Below the fold: まなぶ, related. */
+.v-program .pg { display: grid; gap: var(--s-7); }
 .v-program .pg > * { min-width: 0; }
 .v-program .pg-defer { display: contents; }
 
-/* ---------- masthead: [56 mark] eyebrow / tags · h1 · 2px rule · こんなとき + lead ---------- */
+/* ---------- masthead: [56 mark] eyebrow / tags · h1 · 2px rule · one short sub-line ---------- */
 .v-program .pg-head {
   display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 14px; align-items: center;
 }
@@ -3408,59 +3524,43 @@ html.m-reduce .v-find .f-q-fig-m { display: none; }
 .v-program .pg-basis { color: var(--ink-2); }
 :is(.v-program, .v-tools) .pg-sep { color: var(--ink-4); padding: 0 6px; }
 .v-program .pg-tags { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
-/* a long tag (English, big text, 320px) wraps inside its tint instead of running off the screen */
 .v-program .pg-tags .tag { max-width: 100%; white-space: normal; padding-block: 2px; }
 .v-program .pg-title {
   grid-column: 1 / -1; margin-top: var(--s-5);
   font-family: var(--font-display); font-weight: 700; font-size: var(--t-h1); line-height: var(--lh-heading); letter-spacing: var(--ls-0);
+  word-break: auto-phrase; text-wrap: balance;
 }
 .v-program .pg-title-rule { grid-column: 1 / -1; display: block; height: 2px; margin-top: var(--s-3); background: var(--rule-heavy); transform-origin: left center; }
-.v-program .pg-intro { grid-column: 1 / -1; display: grid; gap: var(--s-3); margin-top: var(--s-4); }
-.v-program .pg-hook { display: flex; align-items: baseline; gap: 10px; }
-.v-program .pg-hook-k {
-  flex: none; position: relative; top: -0.1em; padding: 3px 6px 2px;
-  background: var(--ink); color: var(--paper);
-  font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: 1.3; letter-spacing: var(--ls-label);
+.v-program .pg-hook {
+  grid-column: 1 / -1; margin-top: var(--s-3);
+  font-family: var(--font-display); font-weight: 700; font-size: var(--t-h3); line-height: 1.6; letter-spacing: var(--ls-0);
+  word-break: auto-phrase; line-break: strict; text-wrap: pretty;
 }
-.v-program .pg-hook-v {
-  min-width: 0; font-family: var(--font-display); font-weight: 700; font-size: var(--t-h3); line-height: 1.6; letter-spacing: var(--ls-0); word-break: auto-phrase; line-break: strict; text-wrap: pretty;
-}
-.v-program .pg-summary {
-  max-width: 40em; color: var(--ink-2);
-  font-family: var(--font-body); font-weight: 400; font-size: var(--t-lead); line-height: var(--lh); letter-spacing: var(--ls-body);
-}
-.v-program .pg-tokyo .callout a { color: var(--blue-text); }
 .v-program .pg-ja-note {
   margin-bottom: var(--s-3); padding-left: 10px; border-left: 2px solid var(--rule-2);
   font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3);
 }
 
-/* ---------- body: phone = one column (glance, actions, then the numbered sections) ---------- */
-.v-program .pg-body { display: grid; gap: var(--sec-gap); }
-.v-program .pg-aside { display: grid; gap: var(--s-6); align-content: start; min-width: 0; }
-.v-program .pg-main { display: grid; gap: var(--sec-gap); align-content: start; min-width: 0; }
+/* ---------- body: phone = one column (facts, actions, sections) ---------- */
+.v-program .pg-body { display: grid; gap: var(--s-7); }
+.v-program .pg-aside { display: grid; gap: var(--s-5); align-content: start; min-width: 0; }
+.v-program .pg-main { display: grid; gap: var(--s-5); align-content: start; min-width: 0; }
 .v-program :is(.pg-aside, .pg-main) > *, .v-program .pg-defer > * { min-width: 0; }
 
-/* small label heads (ひと目でわかる · あわせて使えるツール) */
-.v-program .pg-label {
-  font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui); letter-spacing: var(--ls-label);
-  color: var(--ink-3);
+/* ---------- key facts: a ruled 2-column sheet, label above a big value ---------- */
+.v-program .pg-facts {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0;
+  border-top: 2px solid var(--rule-heavy); border-bottom: 1px solid var(--rule);
 }
-
-/* ---------- ひと目でわかる: a ruled 2-column sheet, hairlines between cells ---------- */
-.v-program .pg-glance .pg-label { padding-bottom: 8px; border-bottom: 2px solid var(--rule-heavy); }
-.v-program .pg-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0; border-bottom: 1px solid var(--rule); }
-.v-program .pg-f { display: grid; gap: 6px; align-content: start; min-width: 0; padding: 14px 16px 16px 0; border-top: 1px solid var(--rule); }
+.v-program .pg-f { display: grid; gap: 4px; align-content: start; min-width: 0; padding: 12px 16px 14px 0; border-top: 1px solid var(--rule); }
 .v-program .pg-f:first-child { border-top: 0; }
 .v-program .pg-f:first-child:not(.is-wide) + .pg-f.is-r { border-top: 0; }
 .v-program .pg-f.is-wide { grid-column: 1 / -1; padding-right: 0; }
-.v-program .pg-f.is-r { padding: 14px 0 16px 16px; border-left: 1px solid var(--rule); }
-/* 文字を大きく on a narrow phone: two fact columns are ~130px, too narrow for a sentence-long value
-   (いつまで broke into one-word lines). Stack them. */
+.v-program .pg-f.is-r { padding: 12px 0 14px 16px; border-left: 1px solid var(--rule); }
 @media (max-width: 379px) {
   body:is(.is-big, .lang-en) .v-program .pg-facts { grid-template-columns: minmax(0, 1fr); }
   body:is(.is-big, .lang-en) .v-program .pg-f.is-r,
-  body:is(.is-big, .lang-en) .v-program .pg-f:first-child:not(.is-wide) + .pg-f.is-r { padding: 14px 0 16px; border-left: 0; border-top: 1px solid var(--rule); }
+  body:is(.is-big, .lang-en) .v-program .pg-f:first-child:not(.is-wide) + .pg-f.is-r { padding: 12px 0 14px; border-left: 0; border-top: 1px solid var(--rule); }
 }
 .v-program .pg-f dt {
   font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui); letter-spacing: var(--ls-label);
@@ -3471,72 +3571,73 @@ html.m-reduce .v-find .f-q-fig-m { display: none; }
   font-family: var(--font-display); font-weight: 700; font-size: var(--t-h3); line-height: var(--lh-title); letter-spacing: var(--ls-0);
   font-feature-settings: "palt" 1; overflow-wrap: anywhere;
 }
-/* short fact values break at phrase boundaries (条件しだいで / 返済なし, never 返済な / し) */
 :lang(ja) .v-program .pg-f dd { word-break: auto-phrase; text-wrap-style: balance; }
-/* …but the detail under a value and the long 使える人 text fill their lines (balance made 3 short ragged lines) */
-.v-program .pg-f dd small, .v-program .pg-f.is-who dd { text-wrap-style: pretty; }
 .v-program .pg-f dd small {
-  display: block; margin-top: 4px;
-  font-family: var(--font-body); font-weight: 400; font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-body); color: var(--ink-2);
+  display: block; margin-top: 2px;
+  font-family: var(--font-num); font-weight: 500; font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-0); color: var(--ink-2);
 }
 .v-program .pg-f.tone-free dd { color: var(--action-text); }
 .v-program .pg-f.tone-loan dd, .v-program .pg-f.tone-deadline dd { color: var(--amber-text); }
-.v-program .pg-f.tone-deadline dd small { color: var(--ink-2); }
-/* the amount: money numbers are num-xl, everything else stays a heading; （notes） drop to meta */
-.v-program .pg-f.is-amount dd { display: grid; gap: 6px; line-height: 1.5; }
-.v-program .pg-amt-line { display: block; text-wrap-style: pretty; }
+/* the amount: the money number is the biggest thing on the page and rolls in */
+.v-program .pg-f.is-amount dd { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; line-height: 1.4; font-size: var(--t-h2); }
+.v-program .pg-f.is-amount.tone-free dd { font-size: var(--fs-3xl); line-height: 1.1; }
+.v-program .pg-amt-line { display: inline; text-wrap-style: pretty; }
 .v-program .pg-f.is-amount .amt-n {
-  font-family: var(--font-num); font-weight: 700; font-size: var(--fs-3xl); line-height: 1.05; letter-spacing: var(--ls-num);
+  font-family: var(--font-num); font-weight: 700; font-size: var(--fs-4xl); line-height: 1.05; letter-spacing: var(--ls-num);
   font-variant-numeric: tabular-nums; margin: 0 0.06em;
 }
-.v-program .pg-f.is-amount.is-multi .amt-n { font-size: var(--fs-2xl); }
 .v-program .pg-f.is-amount .amt-o { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+.v-program .pg-k-more {
+  display: inline-grid; place-items: center; min-height: 22px; padding: 0 6px; align-self: center;
+  box-shadow: inset 0 0 0 1px var(--rule-2); border-radius: var(--r-ctl); color: var(--ink-2);
+  font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); letter-spacing: var(--ls-label); line-height: 1;
+}
 .v-program .pg-amt-note {
   font-family: var(--font-body); font-weight: 400; font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-body); color: var(--ink-2);
 }
-/* a short （note） moves to the next line whole instead of breaking 進学する / 人 */
 :lang(ja) .v-program .pg-amt-note { display: inline-block; max-width: 100%; }
 .v-program .pg-amt-note .amt-n { font-size: inherit !important; letter-spacing: var(--ls-0) !important; margin: 0 !important; }
-.v-program .pg-f.is-who dd {
-  font-family: var(--font-body); font-weight: 400; font-size: var(--t-body); line-height: var(--lh); letter-spacing: var(--ls-body);
-}
-/* effort: three ink segments (they draw in from the left one after another) */
+/* 受付: a status dot (green when open now) */
+.v-program .pg-f.is-hours dd { display: block; }
+.v-program .pg-dot { display: inline-block; width: 9px; height: 9px; margin-right: 8px; border-radius: var(--r-round); background: var(--ink-4); vertical-align: 0.12em; }
+.v-program .pg-f.is-hours.is-open dd { color: var(--action-text); }
+.v-program .pg-f.is-hours.is-open .pg-dot { background: var(--action); }
+/* effort: three ink segments */
 .v-program .pg-meter-row { display: flex; align-items: center; gap: 10px; }
 .v-program .pg-meter { display: inline-grid; grid-template-columns: repeat(3, 14px); gap: 3px; flex: none; }
 .v-program .pg-meter i { display: block; height: 8px; background: var(--paper-3); transform-origin: left center; }
 .v-program .pg-meter i.is-on { background: var(--ink); }
 
-/* ---------- inline actions: call (the one green) · save · text links ---------- */
+/* ---------- actions: ONE green (電話する / 公式ページ), then 保存 (+ 公式ページ) ---------- */
 .v-program .pg-actions { display: grid; gap: var(--s-2); }
-.v-program .pg-call-btn {
-  min-height: 64px; padding: 8px 20px; gap: 12px 16px;
-  justify-content: space-between; flex-wrap: wrap; text-decoration: none;
-}
-.v-program .pg-call-l { display: inline-flex; align-items: center; gap: 10px; }
-.v-program .pg-call-l .icon { width: 24px; height: 24px; stroke-width: 1.75; }
-.v-program .pg-call-r { display: grid; justify-items: end; gap: 2px; text-align: right; }
+.v-program .pg-main-act { min-height: 64px; padding: 8px 20px; gap: 12px 16px; text-decoration: none; }
+.v-program .pg-call-btn { justify-content: space-between; flex-wrap: wrap; }
+.v-program .pg-call-l { display: inline-flex; align-items: center; gap: 10px; font-size: var(--fs-lg); }
+.v-program .pg-main-act .icon { width: 24px; height: 24px; stroke-width: 1.75; }
+.v-program .pg-web-btn { justify-content: space-between; font-size: var(--fs-lg); }
 .v-program .pg-call-num {
   font-family: var(--font-num); font-weight: 700; font-size: var(--fs-xl); line-height: 1.1; letter-spacing: var(--ls-0);
   font-variant-numeric: tabular-nums; white-space: nowrap;
 }
-.v-program .pg-call-st {
-  display: inline-flex; align-items: center; gap: 6px;
-  font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: 1.3; letter-spacing: var(--ls-label);
-  opacity: 0.88;
-}
-.v-program .pg-call-st::before { content: ""; width: 6px; height: 6px; border-radius: var(--r-round); background: currentColor; opacity: 0.55; }
-.v-program .pg-call-st.is-open::before { opacity: 1; }
-/* save: always an outline (the state is the filled star + 「保存ずみ」, never a second green) */
-.v-program .pg-save { justify-content: center; gap: 8px; background: transparent; color: var(--ink); border-color: var(--ink); }
-.v-program .pg-save.is-main { min-height: 56px; font-size: var(--fs-lg); }
-.v-program .pg-save .icon { width: 20px; height: 20px; stroke-width: 2; }
-.v-program .pg-save.is-main .icon { width: 24px; height: 24px; stroke-width: 1.75; }
+.v-program .pg-act-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-2); }
+.v-program .pg-act-row.is-one { grid-template-columns: minmax(0, 1fr); }
+.v-program .pg-act-row .btn { min-height: 52px; padding-inline: 12px; white-space: nowrap; justify-content: center; gap: 8px; background: transparent; color: var(--ink); border-color: var(--ink); text-decoration: none; }
+.v-program .pg-act-row .btn .icon { width: 20px; height: 20px; stroke-width: 2; }
+.v-program .pg-save { position: relative; }
+.v-program .pg-save.is-main { min-height: 64px; font-size: var(--fs-lg); }
 .v-program .pg-save[aria-pressed="true"] { background: var(--paper-2); }
-@media (hover: hover) { .v-program .pg-save:hover { background: var(--paper-2); } }
-.v-program .pg-save:active { background: var(--paper-3); }
-.v-program .pg-tlinks { display: flex; flex-wrap: wrap; gap: 0 var(--s-6); margin-top: 2px; }
+@media (hover: hover) { .v-program .pg-act-row .btn:hover { background: var(--paper-2); } }
+.v-program .pg-act-row .btn:active { background: var(--paper-3); }
+/* 済: a small vermilion-free hanko (ink square) that lands on the button when saved */
+.pg-hanko { display: none; }
+.v-program .pg-save.is-saved .pg-hanko, .v-program .pg-act-save.is-saved .pg-hanko {
+  display: inline-grid; place-items: center; width: 22px; height: 22px; flex: none;
+  border: 1.5px solid var(--action); border-radius: var(--r-ctl); color: var(--action-text);
+  font-family: var(--font-display); font-weight: 700; font-size: var(--fs-xs); line-height: 1; letter-spacing: 0;
+  transform: rotate(-8deg);
+}
 .v-program .pg-tlink {
-  display: inline-block; align-content: center; min-height: var(--tap);   /* inline: a wrapped label keeps its arrow after the last word */
+  display: inline-block; align-content: center; min-height: var(--tap);
   color: var(--action-text); font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); line-height: var(--lh-ui); letter-spacing: var(--ls-0); text-decoration: none;
 }
 .v-program .pg-tlink > span:first-child {
@@ -3548,21 +3649,30 @@ html.m-reduce .v-find .f-q-fig-m { display: none; }
 .v-program .pg-tlink > :is(.arrow, .icon) { margin-left: 6px; }
 .v-program .pg-tlink .icon { width: 16px; height: 16px; stroke-width: 2.25; }
 
+/* Tokyo version: one ruled link row */
+.v-program .pg-tokyo {
+  position: relative; isolation: isolate; display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; align-items: center;
+  min-height: 56px; padding: 10px 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); color: var(--ink); text-decoration: none;
+}
+.v-program .pg-tokyo-k { grid-column: 1; font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); letter-spacing: var(--ls-label); color: var(--blue-text); }
+.v-program .pg-tokyo-n { grid-column: 1; font-family: var(--font-display); font-weight: 700; font-size: var(--fs-base); line-height: var(--lh-title); }
+.v-program .pg-tokyo-go { grid-column: 2; grid-row: 1 / span 2; --arrow-s: 20px; }
+
 /* ---------- the sticky bar: slides up from behind the tab bar once the inline actions are gone ---------- */
 .v-program .pg-bar {
   position: fixed; z-index: 50; left: 0; right: 0;
-  bottom: 0;   /* the tab bar steps down while this bar is up (base.css §10) */
+  bottom: 0;
   display: flex; align-items: center; gap: var(--s-2);
   min-height: calc(64px + var(--safe-b)); padding: 8px max(var(--gutter), var(--safe-r)) calc(8px + var(--safe-b)) max(var(--gutter), var(--safe-l));
   background: var(--paper); border-top: 1px solid var(--rule);
 }
 .v-program .pg-bar.is-auto {
   transform: translateY(calc(100% + 1px)); visibility: hidden;
-  transition: transform 220ms var(--ease-exit), visibility 0s linear 220ms;
+  transition: transform 260ms var(--ease-exit), visibility 0s linear 260ms;
 }
 .v-program .pg-bar.is-auto.is-on {
   transform: none; visibility: visible;
-  transition: transform var(--spring-snappy-dur) var(--spring-snappy), visibility 0s;
+  transition: transform var(--spring-rise-dur) var(--spring-rise), visibility 0s;
 }
 .v-program .pg { padding-bottom: 64px; }
 .v-program .pg-act {
@@ -3578,6 +3688,7 @@ html.m-reduce .v-find .f-q-fig-m { display: none; }
 @media (hover: hover) { .v-program .pg-act:hover { background: var(--paper-2); } }
 .v-program .pg-act:active { background: var(--paper-3); }
 .v-program .pg-act-save[aria-pressed="true"] { background: var(--paper-2); }
+.v-program .pg-act-save .pg-hanko { width: 18px; height: 18px; }
 .v-program .pg-bar.is-solo .pg-act-save { flex: 1 1 auto; }
 .v-program .pg-act-call, .v-program .pg-act-web { flex: 1 1 auto; justify-content: flex-start; padding: 0 16px; }
 .v-program .pg-act-web { justify-content: space-between; }
@@ -3588,16 +3699,12 @@ html.m-reduce .v-find .f-q-fig-m { display: none; }
 .v-program .pg-act-call .icon { width: 24px; height: 24px; stroke-width: 1.75; }
 .v-program .pg-act-call-t { display: grid; min-width: 0; text-align: left; line-height: 1.25; }
 .v-program .pg-act-call-t b { font-size: var(--fs-base); }
-.v-program .pg-act-call-t small {
-  font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); letter-spacing: var(--ls-label); line-height: 1.3; opacity: 0.88;
-  overflow: hidden; text-overflow: ellipsis;
-}
+.v-program .pg-act-call-t small { font-family: var(--font-num); font-weight: 500; font-size: var(--t-label); line-height: 1.3; opacity: 0.88; overflow: hidden; text-overflow: ellipsis; }
 @media (max-width: 359px) { .v-program .pg-act { padding: 0 12px; } }
 body.is-big .v-program .pg-act-save .save-label { font-size: var(--fs-xs); }
 @media (min-width: 900px) and (max-width: 1099px) {
   .v-program .pg-bar { bottom: 0; left: var(--rail-w); padding-inline: var(--gutter); }
 }
-/* a toast never lands on the bar */
 @media (max-width: 899px) {
   body:has(#view.v-program .pg-bar:is(.is-on, :not(.is-auto))) .toast { bottom: calc(var(--safe-b) + 64px + 12px); }
 }
@@ -3605,24 +3712,56 @@ body.is-big .v-program .pg-act-save .save-label { font-size: var(--fs-xs); }
   body:has(#view.v-program .pg-bar:is(.is-on, :not(.is-auto))) .toast { bottom: calc(64px + var(--s-4)); }
 }
 
-/* ---------- numbered sections: the shared head, then the body ---------- */
-.v-program .pg-sec { display: grid; }
-.v-program .pg-sec-body { padding-top: var(--s-5); min-width: 0; }
-.v-program :is(.pg-sec-ask, .pg-sec-contact, .pg-sec-places) .pg-sec-body { padding-top: 0; }
-.v-program .pg-sec-body > :is(p, .pg-ja-note):first-child { margin-top: var(--s-4); }
-.v-program .pg-sec-how .pg-sec-body > .pg-ja-note:first-child { margin-top: 0; }
-
-/* ---------- 01 申し込みまでの流れ: ink squares on a rail that fills as you read ---------- */
-.v-program .pg-steps-wrap { position: relative; }
-.v-program .pg-rail {
-  position: absolute; left: 13.5px; top: 14px; bottom: 0; width: 1px;
-  background: var(--rule-2); pointer-events: none;
+/* ---------- collapsed sections: one ruled row each (h2 > button), + turns into − ---------- */
+.v-program .pg-accs { display: grid; border-top: 2px solid var(--rule-heavy); }
+.v-program .pg-acc { position: relative; border-bottom: 1px solid var(--rule); }
+.v-program .pg-acc-h { margin: 0; font-size: inherit; }
+.v-program .pg-acc-btn {
+  position: relative; isolation: isolate;
+  display: flex; align-items: center; gap: 12px; width: 100%; min-height: 60px; padding: 12px 0; text-align: left; color: var(--ink);
+  font-family: var(--font-display); font-weight: 700; font-size: var(--t-h3); line-height: var(--lh-title); letter-spacing: var(--ls-0);
 }
+.v-program .pg-acc-btn::before {
+  content: ""; position: absolute; inset: 0 calc(var(--bleed) * -1); z-index: -1;
+  background: var(--paper-2); opacity: 0; pointer-events: none; transition: opacity var(--dur-quick) var(--ease-standard);
+}
+@media (hover: hover) { .v-program .pg-acc-btn:hover::before { opacity: 1; } }
+.v-program .pg-acc-btn.m-pressed::before, .v-program .pg-acc-btn:active::before { opacity: 1; background: color-mix(in srgb, var(--paper-2), var(--ink) 6%); transition: none; }
+.v-program .pg-acc-t { flex: 1 1 auto; min-width: 0; }
+.v-program .pg-acc-meta {
+  flex: none; font-family: var(--font-num); font-weight: 500; font-size: var(--t-meta); line-height: 1.3; letter-spacing: var(--ls-0); color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.v-program .pg-acc-ic { width: 18px; height: 18px; }
+.v-program .pg-acc-ic::before, .v-program .pg-acc-ic::after { top: 8px; }
+.v-program .pg-acc-btn[aria-expanded="true"] .more-ic::after { transform: rotate(180deg); opacity: 0; }
+.v-program .pg-acc.is-open .pg-acc-t { color: var(--ink); }
+.v-program .pg-acc.is-open .pg-acc-btn { box-shadow: inset 4px 0 0 -0px transparent; }
+.v-program .pg-acc-body { display: grid; gap: var(--s-4); padding: 4px 0 var(--s-6); min-width: 0; }
+.v-program .pg-acc-body[hidden] { display: none; }
+.v-program .pg-acc-body[hidden="until-found"] { display: block; content-visibility: hidden; padding: 0; height: 0; overflow: hidden; }
+.v-program .pg-text { max-width: 40em; font-size: var(--t-body); line-height: var(--lh); color: var(--ink); }
+.v-program .pg-text-hook { font-family: var(--font-display); font-weight: 700; }
+.v-program .pg-caution-t { padding-left: 12px; border-left: 3px solid var(--amber); }
+.v-program .pg-amts { display: grid; border-top: 1px solid var(--rule); }
+.v-program .pg-amts > li { padding: 10px 0; border-bottom: 1px solid var(--rule); font-family: var(--font-display); font-weight: 700; font-size: var(--fs-base); line-height: 1.6; }
+.v-program .pg-amts .amt-n { font-family: var(--font-num); font-size: var(--fs-xl); letter-spacing: var(--ls-num); font-variant-numeric: tabular-nums; margin: 0 0.06em; }
+.v-program .pg-sub-h {
+  padding-bottom: 6px; border-bottom: 1px solid var(--rule-2);
+  font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui); letter-spacing: var(--ls-label); color: var(--ink-3);
+}
+.v-program .pg-kv { display: grid; margin: 0; }
+.v-program .pg-kv > div { display: grid; grid-template-columns: 4em minmax(0, 1fr); gap: 12px; padding: 10px 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+.v-program .pg-kv dt { padding-top: 0.2em; font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui); letter-spacing: var(--ls-label); color: var(--ink-3); }
+.v-program .pg-kv dd { margin: 0; min-width: 0; font-size: var(--t-body); line-height: var(--lh); color: var(--amber-text); font-weight: 700; font-family: var(--font-display); }
+
+/* steps: ink squares on a rail (the rail draws down and the squares stamp when the section opens) */
+.v-program .pg-steps-wrap { position: relative; }
+.v-program .pg-rail { position: absolute; left: 13.5px; top: 14px; bottom: 0; width: 1px; background: var(--rule-2); pointer-events: none; }
 .v-program .pg-rail-fill { position: absolute; left: -0.5px; top: 0; bottom: 0; width: 2px; background: var(--ink); transform-origin: center top; }
 .v-program .pg-steps { display: grid; }
-.v-program .pg-step { position: relative; display: grid; grid-template-columns: 28px minmax(0, 1fr); column-gap: var(--s-4); padding-bottom: var(--s-7); }
+.v-program .pg-step { position: relative; display: grid; grid-template-columns: 28px minmax(0, 1fr); column-gap: var(--s-4); padding-bottom: var(--s-6); }
 .v-program .pg-step:last-child { padding-bottom: 0; }
-/* the rail stops at the last square */
 .v-program .pg-step:last-child::before { content: ""; position: absolute; left: 0; top: 28px; bottom: 0; width: 28px; background: var(--paper); }
 .v-program .pg-step-n {
   position: relative; z-index: 1;
@@ -3630,7 +3769,6 @@ body.is-big .v-program .pg-act-save .save-label { font-size: var(--fs-xs); }
   background: var(--ink); color: var(--paper);
   font-family: var(--font-num); font-weight: 700; font-size: var(--fs-sm); line-height: 1; letter-spacing: var(--ls-0); font-variant-numeric: tabular-nums;
 }
-/* waiting for the fill: an empty outline square (only when motion runs; SM.motion.stamp fills it) */
 .motion-ready .v-program .pg-step-n.is-wait { background: var(--paper); color: var(--ink-3); box-shadow: inset 0 0 0 1.5px var(--rule-2); }
 .v-program .pg-step-body { display: grid; gap: var(--s-2); min-width: 0; }
 .v-program .pg-step-t {
@@ -3638,14 +3776,11 @@ body.is-big .v-program .pg-act-save .save-label { font-size: var(--fs-xs); }
   font-family: var(--font-display); font-weight: 700; font-size: var(--t-h3); line-height: var(--lh-title); letter-spacing: var(--ls-0);
 }
 .v-program .pg-step-body > p { max-width: 40em; color: var(--ink); }
-.v-program .pg-docs-tick { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3); }
-/* the done count: 2 / 5 rolls like a station board; そろった stamps once */
 .v-program .pg-docs-count { position: relative; display: inline-flex; align-items: baseline; gap: 2px; white-space: nowrap; font-family: var(--font-num); color: var(--ink-3); }
 .v-program .pg-docs-n { font-weight: 700; font-size: var(--fs-xl); line-height: 1; letter-spacing: var(--ls-0); color: var(--ink); font-variant-numeric: tabular-nums; }
 .v-program .pg-docs-of { font-weight: 500; font-size: var(--fs-sm); letter-spacing: var(--ls-0); font-variant-numeric: tabular-nums; }
 .v-program .pg-docs-count.is-all .pg-docs-n { color: var(--action-text); }
 .v-program .pg-docs-all {
-  /* hangs under the count, so the number never moves when the hanko lands */
   position: absolute; right: 0; top: calc(100% + 6px);
   display: inline-grid; place-items: center; min-height: 22px; padding: 0 6px;
   border-radius: var(--r-ctl); box-shadow: inset 0 0 0 1.5px var(--action); color: var(--action-text);
@@ -3674,8 +3809,8 @@ body.is-big .v-program .pg-act-save .save-label { font-size: var(--fs-xs); }
 @media (hover: hover) { .v-program .pg-doc:hover .pg-doc-box { box-shadow: inset 0 0 0 1.5px var(--ink); } .v-program .pg-doc:hover .pg-doc-in:checked + .pg-doc-box { box-shadow: none; } }
 .v-program .pg-note { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3); }
 
-/* ---------- 02 窓口でこう聞く: a hairline table, 問1 column on paper-2 ---------- */
-.v-program .pg-asks { display: grid; }
+/* 窓口でこう聞く: a hairline table, 問1 column on paper-2 */
+.v-program .pg-asks { display: grid; border-top: 1px solid var(--rule); }
 .v-program .pg-ask { display: grid; grid-template-columns: 3.5em minmax(0, 1fr); border-bottom: 1px solid var(--rule); }
 .v-program .pg-ask-n {
   display: block; padding: 15px 0 0; background: var(--paper-2); text-align: center;
@@ -3683,27 +3818,24 @@ body.is-big .v-program .pg-act-save .save-label { font-size: var(--fs-xs); }
   font-variant-numeric: tabular-nums;
 }
 .v-program .pg-ask-q { padding: 12px 0 13px 16px; font-size: var(--t-body); line-height: var(--lh); max-width: 40em; }
-.v-program .pg-ask-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-3); margin-top: var(--s-5); }
+.v-program .pg-ask-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-3); }
 .v-program .pg-ask-actions .pg-tlink { margin-left: var(--s-1); }
 @media (max-width: 419px) {
   .v-program .pg-ask-actions .btn { flex: 1 1 auto; }
-  .v-program .pg-ask-actions .pg-tlink { flex: 1 1 100%; margin-left: 0; }
 }
 
-/* ---------- 03 連絡先: the number is the biggest thing; 電話する = ink outline ---------- */
-.v-program .pg-contact { display: grid; grid-template-columns: minmax(0, 1fr); }
-.v-program .pg-tel { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; padding: var(--s-4) 0 var(--s-4); border-bottom: 1px solid var(--rule); }
+/* 連絡先 */
+.v-program .pg-contact, .v-program .pg-places { display: grid; grid-template-columns: minmax(0, 1fr); }
+.v-program .pg-tel { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; padding: var(--s-3) 0 var(--s-4); border-bottom: 1px solid var(--rule); }
 .v-program .pg-tel-label {
   display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px;
   font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui); letter-spacing: var(--ls-label); color: var(--ink-3);
 }
 .v-program .pg-tel-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-2) var(--s-3); min-width: 0; }
 .v-program .pg-tel-num {
-  min-width: 0; color: var(--ink); text-decoration: underline; text-decoration-color: transparent; text-decoration-thickness: 1.5px; text-underline-offset: 0.16em;
+  min-width: 0; color: var(--ink); text-decoration: none;
   font-family: var(--font-num); font-weight: 700; font-size: var(--t-num-l); line-height: 1.15; letter-spacing: var(--ls-0); font-variant-numeric: tabular-nums; white-space: nowrap;
-  transition: text-decoration-color var(--dur-quick) var(--ease-standard);
 }
-@media (hover: hover) { .v-program .pg-tel-num:hover { text-decoration-color: currentColor; } }
 .v-program .pg-tel-call { flex: none; }
 .v-program .pg-today { display: flex; align-items: center; gap: 8px; font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-2); }
 .v-program .pg-today i { flex: none; width: 8px; height: 8px; border-radius: var(--r-round); background: var(--ink-4); }
@@ -3717,73 +3849,40 @@ body.is-big .v-program .pg-act-save .save-label { font-size: var(--fs-xs); }
 .v-program .pg-hours dd { margin: 0; min-width: 0; font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink); }
 .v-program .pg-link-row {
   position: relative; isolation: isolate;
-  display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 10px 0;
+  display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 10px 0;
   border-bottom: 1px solid var(--rule); color: var(--ink); text-decoration: none;
 }
 .v-program .pg-link-row::before { content: ""; position: absolute; inset: 0 calc(var(--bleed) * -1); z-index: -1; background: var(--paper-2); opacity: 0; transition: opacity var(--dur-quick) var(--ease-standard); }
 @media (hover: hover) { .v-program .pg-link-row:hover::before { opacity: 1; } }
-.v-program .pg-link-row:active::before { opacity: 1; background: color-mix(in srgb, var(--paper-2), var(--ink) 6%); transition: none; }
+.v-program .pg-link-row:active::before { opacity: 1; transition: none; }
 .v-program .pg-link-t { font-family: var(--font-display); font-weight: 700; font-size: var(--fs-base); line-height: var(--lh-title); letter-spacing: var(--ls-0); }
 .v-program .pg-link-host { flex: 1; min-width: 0; font-size: var(--t-meta); color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .v-program .pg-link-go { flex: none; width: 16px; height: 16px; stroke-width: 2.25; color: var(--ink-2); }
 
-/* ---------- 04 場所 ---------- */
+/* 場所 */
 .v-program .pg-locs { display: grid; }
-.v-program .pg-loc { display: grid; gap: var(--s-2); padding: var(--s-5) 0; border-bottom: 1px solid var(--rule); }
+.v-program .pg-loc { display: grid; gap: var(--s-2); padding: var(--s-4) 0; border-bottom: 1px solid var(--rule); }
 .v-program .pg-loc-name {
   display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px;
-  font-family: var(--font-display); font-weight: 700; font-size: var(--t-h3); line-height: var(--lh-title); letter-spacing: var(--ls-0);
+  font-family: var(--font-display); font-weight: 700; font-size: var(--fs-base); line-height: var(--lh-title); letter-spacing: var(--ls-0);
 }
 .v-program .pg-loc-area { font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); letter-spacing: var(--ls-label); color: var(--ink-3); }
 .v-program .pg-loc-kv { display: grid; gap: 2px; margin: 0; }
 .v-program .pg-loc-kv > div { display: grid; grid-template-columns: 3.5em minmax(0, 1fr); gap: 12px; }
-.v-program .pg-loc-kv dt {
-  padding-top: 0.25em; font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui); letter-spacing: var(--ls-label); color: var(--ink-3);
-}
+.v-program .pg-loc-kv dt { padding-top: 0.25em; font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui); letter-spacing: var(--ls-label); color: var(--ink-3); }
 .v-program .pg-loc-kv dd { margin: 0; min-width: 0; font-size: var(--t-meta); line-height: var(--lh-meta); overflow-wrap: anywhere; }
-.v-program .pg-loc-tel { color: var(--ink); font-family: var(--font-num); font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.v-program .pg-loc-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-5); margin-top: var(--s-2); }
+.v-program .pg-loc-tel { display: inline-block; min-height: var(--tap); align-content: center; color: var(--ink); font-family: var(--font-num); font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.v-program .pg-loc-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-5); margin-top: var(--s-1); }
 .v-program .pg-more { margin-top: -1px; border-top: 0; }
 
-/* ---------- 気をつけること · まなぶ · ツール · 支援者 ---------- */
-.v-program .pg-caution .callout-body > span { max-width: 40em; }
-.v-program .pg-learn { display: grid; }
-:is(.v-program, .v-tools) .pg-lessons { display: grid; }
-:is(.v-program, .v-tools) .pg-lessons > li { border-bottom: 1px solid var(--rule); }
-:is(.v-program, .v-tools) .pg-lesson {
-  position: relative; isolation: isolate;
-  display: flex; align-items: center; gap: var(--s-4); padding: var(--s-4) 0;
-  color: var(--ink); text-decoration: none;
-}
-:is(.v-program, .v-tools) .pg-lesson[data-press="ink"]::after { inset: 0 calc(var(--bleed) * -1); }
-:is(.v-program, .v-tools) .pg-lesson::before { content: ""; position: absolute; inset: 0 calc(var(--bleed) * -1); z-index: -1; background: var(--paper-2); opacity: 0; transition: opacity var(--dur-quick) var(--ease-standard); }
-@media (hover: hover) { :is(.v-program, .v-tools) .pg-lesson:hover::before { opacity: 1; } }
-:is(.v-program, .v-tools) .pg-lesson-thumb { flex: none; width: 72px; height: 72px; display: grid; place-items: center; overflow: hidden; background: var(--paper-2); }
-:is(.v-program, .v-tools) .pg-lesson-thumb .il { width: 72px; }
-/* with a picture the thumb is the subject on its ground line, not a tinted tile (the tile stays for the kanji fallback) */
-:is(.v-program, .v-tools) .pg-lesson-thumb:has(> .il) { background: none; }
-:is(.v-program, .v-tools) .pg-lesson-text { flex: 1; min-width: 0; display: grid; gap: 4px; }
-:is(.v-program, .v-tools) .pg-lesson-k {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 0 2px;
-  font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui); letter-spacing: var(--ls-label); color: var(--ink-3);
-}
-:is(.v-program, .v-tools) .pg-lesson-k .tag { margin-left: 8px; }
-:is(.v-program, .v-tools) .pg-lesson-t {
-  font-family: var(--font-display); font-weight: 700; font-size: var(--t-h3); line-height: var(--lh-title); letter-spacing: var(--ls-0); word-break: auto-phrase; line-break: strict; text-wrap: pretty;
-}
-:is(.v-program, .v-tools) .pg-lesson-go { --arrow-s: 20px; color: var(--ink-2); }
-.v-program .pg-tools { display: grid; }
-/* the supporter note: one ruled row under 気をつけること (hairline above and below, link at the right) */
-.v-program .pg-caution { display: grid; }
+/* 支援者メモ */
 .v-program .pg-sup-hint {
-  display: flex; align-items: center; gap: var(--s-2) var(--s-4); margin-top: var(--s-5); padding: var(--s-4) 0;
+  display: flex; align-items: center; gap: var(--s-2) var(--s-4); padding: var(--s-2) 0;
   border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule);
   font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-2);
 }
-.v-program .pg-caution-sup > .pg-sup-hint { margin-top: 0; }
 .v-program .pg-sup-hint > span { min-width: 0; flex: 1 1 auto; }
 .v-program .pg-sup-hint > .pg-linkbtn { flex: none; margin-left: auto; }
-.v-program .pg-caution > .pg-sup { margin-top: var(--s-5); }
 .v-program .pg-linkbtn {
   min-height: var(--tap); color: var(--action-text);
   font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); letter-spacing: var(--ls-0);
@@ -3791,13 +3890,10 @@ body.is-big .v-program .pg-act-save .save-label { font-size: var(--fs-xs); }
 }
 .v-program .pg-sup .callout-body > span { max-width: 40em; }
 
-/* ---------- 出典: small print under a hairline ---------- */
-.v-program .pg-src { display: grid; gap: var(--s-2); padding-top: var(--s-4); border-top: 1px solid var(--rule); }
-.v-program .pg-src-h {
-  font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui); letter-spacing: var(--ls-label); color: var(--ink-3);
-}
+/* 出典: small print */
+.v-program .pg-src { display: grid; gap: var(--s-2); }
 .v-program .pg-src-links { display: grid; gap: 2px; }
-.v-program .pg-src-links a { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; font-size: var(--t-meta); line-height: 1.5; overflow-wrap: anywhere; }
+.v-program .pg-src-links a { display: inline-flex; align-items: center; gap: 6px; min-height: var(--tap); font-size: var(--t-meta); line-height: 1.5; overflow-wrap: anywhere; }
 .v-program .pg-src-ext { width: 16px; height: 16px; stroke-width: 2.25; flex: none; }
 .v-program .pg-src-meta { display: flex; flex-wrap: wrap; gap: 0 16px; font-family: var(--font-num); font-size: var(--t-meta); color: var(--ink-2); font-variant-numeric: tabular-nums; }
 .v-program .pg-src-warn { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3); max-width: 40em; }
@@ -3805,8 +3901,30 @@ body.is-big .v-program .pg-act-save .save-label { font-size: var(--fs-xs); }
 .v-program .pg-report .btn { padding-inline: 0; }
 .v-program .pg-report p { font-size: var(--fs-xs); line-height: var(--lh-meta); color: var(--ink-3); max-width: 40em; }
 
-/* ---------- 同じ分野の支援 ---------- */
-.v-program .pg-related { display: grid; }
+/* ---------- まなぶ (shared with tools) · related ---------- */
+.v-program .pg-learn, .v-program .pg-related { display: grid; }
+:is(.v-program, .v-tools) .pg-lessons { display: grid; }
+:is(.v-program, .v-tools) .pg-lessons > li { border-bottom: 1px solid var(--rule); }
+:is(.v-program, .v-tools) .pg-lesson {
+  position: relative; isolation: isolate;
+  display: flex; align-items: center; gap: var(--s-4); padding: var(--s-3) 0;
+  color: var(--ink); text-decoration: none;
+}
+:is(.v-program, .v-tools) .pg-lesson[data-press="ink"]::after { inset: 0 calc(var(--bleed) * -1); }
+:is(.v-program, .v-tools) .pg-lesson::before { content: ""; position: absolute; inset: 0 calc(var(--bleed) * -1); z-index: -1; background: var(--paper-2); opacity: 0; transition: opacity var(--dur-quick) var(--ease-standard); }
+@media (hover: hover) { :is(.v-program, .v-tools) .pg-lesson:hover::before { opacity: 1; } }
+:is(.v-program, .v-tools) .pg-lesson-thumb { flex: none; width: 56px; height: 56px; display: grid; place-items: center; overflow: hidden; background: var(--paper-2); }
+:is(.v-program, .v-tools) .pg-lesson-thumb .il { width: 56px; }
+:is(.v-program, .v-tools) .pg-lesson-thumb:has(> .il) { background: none; }
+:is(.v-program, .v-tools) .pg-lesson-text { flex: 1; min-width: 0; display: grid; gap: 2px; }
+:is(.v-program, .v-tools) .pg-lesson-k {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0 8px;
+  font-family: var(--font-num); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui); letter-spacing: var(--ls-label); color: var(--ink-3);
+}
+:is(.v-program, .v-tools) .pg-lesson-t {
+  font-family: var(--font-display); font-weight: 700; font-size: var(--fs-base); line-height: var(--lh-title); letter-spacing: var(--ls-0); word-break: auto-phrase; line-break: strict; text-wrap: pretty;
+}
+:is(.v-program, .v-tools) .pg-lesson-go { --arrow-s: 20px; color: var(--ink-2); }
 
 /* ---------- the sub-bar title stays quiet while the H1 is on screen (large-title hand-off) ---------- */
 body:has(#view:is(.v-program, .v-tools)) .subbar-title { transition: opacity 200ms var(--ease-enter); }
@@ -3819,53 +3937,38 @@ body:has(#view:is(.v-program, .v-tools)) .subbar-title.pg-quiet { opacity: 0; tr
   .v-program .pg-meta { grid-column: 2; grid-row: 1; }
   .v-program .pg-title { grid-column: 2; grid-row: 2; margin-top: 6px; }
   .v-program .pg-title-rule { margin-top: var(--s-4); }
-  .v-program .pg-intro { margin-top: var(--s-5); }
-  .v-program .pg-glance .pg-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (min-width: 1100px) {
-  /* 12 columns: the masthead, the Tokyo note and the reading column on the left (7–8), the glance and the
-     actions in a column of 4 at the right that starts beside the H1 */
   .v-program .pg { grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--s-6); row-gap: 0; padding-bottom: 0; }
   .v-program .pg > * { grid-column: 1 / span 7; }
-  /* one left edge and one right edge for the reading column: the masthead and its heavy rule end where every
-     section rule below them ends (7 of 12), and the side column starts two tracks later */
   .v-program .pg > .pg-head { grid-column: 1 / span 7; grid-row: 1; }
-  /* the side column opens with a hairline, not a second heavy rule beside the H1's (one heavy rule per section
-     start; the rail's label already sits on the eyebrow's line) */
-  .v-program .pg-aside .pg-glance .pg-label { border-bottom: 1px solid var(--rule-2); }
-  .v-program .pg > .pg-tokyo { grid-row: 2; margin-top: var(--s-7); }
   .v-program .pg-body { display: contents; }
-  .v-program .pg-main { grid-column: 1 / span 7; grid-row: 3; margin-top: var(--s-9); }
-  .v-program .pg-aside { grid-column: 9 / span 4; grid-row: 1 / span 3; align-self: stretch; gap: var(--s-6); padding-top: 4px; }
-  .v-program .pg > .pg-related { grid-row: 4; }
-  .v-program .pg > .pg-defer > .pg-related, .v-program .pg > .pg-related { grid-column: 1 / span 7; margin-top: var(--sec-gap); }
-  .v-program .pg > .pg-defer { display: block; grid-column: 1 / span 7; grid-row: 4; }
-  /* the actions stay in view beside the long reading column; when the whole side column fits the screen,
-     all of it stays (program.js measures and sets .is-stick) */
+  .v-program .pg-main { grid-column: 1 / span 7; grid-row: 2; margin-top: var(--s-8); }
+  .v-program .pg-aside { grid-column: 9 / span 4; grid-row: 1 / span 2; align-self: stretch; gap: var(--s-5); padding-top: 4px; }
+  .v-program .pg > .pg-defer { display: grid; gap: var(--sec-gap); grid-column: 1 / span 7; grid-row: 3; margin-top: var(--sec-gap); }
+  .v-program .pg > :is(.pg-learn, .pg-related) { grid-column: 1 / span 7; margin-top: var(--sec-gap); }
   .v-program .pg-actions { position: sticky; top: var(--sticky-top); }
   .v-program .pg-aside.is-stick { position: sticky; top: var(--sticky-top); align-self: start; }
   .v-program .pg-aside.is-stick .pg-actions { position: static; }
   .v-program .pg-bar { display: none; }
-  /* the call button in the narrow column: 電話する on top, the number under it */
   .v-program .pg-call-btn { display: grid; justify-content: stretch; gap: 6px; padding: 14px 20px 16px; }
-  .v-program .pg-call-r { justify-items: start; text-align: left; gap: 4px; }
   .v-program .pg-call-num { font-size: var(--t-num-l); }
 }
 
-/* ---------- English: labels uppercase (same token) ---------- */
-body.lang-en .v-program :is(.pg-label, .pg-f dt, .pg-eyebrow, .pg-hook-k, .pg-tel-label, .pg-hours dt, .pg-loc-kv dt, .pg-src-h, .pg-lesson-k) { text-transform: uppercase; }
-body.lang-en .v-program .pg-summary, body.lang-en .v-program .pg-hook-v { word-break: normal; }
+/* ---------- English ---------- */
+body.lang-en .v-program :is(.pg-f dt, .pg-eyebrow, .pg-tel-label, .pg-hours dt, .pg-loc-kv dt, .pg-sub-h, .pg-kv dt) { text-transform: uppercase; }
+body.lang-en .v-program .pg-hook { word-break: normal; }
 
-/* ---------- ふりがな / 大きい文字: nothing may push the page wider than the screen ---------- */
-body.is-ruby .v-program .pg-hook-v, body.is-ruby .v-program .pg-title { line-height: 1.7; }
+/* ---------- ふりがな / 大きい文字 ---------- */
+body.is-ruby .v-program .pg-hook, body.is-ruby .v-program .pg-title { line-height: 1.7; }
 body.is-ruby .v-program .pg-mast .cat-icon { min-width: 56px; }
 @media (max-width: 379px) {
-  .v-program .pg-call-btn { padding-inline: 16px; }
+  .v-program .pg-main-act { padding-inline: 16px; }
   .v-program .pg-call-num { font-size: var(--fs-lg); }
-  body.is-big .v-program .pg-call-r { justify-items: start; text-align: left; }
+  .v-program .pg-f.is-amount .amt-n { font-size: var(--fs-3xl); }
 }
 
-/* ---------- 窓口で見せる: a full-screen page for the desk (an overlay, so it may cast a shadow) ---------- */
+/* ---------- 窓口で見せる: a full-screen page for the desk ---------- */
 .pg-show {
   position: fixed; inset: 0; z-index: 120;
   display: flex; flex-direction: column;
@@ -3876,9 +3979,7 @@ body.is-ruby .v-program .pg-mast .cat-icon { min-width: 56px; }
   flex: none; display: flex; align-items: center; justify-content: space-between; gap: var(--s-3);
   min-height: 64px; padding: 0 var(--gutter); border-bottom: 1px solid var(--rule);
 }
-.pg-show-k {
-  font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui); letter-spacing: var(--ls-label); color: var(--ink-3);
-}
+.pg-show-k { font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui); letter-spacing: var(--ls-label); color: var(--ink-3); }
 .pg-show-x {
   display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 18px 0 14px;
   border: 1.5px solid var(--ink); border-radius: var(--r-ctl); color: var(--ink);
@@ -3908,11 +4009,12 @@ body.pg-showing { overflow: hidden; }
 /* ---------- not found ---------- */
 .v-program .pg-nf { padding-top: var(--s-4); }
 
-/* ---------- print: a clean sheet ---------- */
+/* ---------- print: every section open, actions gone ---------- */
 @media print {
   .v-program .pg-bar, .v-program .pg-actions, .v-program .pg-ask-actions, .v-program .pg-loc-actions, .v-program .pg-report, .v-program .pg-related, .pg-show { display: none !important; }
+  .v-program .pg-acc-body[hidden] { display: grid !important; content-visibility: visible !important; height: auto !important; }
+  .v-program .pg-acc-ic { display: none; }
   .v-program .pg-step-n { background: #000 !important; color: #fff !important; box-shadow: none !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .v-program .pg-rail-fill { transform: none !important; }
   .v-program .pg { padding-bottom: 0; }
 }
 /* =================================================================== TOOLS
@@ -4440,7 +4542,7 @@ body.is-big .v-tools .tl-float-mini { display: none; }
 .v-tools .mn-vs-track, .v-tools .mn-bd-track { position: relative; display: block; height: 12px; background: var(--paper-3); overflow: hidden; }
 .v-tools .mn-bar {
   position: absolute; inset: 0; display: block; transform-origin: left center; background: var(--ink);
-  transition: transform var(--spring-snappy-dur) var(--spring-snappy);
+  transition: transform var(--spring-rise-dur) var(--spring-rise);
 }
 .v-tools .mn-vs-row.is-in .mn-bar { background: var(--action); }
 .v-tools .mn-vs-v {
@@ -4615,6 +4717,11 @@ body.lang-en .v-tools :is(.tl-title, .tl-hub-t, .scr-label-title) { word-break: 
 .v-program .pg-src-links a { min-height: 44px; }
 .v-tools .ck-help-more { position: relative; }
 .v-tools .ck-help-more::before { content: ""; position: absolute; inset: -4px -4px; }
+
+/* ---------- v5: the script's call button carries its number; hub rows are title-only ---------- */
+.v-tools .scr-call { justify-content: space-between; }
+.v-tools .scr-call-n { font-family: var(--font-num); font-weight: 700; font-size: var(--fs-lg); letter-spacing: var(--ls-0); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.v-tools .tl-hub-row { min-height: 88px; }
 /* ---- css/map.css ---- */
 /* 巣立ちマップ v4 — css/map.css (MAP). Scoped under .v-map; tokens only (VISUAL-SPEC §2, §4, §7.10, §9).
    Phone / tablet (< 1100px): a stage — header + controls scroll away, the map frame sticks under the app bar
@@ -5292,6 +5399,13 @@ body.lang-en .v-tools :is(.tl-title, .tl-hub-t, .scr-label-title) { word-break: 
 .v-map .m-foot { display: grid; gap: var(--s-3); padding-top: var(--s-4); border-top: 1px solid var(--rule); }
 .v-map .m-foot-list { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-2); }
 .v-map .m-foot-src { font-size: var(--t-label); line-height: var(--lh-meta); color: var(--ink-3); }
+/* v5: one line stays in view; the rest sits behind 「この地図について」 */
+.v-map .m-foot-call { font-family: var(--font-display); font-weight: 500; font-size: var(--t-ui); line-height: var(--lh-ui); color: var(--ink); }
+.v-map .m-about > summary { color: var(--ink-3); }
+.v-map .m-about .m-more-body { gap: var(--s-3); }
+/* rows: name, who + how far, the phone; the rest opens in place */
+.v-map .m-loc .m-more { margin-top: 2px; }
+.v-map .m-loc .m-more-body > .m-tel { margin-bottom: 2px; }
 
 /* ---------- area picker sheet (content carries .v-map) ---------- */
 .v-map.m-pk { display: grid; gap: var(--s-4); }
@@ -5534,6 +5648,10 @@ body.lang-en .v-tools :is(.tl-title, .tl-hub-t, .scr-label-title) { word-break: 
 }
 .v-plan .plan-date-edit { flex: none; }
 .v-plan .plan-date-note { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3); }
+/* v5: the 仮の日付 explanation is a quiet 「くわしく」 under the date row */
+.v-plan .plan-date-more { margin-top: calc(var(--s-3) * -1); }
+.v-plan .plan-date-more > .more-btn { font-size: var(--t-meta); color: var(--ink-2); }
+.v-plan .plan-date-more > .more-body { padding: 0; }
 
 .v-plan .plan-prog { display: grid; gap: var(--s-2); }
 .v-plan .plan-prog-row { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); }
@@ -5544,7 +5662,7 @@ body.lang-en .v-tools :is(.tl-title, .tl-hub-t, .scr-label-title) { word-break: 
 .v-plan .plan-prog-num { white-space: nowrap; color: var(--ink); }
 .v-plan .plan-prog-num b { font-family: var(--font-num); font-weight: 700; font-size: var(--t-num-l); line-height: 1; letter-spacing: var(--ls-0); }
 .v-plan .plan-prog-of { font-family: var(--font-num); font-weight: 500; font-size: var(--t-ui); line-height: 1; color: var(--ink-3); }
-.v-plan .plan-prog-bar { position: relative; height: 6px; background: var(--paper-3); }
+.v-plan .plan-prog-bar { position: relative; height: 8px; background: var(--paper-3); }
 .v-plan .plan-prog-fill { position: absolute; inset: 0; display: block; background: var(--action); transform-origin: left center; }
 .v-plan .plan-prog-tick {
   display: none; position: absolute; top: -4px; bottom: -4px; width: 1px;
@@ -5638,14 +5756,14 @@ body.lang-en .v-plan .plan-now-of { margin: 0 2px 0 4px; }
   margin-top: var(--s-5);
 }
 .v-plan .tl-fill {
-  position: absolute; z-index: 1; left: calc(var(--rail) / 2 - 1px); top: 0; width: 2px; height: 0;
+  position: absolute; z-index: 1; left: calc(var(--rail) / 2 - 2px); top: 0; width: 4px; height: 0;
   transform-origin: center top; pointer-events: none;
 }
 .v-plan .tl-fill > i { display: block; height: 100%; background: var(--action); transform-origin: center top; }
 /* the road ahead inks in under the reading line (JS: top/height from いま to the last station; motion only) */
 .v-plan .tl-trace {
-  display: none; position: absolute; z-index: 1; left: calc(var(--rail) / 2 - 0.5px); top: 0; width: 1px; height: 0;
-  background: var(--ink-3); transform-origin: center top; transform: scaleY(0); pointer-events: none;
+  display: none; position: absolute; z-index: 1; left: calc(var(--rail) / 2 - 1px); top: 0; width: 2px; height: 0;
+  background: var(--ink-2); transform-origin: center top; transform: scaleY(0); pointer-events: none;
 }
 .v-plan .tl {
   --m-rise: 8px;
@@ -5731,6 +5849,13 @@ body.lang-en .v-plan .plan-now-of { margin: 0 2px 0 4px; }
 .v-plan .tl-items { margin: var(--s-2) 0 0; padding: 0; list-style: none; display: grid; border-top: 1px solid var(--rule); }
 .v-plan .tl > li.is-current > .tl-body > .tl-items, .v-plan .tl-fold-body > .tl-items { margin-top: var(--s-3); }
 .tl-item { position: relative; border-bottom: 1px solid var(--rule); background: var(--tl-bg, var(--paper)); }
+.tl-item > :not(.tl-wash) { position: relative; z-index: 1; }
+/* a tick: the green wash sweeps the row and fades (plan.js settleRow) */
+.tl-item > .tl-wash { position: absolute; inset: 0; z-index: 0; background: var(--action-tint); transform-origin: left center; opacity: 0; pointer-events: none; }
+/* one line per task: the action, then its （…） aside in small type */
+.tl-item .tl-item-main { font-weight: 500; }
+.tl-item .tl-item-aside { margin-left: 2px; font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3); }
+.tl-item.is-done .tl-item-main { text-decoration: line-through; text-decoration-thickness: 1.5px; text-decoration-color: var(--ink-3); }
 .tl-item .tl-task {
   position: relative;
   display: flex; align-items: flex-start; gap: var(--s-3);
@@ -5807,11 +5932,16 @@ body.lang-en .tl-item .tl-seal { font-size: var(--t-micro); padding: 0 4px; }
 }
 
 /* related supports: kanji mark + name, plain links */
-.v-plan .tl-related { display: grid; padding-top: var(--s-3); }
+.v-plan .tl-related { display: grid; padding-top: var(--s-2); }
 .v-plan .tl-related-k {
-  font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui);
-  letter-spacing: var(--ls-label); color: var(--ink-3);
+  display: flex; align-items: center; gap: 8px; min-height: var(--tap); cursor: pointer; list-style: none; width: max-content; max-width: 100%;
+  font-family: var(--font-display); font-weight: 700; font-size: var(--t-meta); line-height: var(--lh-ui);
+  letter-spacing: var(--ls-label); color: var(--ink-2);
 }
+.v-plan .tl-related-k::-webkit-details-marker { display: none; }
+.v-plan .tl-related-k::before { content: "＋"; font-weight: 700; color: var(--ink); }
+.v-plan .tl-related[open] > .tl-related-k::before { content: "－"; }
+.v-plan .tl-related-k:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .v-plan .tl-related-links { display: flex; flex-wrap: wrap; gap: 0 18px; margin: 0; padding: 0; list-style: none; }
 .v-plan .tl-related-links > li { min-width: 0; max-width: 100%; }
 .v-plan .tl-rel-link {
@@ -6563,3 +6693,53 @@ html.m-reduce .v-learn .ln-segs.is-full .ln-seg > i { transition-delay: 0ms; }
   .v-learn :is(.ln-hanko-in, .ln-done).is-pre { opacity: 1; }
   .v-learn .ln-fin-ground.is-pre { transform: none; }
 }
+
+/* =====================================================================
+   v5 (SPEC-v5): fewer words, a deck of flat panels, big quiz feedback
+   ===================================================================== */
+/* list rows: title, then the minutes as a small Plex figure (no blurb, no eyebrow) */
+.v-learn .ln-min { font-family: var(--font-num); font-weight: 700; font-size: var(--t-meta); letter-spacing: var(--ls-0); color: var(--ink-2); }
+.v-learn .ln-row { align-items: center; }
+.v-learn .ln-row-body { gap: 2px; }
+
+/* the step panel: a flat sheet of paper framed by one hairline (radius 2px) — the deck's card */
+.v-learn .ln-stage { position: relative; z-index: 1; }
+.v-learn .ln-stage > .ln-step {
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--rule-2);
+  border-radius: 2px;
+  padding: var(--s-5) var(--s-4) var(--s-6);
+}
+@media (min-width: 600px) { .v-learn .ln-stage > .ln-step { padding: var(--s-6) var(--s-6) var(--s-7); } }
+.v-learn .ln-stage > .ln-step > .ln-cover { margin-top: calc(var(--s-5) * -1 + 1px); margin-inline: calc(var(--s-4) * -1 + 1px); width: calc(100% + 2 * var(--s-4) - 2px); max-width: none; }
+@media (min-width: 600px) { .v-learn .ln-stage > .ln-step > .ln-cover { margin: 0; width: 100%; } }
+/* the receding copy of the last panel (learn.js goStep): under the live stage */
+.v-learn .ln-ghost { z-index: 0; will-change: transform, opacity; }
+.v-learn .ln-ghost > .ln-step { box-shadow: inset 0 0 0 1px var(--rule-2), 0 0 0 0 transparent; }
+
+/* 「くわしく」 under a step / an explanation */
+.v-learn .ln-more-in > .more-btn { font-size: var(--t-meta); color: var(--ink-2); }
+.v-learn .ln-more-in > .more-body { padding: 0 0 var(--s-2); font-size: var(--fs-md); }
+.v-learn .ln-text-rest { font-size: var(--fs-md); line-height: 1.85; color: var(--ink-2); }
+.v-learn .ln-cmp-more { display: grid; gap: var(--s-4); }
+.v-learn .ln-cmp-pts-h { font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); color: var(--ink); }
+.v-learn .ln-fb-box .ln-more-in > .more-btn { color: var(--ink); }
+
+/* quiz: the colour sweeps across the option from its key */
+.v-learn .ln-opt > .ln-opt-sweep {
+  position: absolute; inset: 0; z-index: 0; border-radius: inherit; pointer-events: none;
+  transform-origin: left center;
+}
+.v-learn .ln-opt-sweep.is-ok { background: var(--action-tint); }
+.v-learn .ln-opt-sweep.is-ng { background: var(--amber-tint); }
+.v-learn .ln-opts .ln-opt.has-sweep { background: var(--paper); }
+.v-learn .ln-opt > :is(.ln-opt-key, .ln-opt-t) { position: relative; z-index: 1; }
+.v-learn .ln-opts .ln-opt.is-correct { box-shadow: inset 0 0 0 3px var(--action); }
+/* the 正解 seal: bigger, so it reads from arm's length */
+.v-learn .ln-stamp-in { min-height: 30px; padding: 0 12px; font-size: var(--fs-md); box-shadow: inset 0 0 0 2.5px var(--action); }
+.v-learn .ln-opt-res:has(.ln-stamp) { top: -15px; }
+.v-learn .ln-fb-box .ln-fb-h { font-size: var(--t-h2); }
+.v-learn .ln-fb-a { font-size: var(--fs-lg); }
+
+/* the keyboard hint only where there is a keyboard */
+@media (hover: none), (pointer: coarse) { .v-learn .ln-keys { display: none !important; } }

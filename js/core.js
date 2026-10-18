@@ -1,4 +1,4 @@
-/* 巣立ちマップ v4 — core (ENGINE)
+/* 巣立ちマップ v5 — core (ENGINE)
  * Defines window.SM: store, state, i18n, router, delegated events, sheet, toast, copy, furigana.
  * Navigation runs through SM.motion.transition (MOTION-SPEC §3): the update callback renders, mounts,
  * writes chrome classes, restores scroll and focuses — in that order, with no layout reads before the
@@ -245,20 +245,20 @@
     'core.saved': { ja: 'やることに追加しました', en: 'Added to your to-do list' },
     'core.unsaved': { ja: 'やることから外しました', en: 'Removed from your to-do list' },
     'core.copied': { ja: 'コピーしました', en: 'Copied' },
-    'core.copyFail': { ja: 'コピーできませんでした。長押しで選んでコピーしてください', en: 'Could not copy. Press and hold to select it.' },
+    'core.copyFail': { ja: 'コピーできません。長押しで選んでください', en: 'Couldn’t copy. Press and hold to select.' },
     'core.close': { ja: '閉じる', en: 'Close' },
     'core.back': { ja: '戻る', en: 'Back' },
     'core.errTitle': { ja: 'この画面を表示できませんでした', en: 'This page could not be shown' },
-    'core.errBody': { ja: 'ごめんなさい。こちらの不具合です。あなたのせいではありません。もう一度ためすか、ホームに戻ってください。', en: 'Sorry, something went wrong on our side. Please try again or go back home.' },
+    'core.errBody': { ja: 'ごめんなさい、こちらの不具合です（あなたのせいではありません）。', en: 'Sorry — something went wrong on our side, not yours.' },
     'core.retry': { ja: 'もう一度ためす', en: 'Try again' },
     'core.home': { ja: 'ホームへ', en: 'Go home' },
     'core.escAgain': { ja: 'もう一度 Esc で、すぐ閉じます', en: 'Press Esc again to leave quickly' },
     'core.exit': { ja: 'すぐ閉じる', en: 'Quick exit' },
-    'core.exitHint': { ja: 'この画面をすぐに天気の検索に切りかえます', en: 'Instantly switch to a weather search' },
+    'core.exitHint': { ja: 'すぐに天気の検索に切りかえます', en: 'Switch to a weather search at once' },
     'core.newtab': { ja: '（新しいタブで開きます）', en: '(opens in a new tab)' },
     'core.undo': { ja: '元に戻す', en: 'Undo' },
     'core.undone': { ja: '元に戻しました', en: 'Undone' },
-    'core.offline': { ja: 'いまオフラインです。公式ページは開けません。支援の一覧・地図・やることは、このまま使えます。', en: 'You are offline. Official pages can\'t open, but the list, map and to-do still work.' }
+    'core.offline': { ja: 'オフラインです。公式ページは開けません（一覧・地図・やることは使えます）', en: 'Offline: official pages won’t open (the list, map and to-do still work).' }
   });
 
   /* ------------------------------------------------------------------ toast
@@ -274,8 +274,8 @@
     clearTimeout(toastTimer);
     if (!el.classList.contains('is-show')) return;
     toastHiding = true;
-    var a = mAnimate(el, [{ opacity: 1, translate: '0 0' }, { opacity: 0, translate: '0 6px' }],
-      { duration: 160, easing: 'cubic-bezier(0.3, 0, 0.8, 0.15)', fill: 'forwards', key: 'toast' });
+    var a = mAnimate(el, [{ opacity: 1, translate: '0 0' }, { opacity: 0, translate: '0 16px' }],
+      { duration: 220, easing: 'cubic-bezier(0.3, 0, 0.8, 0.15)', fill: 'forwards', key: 'toast' });
     var fin = function () {
       if (!toastHiding) return;
       toastHiding = false;
@@ -444,7 +444,7 @@
       var cur = el._smA && el._smA.toast;
       if (cur) { try { cur.cancel(); } catch (e) { } }
       el.style.translate = ''; el.style.opacity = '';
-      mAnimate(el, [{ opacity: 0, translate: '0 12px' }, { opacity: 1, translate: '0 0' }], { spring: 'snappy', key: 'toast' });
+      mAnimate(el, [{ opacity: 0, translate: '0 32px' }, { opacity: 1, translate: '0 0' }], { spring: 'rise', key: 'toast' });
     }
     toastArm(el, ms);
   };
@@ -1294,9 +1294,11 @@
       else kind = 'forward';
     }
     if (firstRoute) kind = 'none';
-    var seenBefore = !!visited[hash];
+
     visited[hash] = true;
-    var instant = kind === 'back' || (kind === 'tab' && seenBefore) || (kind === 'none' && !firstRoute);
+    // v5: a tab revisited plays its entrance again (motion on every screen); only Back and in-place renders land
+    // instantly (Back must restore the scroll position onto a finished page, MOTION-SPEC §3.8)
+    var instant = kind === 'back' || (kind === 'none' && !firstRoute);
     var restoreY = kind === 'back' && scrollMem[hash] ? scrollMem[hash] : 0;
     // remember what opened the next screen, so Back can put focus there again
     if (prevHash && kind === 'forward') {

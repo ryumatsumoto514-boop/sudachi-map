@@ -1,6 +1,6 @@
 ;
 /* ---- js/core.js ---- */
-/* 巣立ちマップ v4 — core (ENGINE)
+/* 巣立ちマップ v5 — core (ENGINE)
  * Defines window.SM: store, state, i18n, router, delegated events, sheet, toast, copy, furigana.
  * Navigation runs through SM.motion.transition (MOTION-SPEC §3): the update callback renders, mounts,
  * writes chrome classes, restores scroll and focuses — in that order, with no layout reads before the
@@ -247,20 +247,20 @@
     'core.saved': { ja: 'やることに追加しました', en: 'Added to your to-do list' },
     'core.unsaved': { ja: 'やることから外しました', en: 'Removed from your to-do list' },
     'core.copied': { ja: 'コピーしました', en: 'Copied' },
-    'core.copyFail': { ja: 'コピーできませんでした。長押しで選んでコピーしてください', en: 'Could not copy. Press and hold to select it.' },
+    'core.copyFail': { ja: 'コピーできません。長押しで選んでください', en: 'Couldn’t copy. Press and hold to select.' },
     'core.close': { ja: '閉じる', en: 'Close' },
     'core.back': { ja: '戻る', en: 'Back' },
     'core.errTitle': { ja: 'この画面を表示できませんでした', en: 'This page could not be shown' },
-    'core.errBody': { ja: 'ごめんなさい。こちらの不具合です。あなたのせいではありません。もう一度ためすか、ホームに戻ってください。', en: 'Sorry, something went wrong on our side. Please try again or go back home.' },
+    'core.errBody': { ja: 'ごめんなさい、こちらの不具合です（あなたのせいではありません）。', en: 'Sorry — something went wrong on our side, not yours.' },
     'core.retry': { ja: 'もう一度ためす', en: 'Try again' },
     'core.home': { ja: 'ホームへ', en: 'Go home' },
     'core.escAgain': { ja: 'もう一度 Esc で、すぐ閉じます', en: 'Press Esc again to leave quickly' },
     'core.exit': { ja: 'すぐ閉じる', en: 'Quick exit' },
-    'core.exitHint': { ja: 'この画面をすぐに天気の検索に切りかえます', en: 'Instantly switch to a weather search' },
+    'core.exitHint': { ja: 'すぐに天気の検索に切りかえます', en: 'Switch to a weather search at once' },
     'core.newtab': { ja: '（新しいタブで開きます）', en: '(opens in a new tab)' },
     'core.undo': { ja: '元に戻す', en: 'Undo' },
     'core.undone': { ja: '元に戻しました', en: 'Undone' },
-    'core.offline': { ja: 'いまオフラインです。公式ページは開けません。支援の一覧・地図・やることは、このまま使えます。', en: 'You are offline. Official pages can\'t open, but the list, map and to-do still work.' }
+    'core.offline': { ja: 'オフラインです。公式ページは開けません（一覧・地図・やることは使えます）', en: 'Offline: official pages won’t open (the list, map and to-do still work).' }
   });
 
   /* ------------------------------------------------------------------ toast
@@ -276,8 +276,8 @@
     clearTimeout(toastTimer);
     if (!el.classList.contains('is-show')) return;
     toastHiding = true;
-    var a = mAnimate(el, [{ opacity: 1, translate: '0 0' }, { opacity: 0, translate: '0 6px' }],
-      { duration: 160, easing: 'cubic-bezier(0.3, 0, 0.8, 0.15)', fill: 'forwards', key: 'toast' });
+    var a = mAnimate(el, [{ opacity: 1, translate: '0 0' }, { opacity: 0, translate: '0 16px' }],
+      { duration: 220, easing: 'cubic-bezier(0.3, 0, 0.8, 0.15)', fill: 'forwards', key: 'toast' });
     var fin = function () {
       if (!toastHiding) return;
       toastHiding = false;
@@ -446,7 +446,7 @@
       var cur = el._smA && el._smA.toast;
       if (cur) { try { cur.cancel(); } catch (e) { } }
       el.style.translate = ''; el.style.opacity = '';
-      mAnimate(el, [{ opacity: 0, translate: '0 12px' }, { opacity: 1, translate: '0 0' }], { spring: 'snappy', key: 'toast' });
+      mAnimate(el, [{ opacity: 0, translate: '0 32px' }, { opacity: 1, translate: '0 0' }], { spring: 'rise', key: 'toast' });
     }
     toastArm(el, ms);
   };
@@ -1296,9 +1296,11 @@
       else kind = 'forward';
     }
     if (firstRoute) kind = 'none';
-    var seenBefore = !!visited[hash];
+
     visited[hash] = true;
-    var instant = kind === 'back' || (kind === 'tab' && seenBefore) || (kind === 'none' && !firstRoute);
+    // v5: a tab revisited plays its entrance again (motion on every screen); only Back and in-place renders land
+    // instantly (Back must restore the scroll position onto a finished page, MOTION-SPEC §3.8)
+    var instant = kind === 'back' || (kind === 'none' && !firstRoute);
     var restoreY = kind === 'back' && scrollMem[hash] ? scrollMem[hash] : 0;
     // remember what opened the next screen, so Back can put focus there again
     if (prevHash && kind === 'forward') {
@@ -1654,8 +1656,12 @@
 })();
 ;
 /* ---- js/components.js ---- */
-/* 巣立ちマップ v4 — components.js (SYSTEM)
+/* 巣立ちマップ v5 — components.js (ENGINE; was SYSTEM)
    SM.CATS and SM.ui.* — every function returns an HTML string. See DESIGN.md §6.
+   v5 (SPEC-v5 Part B, fewer words): programCard is lean by default (mark + name + one key fact + fact tags + save;
+   {full:true} brings the v4 row back), listItem takes an amount / tags and no grey sub-line unless asked, fact tags
+   (返さなくていい・締切・無料・24時間) via SM.ui.factTags, label/value strips via SM.ui.keyFacts, and a 「くわしく」
+   expand-in-place disclosure via SM.ui.more(label, contentHtml, opts). Section heads rise and draw their rule.
    v4: one drawn arrow everywhere (SM.ui.arrow), chips that never shift when pressed (.chip-l), section heads
    whose 2px rule draws in (data-reveal="rule"), kanji marks that travel between screens (data-vt="cat"),
    spot illustrations in empty states (SM.illus, guarded), a bar progress for question flows.
@@ -1740,6 +1746,17 @@
     'ui.hours': { ja: '受付時間', en: 'Hours' },
     'ui.free': { ja: '無料', en: 'Free' },
     'ui.more': { ja: 'もっと見る', en: 'See all' },
+    'ui.details': { ja: 'くわしく', en: 'Details' },
+    'ui.detailsClose': { ja: 'とじる', en: 'Close' },
+    'ui.tag.grant': { ja: '返さなくていい', en: 'No payback' },
+    'ui.tag.loan': { ja: 'あとで返す', en: 'Pay back later' },
+    'ui.tag.cond': { ja: '返済なしの場合も', en: 'May be forgiven' },
+    'ui.tag.deadline': { ja: '締切 {v}', en: 'Due {v}' },
+    'ui.tag.deadlineAny': { ja: '締切あり', en: 'Deadline' },
+    'ui.tag.free': { ja: '無料', en: 'Free' },
+    'ui.tag.h24': { ja: '24時間', en: '24h' },
+    'ui.tag.always': { ja: 'いつでも', en: 'Anytime' },
+    'ui.tag.right': { ja: '申請は権利', en: 'Your right' },
     'ui.progress': { ja: '進みぐあい', en: 'Progress' }
   };
   LOCAL = STR;
@@ -2110,13 +2127,118 @@
     return v ? '<p class="amount' + (o.size ? ' amount-' + esc(o.size) : '') + '">' + amountHtml(v) + '</p>' : '';
   };
 
-  /* programCard(p, {why, compact, showSave, href, headingLevel, vt}) — a ruled list row:
-     [32 mark] eyebrow (who runs it ／ category) / title / one line / amount / 返済・申込 as labelled text / 理由   [☆ 44]
-     The mark is the source of the shared morph into the program page (vt:false turns that off).
+  /* factTag(kind[, value]) — one fact as a flat 22px tag, never a sentence.
+     kinds: grant (返さなくていい, green) · loan (あとで返す, amber) · cond (返済なしの場合も, amber) · deadline (締切 {value},
+     amber; no value → 締切あり) · free (無料, green) · h24 (24時間, ink outline) · always (いつでも) · right (申請は権利). */
+  var FACT_TONE = { grant: 'free', loan: 'loan', cond: 'loan', deadline: 'deadline', free: 'free', h24: 'right', always: 'neutral', right: 'right' };
+  SM.ui.factTag = function (kind, value) {
+    if (!FACT_TONE[kind]) return '';
+    var label = kind === 'deadline' ? (value ? t('ui.tag.deadline', { v: L(value) }) : t('ui.tag.deadlineAny')) : t('ui.tag.' + kind);
+    return '<span class="tag tag-' + FACT_TONE[kind] + ' tag-fact" data-fact="' + esc(kind) + '" data-noruby>' + esc(label) + '</span>';
+  };
+  /* programFacts(p, {max, skip:[kinds]}) -> [{kind, value}] — the facts a row can show as tags, most useful first:
+     返済 (grant / loan / cond), 締切 (short), 無料 (free dial), 24時間, 申請は権利. */
+  function shortDeadline(d) {
+    var x = deadlineInfo(d);
+    if (!x || x.tone !== 'deadline') return null;
+    var v = factSplit(x.value).head;
+    return v.length > (en() ? 18 : 10) ? null : v;
+  }
+  SM.ui.programFacts = function (p, o) {
+    o = o || {};
+    if (!p) return [];
+    var skip = o.skip || [], out = [];
+    var add = function (k, v) { if (skip.indexOf(k) === -1) out.push({ kind: k, value: v }); };
+    if (p.repay === 'none' || (!p.repay && p.kind === 'grant')) add('grant');
+    else if (p.repay === 'conditional' || p.kind === 'loan_forgivable') add('cond');
+    else if (p.repay === 'yes' || p.kind === 'loan') add('loan');
+    var di = deadlineInfo(p.deadline);
+    // leaveMonths is planning timing (when to start), not a cut-off: some of these can be used for years after leaving
+    if (di && di.tone === 'deadline' && typeof (p.deadline || {}).leaveMonths !== 'number') add('deadline', shortDeadline(p.deadline));
+    var c = p.contact || {};
+    var hours = L(c.hours) || '';
+    if (/24\s*時間|24\s*h|24 hours/i.test(hours)) add('h24');
+    if (c.phone && /^0120|^0800/.test(String(c.phone).replace(/\D/g, ''))) add('free');
+    if (p.right) add('right');
+    return out.slice(0, o.max || 3);
+  };
+  /* factTags(p | [{kind, value}], {max, skip}) -> '<span class="tags tags-fact">…</span>' ('' when none; a span, so it
+     is valid inside a link or button row) */
+  SM.ui.factTags = function (src, o) {
+    var list = Array.isArray(src) ? src : SM.ui.programFacts(src, o);
+    if (o && o.max) list = list.slice(0, o.max);
+    var html = list.map(function (f) { return SM.ui.factTag(f.kind, f.value); }).join('');
+    return html ? '<span class="tags tags-fact">' + html + '</span>' : '';
+  };
+
+  /* keyFacts([{label, value, tone, unit, html}], {cls}) — facts as format, not sentences: a strip of label/value cells
+     (big value, small label above), 2–3 per row on phones. value is text ({ja,en} ok; numbers inside are set big by
+     amountHtml); html: trusted value markup instead. tone: free (green) · deadline / loan (amber) · muted. */
+  SM.ui.keyFacts = function (rows, o) {
+    o = o || {};
+    var cells = (rows || []).filter(function (r) { return r && (r.html || (r.value != null && r.value !== '')); }).map(function (r) {
+      var v = r.html != null ? r.html : amountHtml(L(r.value));
+      return '<div class="kf' + (r.tone ? ' kf-' + esc(r.tone) : '') + '"><dt class="kf-k">' + esc(L(r.label)) + '</dt>' +
+        '<dd class="kf-v">' + v + (r.unit ? '<span class="unit">' + esc(L(r.unit)) + '</span>' : '') + '</dd></div>';
+    });
+    return cells.length ? '<dl class="keyfacts' + (o.cls ? ' ' + esc(o.cls) : '') + '" data-reveal-stagger="50">' + cells.join('') + '</dl>' : '';
+  };
+
+  /* more(label, contentHtml, {open, id, closeLabel, cls, inline}) — 「くわしく」: a disclosure that opens IN PLACE.
+     A real <button aria-expanded aria-controls> + a region (hidden when closed). The engine animates it (space opens,
+     the content drops in; SM.motion.expand). label defaults to くわしく / Details; closeLabel (default: the same label)
+     is shown while open. contentHtml is trusted HTML. inline:true renders a quiet text-size trigger (inside cards). */
+  var moreSeq = 0;
+  SM.ui.more = function (label, content, o) {
+    if (label && typeof label === 'object' && !label.ja && !label.en) { o = label; label = null; }
+    o = o || {};
+    var id = o.id || 'more-' + (++moreSeq) + '-' + Math.random().toString(36).slice(2, 6);
+    var lab = label ? L(label) : t('ui.details');
+    var lab2 = o.closeLabel ? L(o.closeLabel) : lab;
+    var open = !!o.open;
+    return '<div class="more' + (o.inline ? ' more-inline' : '') + (open ? ' is-open' : '') + (o.cls ? ' ' + esc(o.cls) : '') + '">' +
+      '<button type="button" class="more-btn" data-act="more" aria-expanded="' + open + '" aria-controls="' + esc(id) + '"' +
+        ' data-label="' + esc(lab) + '" data-label-open="' + esc(lab2) + '">' +
+        '<span class="more-l">' + esc(open ? lab2 : lab) + '</span><span class="more-ic" aria-hidden="true"></span></button>' +
+      '<div class="more-body" id="' + esc(id) + '" role="region" aria-label="' + esc(lab) + '"' + (open ? '' : ' hidden') + '>' + (content || '') + '</div>' +
+    '</div>';
+  };
+  function moreToggle(btn) {
+    var box = btn.closest ? btn.closest('.more') : null;
+    var body = box ? box.querySelector(':scope > .more-body') : null;
+    if (!box || !body) return;
+    var open = btn.getAttribute('aria-expanded') !== 'true';
+    var lab = btn.querySelector('.more-l');
+    var set = function (v) {
+      body.hidden = !v;
+      box.classList.toggle('is-open', v);
+      btn.setAttribute('aria-expanded', v ? 'true' : 'false');
+    };
+    var nextLabel = open ? btn.getAttribute('data-label-open') : btn.getAttribute('data-label');
+    if (lab && nextLabel && lab.textContent !== nextLabel) lab.textContent = nextLabel;
+    if (SM.motion && typeof SM.motion.expand === 'function') {
+      // the button's own state flips now (screen readers hear it at once); the region follows with the animation
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      box.classList.toggle('is-open', open);
+      SM.motion.expand(box, open, { setOpen: set, body: body });
+    } else set(open);
+    if (open && SM.applyRuby) { try { SM.applyRuby(body); } catch (e) { } }
+  }
+  SM.ui.moreToggle = moreToggle;
+  if (SM.on) SM.on('more', function (el) { moreToggle(el); });
+
+  /* programCard(p, {why, compact, showSave, href, headingLevel, vt, full, hook, whyInline, facts, tags}) — a ruled row.
+     v5 default (lean, SPEC-v5 Part B): [32 mark]  name / ONE key fact (the amount's headline) / fact tags
+     (返さなくていい・締切・無料・24時間, max 3)   [☆ 44]. No eyebrow, no grey summary line, no labelled facts: the program
+     page carries them. hook:true adds the one-line hook back; whyInline:true shows the 理由 line (otherwise the reason
+     is read to screen readers only); tags:false drops the tags; facts: [{kind,value}] overrides them.
+     full:true renders the v4 row (eyebrow / title / hook / amount / labelled facts / 理由).
+     The mark and the title are the sources of the shared morph into the program page (vt:false turns that off).
      The article carries data-id so a back navigation finds the row again. */
   SM.ui.programCard = function (p, o) {
     if (!p) return '';
     o = o || {};
+    if (!o.full) return leanCard(p, o);
     var cat = (p.cat && p.cat[0]) || 'procedures';
     var href = o.href || '#/p/' + encodeURIComponent(p.id);
     var h = 'h' + (o.headingLevel || 3);
@@ -2154,7 +2276,7 @@
       '<div class="pcard-mark">' + SM.ui.catIcon(cat, null, { vt: o.vt !== false }) + '</div>' +
       '<div class="pcard-main">' +
         '<p class="pcard-eyebrow">' + eyebrow.join('<span class="pcard-sep" aria-hidden="true">／</span>') + '</p>' +
-        '<' + h + ' class="pcard-title"><a class="pcard-link" href="' + esc(href) + '">' + esc(name) + '</a></' + h + '>' +
+        '<' + h + ' class="pcard-title"' + (o.vt !== false ? ' data-vt="title"' : '') + '><a class="pcard-link" href="' + esc(href) + '">' + esc(name) + '</a></' + h + '>' +
         (line ? '<p class="pcard-hook">' + esc(line) + '</p>' : '') +
         (amt && !o.compact ? '<p class="pcard-amount"><span class="sr-only">' + esc(t('ui.amount')) + ': </span>' + amountHtml(amt.text) +
           (amt.more ? '<span class="pcard-amount-more">' + esc(t('ui.amountMore')) + '</span>' : '') + '</p>' : '') +
@@ -2164,6 +2286,39 @@
     '</article>';
   };
 
+  function leanCard(p, o) {
+    var cat = (p.cat && p.cat[0]) || 'procedures';
+    var href = o.href || '#/p/' + encodeURIComponent(p.id);
+    var h = 'h' + (o.headingLevel || 3);
+    var saved = isSaved(p.id);
+    var name = L(p.name);
+    var showSave = o.showSave !== false;
+    var amount = L(p.amount);
+    var amt = amount ? amountClause(amount) : null;
+    var key = '';
+    if (amt && amt.text && !o.compact) {
+      key = '<p class="pcard-key pcard-amount"><span class="sr-only">' + esc(t('ui.amount')) + ': </span>' + amountHtml(amt.text) + '</p>';
+    }
+    var facts = o.facts || SM.ui.programFacts(p, { max: 3 });
+    var tags = o.tags === false ? '' : SM.ui.factTags(facts);
+    var hook = o.hook ? (L(p.hook) || L(p.summary)) : '';
+    var w = whyText(o.why);
+    var why = !w ? '' : o.whyInline ?
+      '<p class="pcard-why"><span class="pcard-why-k" aria-hidden="true">' + esc(t('ui.whyShort')) + '</span><span><span class="sr-only">' + esc(t('ui.why')) + ': </span>' + esc(w) + '</span></p>' :
+      '<p class="sr-only">' + esc(t('ui.why')) + ': ' + esc(w) + '</p>';
+    var save = showSave ?
+      '<button type="button" class="pcard-save" data-act="save" data-id="' + esc(p.id) + '" aria-pressed="' + saved + '" aria-label="' + esc(t('ui.save') + '：' + name) + '" title="' + esc(t('ui.save')) + '">' +
+      icon(saved ? 'star-fill' : 'star') + '</button>' : '';
+    return '<article class="pcard pcard-lean' + (o.compact ? ' pcard-compact' : '') + (saved ? ' is-saved' : '') + '" data-id="' + esc(p.id) + '" data-cat="' + esc(cat) + '">' +
+      '<div class="pcard-mark">' + SM.ui.catIcon(cat, null, { vt: o.vt !== false }) + '</div>' +
+      '<div class="pcard-main">' +
+        '<' + h + ' class="pcard-title"' + (o.vt !== false ? ' data-vt="title"' : '') + '><a class="pcard-link" href="' + esc(href) + '">' + esc(name) + '</a></' + h + '>' +
+        (hook ? '<p class="pcard-hook">' + esc(hook) + '</p>' : '') +
+        key + tags + why +
+      '</div>' + save +
+    '</article>';
+  }
+
   /* sectionHeader(title, {sub, action: html | {label, href, act, arrow}, level, id, num, plain, reveal, cls})
      The one section head for every view:   01  困りごとから見る                 すべて見る →
                                                 いちばん近いものをえらんでね
@@ -2172,7 +2327,8 @@
      3 台本). A page's sections are not a sequence, so a num without seq is ignored (v4 round 3: the "01 ──" index
      read as decoration and drifted by persona). plain: true drops the rule.
      The rule is its own element (.section-rule) and draws in from the left when revealed (data-reveal="rule");
-     reveal: false keeps it static (in-place re-renders). */
+     v5: the title block rises 28px with it (data-reveal on .section-head-text) and the rule follows 80ms later, both
+     as they scroll into view. reveal: false keeps both static (in-place re-renders). */
   SM.ui.sectionHeader = function (title, o) {
     o = o || {};
     var lv = 'h' + (o.level || 2);
@@ -2182,8 +2338,9 @@
         '<a class="section-action" href="' + esc(o.action.href) + '"' + (o.action.act ? ' data-act="' + esc(o.action.act) + '"' : '') + '><span>' + esc(L(o.action.label || t('ui.more'))) + '</span>' + SM.ui.arrow(o.action.arrow || 'r') + '</a>';
     }
     var num = o.seq && o.num != null && o.num !== '' ? '<span class="section-num" aria-hidden="true">' + esc(typeof o.num === 'number' ? (o.num < 10 ? '0' + o.num : String(o.num)) : o.num) + '</span>' : '';
-    var rule = o.plain ? '' : '<span class="section-rule"' + (o.reveal === false ? '' : ' data-reveal="rule"') + ' aria-hidden="true"></span>';
-    return '<div class="section-head' + (o.plain ? ' is-plain' : '') + (o.cls ? ' ' + esc(o.cls) : '') + '"><div class="section-head-text">' + num +
+    var rv = o.reveal !== false;
+    var rule = o.plain ? '' : '<span class="section-rule"' + (rv ? ' data-reveal="rule" data-reveal-delay="80"' : '') + ' aria-hidden="true"></span>';
+    return '<div class="section-head' + (o.plain ? ' is-plain' : '') + (o.cls ? ' ' + esc(o.cls) : '') + '"><div class="section-head-text"' + (rv ? ' data-reveal="up"' : '') + '>' + num +
       '<' + lv + ' class="section-title"' + (o.id ? ' id="' + esc(o.id) + '"' : '') + '>' + esc(L(title)) + '</' + lv + '>' +
       (o.sub ? '<p class="section-sub">' + esc(L(o.sub)) + '</p>' : '') + '</div>' + act + rule + '</div>';
   };
@@ -2259,18 +2416,29 @@
     return '<button type="button" class="' + cls + '" aria-pressed="' + (o.selected ? 'true' : 'false') + '"' + actAttrs(o) + '>' + inner + '</button>';
   };
 
-  /* listItem({title, sub, href, act, attrs, icon, cat, meta, unit, chevron, id})  — ruled row, trailing drawn arrow.
-     meta: a count or short text at the right ('12'), unit: its small unit ('件'). id: data-id (back finds the row).
-     A row with a category mark that navigates is the source of the shared category morph. */
+  /* listItem({title, sub, subSr, href, act, attrs, icon, cat, meta, unit, amount, tags, count, chevron, id, vt})
+     — ruled row, trailing drawn arrow. v5: name + count / amount, no grey sub-line unless the view passes `sub`
+     (only where two rows would be confused without it); subSr: the same explanation for screen readers only.
+     meta: a count or short text at the right ('12'), unit: its small unit ('件'); count:true rolls meta (odometer).
+     amount: a money string shown at the right with its numbers set big (月5万円). tags: [{kind,value}] fact tags or
+     an HTML string, under the title. id: data-id (back finds the row).
+     A row with a category mark that navigates is the source of the shared category morph; its title morphs into
+     the next page's heading (vt:false turns both off). */
   SM.ui.listItem = function (o) {
     o = o || {};
     var nav = !!(o.href || o.act);
     var lead = o.cat ? SM.ui.catIcon(o.cat, 'sm', { vt: !!o.href && o.vt !== false }) : o.icon ? '<span class="list-ic">' + icon(o.icon) + '</span>' : '';
     var showChev = o.chevron !== false && nav;
     var hasMeta = o.meta != null && o.meta !== '';
-    var meta = hasMeta ? '<span class="list-count">' + esc(typeof o.meta === 'object' ? L(o.meta) : String(o.meta)) + (o.unit ? '<span class="unit">' + esc(L(o.unit)) + '</span>' : '') + '</span>' : '';
-    var inner = lead + '<span class="list-body"><span class="list-title">' + esc(L(o.title)) + '</span>' +
-      (o.sub ? '<span class="list-sub">' + esc(L(o.sub)) + '</span>' : '') + '</span>' +
+    var mv = hasMeta ? (typeof o.meta === 'object' ? L(o.meta) : String(o.meta)) : '';
+    var meta = hasMeta ? '<span class="list-count"><span class="list-count-v"' + (o.count && /^\d+$/.test(mv) ? ' data-count="' + esc(mv) + '"' : '') + '>' + esc(mv) + '</span>' + (o.unit ? '<span class="unit">' + esc(L(o.unit)) + '</span>' : '') + '</span>' : '';
+    var amt = o.amount ? L(o.amount) : '';
+    if (amt) { meta = '<span class="list-amount">' + amountHtml(amt) + '</span>' + meta; hasMeta = true; }
+    var tags = !o.tags ? '' : typeof o.tags === 'string' ? o.tags : SM.ui.factTags(o.tags);
+    var vtT = !!o.href && o.vt !== false ? ' data-vt="title"' : '';
+    var inner = lead + '<span class="list-body"><span class="list-title"' + vtT + '>' + esc(L(o.title)) + '</span>' +
+      (o.sub ? '<span class="list-sub">' + esc(L(o.sub)) + '</span>' : o.subSr ? '<span class="sr-only">' + esc(L(o.subSr)) + '</span>' : '') +
+      (tags ? tags.replace('class="tags tags-fact"', 'class="tags tags-fact list-tags"') : '') + '</span>' +
       (hasMeta || showChev ? '<span class="list-meta">' + meta + (showChev ? SM.ui.arrow('r', 'list-chev') : '') + '</span>' : '');
     var id = o.id != null ? ' data-id="' + esc(o.id) + '"' : '';
     if (o.href) return '<a class="list-item" href="' + esc(o.href) + '"' + id + actAttrs(o) + '>' + inner + '</a>';
@@ -2933,22 +3101,28 @@
 ;
 /* ---- js/motion.js ---- */
 /* =====================================================================
-   巣立ちマップ v4 — motion.js  (owner: ENGINE)  — pairs with css/motion.css
-   Implements MOTION-SPEC.md §1–§7. Print/signage motion: rules that draw, type that rises from
-   behind a rule, hanko stamps, station-board digit rolls, tiles that travel. transform/opacity
-   only, every animation interruptible, nothing loops.
+   巣立ちマップ v5 — motion.js  (owner: ENGINE)  — pairs with css/motion.css
+   Implements MOTION-SPEC.md §1–§7 at the SPEC-v5 Part A scale: 280–520ms, 24–48px of travel, a spring
+   ease-out with ≤4% overshoot, stagger 50ms (cap 8). Print/signage motion: pages that push in with depth,
+   rules that draw, type that rises from behind a rule, hanko stamps, station-board digit rolls, a dot that
+   flies to やること. transform/opacity only, every animation interruptible, nothing loops.
 
    Content is visible by default: elements are hidden only after JS has marked them pending
    (html.motion-ready + .m-pending), so a missing IntersectionObserver / a JS error never hides
-   anything. Reduced motion is ONE switch: html.m-reduce (OS setting OR 設定 › 動きを少なく).
+   anything; a sweep (~1s after mount, after transitions, on <details> open, on resize) reveals any target
+   the observer missed. Reduced motion is ONE switch: html.m-reduce (OS setting OR 設定 › 動きを少なく):
+   it keeps short opacity fades (150–200ms) and colour changes, and drops every movement.
 
    ------------------------------------------------------------------ API (all on SM.motion)
-   tokens                         {ease, dur, stagger:40, staggerMax:6, spring:{snappy,smooth,stamp,flick}}
+   tokens                         {ease, dur, stagger:50, staggerMax:8, rise:28, spring:{snappy,smooth,stamp,flick,rise,pop}}
    reduced() -> bool              OS reduce OR settings.motion==='reduce' (html.m-reduce). Use this, never matchMedia.
    syncReduce() -> bool           re-read the OS + settings and toggle html.m-reduce (core.applySettings calls it)
-   tier() -> 'full'|'lite'|'off'  off = reduced; lite = save-data / <2GB / two slow transitions this session
+   tier() -> 'full'|'lite'|'off'  off = reduced; lite = save-data / deviceMemory <1GB at start, or (after the
+                                  first 2 navigations) a median of 8 transitions >450ms on a <4GB device. Lite
+                                  still moves (shorter travel, cap 5 stagger); it never turns motion off.
    spring(preset|{response,damping,velocity}) -> {easing, duration}
-   animate(el, keyframes, {duration, easing, spring, delay, fill, key, commit, clear}) -> Animation|null
+   animate(el, keyframes, {duration, easing, spring, delay, fill, key, commit, clear, reduceOk}) -> Animation|null
+                                  reduced: movement props are stripped, opacity/colour fade in 120–180ms
    sequence(steps, {ignoreHold}) -> {play(), skip(), cancel(), finished}
    hold(reason, maxMs=2400) -> release()      whenReleased(fn)      held() -> bool
    finishAll([root], {all, instant, noFlush})
@@ -2956,11 +3130,19 @@
    odometer(el, value, {from, format, duration, delay, direction, instant}) -> Promise
    count(el, to, {from, decimals, format, finalText, duration, tween})
    stamp(el, {ring}) -> Promise    check(el, {color, keep}) -> Promise   nudge(el)   pulse(el)
-   flyTo(fromEl, toEl, {duration, onArrive}) -> Promise
+   flyTo(fromEl, toEl|tabKey, {duration, onArrive, ghost}) -> Promise
+                                  a 14px green dot arcs to the target (tab), the tab icon pops, a ring lands,
+                                  the badge bumps. ghost:true flies a clone of fromEl instead.
+   badge(tabKey|.tab|.tab-badge, value, {roll, bump}) -> el   tab badge: pops in, rolls, fades out at 0
+   bump(el, {scale})               a one-shot spring scale (≤1.12)
+   expand(container, open, {setOpen, body, closedHeight}) -> Promise   in-place open/close (clip + followers);
+                                  SM.ui.more() and every details.disclose / details.more summary use it
    swapText(el, text) -> Promise   press(el)
    sheet(dialogEl, scrimEl, {drag, fast, onDismiss}) -> {open(), close(velocity), destroy(), isDialog()}
    shared(name, el)                sharedTarget(name, el)
    transition(kind, update, {from, to, shared}) -> Promise   kinds: forward|back|tab|none|theme|fade
+                                  forward/back = push with depth (old page shifts 30% and dims), tab = cross-fade
+                                  + indicator slide; shared names 'cat' (mark) and 'title' morph between pages
    afterTransition(fn[, {keep}])   skipTransition()      inTransition() -> bool
    scrollLinked(el, {prop, from, to, source, range}) -> {destroy()}
    indicator(bar, target, {vertical})
@@ -2969,10 +3151,10 @@
 
    Attributes wired by mount():
      data-reveal[=""|up|slide|fade|rule|underline|line|mark]   data-reveal-delay="ms"
-     data-reveal-stagger[="40"] (cap 6; lite 3)   data-count="222" (rolls; data-count-style="tween" = v3 tween,
+     data-reveal-stagger[="50"] (cap 8; lite 5)   data-count="222" (rolls; data-count-style="tween" = v3 tween,
      data-count-from, data-count-seen="key" → rolls only when changed since the last visit)
-     data-draw (SVG stroke draw)   data-press[="ink"] (also .btn and .tabbar .tab automatically)
-     data-scroll="fill-y|fill-x|fade"   data-vt="cat" / data-vt-hero="cat" / data-vt-scope (shared morphs)
+     data-draw (SVG stroke draw)   data-press[="ink"] (sink 2px + darken; also .btn/.chip/.tab… automatically)
+     data-scroll="fill-y|fill-x|fade"   data-vt="cat title" / data-vt-hero="cat title" / data-vt-scope (shared morphs)
    ===================================================================== */
 (function () {
   'use strict';
@@ -2998,8 +3180,13 @@
     rise: 'cubic-bezier(0.25, 1, 0.5, 1)',
     expo: 'cubic-bezier(0.16, 1, 0.3, 1)'
   };
-  var DUR = { instant: 90, quick: 160, base: 240, page: 300, morph: 420, draw: 440, hero: 520 };
-  var STAGGER = 40, STAGGER_MAX = 6;
+  /* v5 scale (SPEC-v5 Part A): 280–520ms, travel 24–48px, spring-like ease-out with a tiny overshoot, staggers
+     40–60ms capped at 8. v4 (90–300ms, 8–16px) read as "everything is still" on a phone. */
+  EASE.spring = 'cubic-bezier(0.22, 1.12, 0.36, 1)';   // ≈3% overshoot: the fallback where linear() is missing
+  EASE.push = 'cubic-bezier(0.16, 1, 0.3, 1)';         // page push: fast off the mark, long soft landing
+  var DUR = { instant: 100, quick: 200, base: 320, page: 440, morph: 480, draw: 560, hero: 560, reduce: 180 };
+  var STAGGER = 50, STAGGER_MAX = 8;
+  var RISE = 28;                                       // default reveal travel (px)
 
   /* ---------------------------------------------------------------- springs
      SwiftUI semantics: response = one undamped period (s), damping = damping fraction.
@@ -3009,13 +3196,19 @@
     snappy: { response: 0.30, damping: 0.86 },
     smooth: { response: 0.42, damping: 1.00 },
     stamp: { response: 0.32, damping: 0.62 },
-    flick: { response: 0.36, damping: 0.92 }
+    flick: { response: 0.36, damping: 0.92 },
+    // v5: reveals, press release, indicators — ≈3% overshoot, settles in ≈520ms
+    rise: { response: 0.48, damping: 0.76, velocity: 6 },
+    // v5: badge bump, tab icon pop — a little more bounce, short
+    pop: { response: 0.34, damping: 0.6 }
   };
   var SPRING_FALLBACK = {
     snappy: { easing: EASE.standard, duration: 320 },
     smooth: { easing: EASE.standard, duration: 400 },
     stamp: { easing: 'cubic-bezier(0.34, 1.4, 0.64, 1)', duration: 420 },
-    flick: { easing: EASE.standard, duration: 300 }
+    flick: { easing: EASE.standard, duration: 300 },
+    rise: { easing: EASE.spring, duration: 520 },
+    pop: { easing: 'cubic-bezier(0.34, 1.5, 0.64, 1)', duration: 420 }
   };
   function springPos(t, w0, z, v0) {
     if (z < 1) {
@@ -3082,28 +3275,31 @@
       var forced = ssGet('sm2:tier');
       if (forced === 'lite' || forced === 'full') tierVal = forced;
       else {
+        // lite from the start only on data saver or a device that reports under 1GB (deviceMemory 0.25 / 0.5)
         var c = navigator.connection, mem = navigator.deviceMemory;
-        tierVal = (c && c.saveData) || (mem && mem < 2) ? 'lite' : 'full';
+        tierVal = (c && c.saveData) || (mem && mem < 1) ? 'lite' : 'full';
       }
       docEl.classList.toggle('m-lite', tierVal === 'lite');
     }
     return tierVal;
   }
-  /* Downgrade on the MEDIAN of the last five update callbacks (MOTION-SPEC §6 rule 10), never on two single
-     samples: one cold route or a font arriving mid-session must not cost a phone its transitions for the whole
-     session. Samples that say nothing about the device are skipped: the first navigation after launch (cold code,
-     the first Intl / font work) and any taken while web fonts are still loading (each arriving face relayouts the
-     whole document inside the update). */
-  var navSeen = 0;
+  /* Demotion to 'lite' is for truly slow devices only (v5). v4 demoted a whole session after a median of 160ms over
+     five route renders, which a real phone reaches on the long lists (results, map) and then lost most of its
+     motion. Now: samples skip the first two navigations after launch (cold code, Intl, fonts) and any taken while
+     web fonts load; a session is demoted only when the MEDIAN of the last eight update callbacks is over 450ms, and
+     never on a device that reports 4GB of memory or more. sessionStorage 'sm2:tier' = 'full' | 'lite' forces it. */
+  var navSeen = 0, SAMPLES = 8, SLOW_MS = 450;
   function noteUpdate(ms) {
     navSeen++;
-    if (navSeen === 1) return;
+    if (navSeen <= 2) return;
     try { if (document.fonts && document.fonts.status === 'loading') return; } catch (e) { }
     vtTimes.push(ms);
-    if (vtTimes.length > 5) vtTimes.shift();
-    if (tierVal === 'lite' || ssGet('sm2:tier') === 'full' || vtTimes.length < 5) return;
-    var med = vtTimes.slice().sort(function (a, b) { return a - b; })[2];
-    if (med > 160) { tierVal = 'lite'; ssSet('sm2:tier', 'lite'); docEl.classList.add('m-lite'); }
+    if (vtTimes.length > SAMPLES) vtTimes.shift();
+    if (tierVal === 'lite' || ssGet('sm2:tier') === 'full' || vtTimes.length < SAMPLES) return;
+    var mem = navigator.deviceMemory;
+    if (mem && mem >= 4) return;
+    var med = vtTimes.slice().sort(function (a, b) { return a - b; })[SAMPLES >> 1];
+    if (med > SLOW_MS) { tierVal = 'lite'; ssSet('sm2:tier', 'lite'); docEl.classList.add('m-lite'); }
   }
   function lite() { return tier() === 'lite'; }
 
@@ -3128,12 +3324,44 @@
   function clearProps(el, props) { props.forEach(function (p) { try { el.style.removeProperty(cssName(p)); } catch (e) { } }); }
   function fillsForward(f) { return f === 'forwards' || f === 'both'; }
 
+  /* Reduced motion (OS or 設定) keeps short opacity cross-fades and colour changes and drops movement (SPEC-v5
+     Part A): a keyframe set is cut down to its opacity / colour properties and played in ≤DUR.reduce, linear-ish,
+     with any delay capped. A set with nothing but movement lands on its end state at once (as v4 did). */
+  var REDUCE_KEEP = { opacity: 1, color: 1, backgroundColor: 1, borderColor: 1, fill: 1, stroke: 1, offset: 1, easing: 1, composite: 1 };
+  function reduceFrames(kf) {
+    var out, keep = false;
+    if (Array.isArray(kf)) {
+      out = kf.map(function (f) {
+        var g = {};
+        Object.keys(f || {}).forEach(function (k) { if (REDUCE_KEEP[k]) { g[k] = f[k]; if (!META[k]) keep = true; } });
+        return g;
+      });
+    } else {
+      out = {};
+      Object.keys(kf || {}).forEach(function (k) { if (REDUCE_KEEP[k]) { out[k] = kf[k]; if (!META[k]) keep = true; } });
+    }
+    return keep ? out : null;
+  }
   function animate(el, kf, o) {
     if (!el || !kf) return null;
     o = o || {};
-    if (!hasWAAPI || reduced()) {
+    if (!hasWAAPI) {
       if (fillsForward(o.fill) || o.commit) applyFrame(el, lastFrame(kf));
       return null;
+    }
+    if (reduced() && !o.reduceOk) {
+      var rk = o.pseudoElement ? null : reduceFrames(kf);
+      // the moving parts still land where they end (fill forwards / commit), without travelling
+      if (fillsForward(o.fill) || o.commit) applyFrame(el, lastFrame(kf));
+      if (!rk) return null;
+      var ro = {};
+      Object.keys(o).forEach(function (k) { ro[k] = o[k]; });
+      ro.spring = null;
+      ro.duration = Math.max(120, Math.min(DUR.reduce, o.duration || DUR.reduce));
+      ro.delay = Math.min(o.delay || 0, 150);
+      ro.easing = 'linear';
+      ro.reduceOk = true;
+      kf = rk; o = ro;
     }
     var timing = {
       duration: o.duration != null ? o.duration : DUR.base,
@@ -3368,7 +3596,7 @@
     var dir = o.direction && o.direction !== 'auto' ? o.direction : null;
     if (!dir) { var na = parseNum(from), nb = parseNum(to); dir = (isFinite(na) && isFinite(nb) && nb < na) ? 'down' : 'up'; }
     var up = dir !== 'down';
-    var base = o.duration || 560;
+    var base = o.duration || 720;
     var frag = document.createElement('span');
     frag.className = 'm-odo-w';
     frag.setAttribute('aria-hidden', 'true');
@@ -3421,9 +3649,9 @@
        legible) and a short tail; the rows are spaced apart (motion.css), so while the strip settles no ink of the
        neighbouring digit is inside the cell. Columns start right to left like a station board, closer together
        when they roll in from blank. */
-    var colStep = blankStart ? 20 : 32;
+    var colStep = blankStart ? 28 : 44;
     rolling.forEach(function (r) {
-      var timing = { duration: Math.min(640, base + r.n * 12), delay: (o.delay || 0) + (L - 1 - r.idx) * colStep, easing: ODO_EASE, fill: 'both' };
+      var timing = { duration: Math.min(920, base + r.n * 14), delay: (o.delay || 0) + (L - 1 - r.idx) * colStep, easing: ODO_EASE, fill: 'both' };
       anims.push(animate(r.strip, [{ transform: 'translateY(' + r.from + '%)' }, { transform: 'translateY(' + r.to + '%)' }], timing));
     });
     var finished = false;
@@ -3476,7 +3704,7 @@
       tweenCount(el, from, to, finalText, Math.min(600, opts.duration || 500), fmt, dec);
       return Promise.resolve();
     }
-    var o = { duration: opts.duration ? Math.max(400, Math.min(800, opts.duration)) : undefined, instant: opts.instant };
+    var o = { duration: opts.duration ? Math.max(400, Math.min(900, opts.duration)) : undefined, instant: opts.instant };
     if (opts.from != null) o.from = typeof opts.from === 'string' ? opts.from : fmt(Number(opts.from));
     return odometer(el, finalText, o);
   }
@@ -3500,12 +3728,12 @@
       if (prev === a.to) { el._smOdoShown = finalText; return; }
       if (typeof prev === 'number' && isFinite(prev)) from = prev;
     }
-    var dur = parseInt(el.getAttribute('data-count-dur') || '', 10) || 640;
+    var dur = parseInt(el.getAttribute('data-count-dur') || '', 10) || 820;
     if (el.getAttribute('data-count-style') === 'tween') {
       count(el, a.to, { from: from == null ? 0 : from, decimals: a.dec, duration: dur, finalText: finalText, tween: true });
       return;
     }
-    odometer(el, finalText, { from: from == null ? '' : fmtNum(from, a.dec), duration: Math.min(800, dur), delay: delay || 0 });
+    odometer(el, finalText, { from: from == null ? '' : fmtNum(from, a.dec), duration: Math.min(900, dur), delay: delay || 0 });
   }
   function scheduleCount(el, delay) {
     if (el._smCountT) clearTimeout(el._smCountT);
@@ -3535,24 +3763,26 @@
      capped stagger), so a block reached by scrolling, a call button above all, is never missing when it arrives. */
   var winOpen = 0, winArm = 0;
   function armWindow() { winArm = now(); winOpen = winArm; }
-  function lateReveal() { return now() - winOpen > 600; }
+  function lateReveal() { return now() - winOpen > 900; }
 
   function setDelay(el, ms) { if (ms) el.style.setProperty('--m-delay', ms + 'ms'); else el.style.removeProperty('--m-delay'); }
 
   function revealEl(el, delay, late) {
     if (!el.classList.contains('m-pending')) return;
-    if (late) { delay = Math.min(delay || 0, 60); el.classList.add('m-late'); }
+    var red = reduced();
+    if (red) { delay = 0; late = true; }
+    if (late) { delay = Math.min(delay || 0, 160); el.classList.add('m-late'); }
     else delay = (delay || 0) + (parseInt(el.getAttribute('data-reveal-delay') || '0', 10) || 0);
     var kind = el.getAttribute('data-reveal');
     setDelay(el, delay);
-    if (kind === 'mark') {
+    if (kind === 'mark' && !red) {
       el.classList.remove('m-pending');
       setTimeout(function () { stamp(el, { ring: false }); }, delay);
     } else {
       el.classList.add('m-in');
       el.classList.remove('m-pending');
     }
-    var life = delay + (late ? (kind === 'line' ? 280 : 200) : kind === 'line' ? 560 : kind === 'rule' ? 480 : 340);
+    var life = delay + (red ? 200 : late ? (kind === 'rule' || kind === 'underline' ? 600 : 420) : kind === 'line' || kind === 'rule' ? 640 : 560);
     if (!late) entranceUntil = Math.max(entranceUntil, now() + life);
     // drop the reveal transition afterwards so the view's own transitions/hover rules win again
     clearTimeout(el._smInT);
@@ -3594,13 +3824,13 @@
       if (!groups[key]) { groups[key] = []; order.push(key); }
       groups[key].push(el);
     });
-    var cap = late ? 3 : lite() ? 3 : STAGGER_MAX;
+    var cap = late ? 4 : lite() ? 5 : STAGGER_MAX;
     order.forEach(function (k) {
       var list = groups[k];
       if (k === '_solo') { list.forEach(function (el) { revealEl(el, 0, late); }); return; }
       list.sort(function (a, b) { return a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1; });
-      var step = late ? Math.min(list[0]._smStagger, 30) : list[0]._smStagger;
-      // items 7+ arrive with item 6 (cap); a long list reveals as a block after that
+      var step = late ? Math.min(list[0]._smStagger, 40) : list[0]._smStagger;
+      // items 9+ arrive with item 8 (cap); a long list reveals as a block after that
       list.forEach(function (el, i) { revealEl(el, Math.min(i, cap - 1) * step, late); });
     });
   }
@@ -3610,7 +3840,8 @@
     return io;
   }
 
-  function enabled() { return hasIO && !reduced(); }
+  /* reveals run in every mode: reduced motion keeps them as short opacity fades (motion.css, html.m-reduce) */
+  function enabled() { return hasIO; }
   function syncReady() {
     if (enabled()) docEl.classList.add('motion-ready');
     else { docEl.classList.remove('motion-ready'); revealAll(document); }
@@ -3624,6 +3855,34 @@
     io.observe(el);
   }
   function claim(el) { el._smWatched = true; }
+
+  /* sweep: a safety net under IntersectionObserver. A target that is moved in the DOM after it was observed
+     (a view regrouping its columns), or that was inside a closed <details> / hidden block when observed, can
+     miss its intersection callback and stay at opacity 0. A sweep re-reads every pending target: one on screen
+     is revealed now (late: a short fade), the rest are re-observed so the next scroll catches them.
+     It runs ~1s after each view mount, after every afterTransition flush, when a <details> opens and on resize. */
+  var sweepT = 0;
+  function sweep(root) {
+    if (!io || !document.querySelectorAll) return;
+    root = root && root.querySelectorAll ? root : document;
+    var list = root.querySelectorAll('.m-pending'), vh = window.innerHeight || 800, on = [], off = [];
+    for (var i = 0; i < list.length && i < 400; i++) {
+      var el = list[i];
+      if (!el._smWatched) continue;
+      var r = el.getBoundingClientRect();
+      if (r.width + r.height > 0 && r.bottom > 0 && r.top < vh) on.push(el); else off.push(el);
+    }
+    on.forEach(function (el, k) { try { io.unobserve(el); } catch (e) { } revealEl(el, Math.min(k, 3) * 40, true); });
+    off.forEach(function (el) { try { io.unobserve(el); io.observe(el); } catch (e) { } });
+  }
+  function sweepSoon(ms) { clearTimeout(sweepT); sweepT = setTimeout(function () { if (!holds) sweep(); else whenReleased(function () { sweepSoon(300); }); }, ms || 0); }
+  if (typeof document !== 'undefined' && document.addEventListener) {
+    document.addEventListener('toggle', function (ev) {
+      var t = ev.target;
+      if (t && t.tagName === 'DETAILS' && t.open) raf(function () { sweep(t); });
+    }, true);
+    window.addEventListener('resize', function () { sweepSoon(250); }, { passive: true });
+  }
 
   function revealAll(root) {
     root = root || document;
@@ -3683,12 +3942,13 @@
     for (i = 0; i < list.length; i++) wireScroll(list[i]);
     reserveSwaps(root);
     // illustrations
-    if (SM.illus && typeof SM.illus.mount === 'function') { try { SM.illus.mount(root, { instant: instant || !enabled() }); } catch (e) { } }
+    if (SM.illus && typeof SM.illus.mount === 'function') { try { SM.illus.mount(root, { instant: instant || !enabled() || reduced() }); } catch (e) { } }
     if (!enabled()) return;
     ensureIO();
     var watch = instant ? claim : watchEl;
     // a view (or a block a view swaps in) arriving: its data-reveal-delay choreography plays (see armWindow)
     if (!instant) armWindow();
+    sweepSoon(1100);
 
     list = root.querySelectorAll('[data-reveal-stagger]');
     for (i = 0; i < list.length; i++) {
@@ -3771,27 +4031,44 @@
   ['pointerdown', 'keydown', 'wheel'].forEach(function (t) { window.addEventListener(t, onInput, { capture: true, passive: true }); });
 
   /* ---------------------------------------------------------------- press */
-  var PRESS_SEL = '[data-press], .btn, .tabbar .tab';
+  /* v5 (SPEC-v5 Part A.4): every tap answers within 50ms. pointerdown adds .m-pressed at once (css/motion.css
+     darkens the fill / washes the row) and the control SINKS 2px; release springs back past its rest by 1px and
+     settles. A press is held on screen for at least 110ms, so a quick tap still shows. Rows (list rows, sheet
+     rows, summaries) only wash: a whole row moving under the finger reads as a layout shift. Tabs pop their icon.
+     data-press="none" opts out; data-press="ink" = wash only; data-press (bare) = sink. */
+  var SINK_SEL = '.btn, .chip, .pill, .icon-btn, .pcard-save, .seg > button, .seg > a, .section-action, .opt, .contact-cta, ' +
+    '.sos-copy, .sos-li.is-urgent > .sos-row, .back, .more-btn, .toast-act, [data-press]:not([data-press="ink"])';
+  var WASH_SEL = 'a.list-item, button.list-item, .contact-item, .sos-row, .set-link, .sos-home-link, .sos-chat-link, ' +
+    'details.disclose > summary, [data-press="ink"]';
+  var PRESS_SEL = SINK_SEL + ', ' + WASH_SEL + ', .tabbar .tab';
+  var PRESS_MIN = 110;
   var pressed = null;
   function pressTarget(ev) {
     var t = ev.target;
     if (!t || !t.closest) return null;
     var el = t.closest(PRESS_SEL);
     if (!el || el.disabled || el.getAttribute('aria-disabled') === 'true' || el.getAttribute('data-press') === 'none') return null;
+    if (el.closest('[data-press="none"]')) return null;
     return el;
   }
   function pressPart(el) {
-    if (el.classList.contains('tab')) return { node: el.querySelector('svg') || el, scale: '0.92' };
-    if (el.getAttribute('data-press') === 'ink') return null;           // rows: ink wash only (CSS)
-    return { node: el, scale: '0.97' };
+    if (el._smPart !== undefined) return el._smPart;
+    var part = null;
+    if (el.classList.contains('tab') && el.closest('.tabbar')) part = { node: el.querySelector('svg') || el, tab: true };
+    else if (el.matches(SINK_SEL)) part = { node: el, tab: false };
+    el._smPart = part;
+    return part;
   }
   function pressOn(el) {
     if (pressed && pressed !== el) pressOff(true);
     pressed = el;
+    el._smPT = now();
     el.classList.add('m-pressed');
     if (reduced()) return;
     var p = pressPart(el);
-    if (p) animate(p.node, [{ scale: p.scale }], { duration: DUR.instant, easing: EASE.standard, fill: 'forwards', key: 'press' });
+    if (!p) return;
+    if (p.tab) { prepSvg(p.node); animate(p.node, [{ scale: '0.86' }], { duration: DUR.instant, easing: EASE.enter, fill: 'forwards', key: 'press' }); }
+    else animate(p.node, [{ translate: '0 2px' }], { duration: 70, easing: EASE.enter, fill: 'forwards', key: 'press' });
   }
   function pressOff(immediate) {
     if (!pressed) return;
@@ -3800,9 +4077,12 @@
       if (pressed === el) return;
       el.classList.remove('m-pressed');
       var p = pressPart(el);
-      if (p && p.node._smA && p.node._smA.press) animate(p.node, [{ scale: '1' }], { spring: 'snappy', key: 'press', fill: 'forwards', clear: true });
+      if (!p || !p.node._smA || !p.node._smA.press) return;
+      if (p.tab) animate(p.node, [{ scale: '0.86' }, { scale: '1.12', offset: 0.42 }, { scale: '1' }], { duration: 360, easing: 'ease-out', key: 'press', clear: true });
+      else animate(p.node, [{ translate: '0 2px' }, { translate: '0 -1px', offset: 0.42 }, { translate: '0 0' }], { duration: 300, easing: 'ease-out', key: 'press', clear: true });
     };
-    if (immediate) go(); else setTimeout(go, 40);
+    var held = now() - (el._smPT || 0);
+    if (immediate) go(); else setTimeout(go, Math.max(30, PRESS_MIN - held));
   }
   function press(el) {
     if (!el) return;
@@ -3813,7 +4093,9 @@
     if (ev.button !== undefined && ev.button !== 0) return;
     var el = pressTarget(ev); if (el) pressOn(el);
   }, { passive: true });
-  ['pointerup', 'pointercancel', 'dragstart'].forEach(function (t) { window.addEventListener(t, function () { pressOff(); }, { passive: true, capture: true }); });
+  ['pointerup', 'dragstart'].forEach(function (t) { window.addEventListener(t, function () { pressOff(); }, { passive: true, capture: true }); });
+  // a scroll that starts on a control cancels its press at once (no held minimum: the finger is scrolling)
+  window.addEventListener('pointercancel', function () { pressOff(true); }, { passive: true, capture: true });
   window.addEventListener('blur', function (ev) { if (ev.target === window) pressOff(true); });
   document.addEventListener('pointerleave', function (ev) { if (pressed && ev.target === pressed) pressOff(); }, { passive: true, capture: true });
   document.addEventListener('keydown', function (ev) {
@@ -3925,7 +4207,7 @@
     var stillHere = typeof Set === 'function' ? new Set(after) : null;
     var afterKeys = {};
     after.forEach(function (el) { var k = flipKey(el); if (k) afterKeys[k] = 1; });
-    var dur = Math.min(400, opts.duration || 400);
+    var dur = Math.min(480, opts.duration || 460);
     var newCount = 0, gone = 0;
     /* opts.hop: rows that change place in the list (a 済み row going to the end, an undo bringing it back) never
        slide THROUGH their neighbours (opaque rows passing over each other slice each other's text). The row fades
@@ -3967,12 +4249,96 @@
       } else {
         el._smWatched = true;
         if (el.classList.contains('m-pending')) { el.classList.remove('m-pending'); if (io) try { io.unobserve(el); } catch (e) { } }
-        animate(el, [{ opacity: 0, translate: '0 12px' }, { opacity: 1, translate: '0 0' }],
-          { duration: 300, delay: Math.min(newCount++, STAGGER_MAX - 1) * 30 + 60, easing: EASE.standard, fill: 'backwards', key: 'flip' });
+        animate(el, [{ opacity: 0, translate: '0 24px' }, { opacity: 1, translate: '0 0' }],
+          { spring: 'rise', delay: Math.min(newCount++, STAGGER_MAX - 1) * 40 + 60, fill: 'backwards', key: 'flip' });
       }
     });
     return out;
   }
+
+  /* ---------------------------------------------------------------- expand (くわしく, details.disclose) */
+  /* expand(container, open[, {setOpen(bool), body, closedHeight}]) -> Promise
+     Opens or closes a block IN PLACE with transform / opacity only (no height animation): the block's new height
+     appears at once in layout, but it is clipped back to its old height and everything below it on screen is
+     translated back to where it was; then the clip opens and the blocks below slide down together, on one curve,
+     while the new content fades and drops 12px into place. Closing runs the same in reverse and commits at the end.
+     setOpen(v) performs the real state change (hidden / open / aria-expanded); body is the part that fades.
+     SM.ui.more() blocks and every details.disclose use it automatically (click on the button / summary). */
+  var EXP_DUR = 380, EXP_EASE = 'cubic-bezier(0.2, 0, 0, 1)';
+  function followers(container) {
+    var out = [], stop = (container.closest && container.closest('#view, .sheet-body')) || document.body;
+    for (var n = container; n && n !== stop && n !== document.body && out.length < 60; n = n.parentElement) {
+      for (var sib = n.nextElementSibling; sib && out.length < 60; sib = sib.nextElementSibling) out.push(sib);
+    }
+    return out;
+  }
+  function expand(container, open, o) {
+    o = o || {};
+    var setOpen = o.setOpen || function () { };
+    if (!container) return Promise.resolve();
+    if (container._smExpEnd) container._smExpEnd();
+    var bodies = o.body ? (o.body.length != null ? Array.prototype.slice.call(o.body) : [o.body]) : [];
+    if (!hasWAAPI || !container.isConnected) { setOpen(open); return Promise.resolve(); }
+    if (reduced()) {
+      setOpen(open);
+      if (open) bodies.forEach(function (b) { animate(b, [{ opacity: 0 }, { opacity: 1 }], { duration: DUR.reduce, key: 'expand' }); });
+      return Promise.resolve();
+    }
+    var vh = window.innerHeight || 800;
+    // reads first
+    var h0 = container.getBoundingClientRect().height;
+    var fol = followers(container).filter(function (el) {
+      if (el.offsetParent === null) return false;
+      var r = el.getBoundingClientRect();
+      return r.bottom > -40 && r.top < vh + 40;
+    });
+    var d, anims = [], ended = false;
+    var clipOf = function (px) { return 'inset(-8px -24px ' + Math.max(0, px) + 'px -24px)'; };
+    if (open) {
+      setOpen(true);
+      d = container.getBoundingClientRect().height - h0;
+      if (d > 1) {
+        anims.push(animate(container, [{ clipPath: clipOf(d) }, { clipPath: clipOf(0) }], { duration: EXP_DUR, easing: EXP_EASE, key: 'expand-c' }));
+        fol.forEach(function (el) { anims.push(animate(el, [{ translate: '0 ' + (-d) + 'px' }, { translate: '0 0' }], { duration: EXP_DUR, easing: EXP_EASE, key: 'expand' })); });
+      }
+      bodies.forEach(function (b) {
+        anims.push(animate(b, [{ opacity: 0, translate: '0 -12px' }, { opacity: 1, translate: '0 0' }], { duration: 320, delay: 60, easing: EASE.enter, fill: 'backwards', key: 'expand' }));
+      });
+    } else {
+      var hc = o.closedHeight;
+      if (hc == null) { setOpen(false); hc = container.getBoundingClientRect().height; setOpen(true); }
+      d = h0 - hc;
+      if (!(d > 1)) { setOpen(false); return Promise.resolve(); }
+      anims.push(animate(container, [{ clipPath: clipOf(0) }, { clipPath: clipOf(d) }], { duration: 300, easing: EXP_EASE, fill: 'forwards', key: 'expand-c' }));
+      fol.forEach(function (el) { anims.push(animate(el, [{ translate: '0 0' }, { translate: '0 ' + (-d) + 'px' }], { duration: 300, easing: EXP_EASE, fill: 'forwards', key: 'expand' })); });
+      bodies.forEach(function (b) { anims.push(animate(b, [{ opacity: 1 }, { opacity: 0 }], { duration: 160, easing: EASE.exit, fill: 'forwards', key: 'expand' })); });
+    }
+    var finish = function () {
+      if (ended) return;
+      ended = true;
+      container._smExpEnd = null;
+      if (!open) setOpen(false);
+      anims.forEach(function (a) { if (a) try { a.cancel(); } catch (e) { } });
+    };
+    container._smExpEnd = finish;
+    return settled(anims).then(finish);
+  }
+  // details.disclose (and details.more): the summary opens / closes them through expand()
+  document.addEventListener('click', function (ev) {
+    if (ev.defaultPrevented || !hasWAAPI) return;
+    var t = ev.target, sum = t && t.closest ? t.closest('summary') : null;
+    if (!sum) return;
+    var det = sum.parentElement;
+    if (!det || det.tagName !== 'DETAILS' || !(det.classList.contains('disclose') || det.classList.contains('more')) || det.hasAttribute('data-native')) return;
+    if (t.closest('a, button, input, select, textarea') && t.closest('a, button, input, select, textarea') !== sum) return;
+    ev.preventDefault();
+    var open = !det.open;
+    var kids = Array.prototype.filter.call(det.children, function (c) { return c !== sum; });
+    var bs = getComputedStyle(det);
+    var closedH = sum.getBoundingClientRect().height + (parseFloat(bs.borderTopWidth) || 0) + (parseFloat(bs.borderBottomWidth) || 0) +
+      (parseFloat(bs.paddingTop) || 0) + (parseFloat(bs.paddingBottom) || 0);
+    expand(det, open, { setOpen: function (v) { det.open = v; }, body: kids, closedHeight: closedH });
+  });
 
   /* ---------------------------------------------------------------- stamp / check / nudge / pulse */
   function isSvgEl(el) { return typeof SVGElement !== 'undefined' && el instanceof SVGElement; }
@@ -4195,41 +4561,135 @@
      never crosses the toast's 元に戻す on its way down to the tab */
   var flightEnd = 0;
   function flightLeft() { return Math.max(0, flightEnd - now()); }
+  /* flyTo(fromEl, toEl, {duration, onArrive, ghost}) -> Promise
+     v5 save feedback (SPEC-v5 Part A.7): a green station dot leaves the save button, lifts clear of it, arcs down into
+     the やること tab and lands there: the tab icon pops, its badge bumps (onArrive usually rolls the count) and a
+     thin ring spreads from the tab. ghost:true flies a copy of fromEl instead of the dot (v4 behaviour).
+     Reduced motion / hidden ends: onArrive runs at once. The toast waits for the landing (flightLeft()). */
   function flyTo(from, to, o) {
     o = o || {};
+    if (typeof to === 'string') to = document.querySelector('.tabbar .tab[data-tab="' + to + '"]');
     var arrive = function () { if (o.onArrive) { try { o.onArrive(); } catch (e) { console.error(e); } } };
-    if (reduced() || !hasWAAPI || !visible(from) || !visible(to)) { arrive(); return Promise.resolve(); }
+    if (!from || !to || reduced() || !hasWAAPI || !visible(from) || !visible(to)) { arrive(); return Promise.resolve(); }
     var a = from.getBoundingClientRect();
     var target = to.querySelector ? (to.querySelector('svg') || to) : to;
     var tb = target.getBoundingClientRect();
-    var g = from.cloneNode(true);
-    if (g.removeAttribute) g.removeAttribute('id');
+    var g, size;
+    if (o.ghost) {
+      g = from.cloneNode(true);
+      if (g.removeAttribute) g.removeAttribute('id');
+      var col = '';
+      try { col = getComputedStyle(from).color; } catch (e) { }
+      g.style.cssText = 'color:' + col + ';position:fixed;left:' + a.left + 'px;top:' + a.top + 'px;width:' + a.width + 'px;height:' + a.height +
+        'px;margin:0;z-index:110;pointer-events:none;transform-origin:50% 50%;overflow:visible;';
+      size = a.height || 1;
+    } else {
+      size = 14;
+      g = document.createElement('span');
+      g.className = 'm-fly-dot';
+      g.style.cssText = 'left:' + (a.left + a.width / 2 - size / 2) + 'px;top:' + (a.top + a.height / 2 - size / 2) + 'px;';
+    }
     g.setAttribute('aria-hidden', 'true');
-    var col = '';
-    try { col = getComputedStyle(from).color; } catch (e) { }
-    g.style.cssText = 'color:' + col + ';position:fixed;left:' + a.left + 'px;top:' + a.top + 'px;width:' + a.width + 'px;height:' + a.height +
-      'px;margin:0;z-index:110;pointer-events:none;transform-origin:50% 50%;overflow:visible;';
     document.body.appendChild(g);
-    var dx = (tb.left + tb.width / 2) - (a.left + a.width / 2), dy = (tb.top + tb.height / 2) - (a.top + a.height / 2);
-    var s = Math.max(0.3, Math.min(1, (tb.height * 0.8) / (a.height || 1)));
-    var dur = o.duration || 520;
+    var cx = o.ghost ? a.left + a.width / 2 : a.left + a.width / 2, cy = a.top + a.height / 2;
+    var dx = (tb.left + tb.width / 2) - cx, dy = (tb.top + tb.height / 2) - cy;
+    var s = o.ghost ? Math.max(0.3, Math.min(1, (tb.height * 0.8) / size)) : 0.7;
+    var dur = o.duration || 600;
+    var lift = Math.min(64, Math.max(36, Math.abs(dy) * 0.18));
     flightEnd = Math.max(flightEnd, now() + dur);
-    // the arc, on two properties: it lifts first (rises 28px clear of its own label while x barely moves), then
-    // travels and falls into the tab like a thrown object. x is balanced (slow start, slow end) so the lift reads
-    // as a toss, not a drag across the button's text.
-    var ax = animate(g, [{ translate: '0 0' }, { translate: dx + 'px 0' }], { duration: dur, easing: 'cubic-bezier(0.4, 0, 0.6, 1)', fill: 'forwards' });
+    // the arc on two properties: x travels balanced (slow start, slow end), y lifts first then falls into the tab
+    var ax = animate(g, [{ translate: '0 0' }, { translate: dx + 'px 0' }], { duration: dur, easing: 'cubic-bezier(0.45, 0, 0.55, 1)', fill: 'forwards' });
     var ay = animate(g, [
-      { transform: 'translateY(0) scale(1)', easing: 'cubic-bezier(0.2, 0, 0.4, 1)' },
-      { transform: 'translateY(-28px) scale(1.05)', offset: 0.25, easing: 'cubic-bezier(0.55, 0, 0.9, 0.5)' },
+      { transform: 'translateY(0) scale(' + (o.ghost ? 1 : 0.4) + ')', easing: 'cubic-bezier(0.2, 0, 0.4, 1)' },
+      { transform: 'translateY(' + (-lift) + 'px) scale(' + (o.ghost ? 1.05 : 1.15) + ')', offset: 0.28, easing: 'cubic-bezier(0.55, 0, 0.85, 0.4)' },
       { transform: 'translateY(' + dy + 'px) scale(' + s + ')' }
     ], { duration: dur, easing: 'linear', fill: 'forwards' });
-    animate(g, [{ opacity: 1 }, { opacity: 1, offset: 0.8 }, { opacity: 0.85 }], { duration: dur, easing: 'linear', fill: 'forwards' });
     return settled([ax, ay]).then(function () {
       if (g.parentNode) g.parentNode.removeChild(g);
-      if (isSvgEl(target)) prepSvg(target);
-      animate(target, [{ scale: '0.86' }, { scale: '1' }], { spring: 'stamp', key: 'arrive' });
+      landOn(to, target);
       arrive();
     });
+  }
+  /* the landing: tab icon pops, a ring spreads from the tab, the badge bumps */
+  function landOn(to, target) {
+    if (isSvgEl(target)) prepSvg(target);
+    animate(target, [{ scale: '0.8' }, { scale: '1.18', offset: 0.4 }, { scale: '1' }], { duration: 420, easing: 'ease-out', key: 'arrive' });
+    var host = to;
+    if (host && host.appendChild && !isSvgEl(host)) {
+      var ring = document.createElement('span');
+      ring.className = 'm-land';
+      ring.setAttribute('aria-hidden', 'true');
+      try {
+        var hr = host.getBoundingClientRect(), r = target.getBoundingClientRect();
+        if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
+        var d = Math.max(r.width, r.height) + 10;
+        ring.style.cssText = 'left:' + (r.left + r.width / 2 - hr.left - d / 2) + 'px;top:' + (r.top + r.height / 2 - hr.top - d / 2) + 'px;width:' + d + 'px;height:' + d + 'px;';
+      } catch (e) { }
+      host.appendChild(ring);
+      var ra = animate(ring, [{ transform: 'scale(0.6)', opacity: 0.9 }, { transform: 'scale(1.9)', opacity: 0 }], { duration: 520, easing: EASE.enter, fill: 'forwards' });
+      var rm = function () { if (ring.parentNode) ring.parentNode.removeChild(ring); };
+      if (ra) done(ra).then(rm); else rm();
+    }
+    var b = to && to.querySelector ? to.querySelector('.tab-badge:not([hidden])') : null;
+    if (b) bump(b);
+  }
+
+  /* bump(el[, {scale}]) -> Promise: a short pop (1 → 1.3 → 1 on the pop spring). Badges, counters. */
+  function bump(el, o) {
+    if (!el || reduced()) return Promise.resolve();
+    o = o || {};
+    prepSvg(el);
+    var k = o.scale || 1.32;
+    return done(animate(el, [{ scale: '1' }, { scale: String(k), offset: 0.3 }, { scale: '0.96', offset: 0.65 }, { scale: '1' }], { duration: 460, easing: 'ease-out', key: 'bump' }));
+  }
+
+  /* badge(target, value[, {roll, bump, label}]) — the tab badge API.
+     target: a tab key ('plan', 'find' …), a .tab element or a .tab-badge element. value: a number or short text;
+     0 / '' / null hides it. roll: true rolls the digits (odometer) when the value changes; bump: true pops it.
+     A badge that appears pops in; one that goes fades out. Returns the badge element (or null). Views call it
+     guarded: if (SM.motion.badge) SM.motion.badge('plan', n, {roll:true, bump:true}). */
+  function badge(target, value, o) {
+    o = o || {};
+    var tab = null, b = null;
+    if (typeof target === 'string') tab = document.querySelector('.tabbar .tab[data-tab="' + attrEsc(target) + '"]');
+    else if (target && target.classList && target.classList.contains('tab-badge')) { b = target; tab = b.parentNode; }
+    else tab = target;
+    if (!b && tab) {
+      b = tab.querySelector('.tab-badge');
+      if (!b) {
+        b = document.createElement('span');
+        b.className = 'tab-badge';
+        b.setAttribute('aria-hidden', 'true');
+        b.hidden = true;
+        tab.appendChild(b);
+      }
+    }
+    if (!b) return null;
+    var txt = value == null || value === 0 || value === '' ? '' : (typeof value === 'number' && value > 99 ? '99+' : String(value));
+    var shown = b._smOdoShown != null ? b._smOdoShown : b.textContent;
+    var wasHidden = b.hidden;
+    if (!txt) {
+      if (wasHidden) return b;
+      if (o.roll || o.bump) {
+        var fa = animate(b, [{ opacity: 1, scale: '1' }, { opacity: 0, scale: '0.5' }], { duration: 200, easing: EASE.exit, key: 'badge' });
+        var hide = function () { if (!b._smOdoShown) { b.hidden = true; } };
+        b._smOdoShown = '';
+        if (fa) done(fa).then(hide); else hide();
+      } else { b.hidden = true; b._smOdoShown = ''; b.textContent = ''; }
+      return b;
+    }
+    b.hidden = false;
+    if (wasHidden) {
+      b._smOdoShown = txt; b.textContent = txt;
+      if (o.roll || o.bump) animate(b, [{ opacity: 0, scale: '0.3' }, { opacity: 1, scale: '1.25', offset: 0.55 }, { scale: '1' }], { duration: 420, easing: 'ease-out', key: 'badge' });
+      return b;
+    }
+    if (shown !== txt) {
+      if (o.roll && !reduced()) odometer(b, txt, { from: shown, duration: 480 });
+      else { odoFinish(b); b._smOdoShown = txt; b.textContent = txt; }
+    } else if (b.firstElementChild && !b._smOdo) { b.textContent = txt; }
+    if (o.bump) bump(b);
+    return b;
   }
 
   /* ---------------------------------------------------------------- swapText */
@@ -4280,8 +4740,8 @@
       host._smSwapT = setTimeout(function () { host.classList.remove('m-swapping'); }, 320);
     }
     // one keyframe: the old label leaves from wherever it is (it may still be rising from the last swap)
-    var a = animate(oldS, [{ opacity: 0, translate: '0 -6px' }], { duration: flipMode ? 80 : DUR.instant, easing: flipMode ? 'linear' : EASE.exit, fill: 'forwards', key: 'swap' });
-    var b = animate(newS, [{ opacity: 0, translate: '0 8px' }, { opacity: 1, translate: '0 0' }], { duration: 200, delay: flipMode ? 90 : 60, easing: EASE.enter, fill: 'backwards', key: 'swap' });
+    var a = animate(oldS, [{ opacity: 0, translate: '0 -10px' }], { duration: flipMode ? 80 : DUR.instant, easing: flipMode ? 'linear' : EASE.exit, fill: 'forwards', key: 'swap' });
+    var b = animate(newS, [{ opacity: 0, translate: '0 12px' }, { opacity: 1, translate: '0 0' }], { duration: 260, delay: flipMode ? 90 : 60, easing: EASE.enter, fill: 'backwards', key: 'swap' });
     var drop = function () { if (oldS.parentNode) oldS.parentNode.removeChild(oldS); };
     if (a) done(a).then(drop); else drop();
     return settled([a, b]);
@@ -4502,13 +4962,24 @@
     return { open: open, close: close, destroy: destroy, resize: resize, isDialog: isDialog, dragging: function () { return dragging; } };
   }
 
-  /* ---------------------------------------------------------------- view transitions */
+  /* ---------------------------------------------------------------- view transitions
+     v5 grammar (SPEC-v5 Part A.2), css/motion.css §10:
+       forward  the new page slides in from the right edge over the old one (EASE.push, 440ms); the old page shifts
+                30% left and dims under it — depth, like a stack of pages
+       back     the reverse: the old page slides off to the right, the page under it comes back from -30%
+       tab      a cross-fade with a 16px rise; the tab bar's indicator slides on the pop spring
+       shared   the tapped row's kanji mark (sm-cat) and its TITLE (sm-title) morph into the next page's mark and
+                heading; the page itself does not slide then, it rises into place under them
+     Without the View Transitions API (or on the 'lite' tier) the new page enters with a WAAPI slide (plainEntrance)
+     and the mark / title fly as ghosts (flipShared). */
   var VT_CLASSES = ['vt-forward', 'vt-back', 'vt-tab', 'vt-shared', 'vt-theme', 'vt-fade', 'vt-same-title'];
   var cur = null;            // { vt, kind, named:[], done:Promise }
   var navGen = 0;
-  var morphMem = {};         // destination hash -> { key, id, from }
-  var tap = null, explicitSrc = null, explicitDst = null;
+  var morphMem = {};         // destination hash -> { keys:[], id, from }
+  var tap = null, explicitSrc = null, explicitDst = {};
+  var SHARED_KEYS = ['cat', 'title'];
   var LEGACY_HERO = { cat: '.pg-mast .cat-icon, .f-cat-sign .cat-icon, .f-cat-hero .cat-icon, .ln-head .cat-icon' };
+  var TITLE_SRC = '.pcard-title, .list-title';
 
   document.addEventListener('click', function (ev) {
     var t = ev.target;
@@ -4519,7 +4990,7 @@
   }, true);
 
   function share(name, el) { explicitSrc = el ? { key: name || 'cat', el: el, t: now() } : null; }
-  function shareTarget(name, el) { explicitDst = el ? { key: name || 'cat', el: el } : null; }
+  function shareTarget(name, el) { if (el) explicitDst[name || 'cat'] = el; else delete explicitDst[name || 'cat']; }
 
   function ratioInView(el) {
     if (!el || !el.isConnected) return 0;
@@ -4530,14 +5001,27 @@
     var iw = Math.max(0, Math.min(r.right, vw) - Math.max(r.left, 0));
     return (ih * iw) / (r.width * r.height);
   }
-  function srcIn(scope, key) {
+  function srcIn(scope, key, link) {
     if (!scope || !scope.querySelector) return null;
     if (scope.matches && scope.matches('[data-vt~="' + key + '"]')) return scope;
-    return scope.querySelector('[data-vt~="' + key + '"]') || (key === 'cat' ? scope.querySelector('.cat-icon') : null);
+    var el = scope.querySelector('[data-vt~="' + key + '"]');
+    if (el) return el;
+    if (key === 'cat') return scope.querySelector('.cat-icon');
+    if (key === 'title') {
+      el = scope.querySelector(TITLE_SRC);
+      // only the title of the row that was tapped (a link inside a list item may be something else entirely)
+      if (el && link && !(el.contains(link) || link.contains(el))) return null;
+      return el;
+    }
+    return null;
   }
   function heroIn(root, key) {
     var list = root.querySelectorAll('[data-vt-hero~="' + key + '"]');
     for (var i = 0; i < list.length; i++) if (ratioInView(list[i]) > 0.5) return list[i];
+    if (key === 'title') {
+      var h = root.querySelector('h1');
+      return h && ratioInView(h) > 0.5 ? h : null;
+    }
     if (LEGACY_HERO[key]) {
       list = root.querySelectorAll(LEGACY_HERO[key]);
       for (var j = 0; j < list.length; j++) if (ratioInView(list[j]) > 0.5) return list[j];
@@ -4548,65 +5032,100 @@
     var n = scope && scope.getAttribute && scope.getAttribute('data-id') ? scope : (el && el.closest ? el.closest('[data-id]') : null);
     return n ? n.getAttribute('data-id') : '';
   }
+  // a title only morphs into a heading that says the same thing (住まい → 住まい, a program name → its page)
+  function normText(el) { return String(el && el.textContent || '').replace(/[\s　（）()「」・、。,.]/g, ''); }
+  function sameText(a, b) {
+    var x = normText(a), y = normText(b);
+    if (!x || !y) return false;
+    var k = Math.min(4, x.length, y.length);
+    return y.indexOf(x.slice(0, k)) !== -1 || x.indexOf(y.slice(0, k)) !== -1;
+  }
   function pickShared(kind, o) {
     var view = document.getElementById('view') || document;
     var out = null, t = now();
     if (kind === 'forward') {
       if (explicitSrc && t - explicitSrc.t < 1500 && ratioInView(explicitSrc.el) >= 0.5) {
-        out = { key: explicitSrc.key, from: explicitSrc.el, id: idOf(null, explicitSrc.el) };
+        out = { back: false, id: idOf(null, explicitSrc.el), list: [{ key: explicitSrc.key, from: explicitSrc.el }] };
       } else if (tap && t - tap.t < 1500 && tap.scope.isConnected) {
-        var key = o.shared || 'cat';
-        var el = srcIn(tap.scope, key);
-        if (el && ratioInView(el) >= 0.5) out = { key: key, from: el, id: idOf(tap.scope, el) };
+        var keys = o.shared ? [o.shared] : SHARED_KEYS, list = [], id = '';
+        keys.forEach(function (key) {
+          var el = srcIn(tap.scope, key, tap.link);
+          if (el && ratioInView(el) >= 0.5) { list.push({ key: key, from: el }); id = id || idOf(tap.scope, el); }
+        });
+        if (list.length) out = { back: false, id: id, list: list };
       }
     } else if (kind === 'back' && o.from && morphMem[o.from] && morphMem[o.from].from === o.to) {
-      var m = morphMem[o.from];
-      var hero = heroIn(view, m.key);
-      if (hero && m.id) out = { key: m.key, from: hero, id: m.id, back: true };
+      var m = morphMem[o.from], back = [];
+      (m.keys || []).forEach(function (key) {
+        var hero = heroIn(view, key);
+        if (hero && m.id) back.push({ key: key, from: hero });
+      });
+      if (back.length) out = { back: true, id: m.id, list: back };
     }
     tap = null; explicitSrc = null;
     return out;
   }
-  function destFor(s) {
+  function destFor(s, it) {
     var view = document.getElementById('view') || document;
-    if (explicitDst && explicitDst.key === s.key && ratioInView(explicitDst.el) > 0.5) return explicitDst.el;
-    if (!s.back) return heroIn(view, s.key);
-    var row = null;
-    try { row = view.querySelector('[data-id="' + attrEsc(s.id) + '"]'); } catch (e) { row = null; }
-    var el = row ? srcIn(row, s.key) : null;
-    return el && ratioInView(el) > 0.5 ? el : null;
+    var ex = explicitDst[it.key];
+    if (ex && ratioInView(ex) > 0.5) return ex;
+    var el = null;
+    if (!s.back) el = heroIn(view, it.key);
+    else {
+      var row = null;
+      try { row = view.querySelector('[data-id="' + attrEsc(s.id) + '"]'); } catch (e) { row = null; }
+      el = row ? srcIn(row, it.key, null) : null;
+      if (el && ratioInView(el) <= 0.5) el = null;
+    }
+    if (el && it.key === 'title' && !sameText(it.from, el)) el = null;
+    return el;
+  }
+  /* a destination that is still waiting on its entrance (data-reveal) must be visible in the new snapshot: it is
+     claimed as shown, so the morph lands on real text and the reveal does not replay inside the moving group */
+  function unpend(el) {
+    var view = document.getElementById('view');
+    for (var n = el; n && n !== view && n !== document.body; n = n.parentElement) {
+      if (n.classList && n.classList.contains('m-pending')) {
+        n.classList.remove('m-pending');
+        n._smWatched = true;
+        if (io) try { io.unobserve(n); } catch (e) { }
+      }
+    }
   }
   function clearNames(list) { list.forEach(function (el) { try { el.style.viewTransitionName = ''; } catch (e) { } }); }
   function setKind(kind) {
     VT_CLASSES.forEach(function (c) { docEl.classList.remove(c); });
     if (kind && kind !== 'none') docEl.classList.add('vt-' + kind);
   }
-
-  /* The page entrance used when there is no view transition (lite tier, or the API is missing). */
+  /* The page entrance used when there is no view transition (lite tier, or the API is missing). Reduced motion:
+     animate() keeps only the opacity (a short cross-fade). */
   function plainEntrance(kind, isLite) {
     var v = document.getElementById('view');
-    if (!v || reduced() || kind === 'none') return null;
-    var travel = isLite ? 12 : 32;
+    if (!v || kind === 'none') return null;
+    var travel = isLite ? 32 : 48;
     var x = kind === 'forward' ? travel : kind === 'back' ? -travel : 0;
-    var yy = kind === 'tab' ? 8 : 0;
+    var yy = kind === 'tab' ? 16 : 0;
     if (kind === 'theme' || kind === 'fade') { x = 0; yy = 0; }
     return animate(v, [{ opacity: 0, translate: x + 'px ' + yy + 'px' }, { opacity: 1, translate: '0 0' }],
-      { duration: isLite ? 160 : DUR.page, easing: EASE.standard, key: 'enter' });
+      { duration: isLite ? 300 : 400, easing: EASE.push, key: 'enter' });
   }
-  /* FLIP fallback for the shared tile when the View Transitions API is missing: a fixed ghost of the
-     source flies to the destination's box; the destination is hidden until the ghost lands. */
-  function flipShared(srcRect, srcEl, dst) {
+  /* FLIP fallback for the shared mark / title when the View Transitions API is missing: a fixed ghost of the source
+     flies to the destination's box (a title scales uniformly, so its letters are never stretched); the destination
+     fades in under the ghost as it lands. */
+  function flipShared(srcRect, srcEl, dst, key) {
     if (!srcRect || !dst) return;
     var b = dst.getBoundingClientRect();
     if (!b.width || !srcRect.width) return;
     var g = ghostOf(srcEl, srcRect);
     g.style.transformOrigin = '0 0';
     document.body.appendChild(g);
-    dst.style.visibility = 'hidden';
-    var a = animate(g, [{ transform: 'none' }, {
-      transform: 'translate(' + (b.left - srcRect.left) + 'px,' + (b.top - srcRect.top) + 'px) scale(' + (b.width / srcRect.width) + ',' + (b.height / srcRect.height) + ')'
-    }], { duration: DUR.morph, easing: EASE.standard, fill: 'forwards' });
-    done(a).then(function () { dst.style.visibility = ''; if (g.parentNode) g.parentNode.removeChild(g); });
+    var sx = b.width / srcRect.width, sy = b.height / srcRect.height;
+    if (key === 'title') { sx = sy; g.style.whiteSpace = 'nowrap'; }
+    var tf = 'translate(' + (b.left - srcRect.left) + 'px,' + (b.top - srcRect.top) + 'px) scale(' + sx + ',' + sy + ')';
+    var a = animate(g, [{ transform: 'none', opacity: 1 }, { transform: tf, opacity: 1, offset: 0.7 }, { transform: tf, opacity: 0 }],
+      { duration: DUR.morph, easing: EASE.push, fill: 'forwards' });
+    animate(dst, [{ opacity: 0 }, { opacity: 0, offset: 0.55 }, { opacity: 1 }], { duration: DUR.morph, easing: 'linear', key: 'shared' });
+    done(a).then(function () { if (g.parentNode) g.parentNode.removeChild(g); });
   }
 
   function transition(kind, update, o) {
@@ -4617,13 +5136,12 @@
     // a new transition always supersedes a running one: rapid taps never queue
     skipTransition();
     var useVT = hasVT && kind !== 'none' && (reduced() || !lite());
-    var allowShared = !reduced() && !lite() && (kind === 'forward' || kind === 'back');
+    var allowShared = !reduced() && (kind === 'forward' || kind === 'back');
     var shared = allowShared ? pickShared(kind, o) : (tap = null, explicitSrc = null, null);
-    explicitDst = null;
+    var keep = [];
     if (!useVT) {
-      if (kind === 'none') { run(); return Promise.resolve(); }
-      var srcRect = shared && !hasVT ? shared.from.getBoundingClientRect() : null;
-      var srcEl = shared ? shared.from.cloneNode(true) : null;
+      if (kind === 'none') { explicitDst = {}; run(); return Promise.resolve(); }
+      var ghosts = shared && !shared.back ? shared.list.map(function (it) { return { it: it, r: it.from.getBoundingClientRect(), el: it.from.cloneNode(true) }; }) : [];
       // a provisional record, so afterTransition() calls made by the view during run() wait for the entrance
       var resolveP, rec0 = { vt: null, kind: kind, named: [], anim: null };
       rec0.done = new Promise(function (r) { resolveP = r; });
@@ -4633,18 +5151,20 @@
       noteUpdate(now() - t0);
       var ent = plainEntrance(kind, lite());
       rec0.anim = ent;
-      if (shared && !hasVT) {
-        var dst = destFor(shared);
-        if (dst) {
-          flipShared(srcRect, srcEl, dst);
-          if (!shared.back) morphMem[o.to] = { key: shared.key, id: shared.id, from: o.from };
-        }
-      }
+      ghosts.forEach(function (gh) {
+        var dst = destFor(shared, gh.it);
+        if (!dst) return;
+        unpend(dst);
+        flipShared(gh.r, gh.el, dst, gh.it.key);
+        keep.push(gh.it.key);
+      });
+      if (shared && !shared.back && keep.length) morphMem[o.to] = { keys: keep, id: shared.id, from: o.from };
+      explicitDst = {};
       done(ent).then(function () { if (cur === rec0) cur = null; resolveP(); });
       return rec0.done;
     }
     var named = [];
-    if (shared) { shared.from.style.viewTransitionName = 'sm-' + shared.key; named.push(shared.from); }
+    if (shared) shared.list.forEach(function (it) { it.from.style.viewTransitionName = 'sm-' + it.key; named.push(it.from); });
     setKind(kind);
     // same subbar title on both pages (core predicts it before the transition, so no class change lands inside
     // the update, where it would restyle the whole document): the title holds still
@@ -4655,15 +5175,19 @@
       run();
       if (kind !== 'theme' && kind !== 'fade') noteUpdate(now() - t1);
       if (shared) {
-        var d = destFor(shared);
-        if (d) {
-          d.style.viewTransitionName = 'sm-' + shared.key;
+        shared.list.forEach(function (it) {
+          var d = destFor(shared, it);
+          if (!d) return;
+          unpend(d);
+          d.style.viewTransitionName = 'sm-' + it.key;
           named.push(d);
-          docEl.classList.add('vt-shared');
-        }
-        if (!shared.back) morphMem[o.to] = { key: shared.key, id: shared.id, from: o.from };
+          keep.push(it.key);
+        });
+        if (keep.length) docEl.classList.add('vt-shared');
+        if (!shared.back) { if (keep.length) morphMem[o.to] = { keys: keep, id: shared.id, from: o.from }; }
         else if (o.from) delete morphMem[o.from];
       }
+      explicitDst = {};
     };
     /* a WebGL map on the page that is leaving: the snapshot would read its drawing buffer back (on a software GPU
        that alone was a 1.4s task). The canvas steps out of the capture (hidden: the map's own land colour shows
@@ -4708,6 +5232,7 @@
       if (!it.keep && it.gen !== navGen) return;
       try { it.fn(); } catch (e) { console.error('[SM] afterTransition failed', e); }
     });
+    sweepSoon(400);
   }
   function scheduleAfter() {
     if (afterScheduled || !afterQ.length) return;
@@ -4901,7 +5426,7 @@
       var prev = bar.style.transform;
       bar.style.transform = t;
       if (!bar._smPlaced || reduced() || !prev || prev === t) { bar._smPlaced = true; return; }
-      animate(bar, [{ transform: prev }, { transform: t }], { spring: 'snappy', key: 'ind' });
+      animate(bar, [{ transform: prev }, { transform: t }], { spring: 'rise', key: 'ind' });
     });
   }
 
@@ -4918,7 +5443,7 @@
   Object.keys(SPRINGS).forEach(function (k) { springTokens[k] = spring(k); });
 
   SM.motion = {
-    tokens: { ease: EASE, dur: DUR, stagger: STAGGER, staggerMax: STAGGER_MAX, spring: springTokens },
+    tokens: { ease: EASE, dur: DUR, stagger: STAGGER, staggerMax: STAGGER_MAX, rise: RISE, spring: springTokens },
     reduced: reduced,
     syncReduce: syncReduce,
     tier: tier,
@@ -4940,6 +5465,8 @@
     pulse: pulse,
     flyTo: flyTo,
     flightLeft: flightLeft,
+    badge: badge,
+    bump: bump,
     swapText: swapText,
     press: press,
     sheet: sheet,
@@ -4953,6 +5480,7 @@
     indicator: indicator,
     mount: mount,
     flip: flip,
+    expand: expand,
     drawLine: drawLine,
     lineProgress: lineProgress,
     revealAll: revealAll,
@@ -9969,7 +10497,8 @@
 })();
 ;
 /* ---- js/match.js ---- */
-/* 巣立ちマップ v3 — match.js (FIND)
+/* 巣立ちマップ v5 — match.js (FIND)
+   v5: answer labels follow the shorter question options (SPEC-v5 Part B 質問: options ≤ 10 chars); scoring unchanged.
    SM.match(answers)        -> [{ p, score, why:[{ja,jr?,en}], group, local, careNote }] sorted by fit
    SM.matchSummary(answers) -> [{ key, q, label, set }] for the answers bar (all 6 questions, in order)
    Helpers also used by the find view (additive, not in SPEC):
@@ -9997,23 +10526,23 @@
   var LABELS = {
     stage: {
       jhs12: { ja: '中1・中2', en: 'Junior high yr 1–2' },
-      jhs3: { ja: '中3（高校受験の年）', en: 'Junior high yr 3 (entrance exam year)' },
+      jhs3: { ja: '中3', en: 'Junior high yr 3' },
       hs12: { ja: '高1・高2', en: 'High school yr 1–2' },
-      hs3: { ja: '高3（今年度に巣立つ）', en: 'High school yr 3 (leaving this year)' },
+      hs3: { ja: '高3', en: 'High school yr 3' },
       left0: { ja: '巣立って1年以内', en: 'Left care < 1 year ago' },
       left1: { ja: '巣立って1年以上', en: 'Left care 1+ years ago' },
-      nohs: { ja: '高校には通っていない', en: 'Not going to high school' }
+      nohs: { ja: '高校に行っていない', en: 'Not in high school' }
     },
     stageShort: {
       jhs12: { ja: '中1・中2', en: 'JHS yr 1–2' }, jhs3: { ja: '中3', en: 'JHS yr 3' },
       hs12: { ja: '高1・高2', en: 'HS yr 1–2' }, hs3: { ja: '高3', en: 'HS yr 3' },
       left0: { ja: '巣立って1年以内', en: 'Left < 1 yr' }, left1: { ja: '巣立って1年以上', en: 'Left 1+ yrs' },
-      nohs: { ja: '高校には通っていない', en: 'Not in HS' }
+      nohs: { ja: '高校に行っていない', en: 'Not in HS' }
     },
     path: {
       hs: { ja: '高校に行きたい', en: 'Want to go to high school' },
       study: { ja: '進学したい', en: 'Want to study' },
-      work: { ja: '働きたい・働いている', en: 'Work / want to work' },
+      work: { ja: '働きたい', en: 'Work' },
       unsure: { ja: 'まだ決めていない', en: 'Not decided yet' }
     },
     age: {
@@ -10024,7 +10553,7 @@
     care: {
       facility: { ja: '児童養護施設', en: "Children's home" },
       foster: { ja: '里親・ファミリーホーム', en: 'Foster / family home' },
-      jhome: { ja: '自立援助ホーム', en: 'Independence support home' },
+      jhome: { ja: '自立援助ホーム', en: 'Independence home' },
       other: { ja: 'そのほか', en: 'Other' },
       skip: { ja: '答えない', en: 'Prefer not to say' }
     }
@@ -10416,27 +10945,31 @@
 })();
 ;
 /* ---- js/views/home.js ---- */
-/* 巣立ちマップ v4 — js/views/home.js (HOME)
-   Home (#/): the first impression. VISUAL-SPEC §7.2 (layout) · MOTION-SPEC §2.5, §4.2 (entrance, morphs).
+/* 巣立ちマップ v5 — js/views/home.js (HOME)
+   Home (#/): the first impression. SPEC-v5 Part A (motion people notice) + Part B (fewer words, better placed).
 
-   Top to bottom (new visitor): the `home-hero` illustration (people standing on the ground line, a green route that
-   steps up to a new home — the logo's line), a typographic hero (one promise, one 蛍光ペン phrase), one green CTA, a
-   text link, and the route strip 1 答える ─ 2 保存する ─ 3 窓口で見せる. Then 01 困りごと (six kanji station rows,
-   the source of the category morph), 02 今すぐ話したい (big numbers, outline call buttons), 03 まなぶ (a shelf of
-   lesson covers), 04 べんりツール, a band for supporters, and the colophon (奥付) with the full lockup, whose
-   green line draws once — the opening's line, at the end of the page.
-   Returning visitor: the number of supports that fit is the headline (station-board roll), then やること.
-   中学生 (body.is-junior): `home-jr-hero`, junior copy, まなぶ first, the ふりがな offer under the hero.
+   First screen (new visitor), read at a glance:
+     the `home-hero` picture (the figures walk in) · one sub-line (who it is for) · one headline (「使える支援」が、
+     3分でわかる。) · one row of facts set as signage (222件 | ログインなし | 6問・3分) · ONE green CTA (質問に答える) ·
+     the crisis link (今夜いる場所がない…, always on the first screen) · then 困りごと: six rows = kanji mark, name,
+     count. No tagline, no step list, no sub-labels in buttons, no grey explanation lines (≤ 120 characters above
+     the fold at 390×844).
+   Returning visitor: the number of supports that fit is the headline, the answers as a tag row with 変える, one CTA.
+   Below: 今すぐ話したい (big numbers, call buttons, facts as tags), まなぶ (covers), べんりツール (titles only),
+   a one-line band for supporters, the colophon (label / value rows). 中学生: `home-jr-hero`, まなぶ first.
 
-   Motion (all through SM.motion; nothing here animates by itself):
-   - The entrance is data attributes with per-element delays (data-reveal-delay), so it plays in reading order.
-     On the first visit the launch holds every reveal (SM.motion.hold) and releases them as the logo docks: the
-     delays then count from the release. Returning / tab entrances use the short table. Back and tab returns
-     mount instantly (SM.route.instant): nothing replays (§3.8).
-   - Delays only shape the first screen: they expire once the entrance is over, so content scrolled into view
-     later reveals at once.
-   - Render the first screen first (§6 rule 4): the hero and section 01 render in render(); the sections after it
-     are built one per idle callback once the transition (or the opening) is over, or all at once on scroll.
+   Motion (SPEC-v5 Part A; transform / opacity only, interruptible, never hides content if JS fails):
+   - The hero is a CSS choreography (css/home.css .h-play): home.js adds .h-play when the view is released by the
+     opening (SM.motion.whenReleased) or when it mounts. Each part carries its delay (--d); lines rise from behind
+     their own baseline, the marker sweeps, the facts step in, the CTA slides up on a spring and its arrow nudges
+     once, the crisis link slides in. Without .h-play (no JS, reduced motion, back) everything simply stands.
+     A tap or key during the cascade lands it at once (.h-land).
+   - 困りごと rows and the section heads are SM.motion reveals with per-row delays: rows rise in order, their kanji
+     marks stamp in (css on .m-in), their counts roll (data-count). Sections further down cascade as they scroll in.
+   - Tables: 'launch' (the opening hands off: delays count from the release), 'short' (returning beat / first tab
+     visit this session), 'none' (reduced motion, back, a tab revisited, in-place re-renders: nothing replays).
+   - Render the first screen first: the hero and section 01 render in render(); the rest is built one section per
+     idle callback once the transition (or the opening) is over, or all at once on scroll / key / print.
    Fully bilingual via SM.strings; 中学生 copy via the `jr` variant (SM.t picks it while body.is-junior). */
 (function () {
   'use strict';
@@ -10471,40 +11004,34 @@
   SM.strings && SM.strings({
     'home.title': { ja: 'ホーム', en: 'Home' },
 
-    /* hero — first visit */
-    'home.eyebrow': { ja: '東京版', en: 'Tokyo edition' },
-    'home.eyebrow2': { ja: '中学生から、巣立ったあとまで', jr: '中学生から使える', en: 'From junior high to after you leave care' },
-    'home.kicker': { ja: '施設や里親家庭を出る人の', jr: '中学生のいまから', en: 'Leaving care?' },
+    /* hero — first visit: one sub-line, one headline, one row of facts, one CTA */
+    'home.kicker': { ja: '施設や里親家庭を出る人へ', jr: '施設や里親家庭でくらす中学生へ', en: 'Leaving care in Tokyo?' },
     'home.h1pre': { ja: '「', en: '' },
     'home.h1mark': { ja: '使える支援', en: 'Support you can use,' },
     'home.h1post': { ja: '」が、', en: '' },
     'home.h1c': { ja: '3分でわかる。', en: 'found in 3 minutes.' },
-    'home.sub': { ja: '国・東京都・区市町村の支援 {n}件。名前もログインもいりません。', en: '{n} national, Tokyo and local programs. No name, no login.' },
-    'home.cta': { ja: '質問に答えてさがす', en: 'Answer a few questions' },
-    'home.ctaMeta': { ja: '6問・約3分', jr: '6つの質問・3分くらい', en: '6 questions · about 3 min' },
-    'home.browse': { ja: '困りごとから見る', en: 'Browse by need' },
-    // one quiet way in for the most urgent case, right under the hero actions (FIXER-robust)
+    'home.facts': { ja: 'このサイトについて', en: 'About this site' },
+    'home.f.count': { ja: '東京の支援', en: 'programs' },
+    'home.f.login': { ja: 'ログインなし', en: 'No login' },
+    'home.f.time': { ja: '6問・3分', en: '6 questions' },
+    'home.cta': { ja: '質問に答える', en: 'Answer questions' },
+    // the one way in for the most urgent case, always on the first screen (FIXER-robust)
     'home.crisis': { ja: '今夜いる場所がない・家にいられない', jr: '家にいられない・帰れないとき', en: 'Nowhere to stay tonight?' },
     'home.unit': { ja: '件', en: '' },
-    'home.route': { ja: 'つかい方', en: 'How it works' },
-    'home.r1': { ja: '答える', en: 'Answer' },
-    'home.r2': { ja: '保存する', en: 'Save' },
-    'home.r3': { ja: '窓口で見せる', jr: '先生や窓口に見せる', en: 'Show it at the office' },
 
     /* hero — returning visitor */
-    'home.welcome': { ja: 'おかえりなさい', en: 'Welcome back' },
-    'home.backA': { ja: 'あなたに合いそうな支援が', en: 'Programs for you' },
+    'home.backA': { ja: 'あなたに合いそうな支援', en: 'Programs that may fit you' },
     'home.backUnit': { ja: '件', en: '' },
-    'home.backB': { ja: 'あります。', en: '' },
     'home.backNone': { ja: 'あなたの答えで、支援をまとめています。', en: 'Your results are ready.' },
-    'home.seeResults': { ja: 'あなたの結果を見る', en: 'See your results' },
-    'home.changeAnswers': { ja: '答えを変える', en: 'Change answers' },
+    'home.seeResults': { ja: '結果を見る', en: 'See results' },
+    'home.changeAnswers': { ja: '変える', en: 'Change' },
+    'home.changeLabel': { ja: '答えを変える', en: 'Change your answers' },
     'home.yourAnswers': { ja: 'あなたの答え', en: 'Your answers' },
 
     /* やること preview */
     'home.planTitle': { ja: 'やること', en: 'My to-do list' },
     'home.planOpen': { ja: 'ひらく', en: 'Open' },
-    'home.planSaved': { ja: '保存した支援', en: 'Saved' },
+    'home.planSaved': { ja: '保存 {n}件', en: '{n} saved' },
     'home.planMore': { ja: 'ほか {n}件', en: '+{n} more' },
     'home.daysTo': { ja: '巣立ちの日まで', en: 'Until you leave' },
     'home.daysToEntry': { ja: '高校入学まで', en: 'Until high school starts' },
@@ -10516,14 +11043,13 @@
 
     /* まなぶ */
     'home.learnTitle': { ja: 'まなぶ', en: 'Learn' },
-    'home.learnSub': { ja: 'お金のきほん。申し込む前に、1つ2〜3分で。', jr: 'お金のきほん。1つ2〜3分。クイズもあるよ。', en: 'Money basics, 2–3 minutes each.' },
     'home.learnAll': { ja: 'すべて見る', en: 'All lessons' },
     'home.learnAllCard': { ja: 'すべてのレッスン', en: 'All lessons' },
-    'home.learnDoneLabel': { ja: 'おわったレッスン', en: 'lessons done' },
-    'home.learnNext': { ja: 'つぎのレッスン', en: 'Next lesson' },
-    'home.learnFirst': { ja: 'まずはここから', en: 'Start here' },
+    'home.learnDoneLabel': { ja: 'おわった', en: 'done' },
+    'home.learnNext': { ja: 'つぎ', en: 'Next' },
+    'home.learnFirst': { ja: 'ここから', en: 'Start here' },
     'home.learnMin': { ja: '{n}分', en: '{n} min' },
-    'home.learnAllDone': { ja: '全部おわりました。おつかれさま。', jr: 'ぜんぶおわったよ。おつかれさま。', en: 'All done. Nice work.' },
+    'home.learnAllDone': { ja: '全部おわった', en: 'All done' },
     'home.learnDone': { ja: 'おわった', en: 'done' },
     'home.learnDoneMark': { ja: '済', en: '✓' },
     'home.learnFor': { ja: '中学生向け', en: 'Junior high' },
@@ -10531,59 +11057,55 @@
 
     /* 困りごと */
     'home.catsTitle': { ja: '困りごとから見る', en: 'Browse by need' },
-    'home.catsSub': { ja: 'いちばん近いものをえらんでね', jr: 'ちかいものをえらんでね', en: 'Pick the one closest to you' },
     'home.catsAll': { ja: 'すべて見る', en: 'See all' },
     'home.count': { ja: '{n}件', en: '{n}' },
 
     /* 今すぐ話したい */
     'home.talkTitle': { ja: '今すぐ話したい', en: 'Want to talk now?' },
-    'home.talkBody': { ja: '名前を言わなくても話せます。', en: 'You can talk without giving your name.' },
+    'home.talkBody': { ja: '名前を言わなくていい', en: "You don't have to give your name" },
     'home.talkMore': { ja: '相談先をもっと見る', en: 'More places to talk' },
-    'home.talkSos': { ja: '命や体があぶないときは', en: 'If you are in danger' },
+    'home.talkSos': { ja: '命や体があぶないとき', en: 'If you are in danger' },
     'home.talkSosBtn': { ja: '緊急の連絡先', en: 'Emergency numbers' },
     'home.callShort': { ja: '電話する', en: 'Call' },
-    'home.chatShort': { ja: 'チャットで話す', en: 'Chat' },
-    'home.lineShort': { ja: 'LINEで話す', en: 'LINE' },
+    'home.chatShort': { ja: 'チャット', en: 'Chat' },
+    'home.lineShort': { ja: 'LINE', en: 'LINE' },
     'home.free': { ja: '無料', en: 'Free' },
-    'home.t.yorisoi': { ja: '24時間。どんなことでも', en: '24 hours. About anything' },
-    'home.t.ibasho': { ja: '24時間・チャット。話すのがこわいときに', jr: '24時間・チャット。電話がこわいときに', en: '24/7 chat, when talking feels hard' },
-    'home.t.wakanavi': { ja: '東京都の若者向け。電話・LINE', en: "Tokyo's youth line. Phone or LINE" },
-    'home.t.b4s': { ja: '施設や里親家庭を出た人のための相談', en: 'For people who grew up in care' },
-    'home.t.kodomoSos': { ja: '24時間。いじめ・学校・家のこと', jr: '24時間。いじめ、学校、家のこと', en: '24 hours. Bullying, school, home' },
-    'home.t.childline': { ja: '18歳まで。話を聞いてほしいとき', en: 'Up to 18. When you want someone to listen' },
+    // facts as tags (split on ・), not sentences
+    'home.t.yorisoi': { ja: '24時間・なんでも', en: '24 hours·Anything' },
+    'home.t.ibasho': { ja: '24時間・チャット', en: '24 hours·Chat' },
+    'home.t.wakanavi': { ja: '東京都・若者向け', en: 'Tokyo·Youth' },
+    'home.t.b4s': { ja: '施設・里親家庭の出身者', en: 'Grew up in care' },
+    'home.t.kodomoSos': { ja: '24時間・いじめ・家', en: '24 hours·Bullying·Home' },
+    'home.t.childline': { ja: '18歳まで', en: 'Up to 18' },
 
     /* ツール */
     'home.toolsTitle': { ja: 'べんりツール', en: 'Tools' },
-    'home.toolsSub': { ja: '準備や確認に使えます', jr: 'じゅんびや、たしかめに使えます', en: 'Help to get ready' },
     'home.tool.script': { ja: '電話・窓口の台本', en: 'Phone & visit script' },
-    'home.tool.scriptSub': { ja: '何を言えばいいか、そのまま読める', en: 'Know exactly what to say' },
     'home.tool.check': { ja: '契約チェック', en: 'Contract check' },
-    'home.tool.checkSub': { ja: 'サインする前に、あやしい点を確認', en: 'Spot red flags before you sign' },
-    'home.tool.money': { ja: '生活費シミュレーター', jr: 'おこづかい・生活費けいさん', en: 'Money calculator' },
-    'home.tool.moneySub': { ja: 'ひと月にいくらかかるか', en: 'Work out a monthly budget' },
+    'home.tool.money': { ja: '生活費の計算', jr: 'お金のけいさん', en: 'Money calculator' },
 
     /* 支援者 */
     'home.staffTitle': { ja: '施設職員・先生・里親の方へ', en: 'For staff, teachers and foster carers' },
-    'home.staffBody': { ja: '設定で「支援者向けメモ」をオンにすると、手続きのつまずきやすい点が表示されます。', en: 'Turn on "notes for supporters" in Settings to see where young people often get stuck.' },
+    'home.staffBody': { ja: '設定で「支援者向けメモ」をオンにできます。', en: 'Turn on "notes for supporters" in Settings.' },
     'home.staffBtn': { ja: '設定をひらく', en: 'Open settings' },
 
     /* オフライン */
     'home.offline': { ja: 'いまオフラインです。', en: 'You are offline.' },
-    'home.offlineBody': { ja: '支援の一覧・地図・やることは、このまま使えます。公式ページは開けません。', en: 'The list, the map and your to-do list still work. Official pages will not open.' },
+    'home.offlineBody': { ja: '一覧・地図・やることは使えます。', en: 'The list, the map and your to-do list still work.' },
 
-    /* 奥付 (colophon) */
+    /* 奥付 (colophon): label / value */
     'home.colo.title': { ja: '巣立ちマップ', en: 'Sudachi Map' },
     'home.colo.ed': { ja: '東京版', en: 'Tokyo edition' },
     'home.colo.by': { ja: 'つくった人', en: 'Made by' },
-    'home.colo.byVal': { ja: 'Economix JP（東京の高校生の団体）', en: 'Economix JP (a Tokyo high-school student group)' },
+    'home.colo.byVal': { ja: 'Economix JP（東京の高校生の団体）', en: 'Economix JP (Tokyo high-school students)' },
     'home.colo.checked': { ja: '最終確認', en: 'Last checked' },
     'home.colo.listed': { ja: 'のせている支援', en: 'Listed' },
-    'home.colo.listedVal': { ja: '{n}件（国・東京都・区市町村・NPO）', en: '{n} (national, Tokyo, local, nonprofit)' },
+    'home.colo.listedVal': { ja: '{n}件', en: '{n}' },
     'home.colo.ads': { ja: '広告', en: 'Ads' },
-    'home.colo.adsVal': { ja: 'ありません。お金をもらって順番を上げることもしません。', en: 'None. Nobody can pay to be shown higher.' },
+    'home.colo.adsVal': { ja: 'なし', en: 'None' },
     'home.colo.data': { ja: 'あなたの答え', en: 'Your answers' },
-    'home.colo.dataVal': { ja: 'このスマホの中だけ。どこにも送りません。', en: 'Only on this device. Nothing is sent.' },
-    'home.colo.note': { ja: '申し込む前に、公式ページや窓口でも確認してください。このサイトは相談窓口ではありません。', en: 'Please check the official page or office before you apply. This site is not a helpline.' },
+    'home.colo.dataVal': { ja: 'このスマホの中だけ', en: 'Only on this device' },
+    'home.colo.note': { ja: '申し込む前に、公式ページでも確認してください。ここは相談窓口ではありません。', en: 'Check the official page before you apply. This site is not a helpline.' },
     'home.colo.about': { ja: '掲載基準・運営について', en: 'About & standards' }
   });
 
@@ -10601,16 +11123,6 @@
   function telHref(n) { return 'tel:' + String(n).replace(/[^\d+#*]/g, '').replace(/#/g, '%23'); }
   function isFreeDial(n) { return /^(0120|0800)/.test(String(n || '').replace(/\D/g, '')); }
   function catLabel(k) { var c = SM.CATS && SM.CATS[k]; return c ? (en() ? c.en : c.ja) : k; }
-  // 中学生: the same plain hints as Q4 and さがす (used unless SM.CATS already carries a jr hint)
-  var CAT_HINT_JR = {
-    housing: '家にいづらい・住むところ', money: '学校のお金・くらしのお金', education: '高校・受験・塾・勉強',
-    work: '働くこと・アルバイト', procedures: '書類・役所の手続き', consult: 'だれかに話したい'
-  };
-  function catHint(k) {
-    var c = SM.CATS && SM.CATS[k];
-    if (junior() && !en() && CAT_HINT_JR[k] && !(c && c.hint && c.hint.jr)) return CAT_HINT_JR[k];
-    return c && c.hint ? L(c.hint) : '';
-  }
   function catMark(k, size, vt) {
     if (SM.ui && SM.ui.catIcon) return SM.ui.catIcon(k, size, { vt: !!vt });
     var c = (SM.CATS && SM.CATS[k]) || {};
@@ -10619,6 +11131,17 @@
   function section(title, o) {
     if (SM.ui && SM.ui.sectionHeader) return SM.ui.sectionHeader(title, o);
     return '<div class="section-head"><h2 class="section-title" id="' + esc(o.id) + '">' + esc(title) + '</h2></div>';
+  }
+  // a section head that rises in as its rule draws (first screen: on the entrance table's clock)
+  function head(title, o, first) {
+    var h = section(title, o);
+    var d = first && T ? T.head : 0;
+    h = h.replace('<div class="section-head', '<div data-reveal="up"' + (d ? ' data-reveal-delay="' + d + '"' : '') + ' class="section-head h-head');
+    if (d) h = h.replace('data-reveal="rule"', 'data-reveal="rule" data-reveal-delay="' + (d + 40) + '"');
+    return h;
+  }
+  function tags(str) {
+    return String(str || '').split(/[・·]/).filter(Boolean).map(function (x) { return '<span class="tag tag-neutral">' + esc(x) + '</span>'; }).join('');
   }
   function updated() { return SM.updated || '2026-10-17'; }
   function fmtDate(d) { try { return SM.fmtDate ? SM.fmtDate(d) : d; } catch (e) { return d; } }
@@ -10659,15 +11182,12 @@
   }
 
   /* ------------------------------------------------------------ entrance choreography
-     One table per kind of arrival. Times are ms after the reveal starts: after the launch releases the view
-     (first visit), or after mount (returning beat, a tab opened for the first time this session).
-     'none': reduced motion, back, a tab revisited, in-place re-renders — no delays, motion.js shows all. */
+     ms after the entrance starts: the opening's release (first visit) or the mount (returning beat, a tab opened
+     for the first time this session). The hero parts are CSS (--d, css .h-play); head / rows are SM.motion reveals.
+     SPEC-v5 scale: travel 24–48px, 280–560ms, staggers 40–60ms. */
   var ENTER = {
-    // the opening hands off: the brand is still docking as this starts (MOTION-SPEC §2.4–2.5, exactly the §2.5
-    // table: kicker 60, lines 60/130, sub 320, CTA + side 400, section rule 480, rows 520 + 40i, marker 560)
-    launch: { brow: 40, browRule: 120, kicker: 60, l1: 60, l2: 130, lead: 320, act: 400, r: [520, 560, 600, 640, 680], mark: 560, side: 400, rows: 520, rowsRule: 480 },
-    // returning visit / first time this session from another tab: everything settles by ~700ms
-    short: { brow: 0, browRule: 80, kicker: 0, l1: 50, l2: 100, lead: 200, act: 200, r: [260, 300, 340, 380, 420], mark: 360, side: 240, rows: 240, rowsRule: 200 }
+    launch: { kicker: 0, l1: 50, l2: 110, mark: 340, facts: 190, factStep: 45, cta: 260, nudge: 760, crisis: 330, answers: 190, side: 320, head: 340, rows: 380, rowStep: 40 },
+    short: { kicker: 0, l1: 30, l2: 80, mark: 280, facts: 130, factStep: 40, cta: 190, nudge: 660, crisis: 250, answers: 130, side: 250, head: 270, rows: 310, rowStep: 35 }
   };
   var mode = 'none', T = null;
   // home is already on screen (an in-place SM.render()): the static #view is also .v-home, so look for the hero
@@ -10683,51 +11203,24 @@
     if (de.classList.contains('lx-full') && !(window.__lx && window.__lx.done)) return 'launch';
     return 'short';
   }
-  // data-reveal + delay for one element of the first screen
-  function rv(kind, key) {
-    var a = ' data-reveal="' + (kind || '') + '"';
-    if (!T) return a;
+  // one hero part of the CSS choreography: its kind (line | rise | cta | slide) and its delay
+  function ha(kind, key, extra) {
+    if (!T) return '';
     var d = typeof key === 'number' ? key : T[key];
-    return d ? a + ' data-reveal-delay="' + d + '"' : a;
+    return ' data-h="' + kind + '" style="--d:' + (d + (extra || 0)) + 'ms"';
+  }
+  // a line of the headline: the outer span holds the clip, the inner one rises from behind the baseline
+  function hline(cls, key, html) {
+    return '<span class="' + cls + ' h-ln-o"' + (T ? ' data-h="line"' : '') + '><span class="h-ln-i"' + (T ? ' style="--d:' + T[key] + 'ms"' : '') + '>' + html + '</span></span>';
+  }
+  // the 蛍光ペン stroke: its own element under the phrase; it sweeps from the left once its line is up
+  function markInk() {
+    return '<span class="h-mark-ink"' + (T ? ' style="--mark-at:' + T.mark + 'ms"' : '') + ' aria-hidden="true"></span>';
   }
 
   /* ------------------------------------------------------------ hero */
-  function eyebrow(second) {
-    return '<p class="h-eyebrow"' + rv('fade', 'brow') + '>' +
-      '<span class="h-eyebrow-a">' + esc(t('home.eyebrow')) + '</span>' +
-      (second ? '<span class="h-eyebrow-rule"' + rv('rule', 'browRule') + ' aria-hidden="true"></span><span class="h-eyebrow-b">' + esc(second) + '</span>' : '') +
-    '</p>';
-  }
-  // the 蛍光ペン stroke: its own element under the phrase (the text sits above it in .h-mark-t). It is not a reveal
-  // of its own (inside the rising line it would only count as visible once the line is up): CSS draws it from the
-  // left when its line reveals. motion.js drops .m-pending when the reveal is scheduled (the delay is a CSS
-  // transition-delay), so --mark-at counts from the same moment as every other delay in the table.
-  function markInk() {
-    var at = T ? T.mark : 300;
-    return '<span class="h-mark-ink" style="--mark-at:' + at + 'ms" aria-hidden="true"></span>';
-  }
-  // section 01 is part of the first screen: its head and body are held with the hero and arrive after it
-  function holdHead(head, first) {
-    if (!first || !T) return head;
-    return head.replace('<div class="section-head', '<div data-reveal="fade" data-reveal-delay="' + Math.max(0, T.rowsRule - 20) + '" class="section-head')
-      .replace('data-reveal="rule"', 'data-reveal="rule" data-reveal-delay="' + T.rowsRule + '"');
-  }
-  function bodyHold(first) { return first && T ? ' data-reveal-delay="' + T.rows + '"' : ''; }
-
-  // 1 答える ─ 2 保存する ─ 3 窓口で見せる: three stations on one line
-  function routeStrip() {
-    var r = T ? T.r : [0, 0, 0, 0, 0];
-    function st(i, key) {
-      return '<span class="h-route-st" role="listitem"' + rv('fade', r[i * 2]) + '><span class="h-route-n" aria-hidden="true">' + (i + 1) + '</span>' +
-        '<span class="h-route-t"><span class="sr-only">' + (i + 1) + '. </span>' + esc(t(key)) + '</span></span>';
-    }
-    function ln(i) { return '<span class="h-route-ln"' + rv('rule', r[i]) + ' aria-hidden="true"></span>'; }
-    return '<div class="h-route" role="list" aria-label="' + esc(t('home.route')) + '">' +
-      st(0, 'home.r1') + ln(1) + st(1, 'home.r2') + ln(3) + st(2, 'home.r3') + '</div>';
-  }
-
-  function cta(label, href, sub) {
-    if (SM.ui && SM.ui.button) return SM.ui.button(label, { href: href, variant: 'primary', size: 'lg', block: true, sub: sub, cls: 'h-cta', attrs: 'data-press' });
+  function cta(label, href) {
+    if (SM.ui && SM.ui.button) return SM.ui.button(label, { href: href, variant: 'primary', size: 'lg', block: true, cls: 'h-cta', attrs: 'data-press' });
     return '<a class="btn btn-primary btn-lg btn-block h-cta" href="' + esc(href) + '" data-press><span>' + esc(label) + '</span>' + arrow() + '</a>';
   }
   // 中学生: straight to the SOS sheet (189 and 子供SOS first there); otherwise the 住まい page, which opens on
@@ -10736,11 +11229,20 @@
     var jr = false;
     try { jr = document.body.classList.contains('is-junior') || (SM.isJunior && SM.isJunior()); } catch (e) { jr = false; }
     var inner = '<span>' + esc(t('home.crisis')) + '</span>' + arrow();
-    return jr ? '<button type="button" class="btn btn-text h-crisis" data-act="sos" aria-haspopup="dialog" data-press>' + inner + '</button>' :
-      '<a class="btn btn-text h-crisis" href="#/find/cat/housing" data-press>' + inner + '</a>';
+    return jr ? '<button type="button" class="btn btn-text h-crisis" data-act="sos" aria-haspopup="dialog" data-press' + ha('slide', 'crisis') + '>' + inner + '</button>' :
+      '<a class="btn btn-text h-crisis" href="#/find/cat/housing" data-press' + ha('slide', 'crisis') + '>' + inner + '</a>';
   }
-  function jumpLink() {
-    return '<button type="button" class="btn btn-text h-jump" data-act="home-jump" data-target="h-cats" data-press><span>' + esc(t('home.browse')) + '</span>' + arrow('d') + '</button>';
+  // facts as signage, not sentences: 東京の支援 222件 | ログインなし | 6問・3分
+  function facts(n) {
+    var num = '<b class="num h-fact-n' + rollCls('home.total', n) + '" data-count="' + n + '" data-count-seen="home.total" data-count-dur="900"' +
+      (T ? ' data-reveal-delay="' + T.facts + '"' : '') + '>' + n + '</b>';
+    var unit = t('home.unit');
+    var first = en() ? num + '<span class="h-fact-k">' + esc(t('home.f.count')) + '</span>' :
+      '<span class="h-fact-k">' + esc(t('home.f.count')) + '</span>' + num + (unit ? '<span class="h-fact-u">' + esc(unit) + '</span>' : '');
+    var cells = [first, '<span class="h-fact-k">' + esc(t('home.f.login')) + '</span>', '<span class="h-fact-k">' + esc(t('home.f.time')) + '</span>'];
+    return '<ul class="h-facts" role="list" aria-label="' + esc(t('home.facts')) + '">' + cells.map(function (c, i) {
+      return '<li class="h-fact"' + ha('rise', T ? T.facts + i * T.factStep : 0) + '>' + c + '</li>';
+    }).join('') + '</ul>';
   }
 
   function heroNew(jr) {
@@ -10749,21 +11251,15 @@
     var pre = t('home.h1pre');
     var title =
       '<h1 class="h-title" id="h-title" tabindex="-1">' +
-        '<span class="h-kicker"' + rv('line', 'kicker') + '>' + esc(t('home.kicker')) + '</span>' +
-        '<span class="h-main"' + rv('line', 'l1') + '>' + (pre ? '<span class="h-open">' + esc(pre) + '</span>' : '') +
-          '<mark class="h-mark">' + markInk() + '<span class="h-mark-t">' + esc(t('home.h1mark')) + '</span></mark>' + esc(t('home.h1post')) + '</span>' +
-        '<span class="h-main"' + rv('line', 'l2') + '>' + esc(t('home.h1c')) + '</span>' +
+        hline('h-kicker', 'kicker', esc(t('home.kicker'))) +
+        hline('h-main', 'l1', (pre ? '<span class="h-open">' + esc(pre) + '</span>' : '') +
+          '<mark class="h-mark">' + markInk() + '<span class="h-mark-t">' + esc(t('home.h1mark')) + '</span></mark>' + esc(t('home.h1post'))) +
+        hline('h-main', 'l2', esc(t('home.h1c'))) +
       '</h1>';
-    // the count rolls up like a station board the first time (and again only when it changed)
-    var num = '<b class="h-lead-n num' + rollCls('home.total', n) + '" data-count="' + n + '" data-count-seen="home.total" data-count-dur="800">' + n + '</b>';
-    var lead = esc(t('home.sub', { n: '\u0000' })).split('\u0000').join(num);
     return '<section class="h-hero is-new wide-layout' + (art ? ' has-art' : '') + '" aria-labelledby="h-title">' +
       (art ? '<div class="h-art">' + art + '</div>' : '') +
-      '<div class="h-copy">' +
-        eyebrow(t('home.eyebrow2')) + title +
-        '<p class="h-lead lead"' + rv('', 'lead') + '>' + lead + '</p>' +
-        '<div class="h-actions"' + rv('', 'act') + '>' + cta(t('home.cta'), '#/find/q/1', t('home.ctaMeta')) + jumpLink() + crisisLink() + '</div>' +
-        routeStrip() +
+      '<div class="h-copy">' + title + facts(n) +
+        '<div class="h-actions"><div class="h-cta-w"' + ha('cta', 'cta') + '>' + cta(t('home.cta'), '#/find/q/1') + '</div>' + crisisLink() + '</div>' +
       '</div>' +
     '</section>';
   }
@@ -10780,33 +11276,24 @@
       if (SM.matchSummary) {
         summary = SM.matchSummary(answers()).filter(function (r) {
           return r.set && r.label && (r.key === 'stage' || r.key === 'path' || r.key === 'area');
-        }).map(function (r, i) {
-          // the separator rides with the answer after it (no line ends on one); EN uses a middle dot, not ／
-          return '<span class="h-ans">' + (i ? '<span class="h-sep" aria-hidden="true">' + (en() ? '\u00b7' : '／') + '</span>' : '') + esc(r.label) + '</span>';
-        }).join(' ');
+        }).map(function (r) { return '<span class="tag tag-neutral h-ans">' + esc(r.label) + '</span>'; }).join('');
       }
     } catch (e) { summary = ''; }
-    var unit = t('home.backUnit'), tail = t('home.backB');
+    var unit = t('home.backUnit');
     var title = n ?
       '<h1 class="h-title is-back" id="h-title" tabindex="-1">' +
-        '<span class="h-kicker"' + rv('line', 'kicker') + '>' + esc(t('home.backA')) + '</span>' +
-        '<span class="h-big-row"' + rv('line', 'l1') + '><mark class="h-mark h-mark-num">' + markInk() + '<span class="h-mark-t"><b class="h-big num' + rollCls('home.fit', n) + '" data-count="' + n + '" data-count-seen="home.fit" data-count-dur="720">' + n + '</b>' +
-          (unit ? '<span class="h-big-unit">' + esc(unit) + '</span>' : '') + '</span></mark>' +
-          (tail ? '<span class="h-big-tail">' + esc(tail) + '</span>' : '') + '</span>' +
+        hline('h-kicker', 'kicker', esc(t('home.backA'))) +
+        hline('h-big-row', 'l1', '<mark class="h-mark h-mark-num">' + markInk() + '<span class="h-mark-t"><b class="h-big num' + rollCls('home.fit', n) + '" data-count="' + n + '" data-count-seen="home.fit" data-count-dur="760"' + (T ? ' data-reveal-delay="' + T.l1 + '"' : '') + '>' + n + '</b>' +
+          (unit ? '<span class="h-big-unit">' + esc(unit) + '</span>' : '') + '</span></mark>') +
       '</h1>' :
-      '<h1 class="h-title is-back is-none" id="h-title" tabindex="-1"><span class="h-kicker"' + rv('line', 'kicker') + '>' + esc(t('home.backNone')) + '</span></h1>';
+      '<h1 class="h-title is-back is-none" id="h-title" tabindex="-1">' + hline('h-kicker', 'kicker', esc(t('home.backNone'))) + '</h1>';
+    var ans = summary ? '<p class="h-answers"' + ha('rise', 'answers') + '><span class="sr-only">' + esc(t('home.yourAnswers')) + ': </span>' + summary +
+      '<a class="h-change" href="#/find/q/1" aria-label="' + esc(t('home.changeLabel')) + '" data-press>' + esc(t('home.changeAnswers')) + '</a></p>' : '';
     return '<section class="h-hero is-back wide-layout' + (side ? ' has-side' : '') + '" aria-labelledby="h-title">' +
-      '<div class="h-copy">' +
-        eyebrow(t('home.welcome')) + title +
-        (summary ? '<p class="h-answers"' + rv('', 'lead') + '><span class="h-answers-k">' + esc(t('home.yourAnswers')) + '</span><span class="h-answers-v">' + summary + '</span></p>' : '') +
-        '<div class="h-actions"' + rv('', 'act') + '>' + cta(t('home.seeResults'), '#/find/results') +
-          '<div class="h-links">' +
-            '<a class="btn btn-text h-link" href="#/find/q/1" data-press><span>' + esc(t('home.changeAnswers')) + '</span></a>' +
-            jumpLink() + crisisLink() +
-          '</div>' +
-        '</div>' +
+      '<div class="h-copy">' + title + ans +
+        '<div class="h-actions"><div class="h-cta-w"' + ha('cta', 'cta') + '>' + cta(t('home.seeResults'), '#/find/results') + '</div>' + crisisLink() + '</div>' +
       '</div>' +
-      (side ? '<div class="h-side"' + rv('', 'side') + '>' + side + '</div>' : '') +
+      (side ? '<div class="h-side"' + ha('rise', 'side') + '>' + side + '</div>' : '') +
     '</section>';
   }
 
@@ -10843,9 +11330,9 @@
     }).join('');
     var more = items.length > 3 ? '<p class="h-plan-more">' + esc(t('home.planMore', { n: items.length - 3 })) + '</p>' : '';
     return '<section class="h-plan" aria-labelledby="h-plan-h">' +
-      section(t('home.planTitle'), { id: 'h-plan-h', sub: items.length ? t('home.planSaved') + ' ' + items.length + t('home.unit') : '', action: { label: t('home.planOpen'), href: '#/plan' } }) +
+      section(t('home.planTitle'), { id: 'h-plan-h', sub: items.length ? t('home.planSaved', { n: items.length }) : '', action: { label: t('home.planOpen'), href: '#/plan' } }) +
       days +
-      (rows ? '<div class="list h-plan-list">' + rows + '</div>' : '') + more +
+      (rows ? '<div class="list h-plan-list" data-reveal-stagger="50">' + rows + '</div>' : '') + more +
     '</section>';
   }
 
@@ -10879,7 +11366,7 @@
   }
   function lessonHref(l) { return '#/learn/' + encodeURIComponent(l.id); }
 
-  function learn(num, jr, first) {
+  function learn(jr, first) {
     var list = lessonsFor(jr);
     if (!list.length) return '';
     // progress counts every lesson (中学生: only theirs), so the numbers match the まなぶ page
@@ -10919,37 +11406,35 @@
       '<span class="h-learn-prog-k">' + esc(t('home.learnDoneLabel')) + '</span></p>' +
       '<span class="h-segs" aria-hidden="true" style="--n:' + total + '">' + segs + '</span></div>';
 
+    var hold = first && T ? ' data-reveal-delay="' + T.rows + '"' : '';
     return '<section class="h-sec h-learn' + (jr ? ' is-jr' : '') + '" id="h-learn" aria-labelledby="h-learn-h">' +
-      holdHead(section(t('home.learnTitle'), { id: 'h-learn-h', num: num, sub: t('home.learnSub'), action: { label: t('home.learnAll'), href: '#/learn' } }), first) +
-      '<div class="h-learn-body" data-reveal' + bodyHold(first) + '>' + progress +
-        '<ul class="h-shelf" role="list" aria-label="' + esc(t('home.shelf')) + '">' + cards + end + '</ul>' +
+      head(t('home.learnTitle'), { id: 'h-learn-h', action: { label: t('home.learnAll'), href: '#/learn' } }, first) +
+      '<div class="h-learn-body" data-reveal' + hold + '>' + progress +
+        '<ul class="h-shelf" role="list" aria-label="' + esc(t('home.shelf')) + '" data-reveal-stagger="60">' + cards + end + '</ul>' +
       '</div>' +
     '</section>';
   }
 
-  /* ------------------------------------------------------------ 困りごと: six kanji station rows */
-  function cats(num, first) {
+  /* ------------------------------------------------------------ 困りごと: six kanji station rows (mark · name · count) */
+  function cats(first) {
     var order = SM.CAT_ORDER || ['housing', 'money', 'education', 'work', 'procedures', 'consult'];
     var counts = catCounts();
     var unit = t('home.unit');
-    // on a wide first screen the rows arrive in order (stagger 40ms, cap 6); otherwise the list is one block
-    var stagger = first && T && (window.innerWidth || 0) >= 900;
-    var rowAt = stagger ? ' data-reveal-delay="' + T.rows + '"' : '';
-    var rows = order.map(function (k) {
+    var lead = first && T;
+    var rows = order.map(function (k, i) {
       var n = counts[k] || 0;
-      // DOM order = reading order for screen readers (name, count, hint); the grid places them visually.
-      // The mark is the source of the shared morph into the category page (data-vt via catIcon {vt}).
-      return '<li class="h-cat-li" data-id="' + esc(k) + '"' + rowAt + '><a class="h-cat cat-' + esc(k) + '" href="#/find/cat/' + esc(k) + '" data-press="ink">' +
+      // each row rises in its turn; its kanji mark stamps in and its count rolls as it arrives (css: .h-cat-li.m-in)
+      var at = lead ? ' data-reveal-delay="' + (T.rows + i * T.rowStep) + '"' : '';
+      return '<li class="h-cat-li" data-id="' + esc(k) + '" data-reveal="up"' + at + '><a class="h-cat cat-' + esc(k) + '" href="#/find/cat/' + esc(k) + '" data-press="ink">' +
         '<span class="h-cat-mark">' + catMark(k, 'sm', true) + '</span>' +
         '<span class="h-cat-name">' + esc(catLabel(k)) + '</span>' +
-        (n ? '<span class="h-cat-n"><b class="num">' + n + '</b>' + (unit ? '<small>' + esc(unit) + '</small>' : '') + '</span>' : '') +
-        '<span class="h-cat-hint">' + esc(catHint(k)) + '</span>' +
+        (n ? '<span class="h-cat-n"><b class="num" data-count="' + n + '" data-count-dur="620">' + n + '</b>' + (unit ? '<small>' + esc(unit) + '</small>' : '') + '</span>' : '') +
         '<span class="h-cat-go">' + arrow() + '</span>' +
       '</a></li>';
     }).join('');
-    var head = holdHead(section(t('home.catsTitle'), { id: 'h-cats-h', num: num, sub: t('home.catsSub'), action: { label: t('home.catsAll'), href: '#/find' } }), first);
-    return '<section class="h-sec h-cats-sec" id="h-cats" aria-labelledby="h-cats-h" tabindex="-1">' + head +
-      '<ul class="h-cats" role="list"' + (stagger ? ' data-reveal-stagger="40"' : ' data-reveal' + bodyHold(first)) + '>' + rows + '</ul>' +
+    return '<section class="h-sec h-cats-sec" id="h-cats" aria-labelledby="h-cats-h" tabindex="-1">' +
+      head(t('home.catsTitle'), { id: 'h-cats-h', action: { label: t('home.catsAll'), href: '#/find' } }, first) +
+      '<ul class="h-cats" role="list"' + (lead ? '' : ' data-reveal-stagger="50"') + '>' + rows + '</ul>' +
     '</section>';
   }
 
@@ -10967,9 +11452,9 @@
     { id: 'anata-no-ibasho', sub: 'home.t.ibasho' },
     { id: 'yorisoi', sub: 'home.t.yorisoi' }
   ];
-  /* one structure for every line: name · tag + hours · the number · a row of equal ink-outline buttons
-     (電話する / チャットで話す / LINEで話す). The number is the biggest thing and also dials (pointer only: the
-     電話する button is the one link screen readers and the keyboard get, with the name and number in its label). */
+  /* one structure for every line: name · tags · the number · a row of equal ink-outline buttons. The number is the
+     biggest thing and also dials (pointer only: the 電話する button is the one link screen readers and the keyboard
+     get, with the name, number and hours in its label). */
   function talkRow(x) {
     var p = prog(x.id);
     if (!p || !p.contact) return '';
@@ -10977,7 +11462,6 @@
     var num = '', acts = [];
     var extBits = ic('external') + '<span class="sr-only">' + esc(t('core.newtab')) + '</span>';
     if (c.phone) {
-      // the label carries what the row shows beside the number: free, and when it answers
       var when = [isFreeDial(c.phone) ? t('home.free') : '', c.hours ? L(c.hours) : ''].filter(Boolean).join('・');
       num = '<a class="h-tel" href="' + esc(telHref(c.phone)) + '" tabindex="-1" aria-hidden="true">' +
         '<span class="h-tel-n num" data-noruby>' + esc(c.phone) + '</span></a>';
@@ -10994,40 +11478,37 @@
     var free = c.phone && isFreeDial(c.phone) ? '<span class="tag tag-free h-free">' + esc(t('home.free')) + '</span>' : '';
     return '<li class="h-ln" data-id="' + esc(p.id) + '">' +
       '<h3 class="h-ln-name"><a href="#/p/' + encodeURIComponent(p.id) + '">' + esc(name) + '</a></h3>' +
-      '<p class="h-ln-sub">' + free + '<span>' + esc(t(x.sub)) + '</span></p>' +
+      '<p class="h-ln-sub">' + free + tags(t(x.sub)) + '</p>' +
       num + '<div class="h-acts">' + acts.join('') + '</div>' +
     '</li>';
   }
-  function talk(num, jr) {
+  function talk(jr) {
     var rows = (jr ? TALK_JR : TALK).map(talkRow).join('');
     return '<section class="h-sec h-talk" id="h-talk" aria-labelledby="h-talk-h">' +
-      section(t('home.talkTitle'), { id: 'h-talk-h', num: num, sub: t('home.talkBody') }) +
-      '<div class="h-talk-body" data-reveal>' +
-        (rows ? '<ul class="h-lines" role="list">' + rows + '</ul>' : '') +
-        '<div class="h-talk-foot">' +
-          '<a class="btn btn-text h-more" href="#/find/cat/consult"><span>' + esc(t('home.talkMore')) + '</span>' + arrow() + '</a>' +
-          '<button type="button" class="h-sos" data-act="sos"><span class="h-sos-k">' + esc(t('home.talkSos')) + '</span>' +
-            '<span class="h-sos-v">' + ic('phone') + '<b>' + esc(t('home.talkSosBtn')) + '</b>' + arrow() + '</span></button>' +
-        '</div>' +
+      head(t('home.talkTitle'), { id: 'h-talk-h', sub: t('home.talkBody') }) +
+      (rows ? '<ul class="h-lines" role="list" data-reveal-stagger="60">' + rows + '</ul>' : '') +
+      '<div class="h-talk-foot" data-reveal>' +
+        '<a class="btn btn-text h-more" href="#/find/cat/consult"><span>' + esc(t('home.talkMore')) + '</span>' + arrow() + '</a>' +
+        '<button type="button" class="h-sos" data-act="sos"><span class="h-sos-k">' + esc(t('home.talkSos')) + '</span>' +
+          '<span class="h-sos-v">' + ic('phone') + '<b>' + esc(t('home.talkSosBtn')) + '</b>' + arrow() + '</span></button>' +
       '</div>' +
     '</section>';
   }
 
-  /* ------------------------------------------------------------ ツール: rows with spot thumbs */
-  function tools(num) {
+  /* ------------------------------------------------------------ ツール: rows with spot thumbs, titles only */
+  function tools() {
     var list = [
       { href: '#/tools/script', k: 'script' },
       { href: '#/tools/check', k: 'check' },
       { href: '#/tools/money', k: 'money' }
     ];
     return '<section class="h-sec h-tools-sec" id="h-tools" aria-labelledby="h-tools-h">' +
-      section(t('home.toolsTitle'), { id: 'h-tools-h', num: num, sub: t('home.toolsSub') }) +
-      '<ul class="h-tools" role="list" data-reveal>' + list.map(function (x) {
+      head(t('home.toolsTitle'), { id: 'h-tools-h' }) +
+      '<ul class="h-tools" role="list" data-reveal-stagger="60">' + list.map(function (x) {
         var art = illus('tools-' + x.k, { size: 'thumb-sm', animate: false, cls: 'h-tool-il' });
         return '<li><a class="h-tool" href="' + x.href + '" data-press="ink">' +
           (art ? '<span class="h-tool-art">' + art + '</span>' : '') +
-          '<span class="h-tool-body"><span class="h-tool-t">' + esc(t('home.tool.' + x.k)) + '</span>' +
-          '<span class="h-tool-s">' + esc(t('home.tool.' + x.k + 'Sub')) + '</span></span>' +
+          '<span class="h-tool-t">' + esc(t('home.tool.' + x.k)) + '</span>' +
           '<span class="h-tool-go">' + arrow() + '</span></a></li>';
       }).join('') + '</ul>' +
     '</section>';
@@ -11042,7 +11523,7 @@
     '</section>';
   }
 
-  /* ------------------------------------------------------------ 奥付 (an honest colophon) */
+  /* ------------------------------------------------------------ 奥付 (an honest colophon, label / value) */
   function colophon() {
     var rows = [
       [t('home.colo.by'), esc(t('home.colo.byVal'))],
@@ -11074,8 +11555,9 @@
   if (SM.on) {
     SM.on('home-jump', function (el) {
       var id = el && el.getAttribute('data-target');
-      fillAll();   // the sections after 01 (中学生: 困りごと is one of them)
-      try { if (SM.motion && SM.motion.finishAll) SM.motion.finishAll(); } catch (e) { /* ignore */ }   // lands the entrance
+      fillAll();
+      landHero();
+      try { if (SM.motion && SM.motion.finishAll) SM.motion.finishAll(); } catch (e) { /* ignore */ }
       var target = id && document.getElementById(id);
       if (!target) return;
       try { if (SM.motion && SM.motion.revealAll) SM.motion.revealAll(target); } catch (e) { /* ignore */ }
@@ -11177,26 +11659,76 @@
     else go();
   }
 
+  /* ------------------------------------------------------------ the hero's CSS choreography
+     play: .h-play on the hero starts every part on its --d (scaled by --h-k after a skip). It ends by itself:
+     .h-done (≈1.6s) drops the clips and the animations, so nothing stays composited. A tap or key in between lands
+     it (.h-land): the reader asked for the page, not the show. */
+  var heroTimer = 0, heroEl = null;
+  function landHero() {
+    var h = heroEl;
+    if (!h || !h.classList.contains('h-play') || h.classList.contains('h-done')) return;
+    h.classList.add('h-land');
+    clearTimeout(heroTimer);
+    heroTimer = setTimeout(function () { h.classList.add('h-done'); }, 40);
+    offInput();
+  }
+  function onInput(e) {
+    if (e.type === 'keydown' && (e.key === 'Shift' || e.key === 'Tab')) return;
+    landHero();
+  }
+  function offInput() {
+    document.removeEventListener('pointerdown', onInput, true);
+    document.removeEventListener('keydown', onInput, true);
+  }
+  function nudge(h, at) {
+    // the CTA's arrow nudges once, after the button has landed: "this way"
+    setTimeout(function () {
+      if (!h.isConnected || h.classList.contains('h-land') || reduced()) return;
+      var a = h.querySelector('.h-cta .arrow');
+      if (!a || !a.animate) return;
+      try {
+        a.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(7px)', offset: 0.4 }, { transform: 'translateX(-1px)', offset: 0.75 }, { transform: 'translateX(0)' }],
+          { duration: 520, easing: 'cubic-bezier(0.3, 0, 0.3, 1)' });
+      } catch (e) { /* ignore */ }
+    }, at);
+  }
+  function playHero(main, table) {
+    var h = main && main.querySelector(':scope > .h-hero');
+    if (!h || !table) return;
+    heroEl = h;
+    var go = function () {
+      if (!h.isConnected) return;
+      var k = parseFloat(h.style.getPropertyValue('--h-k')) || 1;
+      h.classList.add('h-play');
+      document.addEventListener('pointerdown', onInput, true);
+      document.addEventListener('keydown', onInput, true);
+      nudge(h, Math.round(table.nudge * k));
+      clearTimeout(heroTimer);
+      heroTimer = setTimeout(function () { h.classList.add('h-done'); offInput(); }, Math.round((table.nudge + 600) * k));
+    };
+    if (mode === 'launch' && SM.motion && SM.motion.whenReleased) SM.motion.whenReleased(go);
+    else go();
+  }
+
   /* the opening was skipped (launch.js 'sm:lxskip', before it releases the view): the person asked for the app, not
-     the show. The held first screen switches to the returning-visit pace (the launch table's delays × 0.55, so the
-     same order lands in ~half the time) and the numbers stand at their value instead of rolling from blank. */
-  document.addEventListener('sm:lxskip', function () {
-    if (mode !== 'launch') return;
-    var view = document.getElementById('view');
-    if (!view || !view.classList.contains('v-home')) return;
-    mode = 'short';
+     the show. The held first screen switches to the returning-visit pace (the launch delays × 0.55, so the same
+     order lands in about half the time) and the numbers stand at their value instead of rolling from blank. */
+  function toShort(view) {
+    var hero = view.querySelector(':scope > .h-hero');
+    if (hero) hero.style.setProperty('--h-k', '0.55');
     var list = view.querySelectorAll('[data-reveal-delay]');
     for (var i = 0; i < list.length; i++) {
       var d0 = parseInt(list[i].getAttribute('data-reveal-delay'), 10) || 0;
       list[i].setAttribute('data-reveal-delay', String(Math.round(d0 * 0.55)));
     }
-    var inks = view.querySelectorAll('.h-mark-ink');
-    for (var j = 0; j < inks.length; j++) {
-      var at = parseInt(inks[j].style.getPropertyValue('--mark-at'), 10);
-      if (isFinite(at)) inks[j].style.setProperty('--mark-at', Math.round(at * 0.55) + 'ms');
-    }
     var nums = view.querySelectorAll('[data-count]');
     for (var k = 0; k < nums.length; k++) { nums[k].setAttribute('data-count-from', nums[k].getAttribute('data-count')); nums[k].classList.remove('x-rolls'); }
+  }
+  document.addEventListener('sm:lxskip', function () {
+    if (mode !== 'launch') return;
+    var view = document.getElementById('view');
+    if (!view || !view.classList.contains('v-home')) return;
+    toShort(view);
   });
 
   SM.views.home = {
@@ -11209,34 +11741,20 @@
       var hasLearn = lessonsFor(jr).length > 0;
       mode = pickMode();
       T = ENTER[mode] || null;
-      // the opening was skipped before home rendered (an early tap): the same switch as 'sm:lxskip' below, made
-      // here — the launch order at 0.55× its delays, and the numbers stand at their value (no roll from blank)
-      var skipped0 = mode === 'launch' && !!(window.__lx && window.__lx.skipped);
-      if (skipped0 && T) {
-        var T2 = {};
-        for (var tk in T) T2[tk] = typeof T[tk] === 'number' ? Math.round(T[tk] * 0.55) : (T[tk] && T[tk].map ? T[tk].map(function (v) { return Math.round(v * 0.55); }) : T[tk]);
-        T = T2;
-      }
-      var n = 0;
-      function num() { n++; return n; }
 
       var plan = answered ? planPreview() : '';
       var out = answered ? heroBack(plan) : heroNew(jr) + planPreview();
       out += offline();
       // section 01 renders now; 中学生 see まなぶ first, everyone else the six signs
-      out += jr && hasLearn ? learn(num(), true, true) : cats(num(), true);
-      // the rest, one part per section; numbers are fixed now so they never depend on when a part arrives
+      out += jr && hasLearn ? learn(true, true) : cats(true);
+      // the rest, one part per section
       var parts = [];
-      if (jr && hasLearn) {
-        var nCats = num(), nTalk = num();
-        parts.push(function () { return cats(nCats, false); }, function () { return talk(nTalk, true); });
-      } else {
-        var nTalk2 = num();
-        parts.push(function () { return talk(nTalk2, jr); });
-        if (hasLearn) { var nLearn = num(); parts.push(function () { return learn(nLearn, false, false); }); }
+      if (jr && hasLearn) parts.push(function () { return cats(false); }, function () { return talk(true); });
+      else {
+        parts.push(function () { return talk(jr); });
+        if (hasLearn) parts.push(function () { return learn(false, false); });
       }
-      var nTools = num();
-      parts.push(function () { return tools(nTools); }, function () { return staff() + colophon(); });
+      parts.push(tools, function () { return staff() + colophon(); });
 
       var r = SM.route || {};
       var deep = r.kind === 'back' && (r.restoreY || 0) > (window.innerHeight || 700) * 0.5;
@@ -11250,23 +11768,24 @@
         out += parts.map(function (f) { return f(); }).join('');
         T = keep;
       }
-      // (and no .x-rolls: that keeps a number blank until its odometer builds cells, which a standing number never does)
-      if (skipped0) { out = out.replace(/ x-rolls/g, '').replace(/ data-count="([^"]*)"/g, ' data-count="$1" data-count-from="$1"'); mode = 'short'; }
       return out;
     },
     mount: function (main) {
       wrapBanner();
       wireNet();
       startFill();
-      // the entrance delays shape the first screen only: once it has played, anything still waiting reveals at once
-      if (T && SM.motion) {
+      if (T && main) {
+        // tapped before home rendered: the same switch as 'sm:lxskip'
+        if (mode === 'launch' && window.__lx && window.__lx.skipped) toShort(main);
+        playHero(main, T);
+        // the entrance delays shape the first screen only: once it has played, anything still waiting reveals at once
         var expire = function () {
           setTimeout(function () {
             var list = main.querySelectorAll('[data-reveal-delay]');
             for (var i = 0; i < list.length; i++) list[i].removeAttribute('data-reveal-delay');
           }, 1300);
         };
-        if (SM.motion.whenReleased) SM.motion.whenReleased(expire); else expire();
+        if (SM.motion && SM.motion.whenReleased) SM.motion.whenReleased(expire); else expire();
       }
       T = null;
     }
@@ -11274,7 +11793,7 @@
 })();
 ;
 /* ---- js/boot.js ---- */
-/* 巣立ちマップ v4 — shell & boot (ENGINE)
+/* 巣立ちマップ v5 — shell & boot (ENGINE)
  * Paints the app shell (patching the static HTML in place: nothing pops), registers built-in acts (go, save,
  * copy, sheet-close, sos, exit, settings, back), the SOS + settings sheets, keyboard handling, and starts the
  * router. Save = stamp → flight to やること → badge roll → undo toast (MOTION-SPEC §4.1). Loaded before launch.js. */
@@ -11289,7 +11808,7 @@
     'shell.docTitle': { ja: '巣立ちマップ｜施設や里親家庭を出る人の支援ガイド（東京）', en: 'Sudachi Map | Support for young people leaving care in Tokyo' },
     'shell.skip': { ja: '本文へ', en: 'Skip to content' },
     'shell.exit': { ja: 'すぐ閉じる', en: 'Quick exit' },
-    'shell.exitHint': { ja: 'この画面をすぐに天気の検索に切りかえます（Escを2回でも）', en: 'Instantly switch to a weather search (or press Esc twice)' },
+    'shell.exitHint': { ja: 'すぐに天気の検索に切りかえます（Esc 2回でも）', en: 'Switch to a weather search at once (or Esc twice)' },
     'shell.sos': { ja: '緊急', en: 'SOS' },
     'shell.sosLabel': { ja: '緊急の連絡先', en: 'SOS — emergency contacts' },
     'shell.settings': { ja: '設定', en: 'Settings' },
@@ -11303,26 +11822,26 @@
     'tab.learnSub': { ja: 'お金のきほん', en: 'Money basics' },
 
     'jr.title': { ja: 'ふりがなをつけますか？', en: 'Turn on furigana?' },
-    'jr.body': { ja: 'むずかしい漢字に読みがながつきます。設定でいつでも変えられます。', en: 'Readings appear over hard kanji. You can change this in Settings.' },
+    'jr.body': { ja: 'むずかしい漢字に読みがな。あとで設定で変えられます', en: 'Readings over hard kanji. Change it any time in Settings.' },
     'jr.yes': { ja: 'ふりがなをつける', en: 'Turn on furigana' },
     'jr.no': { ja: 'いまはいい', en: 'Not now' },
     'jr.done': { ja: 'ふりがなをつけました', en: 'Furigana is on' },
 
     'sos.title': { ja: 'いま、話せるところ', en: 'Someone to talk to, now' },
-    'sos.lead': { ja: '番号をタップすると電話がかかります。名前を言わなくても大丈夫です。', en: 'Tap a number to call. You don\'t have to give your name.' },
+    'sos.lead': { ja: 'タップで電話。名前は言わなくて大丈夫。', en: 'Tap to call. You don\'t have to give your name.' },
     'sos.g1': { ja: '命や体があぶないとき', en: 'If your life or safety is in danger' },
     'sos.g2': { ja: 'つらい・こまったを話したいとき', en: 'If you need to talk' },
     'sos.g3': { ja: 'お金・契約のトラブル', en: 'Money & contract trouble' },
     'sos.gHome': { ja: 'いる場所がない・家にいられない', en: 'Nowhere to stay / can\'t stay at home' },
     'sos.seikatsu': { ja: '生活保護（福祉事務所）', en: 'Public assistance (welfare office)' },
-    'sos.seikatsud': { ja: '住む所もお金もないとき。申請は権利です。住んでいる区や市の福祉事務所へ', en: 'No home and no money? Applying is your right. Go to your ward/city welfare office' },
-    'sos.seikatsuBtn': { ja: '生活保護のページを見る', en: 'See public assistance' },
+    'sos.seikatsud': { ja: '住む所もお金もないとき。申請は権利。窓口は区や市の福祉事務所', en: 'No home, no money: applying is your right. At your ward/city welfare office' },
+    'sos.seikatsuBtn': { ja: '生活保護（福祉事務所）', en: 'Public assistance' },
     'sos.110': { ja: '警察', en: 'Police' },
     'sos.110d': { ja: '身の危険を感じたら', en: 'If you feel unsafe' },
     'sos.119': { ja: '救急・消防', en: 'Ambulance / Fire' },
     'sos.119d': { ja: '大けが・急な病気・火事', en: 'Serious injury, sudden illness, fire' },
     'sos.yori': { ja: 'よりそいホットライン', en: 'Yorisoi Hotline' },
-    'sos.yorid': { ja: 'どんなことでも。お金・住まい・こころ', en: 'Anything at all — money, housing, feelings' },
+    'sos.yorid': { ja: 'お金・住まい・こころ、なんでも', en: 'Money, housing, feelings — anything' },
     'sos.yorih': { ja: '24時間・無料', en: '24 hours · free' },
     'sos.inochi': { ja: '#いのちSOS', en: '#Inochi SOS' },
     'sos.inochid': { ja: '「死にたい」「消えたい」と思ったら', en: 'If you feel like dying or disappearing' },
@@ -11336,9 +11855,9 @@
     'sos.chald': { ja: '住む所がない・ネットカフェで寝ている', en: 'No place to live, sleeping in net cafés' },
     'sos.chalh': { ja: '月水金土 10〜17時・火木 10〜20時（祝日休み）', en: 'Mon/Wed/Fri/Sat 10–17, Tue/Thu 10–20 (closed holidays)' },
     'sos.188': { ja: '消費者ホットライン', en: 'Consumer hotline' },
-    'sos.188d': { ja: '契約・お金のトラブル。近くの窓口につながります', en: 'Contract or money trouble. Connects you to a local office' },
+    'sos.188d': { ja: '契約・お金のトラブル。近くの窓口へつながる', en: 'Contract or money trouble. Connects to a local office' },
     // 中学生 sheet (body.is-junior): child lines instead of adult housing / youth services
-    'sos.jr.lead': { ja: '番号をタップすると電話がかかります。名前を言わなくても大丈夫。', en: 'Tap a number to call. You don\'t have to give your name.' },
+    'sos.jr.lead': { ja: 'タップで電話。名前は言わなくて大丈夫。', en: 'Tap to call. You don\'t have to give your name.' },
     'sos.jr.g1': { ja: '命や体があぶないとき', jr: '命や体があぶないとき', en: 'If your life or safety is in danger' },
     'sos.jr.gHome': { ja: '家にいられない・こわいとき', jr: '家にいられない・こわいとき', en: 'Can\'t stay at home, or scared' },
     'sos.jr.g2': { ja: '話を聞いてほしいとき', jr: '話を聞いてほしいとき', en: 'When you want someone to listen' },
@@ -11354,37 +11873,37 @@
     'sos.exitSheet': { ja: 'すぐ閉じる', en: 'Quick exit' },
     'sos.copy': { ja: '{name}の番号をコピー', en: 'Copy number for {name}' },
     'sos.copied': { ja: '番号をコピーしました', en: 'Number copied' },
-    'sos.chatTitle': { ja: '話すのがこわいときは', en: 'If calling feels too hard' },
-    'sos.chatBody': { ja: 'LINEやチャットで相談できるところもあります。', en: 'Some places let you talk by LINE or chat.' },
-    'sos.chatBtn': { ja: 'LINE・チャットの相談先を見る', en: 'See LINE & chat options' },
-    'sos.checked': { ja: '番号は {date} に公式ページで確認しました。', en: 'Numbers checked on official pages on {date}.' },
+    'sos.chatTitle': { ja: '電話がこわいときは', en: 'If calling feels too hard' },
+    'sos.chatBody': { ja: 'LINE・チャットでも相談できます。', en: 'You can also talk by LINE or chat.' },
+    'sos.chatBtn': { ja: 'LINE・チャットの相談先', en: 'LINE & chat options' },
+    'sos.checked': { ja: '番号は {date} に公式ページで確認', en: 'Numbers checked on official pages, {date}' },
 
     'set.title': { ja: '設定', en: 'Settings' },
     'set.gView': { ja: '見やすさ', en: 'Display' },
     'set.big': { ja: '文字を大きく', en: 'Larger text' },
-    'set.bigd': { ja: '画面の文字を大きくします', en: 'Make all text bigger' },
+    'set.bigd': { ja: '画面の文字を大きく', en: 'Bigger text everywhere' },
     'set.ruby': { ja: 'ふりがな', en: 'Furigana' },
-    'set.rubyd': { ja: 'むずかしい漢字に読みがなをつけます', en: 'Show readings over hard kanji (Japanese only)' },
+    'set.rubyd': { ja: 'むずかしい漢字に読みがな', en: 'Readings over hard kanji (Japanese only)' },
     'set.lang': { ja: 'English', en: 'English' },
-    'set.langd': { ja: '画面を英語にします', en: 'Show the app in English' },
+    'set.langd': { ja: '画面を英語に', en: 'Show the app in English' },
     'set.dark': { ja: '暗い画面', en: 'Dark screen' },
-    'set.darkd': { ja: '背景を黒っぽくします（ふだんは白）', en: 'Use a dark background (white by default)' },
+    'set.darkd': { ja: '背景を黒っぽく（ふだんは白）', en: 'Dark background (white by default)' },
     'set.motion': { ja: '動きを少なく', en: 'Reduce motion' },
-    'set.motiond': { ja: '画面の動きやアニメーションを止めます', en: 'Turn off movement and animation' },
+    'set.motiond': { ja: '画面は動かさず、ふっと切りかえます', en: 'No movement; screens simply fade' },
     'set.gSup': { ja: '支援する人へ', en: 'For supporters' },
     'set.sup': { ja: '支援者向けメモを表示', en: 'Show supporter notes' },
-    'set.supd': { ja: '施設の職員・先生・里親さん向けのメモを出します', en: 'Notes for care staff, teachers and foster carers' },
+    'set.supd': { ja: '職員・先生・里親さん向けのメモ', en: 'Notes for care staff, teachers and foster carers' },
     'set.gPriv': { ja: 'このスマホの記録', en: 'Data on this phone' },
     'set.priv': { ja: '名前もログインもいりません。答えや保存した支援は、このスマホの中だけにあります。どこにも送りません。', en: 'No name, no login. Your answers and saved items stay on this phone only. Nothing is sent anywhere.' },
-    'set.noStore': { ja: 'このブラウザでは記録が残りません。画面を閉じると消えます。', en: 'This browser can\'t keep data. It will be gone when you close the page.' },
+    'set.noStore': { ja: 'このブラウザでは記録が残りません。閉じると消えます。', en: 'This browser can\'t keep data. It\'s gone when you close the page.' },
     'set.erase': { ja: 'このスマホの記録をすべて消す', en: 'Erase everything on this phone' },
-    'set.eraseNote': { ja: '施設や学校の共有スマホ・パソコンを使ったときは、最後に消しておくと安心です。', en: 'Using a shared phone or computer? Erase when you\'re done.' },
+    'set.eraseNote': { ja: '共有のスマホ・パソコンでは、最後に消すと安心です。', en: 'On a shared phone or computer, erase when you\'re done.' },
     'set.about': { ja: '運営・掲載のルール・プライバシー', en: 'About, listing rules & privacy' },
     'set.learn': { ja: 'まなぶ — お金のきほん', en: 'Learn — money basics' },
     'set.gMore': { ja: 'もっと知る', en: 'More' },
     'set.version': { ja: 'バージョン {v}・情報の確認日 {d}', en: 'Version {v} · Info checked {d}' },
     'set.confirmTitle': { ja: 'ほんとうに消しますか？', en: 'Erase everything?' },
-    'set.confirmBody': { ja: '質問の答え・保存した支援・やることのチェック・巣立ちの日・まなぶの記録が、このスマホから消えます。元には戻せません。', en: 'Your answers, saved items, checked tasks, dates and lesson progress will be removed from this phone. This can\'t be undone.' },
+    'set.confirmBody': { ja: '答え・保存した支援・チェック・日付・まなぶの記録が消えます。元には戻せません。', en: 'Your answers, saved items, checks, dates and lesson progress will be removed. This can\'t be undone.' },
     'set.confirmYes': { ja: 'すべて消す', en: 'Erase all' },
     'set.confirmNo': { ja: 'やめる', en: 'Cancel' },
     'set.erased': { ja: '記録を消しました', en: 'Everything was erased' }
@@ -11546,15 +12065,11 @@
     var n = (SM.state.saved || []).length;
     var tab = document.querySelector('.tabbar .tab[data-tab="plan"]');
     if (!tab) return;
-    var b = tab.querySelector('.tab-badge');
-    if (b) {
-      var txt = n > 99 ? '99+' : String(n);
-      var shown = b._smOdoShown != null ? b._smOdoShown : b.textContent;
-      var was = b.hidden;
-      b.hidden = n === 0;
-      if (o && o.roll && !was && n > 0 && shown !== txt && SM.motion && SM.motion.odometer) SM.motion.odometer(b, txt, { from: shown, duration: 420 });
-      else if (shown !== txt || b.firstElementChild) { b._smOdoShown = txt; b.textContent = txt; }
-      if (o && o.roll && was && n > 0 && SM.motion && SM.motion.stamp) SM.motion.stamp(b, { ring: false });
+    var roll = !!(o && o.roll);
+    if (SM.motion && SM.motion.badge) SM.motion.badge(tab, n, { roll: roll, bump: roll });
+    else {
+      var b = tab.querySelector('.tab-badge');
+      if (b) { b.hidden = n === 0; b.textContent = n > 99 ? '99+' : String(n); }
     }
     if (n) tab.setAttribute('aria-label', t('tab.planCount', { n: n }));
     else tab.removeAttribute('aria-label');
@@ -11966,30 +12481,31 @@
 })();
 ;
 /* ---- js/launch.js ---- */
-/* 巣立ちマップ v4 — launch.js (LAUNCH). Classic script, loaded last (after boot.js).
-   MOTION-SPEC §2 (opening), LOGO.md §7 (the mark slot). Reads window.__lx from the head gate in index.html.
+/* 巣立ちマップ v5 — launch.js (LAUNCH). Classic script, loaded last (after boot.js).
+   SPEC-v5 Part A 1, MOTION-SPEC §2. Reads window.__lx from the head gate in index.html.
 
-   1. html.lx-full — the hand-off. The intro already runs on CSS from first paint. This script:
+   1. html.lx-full — the hand-off. The opening already runs on the inline CSS in index.html from frame 1 (the line
+      draws across the screen, the 巣 box arrives along it, 立ちマップ ride in). This script:
         - holds the view's entrance (SM.motion.hold) while the splash is up,
-        - waits for H = max(intro end 860ms, first render, web fonts — at most until 1300ms),
-        - in one frame reads the geometry, then FLIPs the lockup into the app-bar logo, slides the rule up into the
-          app bar's bottom border (matching its width and colour), fades the caption, the green line and the
-          paper, and raises the tab bar (the rail on desktop),
-        - releases the view's entrance 90ms into the hand-off (40 after a skip; see step 4): the view is not
-          faded as a whole (its parts are already in their from-state), so the first line starts to rise while the
-          paper is still fading — no blank frame between the poster and the page,
+        - waits for H = max(intro end 740ms, first render, the web fonts if they are in by then); on a slow network the
+          splash holds with a small "train" running along the line (CSS) until the app is ready,
+        - in one frame reads the geometry, then FLIPs the lockup into the app-bar logo, lifts the whole line up into
+          the app bar's underline (it thins and settles into the hairline colour), fades the caption and the paper,
+          and raises the tab bar (the rail on desktop),
+        - releases the view's entrance 60ms into the hand-off (home.js cascades its first screen in from there),
         - when everything lands, in the same frame: removes the splash, restores the chrome, writes sm2:seen.
       A tap / key / wheel on the splash (head gate) fast-forwards the intro and hands off as soon as the app is ready.
-   2. html.lx-short — the returning beat is pure CSS; this keeps it in step if boot repaints the bar, then tidies up.
+   2. html.lx-short — the 0.55s returning beat is pure CSS (inline); this keeps it in step if boot repaints the bar,
+      then tidies up. html.lx-fade (reduced motion) — fades the page in once it has rendered (css/launch.css).
    3. Always: meta theme-color follows the theme; SM.loadMapLib() loads MapLibre + the map data on first use.
 
    Public:
      SM.loadMapLib([cb]) -> Promise<maplibregl>  (cb(err, maplibregl) also called). Idempotent. Adds, in order,
         js/vendor/maplibre-gl.css, js/vendor/maplibre-gl.js, data/map/base.js, data/map/style.js. Resolves when
         window.maplibregl, SM.mapStyle and SM.data.mapMeta exist; rejects if a file fails to load.
-        Started by the map view itself, and right after the first render when the app opens on #/map (not on
-        pointerdown or hashchange: parsing MapLibre there held the tap's own transition). Fires `sm:maplib`.
-     document event `sm:launched` when the opening has finished (or was cut short).
+        Started by the map view itself, and right after the first render when the app opens on #/map. Fires `sm:maplib`.
+     document event `sm:launched` {mode, skipped} when the opening has finished (every mode, also when cut short).
+     document event `sm:lxskip` when the full opening was skipped before the view was released.
      SM.launch = { mode, done() } for diagnostics. */
 (function () {
   'use strict';
@@ -12110,31 +12626,28 @@
   whenReady(function () { if (isMapHash(location.hash)) warmMap(); });
 
   /* ------------------------------------------------------------------ html.lx-short: the returning beat */
+  L.taken = true;   // the head gate's fallback (index.html) leaves the opening to this script from here on
+  function tidyClasses() { de.classList.remove('lx-full', 'lx-short', 'lx-fade', 'lx-fade-go', 'lx-on', 'lx-out', 'lx-in', 'lx-skip', 'lx-skip-css'); }
   if (L.mode === 'short') {
-    var bar = d.querySelector('.appbar');
-    var beatOf = function (box) {
+    var bar = d.querySelector('.appbar'), beatStart = null;
+    // the clock of the beat that is on screen (the bar's animations may still be pending when this script runs)
+    var clock = function () {
       try {
-        var list = box && box.getAnimations ? box.getAnimations() : [];
-        for (var i = 0; i < list.length; i++) if (list[i].animationName === 'lg-beat') return list[i];
+        var list = bar ? bar.getAnimations({ subtree: true }) : [];
+        for (var i = 0; i < list.length; i++) {
+          var an = list[i];
+          if (!/^lx-s-arrive$/.test(an.animationName || '')) continue;
+          if (an.startTime !== null && an.startTime !== undefined) { beatStart = an.startTime; return; }
+          if (an.ready) an.ready.then(function () { if (beatStart === null && an.startTime !== null) beatStart = an.startTime; }, noop);
+        }
       } catch (e) { }
-      return null;
     };
-    var beat = bar ? beatOf(bar.querySelector('.brand .lg-box')) : null, beatStart = null;
-    // the clock of the beat that is actually on screen (it may still be pending when this script runs)
-    var clock = function (an) {
-      if (!an) return;
-      if (an.startTime !== null && an.startTime !== undefined) { beatStart = an.startTime; return; }
-      if (an.ready) an.ready.then(function () { if (an.startTime !== null && beatStart === null) beatStart = an.startTime; }, noop);
-    };
-    clock(beat);
-    // boot may repaint the bar (innerHTML) while or after the beat runs: the new box would beat again. Put the new
-    // animation on the old one's clock, so the beat continues (or stays finished): nothing visibly restarts.
-    // (If the old box never reached the screen, beatStart is unknown and the new one simply plays.)
+    clock();
+    // boot repaints the brand when it differs (English): the new one would beat again from 0. Put every new
+    // animation in the bar on the old clock, so the beat continues (or stays finished) and nothing restarts.
     var mo = (w.MutationObserver && bar) ? new MutationObserver(function () {
-      var nb = beatOf(bar.querySelector('.brand .lg-box'));
-      if (!nb || nb === beat) return;
-      beat = nb;
-      if (beatStart !== null) { try { nb.startTime = beatStart; } catch (e) { } } else clock(nb);
+      if (beatStart === null) { clock(); return; }
+      try { bar.getAnimations({ subtree: true }).forEach(function (a) { if (/^lx-/.test(a.animationName || '') && a.startTime !== beatStart) a.startTime = beatStart; }); } catch (e) { }
     }) : null;
     if (mo) mo.observe(bar, { childList: true, subtree: true });
     var tidied = false;
@@ -12146,10 +12659,21 @@
       L.done = true;
       emit('sm:launched', { mode: 'short' });
     };
-    // the ink rule (::after) and its paper mask (::before) soften into the bar's own hairline by 760ms: then the
-    // overlay goes, and what is left is exactly the real border
+    // the green line has settled into the hairline (≈620ms): what is left is exactly the real border
     if (bar) bar.addEventListener('animationend', function (e) { if (e.animationName === 'lx-soft') setTimeout(tidy, 20); });
-    setTimeout(tidy, 3000);
+    setTimeout(tidy, 1600);
+  }
+
+  /* ------------------------------------------------------------------ html.lx-fade: reduced motion */
+  if (L.mode === 'fade') {
+    whenReady(function () {
+      de.classList.add('lx-fade-go');
+      setTimeout(function () {
+        de.classList.remove('lx-fade', 'lx-fade-go');
+        L.done = true;
+        emit('sm:launched', { mode: 'fade' });
+      }, 260);
+    });
   }
 
   /* ------------------------------------------------------------------ html.lx-full: the hand-off */
@@ -12157,32 +12681,29 @@
   var finishLaunch = null;
   if (L.mode !== 'full' || !root) {
     if (root && root.parentNode) root.parentNode.removeChild(root);
-    if (L.mode === 'full') { de.classList.remove('lx-full', 'lx-skip', 'lx-skip-css'); L.done = true; }
+    if (L.mode === 'full') { tidyClasses(); L.done = true; emit('sm:launched', { mode: 'full', skipped: true }); }
     return;
   }
 
-  var INTRO_END = 860;       // caption settles at 760 + 100ms of stillness (MOTION-SPEC §2.2)
-  var FONT_DEADLINE = 1300;  // wait for the web fonts at most until here (VISUAL-SPEC §9: ≤600ms past the intro)
-  var MOVE = 380, MOVE_SKIP = 260;
+  var INTRO_END = 660;       // the last kana is landing, the caption has hung (inline CSS in index.html)
+  var FONT_DEADLINE = 660;  // web fonts may be waited for only while the intro still plays: never on the network
+  var MOVE = 360, MOVE_SKIP = 260;
   var EASE = 'cubic-bezier(0.2, 0, 0, 1)';          // --ease-standard
   /* the lockup's flight, split by axis: it shrinks toward its top-left (and moves across) a little ahead of its rise,
-     so its far end clears すぐ閉じる by 12px or more on the way up instead of grazing the pill's corner (2-3px on a
-     standard phone). The vertical stays close to --ease-standard: the view's entrance timing (step 4) still holds. */
+     so its far end clears すぐ閉じる on the way up instead of grazing the button's corner. */
   var EASE_X = 'cubic-bezier(0.05, 0.75, 0, 1)', EASE_Y = 'cubic-bezier(0.2, 0, 0.05, 1)';
-  var EXIT = 'cubic-bezier(0.3, 0, 0.8, 0.15)';     // --ease-exit
   var started = false, ready = false, fontsOk = false, timer = 0, chromeAnims = [];
 
   de.classList.add('lx-on');
   var release = noop;
-  try { if (SM.motion && typeof SM.motion.hold === 'function') release = SM.motion.hold('launch', 2400) || noop; } catch (e) { release = noop; }
+  try { if (SM.motion && typeof SM.motion.hold === 'function') release = SM.motion.hold('launch', 2600) || noop; } catch (e) { release = noop; }
   var released = false;
   function releaseView() {
     if (released) return;
     released = true;
     try { release(); } catch (e) { }
     // the guard on #view lifts at once: every held element is still in its from-state, and its own entrance (with
-    // its delay from the table in home.js) is what brings it in. A fade of the whole view on top of that would
-    // square every element's opacity (a quarter at its own halfway point) and read as dead air.
+    // its delay from the table in home.js) brings it in. No fade of the whole view on top of that.
     de.classList.add('lx-in');
   }
 
@@ -12195,8 +12716,8 @@
     chromeAnims = [];
     var bar = d.querySelector('.appbar');
     if (bar) { bar.style.backgroundColor = ''; bar.style.borderBottomColor = ''; }
-    releaseView();   // if its timer has not run yet (busy main thread): release now, no fade (L.done)
-    de.classList.remove('lx-full', 'lx-on', 'lx-out', 'lx-in', 'lx-skip', 'lx-skip-css');
+    releaseView();   // if its timer has not run yet (busy main thread): release now
+    tidyClasses();
     if (root.parentNode) root.parentNode.removeChild(root);
     if (!hidden) { try { localStorage.setItem('sm2:seen', '1'); } catch (e) { } }
     emit('sm:launched', { mode: 'full', skipped: !!L.skipped });
@@ -12208,7 +12729,7 @@
   // where the CSS intro's clock started (document timeline = performance.now() base)
   function introStart() {
     try {
-      var a = root.querySelector('.lx-rule-ink').getAnimations()[0];
+      var a = root.querySelector('.lx-track').getAnimations()[0];
       if (a && a.startTime !== null && a.startTime !== undefined && !L.skipped) return a.startTime;
     } catch (e) { }
     return L.t0 || 0;
@@ -12235,9 +12756,8 @@
     if (inFrame === true && due - t <= 8) { clearTimeout(timer); handoff(); return; }
     later(due - t);
   }
-  // home.js listens: an entrance that was set up for the full opening switches to the short one (no 1.3s replay)
+  // home.js listens: an entrance that was set up for the full opening switches to the short one
   L.onskip = function () { emit('sm:lxskip'); schedule(false); };
-  if (L.skipped) { /* tapped before this script parsed: the head gate already fast-forwarded the CSS */ }
 
   // web fonts: the first view should paint in Plex / BIZ, but never wait past FONT_DEADLINE
   function fontGate() {
@@ -12258,17 +12778,16 @@
     if (started || L.done) return;
     started = true; L.out = true;
     var skipped = !!L.skipped, dur = skipped ? MOVE_SKIP : MOVE;
-    var lock = root.querySelector('.lx-lockup'), rule = root.querySelector('.lx-rule');
-    var ink = root.querySelector('.lx-rule-ink'), hair = root.querySelector('.lx-rule-hair');
-    var paper = root.querySelector('.lx-paper'), cap = root.querySelector('.lx-cap');
-    var line = root.querySelector('.lg-line'), word = root.querySelector('.lg-word');
+    var lock = root.querySelector('.lx-lockup'), track = root.querySelector('.lx-track');
+    var paper = root.querySelector('.lx-paper'), cap = root.querySelector('.lx-cap'), runner = root.querySelector('.lx-run');
+    var line = lock && lock.querySelector('.lg-line'), word = lock && lock.querySelector('.lg-word');
     var appbar = d.querySelector('.appbar'), brand = appbar && appbar.querySelector('.brand');
     var tBox = brand && (brand.querySelector('.lg-box') || brand.querySelector('svg'));
     var tabbar = d.querySelector('.tabbar');
     var rs;
     try { rs = getComputedStyle(root); } catch (e) { rs = null; }
     // splash already gone (CSS failsafe fired, reduced motion, no CSS): just clean up
-    if (!rs || rs.display === 'none' || rs.visibility === 'hidden' || !lock || !rule || !tBox || de.classList.contains('m-reduce')) {
+    if (!rs || rs.display === 'none' || rs.visibility === 'hidden' || !lock || !track || !tBox || de.classList.contains('m-reduce')) {
       finish(false); return;
     }
 
@@ -12277,20 +12796,22 @@
     var bAfter = null;
     try { bAfter = getComputedStyle(brand, '::after'); } catch (e) { bAfter = null; }
     var hasBarLine = !!(bAfter && bAfter.content && bAfter.content !== 'none' && bAfter.content !== 'normal');
-    var ra = rule.getBoundingClientRect(), ab = appbar.getBoundingClientRect();
-    var cs = getComputedStyle(appbar), inkColor = getComputedStyle(ink).backgroundColor;
+    var ab = appbar.getBoundingClientRect();
+    var cs = getComputedStyle(appbar);
     var bw = parseFloat(cs.borderBottomWidth) || 0, bc = cs.borderBottomColor, bstyle = cs.borderBottomStyle;
     var wide = !!(w.matchMedia && w.matchMedia('(min-width: 900px)').matches);
     var en = de.classList.contains('lx-en') || !!brand.querySelector('.logo-lockup.is-en');
     if (!la.height || !tb.height) { finish(false); return; }
+    var unit = la.height / 23, lineY = la.top + 22 * unit;   // the line's centre (lockup units 21–23)
 
     // ---- writes ----
     de.classList.add('lx-out');
-    // the lockup and the rule land inside the app bar, which sits above the splash: from here until they land
+    // the lockup and the line land inside the app bar, which sits above the splash: from here until they land
     // the bar has no paper and no border of its own (finish() hands both back in the landing frame)
     appbar.style.backgroundColor = 'transparent';
     appbar.style.borderBottomColor = 'transparent';
-    // launch.js is alive: the 3.2s CSS failsafes must not cut the hand-off short
+    if (runner) runner.style.display = 'none';
+    // launch.js is alive: the CSS failsafes must not cut the hand-off short
     try {
       root.getAnimations().forEach(function (a) { if (/^lx-failsafe/.test(a.animationName || '')) a.cancel(); });
       [brand, tabbar].forEach(function (el) { if (el) el.getAnimations().forEach(function (a) { if (/^lx-restore/.test(a.animationName || '')) a.cancel(); }); });
@@ -12307,15 +12828,14 @@
     // 1. the lockup FLIPs into the app-bar logo: box onto box (transform-origin 0 0 = the box's top-left)
     var side = la.height * 20 / 23;                       // the box is 20 of the lockup's 23 units
     var s = tb.height / side, dx = tb.left - la.left, dy = tb.top - la.top;
-    L.geom = { from: [la.left, la.top, side], to: [tb.left, tb.top, tb.height], rule: [ra.top, ab.bottom], wide: wide };
+    L.geom = { from: [la.left, la.top, side], to: [tb.left, tb.top, tb.height], line: [lineY, ab.bottom], wide: wide };
     run(lock, [{ translate: '0 0' }, { translate: '0 ' + dy + 'px' }], { duration: dur, easing: EASE_Y, fill: 'forwards' });
     run(lock, [{ transform: 'none' }, { transform: 'translateX(' + dx + 'px) scale(' + s + ')' }],
       { duration: dur, easing: EASE_X, fill: 'forwards' });
-    /* the green line: the bar draws it too (base.css .brand::after, from under 立 to the step), so the splash HANDS
-       it over instead of dropping it. Only the run under the box (0 → 23.333 units) lets go; the rest flies with the
-       lockup, easing 1 unit lower (the bar's line sits 2px under the box, the lockup's 1 unit), and in the landing
-       frame the bar's own line takes over at the same place (launch.css keeps it hidden until then). English and
-       bars without the line: the whole line lets go, as before. */
+    /* the logo's own green line (under 立ちマップ, ending in the step) was drawn by the track until now (same pixels);
+       it flies with the lockup and lands on the bar's brand line (base.css .brand::after), which takes over in the
+       landing frame. Only the run under the box lets go. English and bars without the line: it all lets go. */
+    if (line) line.style.opacity = '1';
     var run1 = line && line.querySelector('.lg-run1');
     if (line && run1 && hasBarLine && !en) {
       var NS = 'http://www.w3.org/2000/svg';
@@ -12332,11 +12852,11 @@
       line.style.transformOrigin = '0 22px';
       run(line, [{ transform: 'none' }, { transform: 'translateY(' + gapU.toFixed(3) + 'px) scaleY(' + thick.toFixed(3) + ')' }],
         { duration: dur, easing: EASE, fill: 'forwards' });
-    } else {
+    } else if (line) {
       run(line, [{ opacity: 1 }, { opacity: 0 }], { duration: 160, easing: 'linear', fill: 'forwards' });
     }
     if (en) {
-      // English: only the box travels. The JP wordmark fades; "Sudachi Map" fades in, in place, from H+200.
+      // English: only the box travels. The JP wordmark fades; "Sudachi Map" fades in, in place.
       run(word, [{ opacity: 1 }, { opacity: 0 }], { duration: 120, easing: 'linear', fill: 'forwards' });
       var tWord = brand.querySelector('.lg-word'), tBoxEl = brand.querySelector('.lg-box');
       run(brand, [{ opacity: 1 }, { opacity: 1 }], { duration: 10000, fill: 'forwards' }, true);
@@ -12344,36 +12864,33 @@
       run(tWord, [{ opacity: 0 }, { opacity: 1 }], { duration: 160, delay: skipped ? 100 : 200, easing: 'linear', fill: 'both' }, true);
     }
 
-    // 2. the rule rises and becomes the app bar's bottom border (its width, its colour)
+    // 2. the line keeps going: the whole track rises and becomes the app bar's underline (its width, its colour)
     var hasBorder = bw > 0 && bstyle !== 'none' && !/^transparent$|rgba\([^)]*,\s*0\)$/.test(bc);
-    var ty = (ab.bottom - (hasBorder ? bw : 0)) - ra.top;
-    var sy = hasBorder ? Math.max(0.25, bw / (ra.height || 2)) : 1;
-    run(rule, [{ transform: 'none' }, { transform: 'translateY(' + ty + 'px) scaleY(' + sy + ')' }],
+    var target = ab.bottom - (hasBorder ? bw / 2 : 0.5);
+    var ty = target - lineY, sy = Math.max(0.15, (hasBorder ? bw : 1) / (2 * unit));
+    track.style.transformOrigin = '0 ' + lineY.toFixed(2) + 'px';
+    run(track, [{ transform: 'translateY(0) scaleY(1)' }, { transform: 'translateY(' + ty.toFixed(2) + 'px) scaleY(' + sy.toFixed(3) + ')' }],
       { duration: dur, easing: EASE_Y, fill: 'forwards' });
-    if (!hasBorder) {
-      run(ink, [{ opacity: 1 }, { opacity: 0 }], { duration: dur * 0.5, delay: dur * 0.5, easing: 'linear', fill: 'forwards' });
-    } else if (bc !== inkColor) {
-      // an ink rule landing on a hairline: it softens into the border colour on the way up
-      hair.style.background = bc;
-      run(hair, [{ opacity: 0 }, { opacity: 1 }], { duration: dur * 0.55, delay: dur * 0.3, easing: 'linear', fill: 'both' });
-      run(ink, [{ opacity: 1 }, { opacity: 0 }], { duration: dur * 0.55, delay: dur * 0.3, easing: 'linear', fill: 'both' });
+    if (hasBorder) {
+      // the green settles into the hairline: a hairline of the bar's own colour fades in where the line lands
+      var hair = d.createElement('i');
+      hair.style.cssText = 'position:absolute;left:0;right:0;display:block;pointer-events:none;top:' + (ab.bottom - bw) + 'px;height:' + bw + 'px;background:' + bc;
+      root.appendChild(hair);
+      run(hair, [{ opacity: 0 }, { opacity: 1 }], { duration: dur * 0.45, delay: dur * 0.55, easing: 'linear', fill: 'both' });
     }
+    run(track, [{ opacity: 1 }, { opacity: 0 }], { duration: dur * 0.45, delay: dur * 0.55, easing: 'linear', fill: 'both' });
 
     // 3. caption out, paper out, tab bar (rail) in
-    // the caption lets go at once and in place (a slow-start exit kept it legible behind the departing lockup)
     run(cap, [{ opacity: 1 }, { opacity: 0 }], { duration: 90, easing: 'cubic-bezier(0, 0, 0.2, 1)', fill: 'forwards' });
-    run(paper, [{ opacity: 1 }, { opacity: 0 }], { duration: 160, delay: skipped ? 0 : 60, easing: 'linear', fill: 'both' });
+    run(paper, [{ opacity: 1 }, { opacity: 0 }], { duration: 180, delay: skipped ? 0 : 60, easing: 'linear', fill: 'both' });
     if (tabbar) {
       run(tabbar, [{ transform: wide ? 'translateX(-100%)' : 'translateY(100%)' }, { transform: 'none' }],
-        { duration: dur, delay: skipped ? 0 : 80, easing: EASE, fill: 'both' }, true);
+        { duration: dur, delay: skipped ? 0 : 80, easing: 'cubic-bezier(0.2, 0.9, 0.3, 1)', fill: 'both' }, true);
     }
 
-    // 4. the view's held entrance starts while the brand is still travelling: R = H+90 (H+40 after a skip).
-    //    MOTION-SPEC §2.4 says H+140, but on --ease-standard the lockup has visually docked by about H+110, and
-    //    H+140 left ~5 frames of empty page between the poster and the first ink (measured, 1x and 4x). From H+90
-    //    the art's ground line and the eyebrow start drawing as the brand lands; nothing is legible under the
-    //    lockup's path before it has passed (it is above y 100 by H+90).
-    setTimeout(releaseView, skipped ? 40 : 90);
+    // 4. the view's held entrance starts while the brand is still travelling (H+60; H+40 after a skip): the hero's
+    //    first line rises as the paper fades, so there is no empty frame between the poster and the page
+    setTimeout(releaseView, skipped ? 40 : 60);
 
     // 5. land: same frame — splash gone, real logo + border + tab bar in place (pixel-identical underneath)
     var all = anims.concat(chromeAnims.filter(function (a) { return a.effect && a.effect.getTiming().duration < 10000; }));
@@ -12381,6 +12898,6 @@
     function land() { if (landed) return; landed = true; finish(false); }
     Promise.all(all.map(function (a) { return a.finished; })).then(land, land);
     // belt and braces: never leave the splash up if an animation is cancelled from outside
-    setTimeout(land, dur + 240);
+    setTimeout(land, dur + 260);
   }
 })();

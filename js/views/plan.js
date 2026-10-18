@@ -72,9 +72,9 @@
     'plan.jr.g1': { ja: '中1', en: 'grade 7' },
     'plan.jr.until': { ja: '{date}まで', en: 'Until {date}' },
     'plan.jr.tl.h': { ja: '高校入学までの道のり', jr: '高校に入るまでの道のり', en: 'Road to high school' },
-    'plan.jr.nowEarly': { ja: 'まだ先なので、ゆっくりで大丈夫。お金のことを少しずつ知っておこう。', jr: 'まだ先なので、ゆっくりで大丈夫。', en: 'Plenty of time. Learn a little about the money side as you go.' },
+    'plan.jr.nowEarly': { ja: 'まだ先。ゆっくりで大丈夫。', en: 'Plenty of time.' },
     'plan.jr.nowLate': { ja: '就学支援金や給付金は、毎年の申請が必要です。', jr: '申請は毎年あります。わすれずに。', en: 'Tuition support and benefits must be applied for every year.' },
-    'plan.jr.note': { ja: '時期は目安です。学校や区市町村の案内で、正しい日にちを確かめてね。', jr: '時期は目安です。学校の案内で日にちを確かめてね。', en: 'Timing is a guide. Check the exact dates with your school or city.' },
+    'plan.jr.note': { ja: '時期は目安。日にちは学校の案内で確かめてね。', en: 'Timing is a guide. Check dates with your school.' },
     'plan.jr.date.title': { ja: '高校入学の日', en: 'When high school starts' },
     'plan.jr.date.field': { ja: '高校に入学する日（入学式の日でもOK）', en: 'The day you start high school (the entrance ceremony is fine)' },
     'plan.jr.date.quick': { ja: 'いまの学年からえらぶ', en: 'Pick by your grade now' },
@@ -102,18 +102,18 @@
     'plan.now.unit': { ja: 'こ', en: 'left' },
     'plan.now.of': { ja: '（全{n}こ）', en: 'of {n}' },
     'plan.now.from': { ja: '{date}から', en: 'from {date}' },
-    'plan.now.jump': { ja: 'いまのやることを見る', en: 'See what to do now' },
-    'plan.now.jumpNext': { ja: 'つぎのやることを見る', en: 'See what comes next' },
+    'plan.now.jump': { ja: 'やることを見る', en: 'See tasks' },
+    'plan.now.jumpNext': { ja: 'つぎを見る', en: 'See next' },
     'plan.now.jumpAll': { ja: 'やることを見る', en: 'See the list' },
-    'plan.now.doneT': { ja: 'この時期のやることは、ぜんぶできました', en: 'Everything for this period is done' },
-    'plan.now.emptyT': { ja: 'この時期のやることはありません', en: 'Nothing to do in this period' },
-    'plan.now.emptyB': { ja: '次の時期を見てみよう。', en: 'Take a look at what comes next.' },
-    'plan.now.lateT': { ja: '巣立ちから、時間がたちました', en: 'It has been a while since you left' },
+    'plan.now.doneT': { ja: 'この時期は、ぜんぶできた', en: 'This period: all done' },
+    'plan.now.emptyT': { ja: 'この時期のやることはなし', en: 'Nothing due now' },
+    'plan.now.emptyB': { ja: '', en: '' },
+    'plan.now.lateT': { ja: '巣立ってから、時間がたちました', en: 'A while since you left' },
     'plan.now.lateB': { ja: '巣立ちから時間がたっていても、使える支援はあります。', en: 'Even long after leaving, there is support you can use.' },
     'plan.now.jrLateT': { ja: '高校生活が、はじまっています', en: 'High school is under way' },
-    'plan.now.consult': { ja: '相談できるところを見る', en: 'See where to get help' },
-    'plan.all.t': { ja: 'やることは、ぜんぶできました', en: 'You’ve done everything on the list' },
-    'plan.all.b': { ja: 'ここまで、よくがんばりました。困ったときは、いつでも相談できます。', en: 'Well done. If anything comes up, you can always ask for help.' },
+    'plan.now.consult': { ja: '相談先を見る', en: 'Get help' },
+    'plan.all.t': { ja: 'ぜんぶできました', en: 'All done' },
+    'plan.all.b': { ja: 'よくがんばりました。', en: 'Well done.' },
 
     'plan.act.ics': { ja: 'カレンダーに入れる', en: 'Add to calendar' },
     'plan.act.icsSub': { ja: 'やることの日をスマホのカレンダーへ', en: 'Put your to-do dates in your phone' },
@@ -121,17 +121,17 @@
     'plan.act.sheetSub': { ja: '職員や先生に見せるメモ', en: 'A note to show staff or a teacher' },
 
     'plan.saved.h': { ja: '保存した支援', en: 'Saved' },
-    'plan.saved.sub': { ja: '{n}件・締切は「道のり」にも入ります', en: '{n} saved · deadlines also appear in your timeline' },
+    'plan.saved.sub': { ja: '{n}件', en: '{n} saved' },
     'plan.saved.more': { ja: 'さがす', en: 'Find more' },
     'plan.saved.remove': { ja: '外す', en: 'Remove' },
     'plan.saved.removeLabel': { ja: '「{name}」をやることから外す', en: 'Remove “{name}” from my plan' },
     'plan.saved.removed': { ja: '「{name}」を外しました', en: 'Removed “{name}”' },
     'plan.saved.undo': { ja: '元に戻す', en: 'Undo' },
     'plan.saved.restored': { ja: '元に戻しました', en: 'Restored' },
-    'plan.empty.title': { ja: 'まだ保存した支援はありません', en: 'Nothing saved yet' },
-    'plan.empty.body': { ja: '支援のページで ☆ を押すと、ここに集まります。', en: 'Tap ☆ on any program and it shows up here.' },
-    'plan.empty.find': { ja: 'あなたに合う支援をさがす', en: 'Find programs for you' },
-    'plan.empty.results': { ja: 'あなたに合う支援を見る', en: 'See programs for you' },
+    'plan.empty.title': { ja: 'まだ保存なし', en: 'Nothing saved yet' },
+    'plan.empty.body': { ja: '☆で保存すると、ここに入ります。', en: 'Tap ☆ on a program to keep it here.' },
+    'plan.empty.find': { ja: '支援をさがす', en: 'Find support' },
+    'plan.empty.results': { ja: '結果を見る', en: 'See results' },
 
     'plan.tl.h': { ja: '巣立ちまでの道のり', en: 'Your timeline' },
     'plan.tl.sub': { ja: 'チェックすると、このスマホに記録されます。', en: 'Ticks are saved on this phone.' },
@@ -140,14 +140,15 @@
     'plan.tl.after': { ja: '{n}か月後', en: '{n} mo. after' },
     'plan.tl.day': { ja: '当日', en: 'The day' },
     'plan.tl.now': { ja: 'いま', en: 'Now' },
-    'plan.tl.nowEarly': { ja: 'まだ先なので、ゆっくりで大丈夫。気になるところから見てみよう。', en: 'Plenty of time. Look at whatever you are curious about.' },
+    'plan.tl.nowEarly': { ja: 'まだ先。ゆっくりで大丈夫。', en: 'Plenty of time.' },
     'plan.tl.nowLate': { ja: '巣立ちから時間がたっていても、使える支援はあります。', en: 'Even long after leaving, there is support you can use.' },
     'plan.tl.past': { ja: 'すぎた時期（{n}）', en: 'Earlier ({n})' },
-    'plan.tl.pastLeft': { ja: 'まだのもの {n}こ（今からでも大丈夫）', en: '{n} not done yet (still fine to do now)' },
+    'plan.tl.pastLeft': { ja: 'まだ {n}こ', en: '{n} left' },
     'plan.tl.pastAll': { ja: 'ぜんぶできた', en: 'All done' },
     'plan.tl.pastNote': { ja: 'すぎていても、やる価値があります。', en: 'Still worth doing, even now.' },
     'plan.tl.count': { ja: '{done}/{total}', en: '{done}/{total}' },
     'plan.tl.related': { ja: '関係する支援', en: 'Related' },
+    'plan.tl.relatedN': { ja: '関係する支援（{n}）', en: 'Related ({n})' },
     'plan.tl.saved': { ja: '保存した支援', en: 'Saved' },
     'plan.tl.openNow': { ja: 'いま受付中', en: 'Open now' },
     'plan.tl.open': { ja: '申込 {m}', en: 'Apply {m}' },
@@ -157,9 +158,9 @@
     'plan.tl.tool': { ja: 'ひらく', en: 'Open' },
     'plan.tl.detail': { ja: 'くわしく', en: 'Details' },
     'plan.tl.seal': { ja: '済', en: 'Done' },
-    'plan.tl.note': { ja: '時期は目安です。学校や施設の予定に合わせて、職員や先生と一緒に調整してね。', en: 'Timing is a guide. Adjust it with staff or a teacher to fit your school and home.' },
+    'plan.tl.note': { ja: '時期は目安。職員や先生と調整してね。', en: 'Timing is a guide. Adjust it with staff.' },
     'plan.done.toast': { ja: 'できた！', en: 'Done!' },
-    'plan.done.groupToast': { ja: 'この時期のやること、ぜんぶできました', en: 'Everything for this period is done' },
+    'plan.done.groupToast': { ja: 'この時期、ぜんぶできた！', en: 'Period complete!' },
 
     'plan.ics.title': { ja: 'カレンダーに入れる', en: 'Add to calendar' },
     'plan.ics.lead': { ja: 'これからの予定 {n}件を、カレンダー用のファイルにしました。', en: 'We made a calendar file with your {n} upcoming dates.' },
@@ -757,7 +758,7 @@
 
   function headHtml(ti) {
     return '<header class="plan-head">' +
-      '<h1 class="plan-h1" id="plan-h1">' + esc(t('plan.h1')) + '</h1>' + switchHtml(ti) + '</header>';
+      '<h1 class="plan-h1" id="plan-h1" data-reveal="line">' + esc(t('plan.h1')) + '</h1>' + switchHtml(ti) + '</header>';
   }
 
   function progressHtml(model) {
@@ -765,7 +766,7 @@
     var due = model.due || 0;
     var showDue = model.total > 0 && due > 0.001 && due < 0.999;
     var vt = showDue ? t('plan.progressDue', { done: model.done, total: model.total, due: model.dueN }) : t('plan.progressOf', { done: model.done, total: model.total });
-    return '<div class="plan-prog' + (showDue ? ' has-due' : '') + '" id="plan-prog" data-flip-key="ph-prog" style="--due:' + due.toFixed(4) + '">' +
+    return '<div class="plan-prog' + (showDue ? ' has-due' : '') + '" id="plan-prog" data-flip-key="ph-prog" data-reveal="" data-reveal-delay="220" style="--due:' + due.toFixed(4) + '">' +
       '<p class="plan-prog-row"><span class="plan-prog-k">' + esc(t('plan.progress')) + '</span>' +
         '<span class="plan-prog-num num"><b id="plan-prog-done" data-m="pd" data-count="' + model.done + '" data-count-seen="plan.done.' + model.track + '">' + model.done + '</b>' +
         '<span class="plan-prog-of"> / <span id="plan-prog-total" data-m="pt">' + model.total + '</span></span></span></p>' +
@@ -796,14 +797,17 @@
     if (model.assumed) {
       note = jr ? t('plan.jr.assumedNote', { date: fmtMonth(model.anchor), g: gradeFor(model.anchor, model.now) }) : t('plan.assumedNote', { date: fmtDate(model.anchor) }) + ' ' + t('plan.leave.def');
     } else if (jr) note = t('plan.jr.def');
-    var date = '<div class="plan-date" data-flip-key="ph-date">' +
+    var date = '<div class="plan-date" data-flip-key="ph-date" data-reveal="" data-reveal-delay="140">' +
       '<div class="plan-date-main">' +
         '<p class="plan-date-k"><span data-m="dk">' + esc(what) + '</span>' + (model.assumed ? '<span class="tag tag-deadline plan-assumed">' + esc(t('plan.assumed')) + '</span>' : '') + '</p>' +
         '<p class="plan-date-v" data-m="dv">' + esc(fmtDateW(model.anchor)) + '</p></div>' +
       '<button type="button" class="btn btn-secondary btn-sm plan-date-edit" id="plan-date-btn" data-act="plan-date" aria-label="' + esc(t('plan.changeLabel', { what: what, date: fmtDate(model.anchor) })) + '"><span>' + esc(t('plan.change')) + '</span></button>' +
     '</div>';
+    // the long explanation (仮の日付 / what 巣立ちの日 means) waits behind 「くわしく」 (SPEC-v5 Part B)
+    var more = note ? (SM.ui.more ? SM.ui.more(null, '<p class="plan-date-note" data-m="note">' + esc(note) + '</p>', { inline: true, cls: 'plan-date-more' }) :
+      '<p class="plan-date-note" data-m="note">' + esc(note) + '</p>') : '';
     return '<div class="plan-hero' + (art ? ' has-il' : '') + '" data-track="' + model.track + '">' + count + art +
-      '<div class="plan-meta">' + (c.today ? '<p class="plan-count-sub" data-m="sub">' + esc(c.sub) + '</p>' : '') + date + (note ? '<p class="plan-date-note" data-m="note">' + esc(note) + '</p>' : '') + progressHtml(model) + '</div>' +
+      '<div class="plan-meta">' + (c.today ? '<p class="plan-count-sub" data-m="sub">' + esc(c.sub) + '</p>' : '') + date + more + progressHtml(model) + '</div>' +
     '</div>';
   }
 
@@ -854,14 +858,13 @@
       var first = g[0];
       kHtml = tag;
       title = '<span class="plan-now-next">' + esc(t('plan.now.next')) + '</span>' + SM.ui.marker(first.title);
-      body = '<p class="plan-now-from">' + esc(fromLabel(first)) + '</p>' +
-        '<p class="plan-now-meta">' + esc(t(jr ? 'plan.jr.nowEarly' : 'plan.tl.nowEarly')) + '</p>';
+      body = '<p class="plan-now-from">' + esc(fromLabel(first)) + '</p>';
       btn = jump('tl-' + first.key, t('plan.now.jumpNext'));
     } else if (v === 'done' || v === 'empty') {
       art = il(v === 'done' ? doneArt : 'plan-empty', { size: 'spot', cls: 'plan-now-il' });
       kHtml = tag + '<span class="plan-now-when">' + esc([c.when, c.dateLabel].filter(Boolean).join('・')) + '</span>';
       title = esc(t(v === 'done' ? 'plan.now.doneT' : 'plan.now.emptyT'));
-      body = v === 'empty' ? '<p class="plan-now-meta">' + esc(t('plan.now.emptyB')) + '</p>' : '';
+      body = v === 'empty' && t('plan.now.emptyB') ? '<p class="plan-now-meta">' + esc(t('plan.now.emptyB')) + '</p>' : '';
       if (nx) body += '<p class="plan-now-meta plan-now-nx"><b>' + esc(t('plan.now.next')) + '</b><span>' + esc(nx.title) + '（' + esc(fromLabel(nx)) + '）</span></p>';
       btn = nx ? jump('tl-' + nx.key, t('plan.now.jumpNext')) : jump('tl-' + c.key, t('plan.now.jump'));
     } else if (v === 'late') {
@@ -876,7 +879,7 @@
       body = '<p class="plan-now-meta">' + esc(t('plan.all.b')) + '</p>';
       btn = SM.ui.button(t('plan.now.consult'), { href: '#/find/cat/consult', variant: 'text', cls: 'plan-now-link' });
     }
-    return '<section class="plan-now is-' + v + (art ? ' has-il' : '') + '" id="plan-now" data-v="' + v + '" aria-labelledby="plan-now-h">' + art +
+    return '<section class="plan-now is-' + v + (art ? ' has-il' : '') + '" id="plan-now" data-v="' + v + '" aria-labelledby="plan-now-h" data-reveal="" data-reveal-delay="300">' + art +
       '<div class="plan-now-text">' +
         (kHtml ? '<p class="plan-now-k">' + kHtml + '</p>' : '') +
         '<h2 class="plan-now-title" id="plan-now-h">' + title + '</h2>' + body + '</div>' + btn +
@@ -888,8 +891,8 @@
       return SM.ui.listItem({ title: title, sub: sub, icon: icon, act: act, attrs: 'data-press="ink"' });
     };
     return '<div class="list plan-tools">' +
-      row('plan-ics', 'calendar', t('plan.act.ics'), t('plan.act.icsSub')) +
-      row('plan-sheet', 'print', t('plan.act.sheet'), t('plan.act.sheetSub')) +
+      row('plan-ics', 'calendar', t('plan.act.ics'), null) +
+      row('plan-sheet', 'print', t('plan.act.sheet'), null) +
       '</div>';
   }
 
@@ -938,6 +941,13 @@
   }
 
   /* ------------------------------------------------------------------ timeline */
+  /* one line per task: the action reads first, a trailing （…） aside (dates, amounts, where) follows in small type,
+     so the row scans as a to-do and the fact stays on the page */
+  function taskText(text) {
+    var m = /^(.+?)\s*([（(][^（()）]*[)）])\s*$/.exec(text || '');
+    if (!m || m[1].length < 6) return '<span class="tl-item-main">' + esc(text) + '</span>';
+    return '<span class="tl-item-main">' + esc(m[1]) + '</span><span class="tl-item-aside">' + esc(m[2]) + '</span>';
+  }
   function itemId(key) { return 'pt-' + key.replace(/[^A-Za-z0-9-]/g, '_'); }
   function itemHtml(x, i) {
     var id = itemId(x.key);
@@ -958,7 +968,7 @@
         '</li>';
     }
     return open +
-      '<label class="tl-task" for="' + id + '">' + check + '<span class="tl-item-text">' + seal + esc(x.text) + '</span></label>' +
+      '<label class="tl-task" for="' + id + '">' + check + '<span class="tl-item-text">' + seal + taskText(x.text) + '</span></label>' +
       (x.href ? '<p class="tl-item-meta"><a class="tl-link" href="' + esc(x.href) + '"><span>' + esc(x.hrefLabel || t('plan.tl.tool')) + '</span>' + arrow() + '</a></p>' : '') +
       '</li>';
   }
@@ -980,13 +990,13 @@
       seenNames[nm] = true; return true;
     }).slice(0, 4);
     if (!ids.length) return '';
-    return '<div class="tl-related"><p class="tl-related-k">' + esc(t('plan.tl.related')) + '</p><ul class="tl-related-links">' +
+    return '<details class="tl-related"><summary class="tl-related-k">' + esc(t('plan.tl.relatedN', { n: ids.length })) + '</summary><ul class="tl-related-links">' +
       ids.map(function (id) {
         var p = SM.program(id);
         var nm = L(p.name).replace(/[（(].*$/, '');
         var cat = (p.cat && p.cat[0]) || 'procedures';
         return '<li><a class="tl-rel-link" href="#/p/' + encodeURIComponent(id) + '">' + SM.ui.catIcon(cat, 'xs') + '<span>' + esc(nm) + '</span></a></li>';
-      }).join('') + '</ul></div>';
+      }).join('') + '</ul></details>';
   }
 
   var TOGGLE = '<span class="tl-toggle" aria-hidden="true"></span>';
@@ -1004,8 +1014,8 @@
       (g.when ? '<span class="tl-rel">' + esc(g.when) + '</span>' : '') +
       '<span class="tl-date">' + esc(g.dateLabel) + '</span></span>' + countHtml(g) + '</p>';
     var titleHtml = '<h3 class="tl-title">' + esc(g.title) + '</h3>';
-    var bodyHtml = (g.sub ? '<p class="tl-sub">' + esc(g.sub) + '</p>' : '') +
-      (g.all.length ? '<ul class="tl-items">' + itemsHtml(g.all) + '</ul>' : '') +
+    // one line per task; the period's kind sub-line is dropped (SPEC-v5: no repeated reassurance)
+    var bodyHtml = (g.all.length ? '<ul class="tl-items" data-reveal-stagger="50">' + itemsHtml(g.all) + '</ul>' : '') +
       relatedHtml(g);
     var inner = fold ?
       '<details class="tl-fold" data-fold="' + esc(g.key) + '"' + (foldOpen[g.key] ? ' open' : '') + '>' +
@@ -1013,8 +1023,8 @@
         '<div class="tl-fold-body">' + bodyHtml + '</div></details>' :
       whenHtml + titleHtml + bodyHtml;
     return '<li class="tl-group ' + cls + (fold ? ' is-folded' : '') + (allDone ? ' is-complete' : '') + (g.milestone ? ' is-milestone' : '') + '" id="tl-' + g.key + '" data-group="' + g.key + '">' +
-      '<span class="tl-mk" aria-hidden="true"></span>' +
-      '<div class="tl-body" data-reveal=""' + (delay ? ' data-reveal-delay="' + delay + '"' : '') + '>' + inner + '</div></li>';
+      '<span class="tl-mk" aria-hidden="true" data-reveal="mark"' + (delay ? ' data-reveal-delay="' + delay + '"' : '') + '></span>' +
+      '<div class="tl-body" data-reveal=""' + (delay ? ' data-reveal-delay="' + (delay + 60) + '"' : '') + '>' + inner + '</div></li>';
   }
 
   /* tasks still open in the periods already behind us. A 中3 opening this for the first time never had the
@@ -1071,7 +1081,7 @@
   }
   function tlHeadHtml(model) {
     var jr = model.track === 'junior';
-    return SM.ui.sectionHeader(t(jr ? 'plan.jr.tl.h' : 'plan.tl.h'), { sub: t('plan.tl.sub'), id: 'plan-tl-h' });
+    return SM.ui.sectionHeader(t(jr ? 'plan.jr.tl.h' : 'plan.tl.h'), { id: 'plan-tl-h' });
   }
   /* items: the <li> strings to put in now */
   function timelineHtml(model, items) {
@@ -1173,23 +1183,23 @@
       var n = +num.getAttribute('data-n');
       var key = 'plan.days.' + model.track;
       var prev = m.seen(key, n);
-      if (first && prev !== n && m.odometer && !reduced()) {
+      if (first && m.odometer) {
         var to = num.textContent;
-        // first view: every column rolls in from blank (§4.2). Not from '0': the ones column would pass 1, 2, 3 and
-        // settle through a legible '163日' while the others had landed ('000' was worse: 001, 012 …)
-        var from = typeof prev === 'number' && isFinite(prev) ? fmtNum(prev) : '';
-        m.odometer(num, to, { from: from, duration: 640 });
+        // v5: the station-board roll plays on EVERY arrival (from blank; from the old N when it changed since the
+        // last visit), long enough to be seen on a phone. Not from '0': the ones column would pass 1, 2, 3 and
+        // settle through a legible '163日' while the others had landed. Reduced motion: the number fades in.
+        var from = typeof prev === 'number' && isFinite(prev) && prev !== n ? fmtNum(prev) : '';
+        if (reduced()) anim(num, [{ opacity: 0 }, { opacity: 1 }], { duration: 180, easing: 'linear' });
+        else m.odometer(num, to, { from: from, duration: 960, delay: 80 });
       }
     }
     // progress bar: grows from where it was at the last visit (data-count-seen on the number shares the key)
     var fill = root.querySelector('.plan-prog-fill');
-    if (fill && m && m.seen && first && canAnim()) {
+    if (fill && m && m.seen && first && canAnim() && model.total) {
       var prevDone = m.seen('plan.done.' + model.track);
-      var pd = typeof prevDone === 'number' ? prevDone : 0;
-      if (pd !== model.done && model.total) {
-        var a = Math.min(1, pd / model.total), b = model.done / model.total;
-        anim(fill, [{ transform: 'scaleX(' + a + ')' }, { transform: 'scaleX(' + b + ')' }], { duration: 640, delay: 220, easing: EASE('draw'), fill: 'backwards' });
-      }
+      var pd = typeof prevDone === 'number' && prevDone !== model.done ? prevDone : 0;
+      var a = Math.min(1, pd / model.total), b = model.done / model.total;
+      if (b > a) anim(fill, [{ transform: 'scaleX(' + a + ')' }, { transform: 'scaleX(' + b + ')' }], { duration: 760, delay: 380, easing: EASE('draw'), fill: 'backwards' });
     }
     var toNow = !nowScrolled && !!(route.query && route.query.now === '1');
     if (toNow) nowScrolled = true;
@@ -1502,6 +1512,7 @@
     if (on && motion && m && canAnim() && box && m.check) m.check(box, { color: 'var(--on-action-fill, #fff)', fill: 'var(--action-fill)' });
     else if (!on && box && m && m.uncheck) m.uncheck(box, { color: 'var(--action-fill)' });
     li.classList.toggle('is-done', on);
+    if (on && motion && m) settleRow(li);
     if (on && motion && m && canAnim()) {
       var seal = li.querySelector('.tl-seal');
       if (seal && m.stamp) {
@@ -1509,6 +1520,24 @@
         setTimeout(function () { seal.style.opacity = ''; if (li.classList.contains('is-done')) m.stamp(seal); }, 150);
       }
     }
+  }
+
+  /* the ticked row answers with its whole body: a green wash sweeps across it and fades (reduced: the fade only),
+     and the text hops 10px toward the box and settles back, so a tick reads as "done" from arm's length */
+  function settleRow(li) {
+    var task = li.querySelector('.tl-task');
+    if (!task) return;
+    var w = document.createElement('span');
+    w.className = 'tl-wash';
+    w.setAttribute('aria-hidden', 'true');
+    li.appendChild(w);
+    var a = anim(w, [{ opacity: 1, transform: 'scaleX(0)' }, { opacity: 1, transform: 'scaleX(1)', offset: 0.45 }, { opacity: 0, transform: 'scaleX(1)' }],
+      { duration: 820, easing: EASE('standard'), fill: 'forwards', key: 'wash' });
+    var gone = function () { if (w.parentNode) w.parentNode.removeChild(w); };
+    finished(a).then(gone);
+    setTimeout(gone, 1200);
+    var txt = li.querySelector('.tl-item-text');
+    if (txt && canAnim()) anim(txt, [{ translate: '0 0' }, { translate: '12px 0', offset: 0.32 }, { translate: '0 0' }], { duration: 520, easing: EASE('standard'), key: 'hop' });
   }
 
   function completeGroup(gEl) {
@@ -1718,13 +1747,20 @@
       if (m && m.mount) m.mount(nb, { instant: true });
       wireFill(root);
       if (live) {
-        anim(nb, [{ opacity: 0, transform: 'translateX(' + (24 * dir) + 'px)' }, { opacity: 1, transform: 'none' }], { duration: 220, easing: EASE('enter'), fill: 'backwards', key: 'slide' });
+        anim(nb, [{ opacity: 0 }, { opacity: 1 }], { duration: 260, easing: EASE('enter'), fill: 'backwards', key: 'slideO' });
+        anim(nb, [{ transform: 'translateX(' + (48 * dir) + 'px)' }, { transform: 'none' }], { spring: 'rise', fill: 'backwards', key: 'slide' });
         var fig = nb.querySelector('#plan-now .il');
         if (fig && SM.illus && SM.illus.play) SM.illus.play(fig);
       }
     };
-    if (!live) { land(); return; }
-    var a = anim(old, [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateX(' + (-24 * dir) + 'px)' }], { duration: 90, easing: EASE('exit'), fill: 'forwards', key: 'slide' });
+    if (!live) {
+      land();
+      // reduced motion: a short cross-fade instead of nothing
+      var nb0 = root.querySelector('.plan-body');
+      if (nb0 && m) anim(nb0, [{ opacity: 0 }, { opacity: 1 }], { duration: 180, easing: 'linear' });
+      return;
+    }
+    var a = anim(old, [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateX(' + (-40 * dir) + 'px)' }], { duration: 180, easing: EASE('exit'), fill: 'forwards', key: 'slide' });
     if (!a) { land(); return; }
     finished(a).then(land);
   }

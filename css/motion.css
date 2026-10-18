@@ -1,5 +1,6 @@
 /* =====================================================================
-   巣立ちマップ v4 — motion.css  (owner: ENGINE) — pairs with js/motion.js, implements MOTION-SPEC.md
+   巣立ちマップ v5 — motion.css  (owner: ENGINE) — pairs with js/motion.js, implements MOTION-SPEC.md + SPEC-v5 Part A
+   v5 scale: 280–520ms, travel 24–48px, spring-like ease-out (≈3% overshoot), staggers 50ms capped at 8.
    transform / opacity only. Nothing loops. Hidden states apply ONLY to .m-pending under
    html.motion-ready (set by JS), so content is always visible without JS / IntersectionObserver.
    Reduced motion is one switch: html.m-reduce (OS setting or 設定 › 動きを少なく), never the media query.
@@ -13,18 +14,23 @@
   --ease-draw: cubic-bezier(0.5, 0, 0.15, 1);
   --ease-rise: cubic-bezier(0.25, 1, 0.5, 1);
   --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
-  --dur-instant: 90ms;
-  --dur-quick: 160ms;
-  --dur-base: 240ms;
-  --dur-page: 300ms;
-  --dur-morph: 420ms;
-  --dur-draw: 440ms;
-  --dur-hero: 520ms;
+  --ease-push: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.22, 1.12, 0.36, 1);
+  --dur-instant: 100ms;
+  --dur-quick: 200ms;
+  --dur-base: 320ms;
+  --dur-page: 440ms;
+  --dur-morph: 480ms;
+  --dur-draw: 560ms;
+  --dur-hero: 560ms;
+  --dur-reduce: 180ms;
   /* springs: cubic-bezier fallbacks; the @supports block below swaps in the real linear() curves */
   --spring-snappy: var(--ease-standard);              --spring-snappy-dur: 320ms;
   --spring-smooth: var(--ease-standard);              --spring-smooth-dur: 400ms;
   --spring-stamp: cubic-bezier(0.34, 1.4, 0.64, 1);   --spring-stamp-dur: 420ms;
   --spring-flick: var(--ease-standard);               --spring-flick-dur: 300ms;
+  --spring-rise: var(--ease-spring);                  --spring-rise-dur: 520ms;
+  --spring-pop: cubic-bezier(0.34, 1.5, 0.64, 1);     --spring-pop-dur: 420ms;
   /* old names (v3) → the new tokens, so every view's CSS speaks one easing language */
   --ease: var(--ease-standard);
   --ease-out: var(--ease-standard);
@@ -34,7 +40,8 @@
   --m-fast: 90ms;
   --m-mid: 160ms;
   --m-slow: 300ms;
-  --m-rise: 12px;
+  --m-rise: 28px;
+  --m-slide: 32px;
   --m-ink: var(--ink, #1b1b19);
 }
 @supports (animation-timing-function: linear(0, 1)) {
@@ -47,6 +54,10 @@
     --spring-stamp-dur: 485ms;
     --spring-flick: linear(0, 0.026, 0.089, 0.174, 0.267, 0.362, 0.453, 0.538, 0.614, 0.681, 0.739, 0.789, 0.83, 0.865, 0.894, 0.917, 0.936, 0.951, 0.963, 0.972, 0.98, 0.985, 0.99, 0.993, 0.995, 1);
     --spring-flick-dur: 352ms;
+    --spring-rise: linear(0, 0.089, 0.183, 0.279, 0.372, 0.461, 0.545, 0.621, 0.69, 0.752, 0.805, 0.851, 0.891, 0.924, 0.951, 0.973, 0.99, 1.004, 1.014, 1.021, 1.026, 1.029, 1.03, 1.03, 1.029, 1.028, 1.026, 1.023, 1.021, 1.019, 1.016, 1.014, 1.012, 1.01, 1.008, 1.007, 1.005, 1);
+    --spring-rise-dur: 522ms;
+    --spring-pop: linear(0, 0.03, 0.108, 0.217, 0.341, 0.471, 0.596, 0.711, 0.811, 0.896, 0.964, 1.016, 1.053, 1.077, 1.09, 1.095, 1.093, 1.086, 1.076, 1.064, 1.052, 1.04, 1.029, 1.019, 1.011, 1.004, 0.999, 0.995, 0.993, 0.992, 0.991, 0.991, 0.992, 0.993, 0.994, 0.995, 1);
+    --spring-pop-dur: 506ms;
   }
 }
 
@@ -57,11 +68,11 @@
    (measured: ~10% of the style time inside a page transition at 4x CPU). */
 .motion-ready .m-pending:is([data-reveal], [data-count]),
 .motion-ready .m-in:is([data-reveal], [data-count]) {
-  transition: opacity 300ms var(--ease-enter), transform 300ms var(--ease-standard);
+  transition: opacity 360ms var(--ease-enter), transform var(--spring-rise-dur) var(--spring-rise);
   transition-delay: var(--m-delay, 0ms);
 }
 .motion-ready :is([data-reveal=""], [data-reveal="up"]).m-pending { transform: translateY(var(--m-rise)); }
-.motion-ready [data-reveal="slide"].m-pending { transform: translateX(-16px); }
+.motion-ready [data-reveal="slide"].m-pending { transform: translateX(calc(var(--m-slide) * -1)); }
 .motion-ready [data-reveal="fade"].m-pending { transform: none; }
 /* rule: draws from the left like a pen stroke */
 .motion-ready [data-reveal="rule"].m-pending { opacity: 1; transform: scaleX(0); transform-origin: left center; }
@@ -73,15 +84,16 @@
 .motion-ready [data-reveal="line"]:is(.m-pending, .m-in) { clip-path: inset(-0.9em -1em 0 -1em); }
 .motion-ready [data-reveal="line"].m-pending > .m-line-in { transform: translateY(108%); }
 .motion-ready [data-reveal="line"].m-in { transition: none; }
-.motion-ready [data-reveal="line"].m-in > .m-line-in { transition: transform var(--dur-hero) var(--ease-rise); transition-delay: var(--m-delay, 0ms); }
+.motion-ready [data-reveal="line"].m-in > .m-line-in { transition: transform 620ms var(--ease-expo); transition-delay: var(--m-delay, 0ms); }
 /* mark: hidden until it stamps (the stamp itself is WAAPI) */
 .motion-ready [data-reveal="mark"].m-pending { transform: none; }
 /* SVG lines drawn via stroke-dashoffset: never fade them */
 .motion-ready [data-draw].m-pending { opacity: 1; transform: none; }
-/* a reveal reached by scrolling (after the arrival window): no delay, a quick fade, so it is there when it arrives */
-.motion-ready .m-late:is([data-reveal], [data-count]) { transition-duration: 160ms, 200ms; }
-.motion-ready [data-reveal="line"].m-late > .m-line-in { transition-duration: 260ms; }
-.motion-ready [data-reveal="rule"].m-late, .motion-ready [data-reveal="underline"].m-late::after { transition-duration: 240ms; }
+/* a reveal reached by scrolling (after the arrival window): it starts at once (no choreography delay) and travels
+   less, but it is still a visible rise — v4's 160ms fade read as no motion at all */
+.motion-ready .m-late:is([data-reveal], [data-count]) { transition-duration: 280ms, 420ms; }
+.motion-ready [data-reveal="line"].m-late > .m-line-in { transition-duration: 420ms; }
+.motion-ready [data-reveal="rule"].m-late, .motion-ready [data-reveal="underline"].m-late::after { transition-duration: 520ms; }
 /* finishAll(): pending entrances land within 120ms (m-fast) or now (m-now) */
 .motion-ready .m-fast, .motion-ready .m-fast > .m-line-in { transition-duration: 120ms !important; transition-delay: 0ms !important; }
 .motion-ready .m-now, .motion-ready .m-now > .m-line-in { transition: none !important; }
@@ -122,7 +134,8 @@
 .m-cnt { display: inline-block; text-align: right; white-space: nowrap; }
 .m-cnt::before { content: attr(data-v); }
 
-/* ---------- 4. press (§4.1): buttons scale .97 (WAAPI); rows get an instant 6% ink wash ---------- */
+/* ---------- 4. press (SPEC-v5 A.4): .m-pressed lands on pointerdown (≤50ms). Controls sink 2px (WAAPI) and
+   darken here; rows wash. Colour only, applied with no transition so it is there on the first frame. ---------- */
 :where([data-press]), :where(.btn), :where(.tabbar .tab) { -webkit-tap-highlight-color: transparent; }
 :where([data-press="ink"]) { position: relative; }
 [data-press="ink"]::after {
@@ -131,6 +144,23 @@
   transition: opacity var(--dur-quick) var(--ease-standard);
 }
 [data-press="ink"]:active::after, [data-press="ink"].m-pressed::after { opacity: 0.06; transition: none; }
+/* darken: solid fills go one step darker, outlines and text controls take a paper-3 fill / the press colour */
+.btn.m-pressed { transition: none; }
+.btn-primary.m-pressed { background: var(--action-fill-press); border-color: var(--action-fill-press); }
+.btn-ink.m-pressed { background: var(--ink-2); border-color: var(--ink-2); }
+.btn-secondary.m-pressed, .btn-soft.m-pressed { background: var(--paper-3); }
+:is(.btn-ghost, .btn-text).m-pressed, .section-action.m-pressed, .sos-chat-link.m-pressed { color: var(--action-press); }
+.btn-danger.m-pressed { background: var(--red-tint); }
+.btn-sos.m-pressed, .pill-sos.m-pressed, .sos-li.is-urgent > .sos-row.m-pressed { background: var(--red-hover); border-color: var(--red-hover); }
+:is(.chip, .pill:not(.pill-sos), .icon-btn, .pcard-save, .sos-copy, .back).m-pressed { background-color: var(--paper-3); transition: none; }
+.chip[aria-pressed="true"].m-pressed { background: var(--ink-2); border-color: var(--ink-2); }
+.opt.m-pressed { background: var(--paper-2); transition: none; }
+/* rows: the 6% ink wash shows on pointerdown (the :active rules in base.css wait for the browser's own timing) */
+:is(a.list-item, button.list-item, .contact-item, details.disclose > summary, .sos-home-link).m-pressed::before {
+  opacity: 1; background: color-mix(in srgb, var(--paper-2), var(--ink) 6%); transition: none;
+}
+:is(.set-link, .sos-row:not(.is-urgent .sos-row)).m-pressed { background: color-mix(in srgb, var(--paper), var(--ink) 6%); }
+.tabbar .tab.m-pressed { color: var(--ink); }
 /* the trailing arrow nudges 4px on the snappy spring while pressed */
 :is([data-press], .btn) .arrow { transition: translate var(--spring-snappy-dur) var(--spring-snappy); }
 :is([data-press], .btn).m-pressed .arrow { translate: 4px 0; }
@@ -142,6 +172,16 @@
   pointer-events: none; opacity: 0;
 }
 .m-check { position: absolute; inset: 0; pointer-events: none; }
+/* flyTo: the station dot that carries a save to the やること tab, and the ring where it lands */
+.m-fly-dot {
+  position: fixed; z-index: 110; width: 14px; height: 14px; margin: 0; pointer-events: none;
+  border-radius: 50%; background: var(--action, #0b6e44); box-shadow: 0 0 0 2.5px var(--paper, #fff);
+  transform-origin: 50% 50%;
+}
+.m-land {
+  position: absolute; pointer-events: none; border-radius: 50%;
+  border: 2px solid var(--action, #0b6e44); opacity: 0;
+}
 .m-check > i { position: absolute; display: block; background: var(--m-check-color, var(--paper, #fff)); transform-origin: 0 50%; }
 .m-checking > svg { opacity: 0 !important; }
 /* check(): a checkbox square's fill presses in by itself (the edge stays put, in the fill colour); uncheck(): the
@@ -176,8 +216,11 @@
 
 /* ---------- 7. tab indicator: base.css draws it (.tabbar::before); it moves on the snappy spring ---------- */
 .tabbar.ind-ready::before {
-  transition: transform var(--spring-snappy-dur) var(--spring-snappy), opacity var(--dur-quick) var(--ease-standard);
+  transition: transform var(--spring-rise-dur) var(--spring-rise), opacity var(--dur-quick) var(--ease-standard);
 }
+/* the tab that becomes active pops its icon once (class change → animation; not on the first paint) */
+@keyframes m-tab-pop { 0% { transform: scale(0.82); } 45% { transform: scale(1.14); } 100% { transform: none; } }
+.tabbar.ind-ready .tab.is-active > svg { animation: m-tab-pop 420ms var(--ease-standard) both; transform-origin: 50% 60%; }
 
 /* ---------- 8. toast (§4.1): WAAPI in (snappy) / out (160ms exit); the CSS transitions step aside ---------- */
 .toast.m-toast { transition: none !important; }
@@ -250,40 +293,66 @@ html::view-transition-old(sm-subbar-title) { animation: m-fade-out var(--dur-ins
 @keyframes m-x-in-l   { from { transform: translateX(-32px); } to { transform: none; } }
 @keyframes m-y-in-8   { from { transform: translateY(8px); } to { transform: none; } }
 @keyframes m-y-in-16  { from { transform: translateY(16px); } to { transform: none; } }
+@keyframes m-y-in-32  { from { transform: translateY(32px); } to { transform: none; } }
+/* v5 push / pop: the page on top travels the full width, the page under it shifts 30% and dims */
+@keyframes m-push-in  { from { transform: translateX(100%); } to { transform: none; } }
+@keyframes m-push-under { from { transform: none; opacity: 1; } to { transform: translateX(-30%); opacity: 0.7; } }
+@keyframes m-pop-under { from { transform: translateX(-30%); opacity: 0.7; } to { transform: none; opacity: 1; } }
+@keyframes m-pop-out  { from { transform: none; } to { transform: translateX(100%); } }
 
-/* forward / back: shared axis X without ghosting. The old page's fade is LINEAR over 80ms (front-loaded compared
-   with --ease-exit, which held it near 90% for its first 50ms), and the new page starts at 60–70ms on --ease-enter:
-   the crossing sits near 15%, so no frame shows both pages above 30% (§6/§8), and there is never more than one
-   frame where neither is visible. Both travel 32px on the same curve, so they read as one surface sliding. */
-html.vt-forward::view-transition-old(root) { animation: m-fade-out 80ms linear both, m-x-out-l var(--dur-page) var(--ease-standard) both; }
-html.vt-forward::view-transition-new(root) { animation: m-fade-in 220ms var(--ease-enter) 70ms both, m-x-in-r var(--dur-page) var(--ease-standard) both; }
-html.vt-back::view-transition-old(root)    { animation: m-fade-out 80ms linear both, m-x-out-r var(--dur-page) var(--ease-standard) both; }
-html.vt-back::view-transition-new(root)    { animation: m-fade-in 220ms var(--ease-enter) 70ms both, m-x-in-l var(--dur-page) var(--ease-standard) both; }
-/* tab: fade through with a small rise (tabs are siblings, not a path) */
-html.vt-tab::view-transition-old(root)     { animation: m-fade-out 80ms linear both; }
-html.vt-tab::view-transition-new(root)     { animation: m-fade-in 200ms var(--ease-enter) 64ms both, m-y-in-8 280ms var(--ease-standard) 60ms both; }
-/* shared tile present: the page does not slide sideways (the tile carries the direction); content rises toward it */
-html.vt-shared::view-transition-old(root)  { animation: m-fade-out 80ms linear both; }
-html.vt-shared::view-transition-new(root)  { animation: m-fade-in var(--dur-base) var(--ease-enter) 66ms both, m-y-in-16 380ms var(--ease-standard) 20ms both; }
+/* forward: the new page slides in from the right edge OVER the old one (--ease-push: most of the way in ≈180ms, then
+   a long soft landing, 440ms in all); the old page shifts 30% left and dims under it. The pair sits on a dark
+   ground, so the old page's opacity reads as dimming (not as a fade to white); the new page is opaque (the root
+   snapshot carries the canvas background) and casts one soft edge shadow while it travels. */
+html.vt-forward::view-transition-image-pair(root),
+html.vt-back::view-transition-image-pair(root) { background: #000; }
+html.vt-forward::view-transition-old(root) { animation: m-push-under var(--dur-page) var(--ease-push) both; }
+html.vt-forward::view-transition-new(root) {
+  animation: m-push-in var(--dur-page) var(--ease-push) both;
+  box-shadow: -1px 0 0 rgba(20, 20, 18, 0.10), -18px 0 36px rgba(20, 20, 18, 0.16);
+}
+/* back: the old page (on top) slides off to the right; the page under it comes back from -30% and brightens */
+html.vt-back::view-transition-old(root) {
+  z-index: 1;
+  animation: m-pop-out 380ms var(--ease-push) both;
+  box-shadow: -1px 0 0 rgba(20, 20, 18, 0.10), -18px 0 36px rgba(20, 20, 18, 0.16);
+}
+html.vt-back::view-transition-new(root) { animation: m-pop-under 380ms var(--ease-push) both; }
+/* tab: siblings, not a path — the old content fades out fast, the new one fades in rising 16px */
+html.vt-tab::view-transition-old(root)     { animation: m-fade-out 110ms linear both; }
+html.vt-tab::view-transition-new(root)     { animation: m-fade-in 260ms var(--ease-enter) 60ms both, m-y-in-16 var(--spring-rise-dur) var(--spring-rise) 40ms both; }
+/* shared mark / title present: the page does not slide sideways (the morphs carry the direction); it rises */
+html.vt-shared::view-transition-image-pair(root) { background: none; }
+html.vt-shared::view-transition-old(root)  { animation: m-fade-out 120ms linear both; box-shadow: none; z-index: auto; }
+html.vt-shared::view-transition-new(root)  { animation: m-fade-in 280ms var(--ease-enter) 80ms both, m-y-in-32 var(--spring-rise-dur) var(--spring-rise) 40ms both; box-shadow: none; }
 /* the subbar title travels with the page direction */
-html.vt-forward::view-transition-new(sm-subbar-title) { animation: m-fade-in 220ms var(--ease-enter) 70ms both, m-x-in-r var(--dur-page) var(--ease-standard) both; }
-html.vt-back::view-transition-new(sm-subbar-title)    { animation: m-fade-in 220ms var(--ease-enter) 70ms both, m-x-in-l var(--dur-page) var(--ease-standard) both; }
-html.vt-tab::view-transition-new(sm-subbar-title)     { animation: m-fade-in 200ms var(--ease-enter) 60ms both; }
+html.vt-forward::view-transition-new(sm-subbar-title) { animation: m-fade-in 240ms var(--ease-enter) 80ms both, m-x-in-r var(--dur-page) var(--ease-push) both; }
+html.vt-back::view-transition-new(sm-subbar-title)    { animation: m-fade-in 240ms var(--ease-enter) 80ms both, m-x-in-l var(--dur-page) var(--ease-push) both; }
+html.vt-tab::view-transition-new(sm-subbar-title)     { animation: m-fade-in 220ms var(--ease-enter) 60ms both; }
 /* the same title on both pages (しつもん q1 → q2 …): it holds still — no blink, no slide (core.js sets the class) */
 html.vt-same-title::view-transition-old(sm-subbar-title) { animation: none; opacity: 0; }
 html.vt-same-title::view-transition-new(sm-subbar-title) { animation: none; }
 /* the travelling category tile: the NEW image at full opacity for the whole flight (a cross-fade looks muddy) */
-html::view-transition-group(sm-cat) { animation-duration: var(--dur-morph); animation-timing-function: var(--ease-standard); }
+html::view-transition-group(sm-cat) { animation-duration: var(--dur-morph); animation-timing-function: var(--ease-push); }
 html::view-transition-old(sm-cat) { animation: m-fade-out 60ms linear both; }
 html::view-transition-new(sm-cat) { animation: none; }
 html::view-transition-image-pair(sm-cat) { isolation: auto; }
+/* the row title becomes the page heading: the group travels and grows; both images keep their aspect (height-led,
+   anchored top-left, so the letters scale evenly instead of stretching) and cross-fade in the middle third */
+html::view-transition-group(sm-title) { animation-duration: var(--dur-morph); animation-timing-function: var(--ease-push); }
+html::view-transition-old(sm-title),
+html::view-transition-new(sm-title) { height: 100%; width: auto; inset: 0 auto auto 0; }
+html::view-transition-old(sm-title) { animation: m-fade-out 220ms linear 60ms both; }
+html::view-transition-new(sm-title) { animation: m-fade-in 260ms linear 80ms both; }
+/* a named source with no destination (it was not on the new page): it leaves at once */
+html::view-transition-old(sm-title):only-child, html::view-transition-old(sm-cat):only-child { animation: m-fade-out 80ms linear both; }
 /* theme (light ↔ dark): a 200ms cross-fade of everything, nothing moves */
 html.vt-theme::view-transition-group(*) { animation: none; }
 html.vt-theme::view-transition-old(*) { animation: none; display: block; }
-html.vt-theme::view-transition-new(*) { animation: m-fade-in 200ms linear both; }
-/* fade: a plain 120ms cross-fade of the page (language change etc.) */
-html.vt-fade::view-transition-old(root) { animation: m-fade-out 120ms linear both; }
-html.vt-fade::view-transition-new(root) { animation: m-fade-in 120ms linear both; }
+html.vt-theme::view-transition-new(*) { animation: m-fade-in 220ms linear both; }
+/* fade: a plain cross-fade of the page (language change etc.) */
+html.vt-fade::view-transition-old(root) { animation: m-fade-out 160ms linear both; }
+html.vt-fade::view-transition-new(root) { animation: m-fade-in 200ms linear both; }
 
 /* ---------- 11. print: everything visible, final values ---------- */
 @media print {
@@ -293,20 +362,36 @@ html.vt-fade::view-transition-new(root) { animation: m-fade-in 120ms linear both
   .motion-ready [data-reveal="line"] { clip-path: none !important; }
 }
 
-/* ---------- 12. reduced motion (§7): ≤120ms opacity cross-fades only; no movement anywhere ---------- */
-html.m-reduce *, html.m-reduce *::before, html.m-reduce *::after {
+/* ---------- 12. reduced motion (SPEC-v5 Part A): short opacity cross-fades (≤200ms) and colour changes stay;
+   every movement goes (translate / scale / rotate, springs, staggers, morphs, rolls, draws, stamps). v4 turned
+   everything off and the app felt dead. One switch: html.m-reduce (OS setting or 設定 › 動きを少なく).
+   The transition rule has zero specificity (:where) but !important, so it beats every normal rule and loses to
+   the engine's own !important ones (m-fast, m-now, m-swapping …). ---------- */
+:where(html.m-reduce) :where(*), :where(html.m-reduce) :where(*)::before, :where(html.m-reduce) :where(*)::after {
   animation-duration: 1ms !important; animation-delay: 0ms !important; animation-iteration-count: 1 !important;
-  transition-duration: 0ms !important; transition-delay: 0ms !important; scroll-behavior: auto !important;
+  transition-property: opacity, color, background-color, border-color, outline-color, fill, stroke, text-decoration-color !important;
+  transition-duration: 160ms !important; transition-delay: 0ms !important; transition-timing-function: linear !important;
+  scroll-behavior: auto !important;
 }
-html.m-reduce .m-fade-ok { transition: opacity 120ms linear !important; }
-html.m-reduce .m-pending, html.m-reduce .m-in { opacity: 1 !important; transform: none !important; }
+html.m-reduce .m-fade-ok { transition: opacity var(--dur-reduce) linear !important; }
+/* reveals: a plain fade, no travel, no delay */
+html.m-reduce.motion-ready .m-pending:is([data-reveal], [data-count]) { opacity: 0; transform: none !important; }
+html.m-reduce.motion-ready .m-in:is([data-reveal], [data-count]) { transform: none !important; transition: opacity var(--dur-reduce) linear !important; }
 html.m-reduce .m-line-in { transform: none !important; }
 html.m-reduce [data-reveal="line"] { clip-path: none !important; }
+html.m-reduce.motion-ready [data-reveal="line"].m-pending,
+html.m-reduce.motion-ready [data-reveal="rule"].m-pending,
+html.m-reduce.motion-ready [data-reveal="mark"].m-pending { opacity: 0; transform: none !important; }
 html.m-reduce [data-reveal="underline"]::after { transform: none !important; }
-html.m-reduce .m-ink { display: none; }
+html.m-reduce .m-ink, html.m-reduce .m-land, html.m-reduce .m-fly-dot { display: none; }
 html.m-reduce [data-m-sl] { animation: none !important; }
+html.m-reduce .tabbar .tab.is-active > svg { animation: none !important; }
+/* page changes: a 180ms cross-fade of the page, nothing slides; shell bars hold still */
 html.m-reduce::view-transition-group(*) { animation: none !important; }
 html.m-reduce::view-transition-old(*) { animation: none !important; }
 html.m-reduce::view-transition-new(*) { animation: none !important; }
-html.m-reduce::view-transition-old(root) { animation: m-fade-out 120ms linear both !important; }
-html.m-reduce::view-transition-new(root) { animation: m-fade-in 120ms linear both !important; }
+html.m-reduce::view-transition-image-pair(root) { background: none !important; }
+html.m-reduce::view-transition-old(root) { animation: m-fade-out 140ms linear both !important; box-shadow: none !important; z-index: auto !important; }
+html.m-reduce::view-transition-new(root) { animation: m-fade-in var(--dur-reduce) linear both !important; box-shadow: none !important; }
+html.m-reduce::view-transition-old(sm-subbar):only-child { animation: m-fade-out 140ms linear both !important; }
+html.m-reduce::view-transition-new(sm-subbar):only-child { animation: m-fade-in var(--dur-reduce) linear both !important; }

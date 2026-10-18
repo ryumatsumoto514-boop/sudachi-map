@@ -1,4 +1,5 @@
-/* 巣立ちマップ v3 — match.js (FIND)
+/* 巣立ちマップ v5 — match.js (FIND)
+   v5: answer labels follow the shorter question options (SPEC-v5 Part B 質問: options ≤ 10 chars); scoring unchanged.
    SM.match(answers)        -> [{ p, score, why:[{ja,jr?,en}], group, local, careNote }] sorted by fit
    SM.matchSummary(answers) -> [{ key, q, label, set }] for the answers bar (all 6 questions, in order)
    Helpers also used by the find view (additive, not in SPEC):
@@ -26,23 +27,23 @@
   var LABELS = {
     stage: {
       jhs12: { ja: '中1・中2', en: 'Junior high yr 1–2' },
-      jhs3: { ja: '中3（高校受験の年）', en: 'Junior high yr 3 (entrance exam year)' },
+      jhs3: { ja: '中3', en: 'Junior high yr 3' },
       hs12: { ja: '高1・高2', en: 'High school yr 1–2' },
-      hs3: { ja: '高3（今年度に巣立つ）', en: 'High school yr 3 (leaving this year)' },
+      hs3: { ja: '高3', en: 'High school yr 3' },
       left0: { ja: '巣立って1年以内', en: 'Left care < 1 year ago' },
       left1: { ja: '巣立って1年以上', en: 'Left care 1+ years ago' },
-      nohs: { ja: '高校には通っていない', en: 'Not going to high school' }
+      nohs: { ja: '高校に行っていない', en: 'Not in high school' }
     },
     stageShort: {
       jhs12: { ja: '中1・中2', en: 'JHS yr 1–2' }, jhs3: { ja: '中3', en: 'JHS yr 3' },
       hs12: { ja: '高1・高2', en: 'HS yr 1–2' }, hs3: { ja: '高3', en: 'HS yr 3' },
       left0: { ja: '巣立って1年以内', en: 'Left < 1 yr' }, left1: { ja: '巣立って1年以上', en: 'Left 1+ yrs' },
-      nohs: { ja: '高校には通っていない', en: 'Not in HS' }
+      nohs: { ja: '高校に行っていない', en: 'Not in HS' }
     },
     path: {
       hs: { ja: '高校に行きたい', en: 'Want to go to high school' },
       study: { ja: '進学したい', en: 'Want to study' },
-      work: { ja: '働きたい・働いている', en: 'Work / want to work' },
+      work: { ja: '働きたい', en: 'Work' },
       unsure: { ja: 'まだ決めていない', en: 'Not decided yet' }
     },
     age: {
@@ -53,7 +54,7 @@
     care: {
       facility: { ja: '児童養護施設', en: "Children's home" },
       foster: { ja: '里親・ファミリーホーム', en: 'Foster / family home' },
-      jhome: { ja: '自立援助ホーム', en: 'Independence support home' },
+      jhome: { ja: '自立援助ホーム', en: 'Independence home' },
       other: { ja: 'そのほか', en: 'Other' },
       skip: { ja: '答えない', en: 'Prefer not to say' }
     }

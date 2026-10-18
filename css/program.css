@@ -9,12 +9,13 @@
    hidden "waiting" states exist only under html.motion-ready, so the page is complete without JS.
    ===================================================================== */
 
-/* =================================================================== PROGRAM PAGE */
-.v-program .pg { display: grid; gap: var(--s-8); }
+/* =================================================================== PROGRAM PAGE (v5: read at a glance)
+   name · 3 key facts · one action · collapsed sections. Below the fold: まなぶ, related. */
+.v-program .pg { display: grid; gap: var(--s-7); }
 .v-program .pg > * { min-width: 0; }
 .v-program .pg-defer { display: contents; }
 
-/* ---------- masthead: [56 mark] eyebrow / tags · h1 · 2px rule · こんなとき + lead ---------- */
+/* ---------- masthead: [56 mark] eyebrow / tags · h1 · 2px rule · one short sub-line ---------- */
 .v-program .pg-head {
   display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 14px; align-items: center;
 }
@@ -29,59 +30,43 @@
 .v-program .pg-basis { color: var(--ink-2); }
 :is(.v-program, .v-tools) .pg-sep { color: var(--ink-4); padding: 0 6px; }
 .v-program .pg-tags { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
-/* a long tag (English, big text, 320px) wraps inside its tint instead of running off the screen */
 .v-program .pg-tags .tag { max-width: 100%; white-space: normal; padding-block: 2px; }
 .v-program .pg-title {
   grid-column: 1 / -1; margin-top: var(--s-5);
   font-family: var(--font-display); font-weight: 700; font-size: var(--t-h1); line-height: var(--lh-heading); letter-spacing: var(--ls-0);
+  word-break: auto-phrase; text-wrap: balance;
 }
 .v-program .pg-title-rule { grid-column: 1 / -1; display: block; height: 2px; margin-top: var(--s-3); background: var(--rule-heavy); transform-origin: left center; }
-.v-program .pg-intro { grid-column: 1 / -1; display: grid; gap: var(--s-3); margin-top: var(--s-4); }
-.v-program .pg-hook { display: flex; align-items: baseline; gap: 10px; }
-.v-program .pg-hook-k {
-  flex: none; position: relative; top: -0.1em; padding: 3px 6px 2px;
-  background: var(--ink); color: var(--paper);
-  font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: 1.3; letter-spacing: var(--ls-label);
+.v-program .pg-hook {
+  grid-column: 1 / -1; margin-top: var(--s-3);
+  font-family: var(--font-display); font-weight: 700; font-size: var(--t-h3); line-height: 1.6; letter-spacing: var(--ls-0);
+  word-break: auto-phrase; line-break: strict; text-wrap: pretty;
 }
-.v-program .pg-hook-v {
-  min-width: 0; font-family: var(--font-display); font-weight: 700; font-size: var(--t-h3); line-height: 1.6; letter-spacing: var(--ls-0); word-break: auto-phrase; line-break: strict; text-wrap: pretty;
-}
-.v-program .pg-summary {
-  max-width: 40em; color: var(--ink-2);
-  font-family: var(--font-body); font-weight: 400; font-size: var(--t-lead); line-height: var(--lh); letter-spacing: var(--ls-body);
-}
-.v-program .pg-tokyo .callout a { color: var(--blue-text); }
 .v-program .pg-ja-note {
   margin-bottom: var(--s-3); padding-left: 10px; border-left: 2px solid var(--rule-2);
   font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3);
 }
 
-/* ---------- body: phone = one column (glance, actions, then the numbered sections) ---------- */
-.v-program .pg-body { display: grid; gap: var(--sec-gap); }
-.v-program .pg-aside { display: grid; gap: var(--s-6); align-content: start; min-width: 0; }
-.v-program .pg-main { display: grid; gap: var(--sec-gap); align-content: start; min-width: 0; }
+/* ---------- body: phone = one column (facts, actions, sections) ---------- */
+.v-program .pg-body { display: grid; gap: var(--s-7); }
+.v-program .pg-aside { display: grid; gap: var(--s-5); align-content: start; min-width: 0; }
+.v-program .pg-main { display: grid; gap: var(--s-5); align-content: start; min-width: 0; }
 .v-program :is(.pg-aside, .pg-main) > *, .v-program .pg-defer > * { min-width: 0; }
 
-/* small label heads (ひと目でわかる · あわせて使えるツール) */
-.v-program .pg-label {
-  font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui); letter-spacing: var(--ls-label);
-  color: var(--ink-3);
+/* ---------- key facts: a ruled 2-column sheet, label above a big value ---------- */
+.v-program .pg-facts {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0;
+  border-top: 2px solid var(--rule-heavy); border-bottom: 1px solid var(--rule);
 }
-
-/* ---------- ひと目でわかる: a ruled 2-column sheet, hairlines between cells ---------- */
-.v-program .pg-glance .pg-label { padding-bottom: 8px; border-bottom: 2px solid var(--rule-heavy); }
-.v-program .pg-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0; border-bottom: 1px solid var(--rule); }
-.v-program .pg-f { display: grid; gap: 6px; align-content: start; min-width: 0; padding: 14px 16px 16px 0; border-top: 1px solid var(--rule); }
+.v-program .pg-f { display: grid; gap: 4px; align-content: start; min-width: 0; padding: 12px 16px 14px 0; border-top: 1px solid var(--rule); }
 .v-program .pg-f:first-child { border-top: 0; }
 .v-program .pg-f:first-child:not(.is-wide) + .pg-f.is-r { border-top: 0; }
 .v-program .pg-f.is-wide { grid-column: 1 / -1; padding-right: 0; }
-.v-program .pg-f.is-r { padding: 14px 0 16px 16px; border-left: 1px solid var(--rule); }
-/* 文字を大きく on a narrow phone: two fact columns are ~130px, too narrow for a sentence-long value
-   (いつまで broke into one-word lines). Stack them. */
+.v-program .pg-f.is-r { padding: 12px 0 14px 16px; border-left: 1px solid var(--rule); }
 @media (max-width: 379px) {
   body:is(.is-big, .lang-en) .v-program .pg-facts { grid-template-columns: minmax(0, 1fr); }
   body:is(.is-big, .lang-en) .v-program .pg-f.is-r,
-  body:is(.is-big, .lang-en) .v-program .pg-f:first-child:not(.is-wide) + .pg-f.is-r { padding: 14px 0 16px; border-left: 0; border-top: 1px solid var(--rule); }
+  body:is(.is-big, .lang-en) .v-program .pg-f:first-child:not(.is-wide) + .pg-f.is-r { padding: 12px 0 14px; border-left: 0; border-top: 1px solid var(--rule); }
 }
 .v-program .pg-f dt {
   font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui); letter-spacing: var(--ls-label);
@@ -92,72 +77,73 @@
   font-family: var(--font-display); font-weight: 700; font-size: var(--t-h3); line-height: var(--lh-title); letter-spacing: var(--ls-0);
   font-feature-settings: "palt" 1; overflow-wrap: anywhere;
 }
-/* short fact values break at phrase boundaries (条件しだいで / 返済なし, never 返済な / し) */
 :lang(ja) .v-program .pg-f dd { word-break: auto-phrase; text-wrap-style: balance; }
-/* …but the detail under a value and the long 使える人 text fill their lines (balance made 3 short ragged lines) */
-.v-program .pg-f dd small, .v-program .pg-f.is-who dd { text-wrap-style: pretty; }
 .v-program .pg-f dd small {
-  display: block; margin-top: 4px;
-  font-family: var(--font-body); font-weight: 400; font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-body); color: var(--ink-2);
+  display: block; margin-top: 2px;
+  font-family: var(--font-num); font-weight: 500; font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-0); color: var(--ink-2);
 }
 .v-program .pg-f.tone-free dd { color: var(--action-text); }
 .v-program .pg-f.tone-loan dd, .v-program .pg-f.tone-deadline dd { color: var(--amber-text); }
-.v-program .pg-f.tone-deadline dd small { color: var(--ink-2); }
-/* the amount: money numbers are num-xl, everything else stays a heading; （notes） drop to meta */
-.v-program .pg-f.is-amount dd { display: grid; gap: 6px; line-height: 1.5; }
-.v-program .pg-amt-line { display: block; text-wrap-style: pretty; }
+/* the amount: the money number is the biggest thing on the page and rolls in */
+.v-program .pg-f.is-amount dd { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; line-height: 1.4; font-size: var(--t-h2); }
+.v-program .pg-f.is-amount.tone-free dd { font-size: var(--fs-3xl); line-height: 1.1; }
+.v-program .pg-amt-line { display: inline; text-wrap-style: pretty; }
 .v-program .pg-f.is-amount .amt-n {
-  font-family: var(--font-num); font-weight: 700; font-size: var(--fs-3xl); line-height: 1.05; letter-spacing: var(--ls-num);
+  font-family: var(--font-num); font-weight: 700; font-size: var(--fs-4xl); line-height: 1.05; letter-spacing: var(--ls-num);
   font-variant-numeric: tabular-nums; margin: 0 0.06em;
 }
-.v-program .pg-f.is-amount.is-multi .amt-n { font-size: var(--fs-2xl); }
 .v-program .pg-f.is-amount .amt-o { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+.v-program .pg-k-more {
+  display: inline-grid; place-items: center; min-height: 22px; padding: 0 6px; align-self: center;
+  box-shadow: inset 0 0 0 1px var(--rule-2); border-radius: var(--r-ctl); color: var(--ink-2);
+  font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); letter-spacing: var(--ls-label); line-height: 1;
+}
 .v-program .pg-amt-note {
   font-family: var(--font-body); font-weight: 400; font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-body); color: var(--ink-2);
 }
-/* a short （note） moves to the next line whole instead of breaking 進学する / 人 */
 :lang(ja) .v-program .pg-amt-note { display: inline-block; max-width: 100%; }
 .v-program .pg-amt-note .amt-n { font-size: inherit !important; letter-spacing: var(--ls-0) !important; margin: 0 !important; }
-.v-program .pg-f.is-who dd {
-  font-family: var(--font-body); font-weight: 400; font-size: var(--t-body); line-height: var(--lh); letter-spacing: var(--ls-body);
-}
-/* effort: three ink segments (they draw in from the left one after another) */
+/* 受付: a status dot (green when open now) */
+.v-program .pg-f.is-hours dd { display: block; }
+.v-program .pg-dot { display: inline-block; width: 9px; height: 9px; margin-right: 8px; border-radius: var(--r-round); background: var(--ink-4); vertical-align: 0.12em; }
+.v-program .pg-f.is-hours.is-open dd { color: var(--action-text); }
+.v-program .pg-f.is-hours.is-open .pg-dot { background: var(--action); }
+/* effort: three ink segments */
 .v-program .pg-meter-row { display: flex; align-items: center; gap: 10px; }
 .v-program .pg-meter { display: inline-grid; grid-template-columns: repeat(3, 14px); gap: 3px; flex: none; }
 .v-program .pg-meter i { display: block; height: 8px; background: var(--paper-3); transform-origin: left center; }
 .v-program .pg-meter i.is-on { background: var(--ink); }
 
-/* ---------- inline actions: call (the one green) · save · text links ---------- */
+/* ---------- actions: ONE green (電話する / 公式ページ), then 保存 (+ 公式ページ) ---------- */
 .v-program .pg-actions { display: grid; gap: var(--s-2); }
-.v-program .pg-call-btn {
-  min-height: 64px; padding: 8px 20px; gap: 12px 16px;
-  justify-content: space-between; flex-wrap: wrap; text-decoration: none;
-}
-.v-program .pg-call-l { display: inline-flex; align-items: center; gap: 10px; }
-.v-program .pg-call-l .icon { width: 24px; height: 24px; stroke-width: 1.75; }
-.v-program .pg-call-r { display: grid; justify-items: end; gap: 2px; text-align: right; }
+.v-program .pg-main-act { min-height: 64px; padding: 8px 20px; gap: 12px 16px; text-decoration: none; }
+.v-program .pg-call-btn { justify-content: space-between; flex-wrap: wrap; }
+.v-program .pg-call-l { display: inline-flex; align-items: center; gap: 10px; font-size: var(--fs-lg); }
+.v-program .pg-main-act .icon { width: 24px; height: 24px; stroke-width: 1.75; }
+.v-program .pg-web-btn { justify-content: space-between; font-size: var(--fs-lg); }
 .v-program .pg-call-num {
   font-family: var(--font-num); font-weight: 700; font-size: var(--fs-xl); line-height: 1.1; letter-spacing: var(--ls-0);
   font-variant-numeric: tabular-nums; white-space: nowrap;
 }
-.v-program .pg-call-st {
-  display: inline-flex; align-items: center; gap: 6px;
-  font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: 1.3; letter-spacing: var(--ls-label);
-  opacity: 0.88;
-}
-.v-program .pg-call-st::before { content: ""; width: 6px; height: 6px; border-radius: var(--r-round); background: currentColor; opacity: 0.55; }
-.v-program .pg-call-st.is-open::before { opacity: 1; }
-/* save: always an outline (the state is the filled star + 「保存ずみ」, never a second green) */
-.v-program .pg-save { justify-content: center; gap: 8px; background: transparent; color: var(--ink); border-color: var(--ink); }
-.v-program .pg-save.is-main { min-height: 56px; font-size: var(--fs-lg); }
-.v-program .pg-save .icon { width: 20px; height: 20px; stroke-width: 2; }
-.v-program .pg-save.is-main .icon { width: 24px; height: 24px; stroke-width: 1.75; }
+.v-program .pg-act-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-2); }
+.v-program .pg-act-row.is-one { grid-template-columns: minmax(0, 1fr); }
+.v-program .pg-act-row .btn { min-height: 52px; padding-inline: 12px; white-space: nowrap; justify-content: center; gap: 8px; background: transparent; color: var(--ink); border-color: var(--ink); text-decoration: none; }
+.v-program .pg-act-row .btn .icon { width: 20px; height: 20px; stroke-width: 2; }
+.v-program .pg-save { position: relative; }
+.v-program .pg-save.is-main { min-height: 64px; font-size: var(--fs-lg); }
 .v-program .pg-save[aria-pressed="true"] { background: var(--paper-2); }
-@media (hover: hover) { .v-program .pg-save:hover { background: var(--paper-2); } }
-.v-program .pg-save:active { background: var(--paper-3); }
-.v-program .pg-tlinks { display: flex; flex-wrap: wrap; gap: 0 var(--s-6); margin-top: 2px; }
+@media (hover: hover) { .v-program .pg-act-row .btn:hover { background: var(--paper-2); } }
+.v-program .pg-act-row .btn:active { background: var(--paper-3); }
+/* 済: a small vermilion-free hanko (ink square) that lands on the button when saved */
+.pg-hanko { display: none; }
+.v-program .pg-save.is-saved .pg-hanko, .v-program .pg-act-save.is-saved .pg-hanko {
+  display: inline-grid; place-items: center; width: 22px; height: 22px; flex: none;
+  border: 1.5px solid var(--action); border-radius: var(--r-ctl); color: var(--action-text);
+  font-family: var(--font-display); font-weight: 700; font-size: var(--fs-xs); line-height: 1; letter-spacing: 0;
+  transform: rotate(-8deg);
+}
 .v-program .pg-tlink {
-  display: inline-block; align-content: center; min-height: var(--tap);   /* inline: a wrapped label keeps its arrow after the last word */
+  display: inline-block; align-content: center; min-height: var(--tap);
   color: var(--action-text); font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); line-height: var(--lh-ui); letter-spacing: var(--ls-0); text-decoration: none;
 }
 .v-program .pg-tlink > span:first-child {
@@ -169,21 +155,30 @@
 .v-program .pg-tlink > :is(.arrow, .icon) { margin-left: 6px; }
 .v-program .pg-tlink .icon { width: 16px; height: 16px; stroke-width: 2.25; }
 
+/* Tokyo version: one ruled link row */
+.v-program .pg-tokyo {
+  position: relative; isolation: isolate; display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; align-items: center;
+  min-height: 56px; padding: 10px 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); color: var(--ink); text-decoration: none;
+}
+.v-program .pg-tokyo-k { grid-column: 1; font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); letter-spacing: var(--ls-label); color: var(--blue-text); }
+.v-program .pg-tokyo-n { grid-column: 1; font-family: var(--font-display); font-weight: 700; font-size: var(--fs-base); line-height: var(--lh-title); }
+.v-program .pg-tokyo-go { grid-column: 2; grid-row: 1 / span 2; --arrow-s: 20px; }
+
 /* ---------- the sticky bar: slides up from behind the tab bar once the inline actions are gone ---------- */
 .v-program .pg-bar {
   position: fixed; z-index: 50; left: 0; right: 0;
-  bottom: 0;   /* the tab bar steps down while this bar is up (base.css §10) */
+  bottom: 0;
   display: flex; align-items: center; gap: var(--s-2);
   min-height: calc(64px + var(--safe-b)); padding: 8px max(var(--gutter), var(--safe-r)) calc(8px + var(--safe-b)) max(var(--gutter), var(--safe-l));
   background: var(--paper); border-top: 1px solid var(--rule);
 }
 .v-program .pg-bar.is-auto {
   transform: translateY(calc(100% + 1px)); visibility: hidden;
-  transition: transform 220ms var(--ease-exit), visibility 0s linear 220ms;
+  transition: transform 260ms var(--ease-exit), visibility 0s linear 260ms;
 }
 .v-program .pg-bar.is-auto.is-on {
   transform: none; visibility: visible;
-  transition: transform var(--spring-snappy-dur) var(--spring-snappy), visibility 0s;
+  transition: transform var(--spring-rise-dur) var(--spring-rise), visibility 0s;
 }
 .v-program .pg { padding-bottom: 64px; }
 .v-program .pg-act {
@@ -199,6 +194,7 @@
 @media (hover: hover) { .v-program .pg-act:hover { background: var(--paper-2); } }
 .v-program .pg-act:active { background: var(--paper-3); }
 .v-program .pg-act-save[aria-pressed="true"] { background: var(--paper-2); }
+.v-program .pg-act-save .pg-hanko { width: 18px; height: 18px; }
 .v-program .pg-bar.is-solo .pg-act-save { flex: 1 1 auto; }
 .v-program .pg-act-call, .v-program .pg-act-web { flex: 1 1 auto; justify-content: flex-start; padding: 0 16px; }
 .v-program .pg-act-web { justify-content: space-between; }
@@ -209,16 +205,12 @@
 .v-program .pg-act-call .icon { width: 24px; height: 24px; stroke-width: 1.75; }
 .v-program .pg-act-call-t { display: grid; min-width: 0; text-align: left; line-height: 1.25; }
 .v-program .pg-act-call-t b { font-size: var(--fs-base); }
-.v-program .pg-act-call-t small {
-  font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); letter-spacing: var(--ls-label); line-height: 1.3; opacity: 0.88;
-  overflow: hidden; text-overflow: ellipsis;
-}
+.v-program .pg-act-call-t small { font-family: var(--font-num); font-weight: 500; font-size: var(--t-label); line-height: 1.3; opacity: 0.88; overflow: hidden; text-overflow: ellipsis; }
 @media (max-width: 359px) { .v-program .pg-act { padding: 0 12px; } }
 body.is-big .v-program .pg-act-save .save-label { font-size: var(--fs-xs); }
 @media (min-width: 900px) and (max-width: 1099px) {
   .v-program .pg-bar { bottom: 0; left: var(--rail-w); padding-inline: var(--gutter); }
 }
-/* a toast never lands on the bar */
 @media (max-width: 899px) {
   body:has(#view.v-program .pg-bar:is(.is-on, :not(.is-auto))) .toast { bottom: calc(var(--safe-b) + 64px + 12px); }
 }
@@ -226,24 +218,56 @@ body.is-big .v-program .pg-act-save .save-label { font-size: var(--fs-xs); }
   body:has(#view.v-program .pg-bar:is(.is-on, :not(.is-auto))) .toast { bottom: calc(64px + var(--s-4)); }
 }
 
-/* ---------- numbered sections: the shared head, then the body ---------- */
-.v-program .pg-sec { display: grid; }
-.v-program .pg-sec-body { padding-top: var(--s-5); min-width: 0; }
-.v-program :is(.pg-sec-ask, .pg-sec-contact, .pg-sec-places) .pg-sec-body { padding-top: 0; }
-.v-program .pg-sec-body > :is(p, .pg-ja-note):first-child { margin-top: var(--s-4); }
-.v-program .pg-sec-how .pg-sec-body > .pg-ja-note:first-child { margin-top: 0; }
-
-/* ---------- 01 申し込みまでの流れ: ink squares on a rail that fills as you read ---------- */
-.v-program .pg-steps-wrap { position: relative; }
-.v-program .pg-rail {
-  position: absolute; left: 13.5px; top: 14px; bottom: 0; width: 1px;
-  background: var(--rule-2); pointer-events: none;
+/* ---------- collapsed sections: one ruled row each (h2 > button), + turns into − ---------- */
+.v-program .pg-accs { display: grid; border-top: 2px solid var(--rule-heavy); }
+.v-program .pg-acc { position: relative; border-bottom: 1px solid var(--rule); }
+.v-program .pg-acc-h { margin: 0; font-size: inherit; }
+.v-program .pg-acc-btn {
+  position: relative; isolation: isolate;
+  display: flex; align-items: center; gap: 12px; width: 100%; min-height: 60px; padding: 12px 0; text-align: left; color: var(--ink);
+  font-family: var(--font-display); font-weight: 700; font-size: var(--t-h3); line-height: var(--lh-title); letter-spacing: var(--ls-0);
 }
+.v-program .pg-acc-btn::before {
+  content: ""; position: absolute; inset: 0 calc(var(--bleed) * -1); z-index: -1;
+  background: var(--paper-2); opacity: 0; pointer-events: none; transition: opacity var(--dur-quick) var(--ease-standard);
+}
+@media (hover: hover) { .v-program .pg-acc-btn:hover::before { opacity: 1; } }
+.v-program .pg-acc-btn.m-pressed::before, .v-program .pg-acc-btn:active::before { opacity: 1; background: color-mix(in srgb, var(--paper-2), var(--ink) 6%); transition: none; }
+.v-program .pg-acc-t { flex: 1 1 auto; min-width: 0; }
+.v-program .pg-acc-meta {
+  flex: none; font-family: var(--font-num); font-weight: 500; font-size: var(--t-meta); line-height: 1.3; letter-spacing: var(--ls-0); color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.v-program .pg-acc-ic { width: 18px; height: 18px; }
+.v-program .pg-acc-ic::before, .v-program .pg-acc-ic::after { top: 8px; }
+.v-program .pg-acc-btn[aria-expanded="true"] .more-ic::after { transform: rotate(180deg); opacity: 0; }
+.v-program .pg-acc.is-open .pg-acc-t { color: var(--ink); }
+.v-program .pg-acc.is-open .pg-acc-btn { box-shadow: inset 4px 0 0 -0px transparent; }
+.v-program .pg-acc-body { display: grid; gap: var(--s-4); padding: 4px 0 var(--s-6); min-width: 0; }
+.v-program .pg-acc-body[hidden] { display: none; }
+.v-program .pg-acc-body[hidden="until-found"] { display: block; content-visibility: hidden; padding: 0; height: 0; overflow: hidden; }
+.v-program .pg-text { max-width: 40em; font-size: var(--t-body); line-height: var(--lh); color: var(--ink); }
+.v-program .pg-text-hook { font-family: var(--font-display); font-weight: 700; }
+.v-program .pg-caution-t { padding-left: 12px; border-left: 3px solid var(--amber); }
+.v-program .pg-amts { display: grid; border-top: 1px solid var(--rule); }
+.v-program .pg-amts > li { padding: 10px 0; border-bottom: 1px solid var(--rule); font-family: var(--font-display); font-weight: 700; font-size: var(--fs-base); line-height: 1.6; }
+.v-program .pg-amts .amt-n { font-family: var(--font-num); font-size: var(--fs-xl); letter-spacing: var(--ls-num); font-variant-numeric: tabular-nums; margin: 0 0.06em; }
+.v-program .pg-sub-h {
+  padding-bottom: 6px; border-bottom: 1px solid var(--rule-2);
+  font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui); letter-spacing: var(--ls-label); color: var(--ink-3);
+}
+.v-program .pg-kv { display: grid; margin: 0; }
+.v-program .pg-kv > div { display: grid; grid-template-columns: 4em minmax(0, 1fr); gap: 12px; padding: 10px 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+.v-program .pg-kv dt { padding-top: 0.2em; font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui); letter-spacing: var(--ls-label); color: var(--ink-3); }
+.v-program .pg-kv dd { margin: 0; min-width: 0; font-size: var(--t-body); line-height: var(--lh); color: var(--amber-text); font-weight: 700; font-family: var(--font-display); }
+
+/* steps: ink squares on a rail (the rail draws down and the squares stamp when the section opens) */
+.v-program .pg-steps-wrap { position: relative; }
+.v-program .pg-rail { position: absolute; left: 13.5px; top: 14px; bottom: 0; width: 1px; background: var(--rule-2); pointer-events: none; }
 .v-program .pg-rail-fill { position: absolute; left: -0.5px; top: 0; bottom: 0; width: 2px; background: var(--ink); transform-origin: center top; }
 .v-program .pg-steps { display: grid; }
-.v-program .pg-step { position: relative; display: grid; grid-template-columns: 28px minmax(0, 1fr); column-gap: var(--s-4); padding-bottom: var(--s-7); }
+.v-program .pg-step { position: relative; display: grid; grid-template-columns: 28px minmax(0, 1fr); column-gap: var(--s-4); padding-bottom: var(--s-6); }
 .v-program .pg-step:last-child { padding-bottom: 0; }
-/* the rail stops at the last square */
 .v-program .pg-step:last-child::before { content: ""; position: absolute; left: 0; top: 28px; bottom: 0; width: 28px; background: var(--paper); }
 .v-program .pg-step-n {
   position: relative; z-index: 1;
@@ -251,7 +275,6 @@ body.is-big .v-program .pg-act-save .save-label { font-size: var(--fs-xs); }
   background: var(--ink); color: var(--paper);
   font-family: var(--font-num); font-weight: 700; font-size: var(--fs-sm); line-height: 1; letter-spacing: var(--ls-0); font-variant-numeric: tabular-nums;
 }
-/* waiting for the fill: an empty outline square (only when motion runs; SM.motion.stamp fills it) */
 .motion-ready .v-program .pg-step-n.is-wait { background: var(--paper); color: var(--ink-3); box-shadow: inset 0 0 0 1.5px var(--rule-2); }
 .v-program .pg-step-body { display: grid; gap: var(--s-2); min-width: 0; }
 .v-program .pg-step-t {
@@ -259,14 +282,11 @@ body.is-big .v-program .pg-act-save .save-label { font-size: var(--fs-xs); }
   font-family: var(--font-display); font-weight: 700; font-size: var(--t-h3); line-height: var(--lh-title); letter-spacing: var(--ls-0);
 }
 .v-program .pg-step-body > p { max-width: 40em; color: var(--ink); }
-.v-program .pg-docs-tick { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3); }
-/* the done count: 2 / 5 rolls like a station board; そろった stamps once */
 .v-program .pg-docs-count { position: relative; display: inline-flex; align-items: baseline; gap: 2px; white-space: nowrap; font-family: var(--font-num); color: var(--ink-3); }
 .v-program .pg-docs-n { font-weight: 700; font-size: var(--fs-xl); line-height: 1; letter-spacing: var(--ls-0); color: var(--ink); font-variant-numeric: tabular-nums; }
 .v-program .pg-docs-of { font-weight: 500; font-size: var(--fs-sm); letter-spacing: var(--ls-0); font-variant-numeric: tabular-nums; }
 .v-program .pg-docs-count.is-all .pg-docs-n { color: var(--action-text); }
 .v-program .pg-docs-all {
-  /* hangs under the count, so the number never moves when the hanko lands */
   position: absolute; right: 0; top: calc(100% + 6px);
   display: inline-grid; place-items: center; min-height: 22px; padding: 0 6px;
   border-radius: var(--r-ctl); box-shadow: inset 0 0 0 1.5px var(--action); color: var(--action-text);
@@ -295,8 +315,8 @@ body.is-big .v-program .pg-act-save .save-label { font-size: var(--fs-xs); }
 @media (hover: hover) { .v-program .pg-doc:hover .pg-doc-box { box-shadow: inset 0 0 0 1.5px var(--ink); } .v-program .pg-doc:hover .pg-doc-in:checked + .pg-doc-box { box-shadow: none; } }
 .v-program .pg-note { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3); }
 
-/* ---------- 02 窓口でこう聞く: a hairline table, 問1 column on paper-2 ---------- */
-.v-program .pg-asks { display: grid; }
+/* 窓口でこう聞く: a hairline table, 問1 column on paper-2 */
+.v-program .pg-asks { display: grid; border-top: 1px solid var(--rule); }
 .v-program .pg-ask { display: grid; grid-template-columns: 3.5em minmax(0, 1fr); border-bottom: 1px solid var(--rule); }
 .v-program .pg-ask-n {
   display: block; padding: 15px 0 0; background: var(--paper-2); text-align: center;
@@ -304,27 +324,24 @@ body.is-big .v-program .pg-act-save .save-label { font-size: var(--fs-xs); }
   font-variant-numeric: tabular-nums;
 }
 .v-program .pg-ask-q { padding: 12px 0 13px 16px; font-size: var(--t-body); line-height: var(--lh); max-width: 40em; }
-.v-program .pg-ask-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-3); margin-top: var(--s-5); }
+.v-program .pg-ask-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-3); }
 .v-program .pg-ask-actions .pg-tlink { margin-left: var(--s-1); }
 @media (max-width: 419px) {
   .v-program .pg-ask-actions .btn { flex: 1 1 auto; }
-  .v-program .pg-ask-actions .pg-tlink { flex: 1 1 100%; margin-left: 0; }
 }
 
-/* ---------- 03 連絡先: the number is the biggest thing; 電話する = ink outline ---------- */
-.v-program .pg-contact { display: grid; grid-template-columns: minmax(0, 1fr); }
-.v-program .pg-tel { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; padding: var(--s-4) 0 var(--s-4); border-bottom: 1px solid var(--rule); }
+/* 連絡先 */
+.v-program .pg-contact, .v-program .pg-places { display: grid; grid-template-columns: minmax(0, 1fr); }
+.v-program .pg-tel { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; padding: var(--s-3) 0 var(--s-4); border-bottom: 1px solid var(--rule); }
 .v-program .pg-tel-label {
   display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px;
   font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui); letter-spacing: var(--ls-label); color: var(--ink-3);
 }
 .v-program .pg-tel-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-2) var(--s-3); min-width: 0; }
 .v-program .pg-tel-num {
-  min-width: 0; color: var(--ink); text-decoration: underline; text-decoration-color: transparent; text-decoration-thickness: 1.5px; text-underline-offset: 0.16em;
+  min-width: 0; color: var(--ink); text-decoration: none;
   font-family: var(--font-num); font-weight: 700; font-size: var(--t-num-l); line-height: 1.15; letter-spacing: var(--ls-0); font-variant-numeric: tabular-nums; white-space: nowrap;
-  transition: text-decoration-color var(--dur-quick) var(--ease-standard);
 }
-@media (hover: hover) { .v-program .pg-tel-num:hover { text-decoration-color: currentColor; } }
 .v-program .pg-tel-call { flex: none; }
 .v-program .pg-today { display: flex; align-items: center; gap: 8px; font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-2); }
 .v-program .pg-today i { flex: none; width: 8px; height: 8px; border-radius: var(--r-round); background: var(--ink-4); }
@@ -338,73 +355,40 @@ body.is-big .v-program .pg-act-save .save-label { font-size: var(--fs-xs); }
 .v-program .pg-hours dd { margin: 0; min-width: 0; font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink); }
 .v-program .pg-link-row {
   position: relative; isolation: isolate;
-  display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 10px 0;
+  display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 10px 0;
   border-bottom: 1px solid var(--rule); color: var(--ink); text-decoration: none;
 }
 .v-program .pg-link-row::before { content: ""; position: absolute; inset: 0 calc(var(--bleed) * -1); z-index: -1; background: var(--paper-2); opacity: 0; transition: opacity var(--dur-quick) var(--ease-standard); }
 @media (hover: hover) { .v-program .pg-link-row:hover::before { opacity: 1; } }
-.v-program .pg-link-row:active::before { opacity: 1; background: color-mix(in srgb, var(--paper-2), var(--ink) 6%); transition: none; }
+.v-program .pg-link-row:active::before { opacity: 1; transition: none; }
 .v-program .pg-link-t { font-family: var(--font-display); font-weight: 700; font-size: var(--fs-base); line-height: var(--lh-title); letter-spacing: var(--ls-0); }
 .v-program .pg-link-host { flex: 1; min-width: 0; font-size: var(--t-meta); color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .v-program .pg-link-go { flex: none; width: 16px; height: 16px; stroke-width: 2.25; color: var(--ink-2); }
 
-/* ---------- 04 場所 ---------- */
+/* 場所 */
 .v-program .pg-locs { display: grid; }
-.v-program .pg-loc { display: grid; gap: var(--s-2); padding: var(--s-5) 0; border-bottom: 1px solid var(--rule); }
+.v-program .pg-loc { display: grid; gap: var(--s-2); padding: var(--s-4) 0; border-bottom: 1px solid var(--rule); }
 .v-program .pg-loc-name {
   display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px;
-  font-family: var(--font-display); font-weight: 700; font-size: var(--t-h3); line-height: var(--lh-title); letter-spacing: var(--ls-0);
+  font-family: var(--font-display); font-weight: 700; font-size: var(--fs-base); line-height: var(--lh-title); letter-spacing: var(--ls-0);
 }
 .v-program .pg-loc-area { font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); letter-spacing: var(--ls-label); color: var(--ink-3); }
 .v-program .pg-loc-kv { display: grid; gap: 2px; margin: 0; }
 .v-program .pg-loc-kv > div { display: grid; grid-template-columns: 3.5em minmax(0, 1fr); gap: 12px; }
-.v-program .pg-loc-kv dt {
-  padding-top: 0.25em; font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui); letter-spacing: var(--ls-label); color: var(--ink-3);
-}
+.v-program .pg-loc-kv dt { padding-top: 0.25em; font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui); letter-spacing: var(--ls-label); color: var(--ink-3); }
 .v-program .pg-loc-kv dd { margin: 0; min-width: 0; font-size: var(--t-meta); line-height: var(--lh-meta); overflow-wrap: anywhere; }
-.v-program .pg-loc-tel { color: var(--ink); font-family: var(--font-num); font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.v-program .pg-loc-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-5); margin-top: var(--s-2); }
+.v-program .pg-loc-tel { display: inline-block; min-height: var(--tap); align-content: center; color: var(--ink); font-family: var(--font-num); font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.v-program .pg-loc-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-5); margin-top: var(--s-1); }
 .v-program .pg-more { margin-top: -1px; border-top: 0; }
 
-/* ---------- 気をつけること · まなぶ · ツール · 支援者 ---------- */
-.v-program .pg-caution .callout-body > span { max-width: 40em; }
-.v-program .pg-learn { display: grid; }
-:is(.v-program, .v-tools) .pg-lessons { display: grid; }
-:is(.v-program, .v-tools) .pg-lessons > li { border-bottom: 1px solid var(--rule); }
-:is(.v-program, .v-tools) .pg-lesson {
-  position: relative; isolation: isolate;
-  display: flex; align-items: center; gap: var(--s-4); padding: var(--s-4) 0;
-  color: var(--ink); text-decoration: none;
-}
-:is(.v-program, .v-tools) .pg-lesson[data-press="ink"]::after { inset: 0 calc(var(--bleed) * -1); }
-:is(.v-program, .v-tools) .pg-lesson::before { content: ""; position: absolute; inset: 0 calc(var(--bleed) * -1); z-index: -1; background: var(--paper-2); opacity: 0; transition: opacity var(--dur-quick) var(--ease-standard); }
-@media (hover: hover) { :is(.v-program, .v-tools) .pg-lesson:hover::before { opacity: 1; } }
-:is(.v-program, .v-tools) .pg-lesson-thumb { flex: none; width: 72px; height: 72px; display: grid; place-items: center; overflow: hidden; background: var(--paper-2); }
-:is(.v-program, .v-tools) .pg-lesson-thumb .il { width: 72px; }
-/* with a picture the thumb is the subject on its ground line, not a tinted tile (the tile stays for the kanji fallback) */
-:is(.v-program, .v-tools) .pg-lesson-thumb:has(> .il) { background: none; }
-:is(.v-program, .v-tools) .pg-lesson-text { flex: 1; min-width: 0; display: grid; gap: 4px; }
-:is(.v-program, .v-tools) .pg-lesson-k {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 0 2px;
-  font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui); letter-spacing: var(--ls-label); color: var(--ink-3);
-}
-:is(.v-program, .v-tools) .pg-lesson-k .tag { margin-left: 8px; }
-:is(.v-program, .v-tools) .pg-lesson-t {
-  font-family: var(--font-display); font-weight: 700; font-size: var(--t-h3); line-height: var(--lh-title); letter-spacing: var(--ls-0); word-break: auto-phrase; line-break: strict; text-wrap: pretty;
-}
-:is(.v-program, .v-tools) .pg-lesson-go { --arrow-s: 20px; color: var(--ink-2); }
-.v-program .pg-tools { display: grid; }
-/* the supporter note: one ruled row under 気をつけること (hairline above and below, link at the right) */
-.v-program .pg-caution { display: grid; }
+/* 支援者メモ */
 .v-program .pg-sup-hint {
-  display: flex; align-items: center; gap: var(--s-2) var(--s-4); margin-top: var(--s-5); padding: var(--s-4) 0;
+  display: flex; align-items: center; gap: var(--s-2) var(--s-4); padding: var(--s-2) 0;
   border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule);
   font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-2);
 }
-.v-program .pg-caution-sup > .pg-sup-hint { margin-top: 0; }
 .v-program .pg-sup-hint > span { min-width: 0; flex: 1 1 auto; }
 .v-program .pg-sup-hint > .pg-linkbtn { flex: none; margin-left: auto; }
-.v-program .pg-caution > .pg-sup { margin-top: var(--s-5); }
 .v-program .pg-linkbtn {
   min-height: var(--tap); color: var(--action-text);
   font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); letter-spacing: var(--ls-0);
@@ -412,13 +396,10 @@ body.is-big .v-program .pg-act-save .save-label { font-size: var(--fs-xs); }
 }
 .v-program .pg-sup .callout-body > span { max-width: 40em; }
 
-/* ---------- 出典: small print under a hairline ---------- */
-.v-program .pg-src { display: grid; gap: var(--s-2); padding-top: var(--s-4); border-top: 1px solid var(--rule); }
-.v-program .pg-src-h {
-  font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui); letter-spacing: var(--ls-label); color: var(--ink-3);
-}
+/* 出典: small print */
+.v-program .pg-src { display: grid; gap: var(--s-2); }
 .v-program .pg-src-links { display: grid; gap: 2px; }
-.v-program .pg-src-links a { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; font-size: var(--t-meta); line-height: 1.5; overflow-wrap: anywhere; }
+.v-program .pg-src-links a { display: inline-flex; align-items: center; gap: 6px; min-height: var(--tap); font-size: var(--t-meta); line-height: 1.5; overflow-wrap: anywhere; }
 .v-program .pg-src-ext { width: 16px; height: 16px; stroke-width: 2.25; flex: none; }
 .v-program .pg-src-meta { display: flex; flex-wrap: wrap; gap: 0 16px; font-family: var(--font-num); font-size: var(--t-meta); color: var(--ink-2); font-variant-numeric: tabular-nums; }
 .v-program .pg-src-warn { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3); max-width: 40em; }
@@ -426,8 +407,30 @@ body.is-big .v-program .pg-act-save .save-label { font-size: var(--fs-xs); }
 .v-program .pg-report .btn { padding-inline: 0; }
 .v-program .pg-report p { font-size: var(--fs-xs); line-height: var(--lh-meta); color: var(--ink-3); max-width: 40em; }
 
-/* ---------- 同じ分野の支援 ---------- */
-.v-program .pg-related { display: grid; }
+/* ---------- まなぶ (shared with tools) · related ---------- */
+.v-program .pg-learn, .v-program .pg-related { display: grid; }
+:is(.v-program, .v-tools) .pg-lessons { display: grid; }
+:is(.v-program, .v-tools) .pg-lessons > li { border-bottom: 1px solid var(--rule); }
+:is(.v-program, .v-tools) .pg-lesson {
+  position: relative; isolation: isolate;
+  display: flex; align-items: center; gap: var(--s-4); padding: var(--s-3) 0;
+  color: var(--ink); text-decoration: none;
+}
+:is(.v-program, .v-tools) .pg-lesson[data-press="ink"]::after { inset: 0 calc(var(--bleed) * -1); }
+:is(.v-program, .v-tools) .pg-lesson::before { content: ""; position: absolute; inset: 0 calc(var(--bleed) * -1); z-index: -1; background: var(--paper-2); opacity: 0; transition: opacity var(--dur-quick) var(--ease-standard); }
+@media (hover: hover) { :is(.v-program, .v-tools) .pg-lesson:hover::before { opacity: 1; } }
+:is(.v-program, .v-tools) .pg-lesson-thumb { flex: none; width: 56px; height: 56px; display: grid; place-items: center; overflow: hidden; background: var(--paper-2); }
+:is(.v-program, .v-tools) .pg-lesson-thumb .il { width: 56px; }
+:is(.v-program, .v-tools) .pg-lesson-thumb:has(> .il) { background: none; }
+:is(.v-program, .v-tools) .pg-lesson-text { flex: 1; min-width: 0; display: grid; gap: 2px; }
+:is(.v-program, .v-tools) .pg-lesson-k {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0 8px;
+  font-family: var(--font-num); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui); letter-spacing: var(--ls-label); color: var(--ink-3);
+}
+:is(.v-program, .v-tools) .pg-lesson-t {
+  font-family: var(--font-display); font-weight: 700; font-size: var(--fs-base); line-height: var(--lh-title); letter-spacing: var(--ls-0); word-break: auto-phrase; line-break: strict; text-wrap: pretty;
+}
+:is(.v-program, .v-tools) .pg-lesson-go { --arrow-s: 20px; color: var(--ink-2); }
 
 /* ---------- the sub-bar title stays quiet while the H1 is on screen (large-title hand-off) ---------- */
 body:has(#view:is(.v-program, .v-tools)) .subbar-title { transition: opacity 200ms var(--ease-enter); }
@@ -440,53 +443,38 @@ body:has(#view:is(.v-program, .v-tools)) .subbar-title.pg-quiet { opacity: 0; tr
   .v-program .pg-meta { grid-column: 2; grid-row: 1; }
   .v-program .pg-title { grid-column: 2; grid-row: 2; margin-top: 6px; }
   .v-program .pg-title-rule { margin-top: var(--s-4); }
-  .v-program .pg-intro { margin-top: var(--s-5); }
-  .v-program .pg-glance .pg-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (min-width: 1100px) {
-  /* 12 columns: the masthead, the Tokyo note and the reading column on the left (7–8), the glance and the
-     actions in a column of 4 at the right that starts beside the H1 */
   .v-program .pg { grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--s-6); row-gap: 0; padding-bottom: 0; }
   .v-program .pg > * { grid-column: 1 / span 7; }
-  /* one left edge and one right edge for the reading column: the masthead and its heavy rule end where every
-     section rule below them ends (7 of 12), and the side column starts two tracks later */
   .v-program .pg > .pg-head { grid-column: 1 / span 7; grid-row: 1; }
-  /* the side column opens with a hairline, not a second heavy rule beside the H1's (one heavy rule per section
-     start; the rail's label already sits on the eyebrow's line) */
-  .v-program .pg-aside .pg-glance .pg-label { border-bottom: 1px solid var(--rule-2); }
-  .v-program .pg > .pg-tokyo { grid-row: 2; margin-top: var(--s-7); }
   .v-program .pg-body { display: contents; }
-  .v-program .pg-main { grid-column: 1 / span 7; grid-row: 3; margin-top: var(--s-9); }
-  .v-program .pg-aside { grid-column: 9 / span 4; grid-row: 1 / span 3; align-self: stretch; gap: var(--s-6); padding-top: 4px; }
-  .v-program .pg > .pg-related { grid-row: 4; }
-  .v-program .pg > .pg-defer > .pg-related, .v-program .pg > .pg-related { grid-column: 1 / span 7; margin-top: var(--sec-gap); }
-  .v-program .pg > .pg-defer { display: block; grid-column: 1 / span 7; grid-row: 4; }
-  /* the actions stay in view beside the long reading column; when the whole side column fits the screen,
-     all of it stays (program.js measures and sets .is-stick) */
+  .v-program .pg-main { grid-column: 1 / span 7; grid-row: 2; margin-top: var(--s-8); }
+  .v-program .pg-aside { grid-column: 9 / span 4; grid-row: 1 / span 2; align-self: stretch; gap: var(--s-5); padding-top: 4px; }
+  .v-program .pg > .pg-defer { display: grid; gap: var(--sec-gap); grid-column: 1 / span 7; grid-row: 3; margin-top: var(--sec-gap); }
+  .v-program .pg > :is(.pg-learn, .pg-related) { grid-column: 1 / span 7; margin-top: var(--sec-gap); }
   .v-program .pg-actions { position: sticky; top: var(--sticky-top); }
   .v-program .pg-aside.is-stick { position: sticky; top: var(--sticky-top); align-self: start; }
   .v-program .pg-aside.is-stick .pg-actions { position: static; }
   .v-program .pg-bar { display: none; }
-  /* the call button in the narrow column: 電話する on top, the number under it */
   .v-program .pg-call-btn { display: grid; justify-content: stretch; gap: 6px; padding: 14px 20px 16px; }
-  .v-program .pg-call-r { justify-items: start; text-align: left; gap: 4px; }
   .v-program .pg-call-num { font-size: var(--t-num-l); }
 }
 
-/* ---------- English: labels uppercase (same token) ---------- */
-body.lang-en .v-program :is(.pg-label, .pg-f dt, .pg-eyebrow, .pg-hook-k, .pg-tel-label, .pg-hours dt, .pg-loc-kv dt, .pg-src-h, .pg-lesson-k) { text-transform: uppercase; }
-body.lang-en .v-program .pg-summary, body.lang-en .v-program .pg-hook-v { word-break: normal; }
+/* ---------- English ---------- */
+body.lang-en .v-program :is(.pg-f dt, .pg-eyebrow, .pg-tel-label, .pg-hours dt, .pg-loc-kv dt, .pg-sub-h, .pg-kv dt) { text-transform: uppercase; }
+body.lang-en .v-program .pg-hook { word-break: normal; }
 
-/* ---------- ふりがな / 大きい文字: nothing may push the page wider than the screen ---------- */
-body.is-ruby .v-program .pg-hook-v, body.is-ruby .v-program .pg-title { line-height: 1.7; }
+/* ---------- ふりがな / 大きい文字 ---------- */
+body.is-ruby .v-program .pg-hook, body.is-ruby .v-program .pg-title { line-height: 1.7; }
 body.is-ruby .v-program .pg-mast .cat-icon { min-width: 56px; }
 @media (max-width: 379px) {
-  .v-program .pg-call-btn { padding-inline: 16px; }
+  .v-program .pg-main-act { padding-inline: 16px; }
   .v-program .pg-call-num { font-size: var(--fs-lg); }
-  body.is-big .v-program .pg-call-r { justify-items: start; text-align: left; }
+  .v-program .pg-f.is-amount .amt-n { font-size: var(--fs-3xl); }
 }
 
-/* ---------- 窓口で見せる: a full-screen page for the desk (an overlay, so it may cast a shadow) ---------- */
+/* ---------- 窓口で見せる: a full-screen page for the desk ---------- */
 .pg-show {
   position: fixed; inset: 0; z-index: 120;
   display: flex; flex-direction: column;
@@ -497,9 +485,7 @@ body.is-ruby .v-program .pg-mast .cat-icon { min-width: 56px; }
   flex: none; display: flex; align-items: center; justify-content: space-between; gap: var(--s-3);
   min-height: 64px; padding: 0 var(--gutter); border-bottom: 1px solid var(--rule);
 }
-.pg-show-k {
-  font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui); letter-spacing: var(--ls-label); color: var(--ink-3);
-}
+.pg-show-k { font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui); letter-spacing: var(--ls-label); color: var(--ink-3); }
 .pg-show-x {
   display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 18px 0 14px;
   border: 1.5px solid var(--ink); border-radius: var(--r-ctl); color: var(--ink);
@@ -529,11 +515,12 @@ body.pg-showing { overflow: hidden; }
 /* ---------- not found ---------- */
 .v-program .pg-nf { padding-top: var(--s-4); }
 
-/* ---------- print: a clean sheet ---------- */
+/* ---------- print: every section open, actions gone ---------- */
 @media print {
   .v-program .pg-bar, .v-program .pg-actions, .v-program .pg-ask-actions, .v-program .pg-loc-actions, .v-program .pg-report, .v-program .pg-related, .pg-show { display: none !important; }
+  .v-program .pg-acc-body[hidden] { display: grid !important; content-visibility: visible !important; height: auto !important; }
+  .v-program .pg-acc-ic { display: none; }
   .v-program .pg-step-n { background: #000 !important; color: #fff !important; box-shadow: none !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .v-program .pg-rail-fill { transform: none !important; }
   .v-program .pg { padding-bottom: 0; }
 }
 /* =================================================================== TOOLS
@@ -1061,7 +1048,7 @@ body.is-big .v-tools .tl-float-mini { display: none; }
 .v-tools .mn-vs-track, .v-tools .mn-bd-track { position: relative; display: block; height: 12px; background: var(--paper-3); overflow: hidden; }
 .v-tools .mn-bar {
   position: absolute; inset: 0; display: block; transform-origin: left center; background: var(--ink);
-  transition: transform var(--spring-snappy-dur) var(--spring-snappy);
+  transition: transform var(--spring-rise-dur) var(--spring-rise);
 }
 .v-tools .mn-vs-row.is-in .mn-bar { background: var(--action); }
 .v-tools .mn-vs-v {
@@ -1236,3 +1223,8 @@ body.lang-en .v-tools :is(.tl-title, .tl-hub-t, .scr-label-title) { word-break: 
 .v-program .pg-src-links a { min-height: 44px; }
 .v-tools .ck-help-more { position: relative; }
 .v-tools .ck-help-more::before { content: ""; position: absolute; inset: -4px -4px; }
+
+/* ---------- v5: the script's call button carries its number; hub rows are title-only ---------- */
+.v-tools .scr-call { justify-content: space-between; }
+.v-tools .scr-call-n { font-family: var(--font-num); font-weight: 700; font-size: var(--fs-lg); letter-spacing: var(--ls-0); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.v-tools .tl-hub-row { min-height: 88px; }

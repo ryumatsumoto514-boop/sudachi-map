@@ -79,23 +79,32 @@
     };
     var m = M();
     if (!m || !m.animate || reduced()) { put(); return; }
-    var a = m.animate(el, [{ opacity: 1 }, { opacity: 0 }], { duration: 90, easing: 'cubic-bezier(0.3, 0, 0.8, 0.15)', fill: 'forwards', key: 'swap' });
+    var a = m.animate(el, [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(-12px)' }], { duration: 140, easing: 'cubic-bezier(0.3, 0, 0.8, 0.15)', fill: 'forwards', key: 'swap' });
     var go = function () {
       put();
-      m.animate(el, [{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }], { duration: 220, easing: 'cubic-bezier(0, 0, 0.2, 1)', key: 'swap' });
+      m.animate(el, [{ opacity: 0, transform: 'translateY(28px)' }, { opacity: 1, transform: 'none' }], { spring: 'rise', key: 'swap' });
     };
     if (a && a.finished) a.finished.then(go, go); else go();
+  }
+
+  // rows arrive one after another (v5: 24px, rise spring, 40–60ms apart, cap 8)
+  function cascade(els, step, delay) {
+    var m = M();
+    if (!m || !m.animate || reduced() || !els) return;
+    Array.prototype.forEach.call(els, function (el, i) {
+      try { m.animate(el, [{ opacity: 0, transform: 'translateY(24px)' }, { opacity: 1, transform: 'none' }], { spring: 'rise', delay: (delay || 0) + Math.min(i, 8) * (step || 50), fill: 'backwards', key: 'casc' }); } catch (e) { }
+    });
   }
 
   SM.strings({
     'tl.kicker': { ja: 'べんりツール', en: 'Tools' },
     'tl.hub': { ja: 'べんりツール', en: 'Tools' },
-    'tl.hub.lead': { ja: '窓口に行く前・サインする前・ひとり暮らしの前に。どれも、このスマホの中だけで動きます。', jr: '電話する前、お金の約束をする前、お金を使う前に。どれも、このスマホの中だけで動きます。', en: 'Before you visit, sign or move out. Everything stays on this phone.' },
+    'tl.hub.lead': { ja: '窓口・契約・お金の前に', jr: '電話・約束・お金の前に', en: 'Before you call, sign or spend' },
     'tl.script': { ja: '電話・窓口の台本', en: 'Phone & visit script' },
     'tl.script.sub': { ja: '何を言えばいいか、そのまま読める台本を作る', jr: '何を言えばいいか、読むだけの台本を作る', en: 'Make a script you can read out loud' },
     'tl.check': { ja: '契約チェック', en: 'Contract check' },
     'tl.check.sub': { ja: 'サインする前に、危ないサインがないか確かめる', jr: 'お金の約束をする前に、あぶないサインがないか見る', en: 'Check for warning signs before you sign' },
-    'tl.money': { ja: '生活費シミュレーター', jr: 'おこづかい・生活費けいさん', en: 'Money calculator' },
+    'tl.money': { ja: '生活費の計算', jr: 'お金のけいさん', en: 'Money calculator' },
     'tl.money.sub': { ja: 'ひと月にいくら残るか、ざっくり計算する。おこづかい・バイト用もあります', jr: 'おこづかいやバイト代で、1か月にいくら残るか計算する', en: 'See what is left each month — for living alone, or pocket money and part-time pay' },
     'tl.private': { ja: '入力した内容は、どこにも送られません。このスマホの中だけで計算しています。', jr: '入力したことは、どこにも送られません。このスマホの中だけで計算しています。', en: 'Nothing you type is sent anywhere. It is all worked out on this phone.' },
     'tl.privateScript': { ja: '入力した内容は、どこにも送られません。このスマホの中だけでつくっています。', jr: '入力したことは、どこにも送られません。このスマホの中だけでつくっています。', en: 'Nothing you type is sent anywhere. The script is made on this phone.' },
@@ -106,7 +115,7 @@
     'tl.toResult': { ja: '結果へ', en: 'Result' },
 
     /* script */
-    'sc.lead': { ja: '用件をえらんで、空らんを自分の言葉に変えるだけ。そのまま読める台本になります。', jr: '用件をえらんで、空らんを自分のことに変えるだけ。読むだけの台本ができます。', en: 'Pick what you need and fill in the blanks. You get a script you can read out. (Scripts are in Japanese, for use at the counter.)' },
+    'sc.lead': { ja: '用件をえらび、空らんを書きかえる', jr: '用件をえらんで、空らんを書きかえよう', en: 'Pick a topic, fill in the blanks' },
     'sc.for': { ja: 'この制度用の台本', en: 'Script for this program' },
     'sc.forOther': { ja: '制度をはずす', en: 'Remove program' },
     'sc.step1': { ja: '用件をえらぶ', en: 'Pick a topic' },
@@ -117,7 +126,7 @@
     'sc.step2sub': { ja: '例が入っています。自分のことに書きかえてください。', jr: '「れい」が入っています。自分のことに書きかえてね。', en: 'Examples are filled in. Change them to fit you.' },
     'sc.step3': { ja: '台本', en: 'Your script' },
     'sc.step3sub': { ja: '下線は、あなたが入れたことばです。', en: 'Underlined words are the ones you filled in.' },
-    'sc.read': { ja: '読みあげモード', en: 'Reading mode' },
+    'sc.read': { ja: '大きく読む', en: 'Read it out' },
     'sc.readSub': { ja: '1行ずつ大きく出します。電話しながら使えます。', jr: '1行ずつ大きく出ます。電話しながら使えるよ。', en: 'Shows one line at a time, large. Use it while you call.' },
     'sc.copy': { ja: 'コピー', en: 'Copy' },
     'sc.copied': { ja: '台本をコピーしました', en: 'Script copied' },
@@ -126,7 +135,7 @@
     'sc.tips': { ja: '電話のコツ', en: 'Tips for calling' },
     'sc.legendQ': { ja: '質問', en: 'Question' },
     'sc.legendH': { ja: '困ったときの一言', en: 'If you get stuck' },
-    'sc.call': { ja: '{name} に電話する', en: 'Call {name}' },
+    'sc.call': { ja: '電話する', en: 'Call' },
     'sc.jaNote': { ja: '', en: 'Say this in Japanese — the script stays in Japanese so you can read it out or show it to the staff.' },
     'sc.empty': { ja: '準備中です', en: 'Coming soon' },
     'sc.updated': { ja: '台本を更新しました', en: 'Script updated' },
@@ -146,9 +155,9 @@
     'rd.awake': { ja: '表示中は画面が消えにくくなります。行をタップするとそこへ移動します。', en: 'The screen stays on while this is open. Tap a line to jump to it.' },
 
     /* check */
-    'ck.lead': { ja: '部屋・仕事・もうけ話・ネット。サインする前に、当てはまるものにチェックしてください。', jr: 'ネット・ゲーム・もうけ話・バイトのさそい。お金の約束をする前に、当てはまるものにチェックしよう。', en: 'Rooms, jobs, money offers, online. Before you sign, tick anything that applies.' },
-    'ck.adult': { ja: '18歳からは、ひとりで契約できます。そのかわり、サインした契約は取り消しにくくなります。', en: 'From 18 you can sign contracts alone — and they become harder to cancel.' },
-    'ck.minor': { ja: '18歳になるまでは、親や施設の人など（保護者）の同意がない契約は、あとから取り消せることがあります。こまったら、すぐ大人に相談してください。', jr: '18歳になるまでは、保護者（親や施設の人など）が「いいよ」と言っていない約束は、あとから取り消せることがあります。こまったら、すぐ大人に話してね。', en: 'Until you are 18, contracts made without your guardian’s consent can often be cancelled. If you are worried, tell an adult straight away.' },
+    'ck.lead': { ja: 'サインの前に、当てはまるものをチェック', jr: '約束の前に、当てはまるものをチェック', en: 'Before you sign, tick what applies' },
+    'ck.adult': { ja: '18歳からはひとりで契約でき、取り消しにくくなります。', en: 'From 18 you sign alone, and it is harder to cancel.' },
+    'ck.minor': { ja: '18歳までは、保護者の同意がない契約は取り消せることがあります。こまったら、すぐ大人に相談を。', jr: '18歳までは、保護者が「いいよ」と言っていない約束は取り消せることがあります。こまったら、すぐ大人に話してね。', en: 'Under 18, contracts without your guardian’s consent can often be cancelled. Worried? Tell an adult now.' },
     'ck.result': { ja: 'チェックの結果', jr: 'けっか', en: 'Result' },
     'ck.count': { ja: '{n}こ チェック', en: '{n} ticked' },
     'ck.lv.safe': { ja: '大きなサインなし', jr: 'いまのところ大丈夫そう', en: 'No big warning signs' },
@@ -157,9 +166,9 @@
     'ck.zone.safe': { ja: '大丈夫そう', en: 'OK' },
     'ck.zone.caution': { ja: '注意', en: 'Careful' },
     'ck.zone.danger': { ja: '危険', jr: 'あぶない', en: 'Danger' },
-    'ck.msg.safe': { ja: '今のところ、大きな危険サインはありません。それでも、契約書の控えは必ずもらって、サインの前にだれか1人に見せてください。', jr: 'いまのところ、大きなサインはありません。それでも、お金の約束をする前に、だれか大人に見せよう。', en: 'No big warning signs so far. Still, always get a copy of the contract and show someone before you sign.' },
-    'ck.msg.caution': { ja: '今日は決めないでください。「相談してから返事します」と言って帰って大丈夫です。気になることは、消費者ホットライン188で相談できます。', jr: '今日は決めないで。「家の人に相談してから」と言ってOK。消費者ホットライン188にも相談できます。', en: 'Do not decide today. It is fine to say "I will answer after I talk to someone" and leave. You can call 188 about it.' },
-    'ck.msg.danger': { ja: 'この契約は進めないでください。お金を払っていても、サインしていても、取り返せることがあります。今日のうちに相談してください。', jr: 'この話は進めないで。お金をはらっていても、とりもどせることがあります。今日のうちに大人に話そう。', en: 'Do not go ahead. Even if you paid or signed, you may get it back. Talk to someone today.' },
+    'ck.msg.safe': { ja: '控えを必ずもらい、サインの前にだれか1人に見せてください。', jr: 'お金の約束をする前に、だれか大人に見せよう。', en: 'Get a copy, and show someone before you sign.' },
+    'ck.msg.caution': { ja: '今日は決めないで。「相談してから返事します」と言って帰って大丈夫。188で相談できます。', jr: '今日は決めないで。「家の人に相談してから」と言ってOK。188にも相談できます。', en: 'Do not decide today. Say "I will answer after I talk to someone" and leave. You can call 188.' },
+    'ck.msg.danger': { ja: '進めないでください。払った・サインした後でも、取り返せることがあります。今日のうちに相談を。', jr: 'この話は進めないで。お金をはらっていても、とりもどせることがあります。今日のうちに大人に話そう。', en: 'Do not go ahead. Even if you paid or signed, you may get it back. Talk to someone today.' },
     'ck.crime.t': { ja: 'あなたが犯罪に巻きこまれるおそれがあります', jr: '犯罪にまきこまれるかもしれません', en: 'You could be pulled into a crime' },
     'ck.crime': { ja: '名前を貸す・口座やスマホをわたす・「受け取るだけ」の仕事は、あなたが犯罪をした人として扱われることがあります。もうやってしまっていても、早く相談するほど守られます。おどされている・今あぶないときは 110 へ。', jr: '名前をかす・口座やスマホをわたす・「受け取るだけ」「運ぶだけ」の仕事は、犯罪になります。もうやってしまっていても、早く話すほど守られます。おどされている・今あぶないときは 110 へ。', en: 'Lending your name, handing over an account or phone, or "just pick it up" jobs can make you treated as a criminal. Even if you already did it, the sooner you ask for help the better. If you are threatened or in danger now, call 110.' },
     'ck.where': { ja: '相談できるところ', en: 'Where to get help' },
@@ -171,8 +180,8 @@
     'ck.learnH': { ja: 'サインする前に読んでおきたいこと', jr: '約束する前に、読んでおこう', en: 'Worth reading before you sign' },
 
     /* money */
-    'mn.lead': { ja: 'ひと月に入るお金と出るお金を入れると、いくら残るかがすぐわかります。足りないときに使える支援も出ます。', en: 'Enter money in and out each month to see what is left — and which support could help.' },
-    'mn.leadJr': { ja: 'おこづかい・お年玉・バイト代と、使うお金を入れると、1か月にいくら残るかがすぐわかります。', jr: 'もらうお金と使うお金を入れると、1か月にいくら残るかがすぐわかるよ。', en: 'Enter pocket money, gifts, part-time pay and what you spend to see what is left each month.' },
+    'mn.lead': { ja: '入るお金と出るお金で、残りを計算', en: 'Money in minus money out, each month' },
+    'mn.leadJr': { ja: 'もらうお金と使うお金で、残りを計算', jr: 'もらうお金と使うお金で、残りを計算', en: 'Money in minus spending, each month' },
     'mn.mode': { ja: 'どちらを計算する？', en: 'What to work out' },
     'mn.mode.alone': { ja: 'ひとり暮らし', en: 'Living alone' },
     'mn.mode.jr': { ja: 'おこづかい・バイト', en: 'Pocket money' },
@@ -190,37 +199,37 @@
     'mn.yearShort': { ja: '1年で {n}円 足りない', jr: '1年で {n}円 たりない', en: '¥{n} short over a year' },
     'mn.sr': { ja: '{label}：{v}（入る {a} − 出る {b}）', en: '{label}: {v} (in {a} − out {b})' },
     'mn.short': { ja: '毎月 {n} 足りません', jr: '毎月 {n} たりません', en: 'Short by {n} a month' },
-    'mn.shortBody': { ja: 'ちょきんを使う前に、下の支援を見てください。足りないのは、あなたのせいではありません。', en: 'Before using savings, look at the support below. Being short is not your fault.' },
+    'mn.shortBody': { ja: '貯金を使う前に、下の支援を見て。足りないのは、あなたのせいではありません。', en: 'Check the support below first. Being short is not your fault.' },
     'mn.thin': { ja: '黒字ですが、よゆうは {n} です', en: 'In the black, but only {n} spare' },
-    'mn.thinBody': { ja: '病気や家電のこしょう1回で赤字になるかも。まずは少しずつ「もしもの時のお金」をためましょう。', en: 'One illness or broken appliance could put you in the red. Start a small emergency fund.' },
+    'mn.thinBody': { ja: '病気や故障1回で赤字に。少しずつ「もしもの時のお金」を。', en: 'One illness could put you in the red. Start a small fund.' },
     'mn.ok': { ja: '毎月 {n} のよゆうがあります', en: '{n} spare each month' },
-    'mn.okBody': { ja: '最初の目標は「家賃2か月分」のちょきん。急な出費にあわてずにすみます。', en: 'First goal: savings of 2 months\' rent.' },
+    'mn.okBody': { ja: '最初の目標は、家賃2か月分の貯金。', en: 'First goal: savings of 2 months\' rent.' },
     'mn.jr.short': { ja: '毎月 {n} 足りません', jr: '毎月 {n} たりません', en: 'Short by {n} a month' },
-    'mn.jr.shortBody': { ja: '「必要なもの？ほしいもの？」と考えて、へらせるものをさがしましょう。足りないときは、ひとりで抱えずに大人に相談してください。', jr: '「ひつよう？ほしいだけ？」と考えて、へらせるものをさがそう。たりないときは、ひとりでかかえずに大人に話してね。', en: 'Ask "need or want?" and look for something to cut. If you are short, talk to an adult.' },
+    'mn.jr.shortBody': { ja: '「必要？ほしいだけ？」で、へらせるものを。足りないときは大人に相談を。', jr: '「ひつよう？ほしいだけ？」で、へらせるものを。たりないときは大人に話してね。', en: 'Ask "need or want?". If you are short, talk to an adult.' },
     'mn.jr.thin': { ja: 'のこりは {n} です', jr: 'のこりは {n} です', en: 'Only {n} left' },
-    'mn.jr.thinBody': { ja: 'ほぼ使い切っています。使う前に「必要なもの？ほしいもの？」と考えてみましょう。', jr: 'ほとんど使い切っています。使う前に「ひつよう？ほしいだけ？」と考えてみよう。', en: 'You spend nearly all of it. Ask "need or want?" before you buy.' },
+    'mn.jr.thinBody': { ja: 'ほぼ使い切り。買う前に「必要？ほしいだけ？」', jr: 'ほとんど使い切り。買う前に「ひつよう？ほしいだけ？」', en: 'Nearly all spent. Ask "need or want?"' },
     'mn.jr.ok': { ja: '毎月 {n} 残ります', jr: '毎月 {n} 残るよ', en: '{n} left each month' },
-    'mn.jr.okBody': { ja: '1年つづけると {y}。高校の入学準備など、目標を決めてためてみましょう。', jr: '1年つづけると {y}。目標を決めて、ためてみよう。', en: 'Keep it up for a year and that is {y}. Pick a goal and save for it.' },
+    'mn.jr.okBody': { ja: '1年で {y}。目標を決めてためよう。', jr: '1年で {y}。目標を決めてためよう。', en: 'A year: {y}. Pick a goal.' },
     'mn.shien': { ja: '自立支援資金の「生活費」を入れる', en: 'Include the living-cost support (students)' },
-    'mn.shienSub': { ja: '進学する人・月{n}（借りる形。条件しだいで返さなくていい）', en: 'Students, {n}/month (a loan that may be forgiven)' },
+    'mn.shienSub': { ja: '進学する人 月{n}・借りる形', en: 'Students, {n}/mo, a loan' },
     'mn.yachin': { ja: '自立支援資金の「家賃」を入れる', en: 'Include the rent support' },
-    'mn.yachinSub': { ja: '家賃と同じ額を入れます（地域の上限あり）', en: 'Adds your rent amount (local caps apply)' },
+    'mn.yachinSub': { ja: '家賃と同じ額（地域の上限あり）', en: 'Your rent (local caps apply)' },
     'mn.reset': { ja: '最初の数字にもどす', en: 'Reset' },
     'mn.amount': { ja: '{label}の金額', en: '{label} amount' },
-    'mn.tips': { ja: 'この数字なら、見ておきたい支援', jr: '知っておきたい支援', en: 'Support worth checking' },
+    'mn.tips': { ja: '見ておきたい支援', jr: '知っておきたい支援', en: 'Support worth checking' },
     'mn.learnH': { ja: 'お金のきほんを読む', jr: 'お金のきほんを読もう', en: 'Money basics' },
     'mn.lessonLink': { ja: '「{title}」を読む', en: 'Read “{title}”' },
-    'mn.t.shikin': { ja: '生活費や家賃の支えを借りられます。働きつづけると返さなくていい場合も。', en: 'Support for living costs and rent; may be forgiven if you keep working.' },
-    'mn.t.jukyo': { ja: '仕事をなくした・収入が減ったときに、家賃の分が出ることがあります。', en: 'If you lost work or income, rent may be covered for a while.' },
-    'mn.t.hogo': { ja: 'それでも足りないときは、生活保護を申請できます。申請は権利です。', en: 'If it is still not enough, you can apply for public assistance. It is your right.' },
-    'mn.t.sodan': { ja: 'お金の困りごとを、まとめて相談できる窓口です。', en: 'One place to talk about money problems.' },
-    'mn.t.rent': { ja: '家賃が収入の35%をこえています。家賃の安い公的な住まいも見てみて。', en: 'Rent is over 35% of income. Look at lower-cost public housing.' },
-    'mn.t.rent2': { ja: '部屋を借りにくい人のために、東京都が登録している住まいです。', en: 'Homes registered by Tokyo for people who find it hard to rent.' },
-    'mn.t.kokuho': { ja: '保険・年金が0円です。国民健康保険は、収入が少ないと安くなります。', en: 'Insurance is ¥0. Health insurance is cheaper on low income.' },
-    'mn.t.nenkin': { ja: '20歳からは年金も。払えないときは「免除」を申請できます。', en: 'From 20 you pay pension — you can apply for an exemption.' },
-    'mn.t.jasso': { ja: '進学するなら、返さなくていい奨学金を入れてみてください。', en: 'If you will study, try adding a grant scholarship.' },
-    'mn.t.kyufukin': { ja: '高校の教科書代などに使える、返さなくていいお金です。', jr: '高校の教科書代などに使える、返さなくていいお金。', en: 'A grant for high school costs like textbooks.' },
-    'mn.t.juken': { ja: '塾や受験料のお金を借りられて、合格すると返さなくていいことがあります。', jr: '塾や受験のお金を借りられて、合格すると返さなくていいことも。', en: 'Borrow for cram school and exam fees; may be forgiven if you get in.' },
+    'mn.t.shikin': { ja: '生活費・家賃を借りられる', en: 'Living costs and rent' },
+    'mn.t.jukyo': { ja: '収入が減ったら家賃の支援', en: 'Rent help if income fell' },
+    'mn.t.hogo': { ja: 'それでも足りないとき。申請は権利', en: 'If still short — your right' },
+    'mn.t.sodan': { ja: 'お金の困りごとの相談窓口', en: 'Help with money problems' },
+    'mn.t.rent': { ja: '家賃が収入の35%超え', en: 'Rent over 35% of income' },
+    'mn.t.rent2': { ja: '借りにくい人向けの住まい', en: 'Homes for hard-to-rent' },
+    'mn.t.kokuho': { ja: '保険0円？収入が少ないと安く', en: '¥0 insurance? Cheaper on low pay' },
+    'mn.t.nenkin': { ja: '払えないときは免除を申請', en: 'Apply for an exemption' },
+    'mn.t.jasso': { ja: '返さなくていい奨学金', en: 'Grant scholarship' },
+    'mn.t.kyufukin': { ja: '教科書代などに。返さなくていい', en: 'For textbooks. No payback' },
+    'mn.t.juken': { ja: '塾・受験料。合格で返済なしも', en: 'Cram school, exam fees' },
     'mn.wage': { ja: 'バイト代を時給から計算する', jr: 'バイト代を時給から計算する', en: 'Work out pay from an hourly wage' },
     'mn.wage.yen': { ja: '時給', en: 'Hourly wage' },
     'mn.wage.hours': { ja: '1日の時間', en: 'Hours a day' },
@@ -229,7 +238,7 @@
     'mn.wage.unitD': { ja: '日', en: 'days' },
     'mn.wage.apply': { ja: 'バイト代に入れる', en: 'Use this' },
     'mn.wage.applied': { ja: 'バイト代に入れました', en: 'Added as part-time pay' },
-    'mn.wage.note': { ja: '東京都の最低賃金は時給{n}（{d}から）。これより低い時給は法律違反です。', jr: '東京都では、時給は{n}より下げてはいけないきまりです（{d}から）。', en: 'Tokyo’s minimum wage is {n} an hour (from {d}); less is illegal.' }
+    'mn.wage.note': { ja: '東京都の最低賃金 時給{n}（{d}から）。これより低いのは違法。', jr: '東京都の時給は{n}より下げてはいけないきまり（{d}から）。', en: 'Tokyo minimum wage: {n}/h (from {d}). Less is illegal.' }
   });
 
   /* ================================================================= shared pieces */
@@ -254,7 +263,6 @@
   function actBtn(act, label, attrs) {
     return '<button type="button" class="section-action tl-act" data-act="' + act + '"' + (attrs || '') + '><span>' + esc(label) + '</span></button>';
   }
-  function privateNote(key) { return '<p class="tl-private">' + ic('lock', 'tl-private-ic') + '<span>' + esc(t(key || 'tl.private')) + '</span></p>'; }
 
   /* まなぶ: the same rows as the program page (72px cover thumb) */
   function learnBlock(ids, heading) {
@@ -392,9 +400,9 @@
         return '<li><a class="tl-hub-row" href="' + r[1] + '" data-press="ink">' +
           '<span class="tl-hub-thumb">' + th + '</span>' +
           '<span class="tl-hub-text"><span class="tl-hub-n" aria-hidden="true">' + pad(i + 1) + '</span>' +
-            '<span class="tl-hub-t">' + esc(t('tl.' + r[0])) + '</span><span class="tl-hub-s">' + esc(t('tl.' + r[0] + '.sub')) + '</span></span>' +
+            '<span class="tl-hub-t">' + esc(t('tl.' + r[0])) + '</span><span class="sr-only">' + esc(t('tl.' + r[0] + '.sub')) + '</span></span>' +
           arrow('r', 'tl-hub-go') + '</a></li>';
-      }).join('') + '</ol>' + privateNote() + '</div>';
+      }).join('') + '</ol></div>';
   }
 
   /* ================================================================= script */
@@ -498,7 +506,7 @@
   }
   function modeHtml(s) {
     if (!s || !s.modes) return '';
-    return '<p class="tl-label" id="scr-mode-l">' + esc(t('sc.mode')) + '</p>' +
+    return '<p class="sr-only" id="scr-mode-l">' + esc(t('sc.mode')) + '</p>' +
       SM.ui.seg([{ label: t('sc.phone'), value: 'phone', pressed: SCR.mode === 'phone', icon: 'phone' }, { label: t('sc.visit'), value: 'visit', pressed: SCR.mode === 'visit', icon: 'pin' }], { act: 'scr-mode', label: t('sc.mode') });
   }
   function fieldsHtml(key, p) {
@@ -513,7 +521,7 @@
   }
   function callHtml(p) {
     if (!(p && p.contact && p.contact.phone && SCR.mode === 'phone')) return '';
-    return '<a class="btn btn-secondary btn-block scr-call" href="' + esc(telHref(p.contact.phone)) + '" data-press>' + ic('phone') + '<span>' + esc(t('sc.call', { name: p.contact.phone })) + '</span></a>';
+    return '<a class="btn btn-secondary btn-block scr-call" href="' + esc(telHref(p.contact.phone)) + '" data-press>' + ic('phone') + '<span>' + esc(t('sc.call')) + '</span><b class="scr-call-n" data-noruby>' + esc(p.contact.phone) + '</b></a>';
   }
 
   function scriptView(args, defer) {
@@ -544,21 +552,21 @@
         '<div class="scr-mode" id="scr-mode">' + modeHtml(s) + '</div></div>' +
       '</section>' +
       '<section class="tl-sec" aria-labelledby="scr-h2">' + secHead(2, 'scr-h2', t('sc.step2'), { seq: true, action: actBtn('scr-reset', t('sc.reset')) }) +
-        '<div class="tl-sec-body"><p class="tl-sub">' + esc(t('sc.step2sub')) + '</p>' +
+        '<div class="tl-sec-body">' +
         '<div class="scr-fields" id="scr-fields">' + fieldsHtml(key, p) + '</div></div>' +
       '</section>';
-    var right = '<section class="tl-sec scr-out-wrap" aria-labelledby="scr-h3">' + secHead(3, 'scr-h3', t('sc.step3'), { seq: true, sub: t('sc.step3sub') }) +
+    var right = '<section class="tl-sec scr-out-wrap" aria-labelledby="scr-h3">' + secHead(3, 'scr-h3', t('sc.step3'), { seq: true }) +
         '<div class="tl-sec-body">' + (en() ? '<p class="tl-sub scr-ja-note">' + esc(t('sc.jaNote')) + '</p>' : '') +
         '<div class="scr-paper"><div class="scr-out" id="scr-out" lang="ja">' + scriptHtml(text, fillWords(key, p)) + '</div></div>' +
         '<p class="sr-only" role="status" id="scr-status"></p>' +
         '<div class="scr-actions">' +
-          '<button type="button" class="btn btn-ink btn-lg btn-block scr-read-btn" data-act="scr-read" data-press><span class="btn-label"><span>' + esc(t('sc.read')) + '</span><small class="btn-sub">' + esc(t('sc.readSub')) + '</small></span>' + arrow('r') + '</button>' +
+          '<button type="button" class="btn btn-ink btn-lg btn-block scr-read-btn" data-act="scr-read" data-press aria-describedby="scr-read-d"><span class="btn-label"><span>' + esc(t('sc.read')) + '</span></span>' + arrow('r') + '</button>' +
+          '<span class="sr-only" id="scr-read-d">' + esc(t('sc.readSub')) + '</span>' +
           '<div class="scr-actions-row"><button type="button" class="btn btn-secondary" id="scr-copy" data-act="copy" data-text="' + esc(text) + '" data-msg="' + esc(t('sc.copied')) + '" data-press>' + ic('copy') + '<span>' + esc(t('sc.copy')) + '</span></button>' +
           '<span class="scr-call-slot" id="scr-call">' + callHtml(p) + '</span></div>' +
         '</div></div>' +
       '</section>';
-    var rest = (tips ? '<details class="disclose scr-tips"><summary><span>' + esc(t('sc.tips')) + '</span></summary><ul class="bullets">' + tips + '</ul></details>' : '') +
-      privateNote('tl.privateScript');
+    var rest = tips ? '<details class="disclose scr-tips"><summary><span>' + esc(t('sc.tips')) + '</span></summary><ul class="bullets">' + tips + '</ul></details>' : '';
     return '<div class="tl-page tl-scriptpage wide-layout" data-tool="script">' +
       head({ title: t('tl.script'), lead: t('sc.lead'), il: ILLUS.script }) + ctx +
       '<div class="tl-split">' +
@@ -573,7 +581,7 @@
     var text = scriptText(SCR.key, p, SCR.mode);
     var out = document.getElementById('scr-out');
     var html = scriptHtml(text, fillWords(SCR.key, p));
-    if (out) { if (fade) swapIn(out, html); else { out.innerHTML = html; ruby(out); } }
+    if (out) { if (fade) swapIn(out, html, function () { cascade(out.querySelectorAll('.scr-line, .scr-help'), 40, 120); }); else { out.innerHTML = html; ruby(out); } }
     var cp = document.getElementById('scr-copy');
     if (cp) cp.setAttribute('data-text', text);
   }
@@ -932,7 +940,7 @@
       n++;
       var hid = 'ck-g-' + (sc.key || 'all');
       return '<section class="tl-sec ck-group" role="group" aria-labelledby="' + hid + '">' + secHead(n, hid, L(sc.label)) +
-        '<div class="ck-items" data-reveal-stagger="40">' + its.map(function (c) {
+        '<div class="ck-items" data-reveal-stagger="50">' + its.map(function (c) {
           var id = 'ck-' + c.k;
           return '<label class="ck-item" for="' + id + '">' +
             '<input type="checkbox" class="ck-in" id="' + id + '" data-act="ck-toggle" data-k="' + esc(c.k) + '"' + (vals[c.k] ? ' checked' : '') + '>' +
@@ -961,7 +969,7 @@
         '<div class="ck-advice" id="ck-advice">' + checkAdvice(ev) + '</div>' +
       '</section>';
     var rest = (info ? '<section class="tl-sec ck-info cv" aria-labelledby="ck-h-info">' + secHead(0, 'ck-h-info', t('ck.info')) + '<div class="ck-info-list">' + info + '</div></section>' : '') +
-      learnBlock(jr ? ['keiyaku', 'koza-card'] : ['keiyaku', 'komattara'], t('ck.learnH')) + privateNote();
+      learnBlock(jr ? ['keiyaku', 'koza-card'] : ['keiyaku', 'komattara'], t('ck.learnH'));
     var float = '<button type="button" class="tl-float no-print" id="ck-float" data-act="tl-scroll" data-target="ck-result">' + checkFloat(ev) + '</button>';
     return '<div class="tl-page tl-checkpage wide-layout" data-tool="check">' +
       head({ title: t('tl.check'), lead: t('ck.lead'), il: ILLUS.check }) +
@@ -980,10 +988,10 @@
       if (still || !m || !m.animate) return;
       var b = s.firstElementChild;
       if (!b) return;
-      if (on && i >= from) m.animate(b, [{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], { duration: 200, delay: (i - from) * 70, easing: 'cubic-bezier(0.2, 0, 0, 1)', fill: 'backwards', key: 'seg' });
+      if (on && i >= from) m.animate(b, [{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], { duration: 300, delay: (i - from) * 60, easing: 'cubic-bezier(0.2, 0, 0, 1)', fill: 'backwards', key: 'seg' });
       else if (!on && i < from) m.animate(b, [{ transform: 'scaleX(1)' }, { transform: 'scaleX(0)' }], { duration: 140, delay: (from - 1 - i) * 40, easing: 'cubic-bezier(0.3, 0, 0.8, 0.15)', fill: 'backwards', key: 'seg' });
     });
-    return Math.abs(to - from) * 70;
+    return Math.abs(to - from) * 60 + 120;
   }
   function paintCheck() {
     var ev = checkEval();
@@ -1258,7 +1266,7 @@
     var tips = '<div class="mn-tips" id="mn-tips">' + tipsHtml(v, mode) + '</div>';
     var rest = learnBlock(c.lessons || [], t('mn.learnH')) +
       '<div class="mn-foot">' + '<button type="button" class="tl-reset" data-act="mn-reset">' + esc(t('mn.reset')) + '</button>' + '</div>' +
-      (c.note ? '<p class="tl-note">' + esc(L(c.note)) + '</p>' : '') + privateNote();
+      (c.note ? '<p class="tl-note">' + esc(L(c.note)) + '</p>' : '');
     return '<div class="mn-preset"><p class="tl-label">' + esc(t(mode === 'jr' ? 'mn.presetJr' : 'mn.preset')) + '</p><div id="mn-preset-seg">' + presetSeg(mode, v) + '</div></div>' +
       '<div class="tl-split mn-split">' +
         '<div class="tl-side mn-side">' + result + '</div>' +
@@ -1275,6 +1283,17 @@
     return '<div class="tl-page tl-moneypage mn wide-layout" data-tool="money" data-mode="' + mode + '">' +
       head({ title: t('tl.money'), lead: t(mode === 'jr' ? 'mn.leadJr' : 'mn.lead'), il: ILLUS.money }) +
       modes + '<div class="mn-body" id="mn-body">' + moneyBody(mode, defer) + '</div></div>';
+  }
+
+  /* entrance: every bar grows from zero in turn (in / out first, then the breakdown, then the sliders' fills) */
+  function growBars(root) {
+    var m = M();
+    if (!m || !m.animate || reduced() || !root) return;
+    var bars = Array.prototype.slice.call(root.querySelectorAll('.mn-vs-bar, .mn-bd-bar'));
+    bars.forEach(function (b, i) {
+      var to = b.style.transform || 'scaleX(1)';
+      try { m.animate(b, [{ transform: 'scaleX(0)' }, { transform: to }], { duration: 560, delay: 160 + Math.min(i, 9) * 55, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', fill: 'backwards', key: 'grow' }); } catch (e) { }
+    });
   }
 
   /* live state: while a slider is held, everything follows the finger directly */
@@ -1470,6 +1489,7 @@
       if (tp) tp.setAttribute('data-sig', tipsHtml(simVals(m), m));
       wireFloat(page, 'mn-result', 'mn-float', { both: true, watch: 'mn-big' });
       wireSide(page);
+      growBars(page);
     });
   });
   SM.on('mn-reset', function () {
@@ -1489,7 +1509,7 @@
       var s = args && args[0];
       if (s === 'script') return { ja: '電話・窓口の台本', en: 'Phone & visit script' };
       if (s === 'check') return { ja: '契約チェック', en: 'Contract check' };
-      if (s === 'money') return { ja: '生活費シミュレーター', jr: 'おこづかい・生活費けいさん', en: 'Money calculator' };
+      if (s === 'money') return { ja: '生活費の計算', jr: 'お金のけいさん', en: 'Money calculator' };
       return { ja: 'べんりツール', en: 'Tools' };
     },
     back: function (args) {
@@ -1524,6 +1544,7 @@
           wireSide(root);
           var tp = root.querySelector('#mn-tips');
           if (tp) tp.setAttribute('data-sig', tipsHtml(simVals(simMode()), simMode()));
+          if (!(SM.route && SM.route.instant)) growBars(root);
         } else if (s === 'script') wireSide(root);
       };
       if (DEFER && DEFER.key === key) after(function () { fillDeferred(root, key, wire); });

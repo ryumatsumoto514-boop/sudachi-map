@@ -591,3 +591,53 @@ html.m-reduce .v-learn .ln-segs.is-full .ln-seg > i { transition-delay: 0ms; }
   .v-learn :is(.ln-hanko-in, .ln-done).is-pre { opacity: 1; }
   .v-learn .ln-fin-ground.is-pre { transform: none; }
 }
+
+/* =====================================================================
+   v5 (SPEC-v5): fewer words, a deck of flat panels, big quiz feedback
+   ===================================================================== */
+/* list rows: title, then the minutes as a small Plex figure (no blurb, no eyebrow) */
+.v-learn .ln-min { font-family: var(--font-num); font-weight: 700; font-size: var(--t-meta); letter-spacing: var(--ls-0); color: var(--ink-2); }
+.v-learn .ln-row { align-items: center; }
+.v-learn .ln-row-body { gap: 2px; }
+
+/* the step panel: a flat sheet of paper framed by one hairline (radius 2px) — the deck's card */
+.v-learn .ln-stage { position: relative; z-index: 1; }
+.v-learn .ln-stage > .ln-step {
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--rule-2);
+  border-radius: 2px;
+  padding: var(--s-5) var(--s-4) var(--s-6);
+}
+@media (min-width: 600px) { .v-learn .ln-stage > .ln-step { padding: var(--s-6) var(--s-6) var(--s-7); } }
+.v-learn .ln-stage > .ln-step > .ln-cover { margin-top: calc(var(--s-5) * -1 + 1px); margin-inline: calc(var(--s-4) * -1 + 1px); width: calc(100% + 2 * var(--s-4) - 2px); max-width: none; }
+@media (min-width: 600px) { .v-learn .ln-stage > .ln-step > .ln-cover { margin: 0; width: 100%; } }
+/* the receding copy of the last panel (learn.js goStep): under the live stage */
+.v-learn .ln-ghost { z-index: 0; will-change: transform, opacity; }
+.v-learn .ln-ghost > .ln-step { box-shadow: inset 0 0 0 1px var(--rule-2), 0 0 0 0 transparent; }
+
+/* 「くわしく」 under a step / an explanation */
+.v-learn .ln-more-in > .more-btn { font-size: var(--t-meta); color: var(--ink-2); }
+.v-learn .ln-more-in > .more-body { padding: 0 0 var(--s-2); font-size: var(--fs-md); }
+.v-learn .ln-text-rest { font-size: var(--fs-md); line-height: 1.85; color: var(--ink-2); }
+.v-learn .ln-cmp-more { display: grid; gap: var(--s-4); }
+.v-learn .ln-cmp-pts-h { font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); color: var(--ink); }
+.v-learn .ln-fb-box .ln-more-in > .more-btn { color: var(--ink); }
+
+/* quiz: the colour sweeps across the option from its key */
+.v-learn .ln-opt > .ln-opt-sweep {
+  position: absolute; inset: 0; z-index: 0; border-radius: inherit; pointer-events: none;
+  transform-origin: left center;
+}
+.v-learn .ln-opt-sweep.is-ok { background: var(--action-tint); }
+.v-learn .ln-opt-sweep.is-ng { background: var(--amber-tint); }
+.v-learn .ln-opts .ln-opt.has-sweep { background: var(--paper); }
+.v-learn .ln-opt > :is(.ln-opt-key, .ln-opt-t) { position: relative; z-index: 1; }
+.v-learn .ln-opts .ln-opt.is-correct { box-shadow: inset 0 0 0 3px var(--action); }
+/* the 正解 seal: bigger, so it reads from arm's length */
+.v-learn .ln-stamp-in { min-height: 30px; padding: 0 12px; font-size: var(--fs-md); box-shadow: inset 0 0 0 2.5px var(--action); }
+.v-learn .ln-opt-res:has(.ln-stamp) { top: -15px; }
+.v-learn .ln-fb-box .ln-fb-h { font-size: var(--t-h2); }
+.v-learn .ln-fb-a { font-size: var(--fs-lg); }
+
+/* the keyboard hint only where there is a keyboard */
+@media (hover: none), (pointer: coarse) { .v-learn .ln-keys { display: none !important; } }

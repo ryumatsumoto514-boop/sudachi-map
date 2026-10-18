@@ -1,4 +1,7 @@
-/* 巣立ちマップ v4 — find.css (FIND)
+/* 巣立ちマップ v5 — find.css (FIND)
+   v5 (SPEC-v5): the way in is one compact block (.f-way); question progress is a train line (.f-q-line); a chosen
+   option fills with a colour sweep (::after); results open with a "searching" beat (.f-scan). Reduced motion keeps
+   the colour changes as short fades (html.m-reduce), never movement.
    Browse (#/find), questions (#/find/q/N), results (#/find/results), category (#/find/cat/KEY).
    VISUAL-SPEC §7.3–7.5: ruled rows, kanji station marks, big tabular numbers, one 蛍光ペン phrase per screen,
    pictures and numbers standing on one ground line. Tokens only (type roles, the four tracking tokens), hairlines
@@ -72,6 +75,25 @@
 .v-find .f-suggest { display: grid; gap: var(--s-2); }
 .v-find .f-suggest-row { padding-block: 2px; }
 
+/* the way in (v5): one line + one button. new: 6つの質問で、合う支援がわかる [質問に答える →] 1分
+   returning: 64件 あなたに合いそうな支援 [結果を見る →] 変える. A 2px ink rule on top, no band, no card. */
+.v-find .f-way { display: grid; gap: var(--s-3); padding-top: var(--s-4); border-top: 2px solid var(--ink); }
+.v-find .f-way-t {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s-1) var(--s-3);
+  font-family: var(--font-display); font-size: var(--t-h3); font-weight: 700; line-height: var(--lh-title); letter-spacing: var(--ls-0); text-wrap: balance;
+}
+.v-find .f-way.is-back .f-back-n { font: 700 var(--t-num-l)/1 var(--font-num); letter-spacing: var(--ls-num); font-variant-numeric: tabular-nums; }
+.v-find .f-way.is-back .f-back-n .unit { font-family: var(--font-display); font-size: var(--t-label); font-weight: 500; }
+.v-find .f-way.is-back .f-back-line { font-size: var(--t-ui); }
+.v-find .f-way-acts { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-4); }
+.v-find .f-way-acts > .btn { flex: 1 1 200px; justify-content: space-between; }
+.v-find .f-way-min { flex: none; }
+.v-find .f-way-alt {
+  flex: none; display: inline-flex; align-items: center; min-height: var(--tap); padding: 0 var(--s-1);
+  font-family: var(--font-display); font-size: var(--t-ui); font-weight: 700; color: var(--action-text);
+  text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 0.28em;
+}
+.v-find .f-way.is-mini { margin-top: var(--s-8); }
 /* returning: one compact band — 64件 あなたに合いそうな支援 · 結果を見る → · 答えを変える */
 .v-find .f-back { display: grid; gap: var(--s-4); }
 .v-find .f-back-t { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s-1) var(--s-3); font-family: var(--font-display); font-weight: 700; }
@@ -131,12 +153,30 @@ body.lang-en .v-find .f-back-n .unit { margin-left: 0.25em; }
 .v-find .f-crisis-rows > :last-child { border-bottom: 0; }
 
 /* ================================================================ questions */
-.v-find .f-q { --m-rise: 8px; display: grid; gap: var(--s-5); max-width: var(--read-w); }
+.v-find .f-q { display: grid; gap: var(--s-5); max-width: var(--read-w); }
 .v-find .f-q > * { min-width: 0; }
 .v-find .f-q-body { display: grid; gap: var(--s-5); }
 .v-find .f-q-body > * { min-width: 0; }
 
-/* progress: 質問 3 / 6 · あとで, one 2px track with a green fill and hairline ticks */
+/* progress (v5): 質問 3 / 6 · あとで, then a train line — a 4px rail, six stations, the green run up to this stop and
+   the train (a station sign with this question's number) standing at it. The train box spans the rail so a
+   translateX in % of it is a distance along the rail (playLine in find.js). */
+.v-find .f-q-line { position: relative; height: 34px; overflow: hidden; }   /* the train box travels inside it */
+.v-find .f-q-rail { position: absolute; left: 16px; right: 16px; top: 15px; height: 4px; background: var(--paper-3); }
+.v-find .f-q-run { position: absolute; inset: 0; display: block; background: var(--action); transform-origin: left center; }
+.v-find .f-q-st {
+  position: absolute; top: 50%; width: 10px; height: 10px; margin: -5px 0 0 -5px;
+  background: var(--paper); box-shadow: inset 0 0 0 2px var(--rule-2);
+}
+.v-find .f-q-st.is-done { background: var(--action); box-shadow: inset 0 0 0 2px var(--action); }
+.v-find .f-q-trainbox { position: absolute; inset: 0; display: block; pointer-events: none; }
+.v-find .f-q-train {
+  position: absolute; left: 0; top: 50%; display: grid; place-items: center;
+  width: 26px; height: 26px; margin: -13px 0 0 -13px; border-radius: var(--r-ctl);
+  background: var(--action-fill); color: var(--on-action-fill); box-shadow: 0 0 0 3px var(--paper);
+  font: 700 14px/1 var(--font-num); font-variant-numeric: tabular-nums;
+}
+/* 質問 3 / 6 · あとで */
 .v-find .f-q-top { display: grid; gap: var(--s-2); }
 .v-find .f-q-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-1) var(--s-3); min-height: var(--tap); }
 .v-find .f-q-step { display: flex; align-items: baseline; gap: var(--s-2); margin: 0; }
@@ -151,9 +191,6 @@ body.lang-en .v-find .f-back-n .unit { margin-left: 0.25em; }
   text-decoration: underline; text-decoration-color: var(--rule-2); text-decoration-thickness: 1px; text-underline-offset: 0.3em;
 }
 @media (hover: hover) { .v-find .f-q-quit:hover { color: var(--ink); text-decoration-color: currentColor; } }
-.v-find .f-q-track { position: relative; height: 2px; background: var(--paper-3); }
-.v-find .f-q-fill { position: absolute; inset: 0; display: block; background: var(--action); transform-origin: left center; }
-.v-find .f-q-tick { position: absolute; top: -3px; bottom: -3px; width: 1px; margin-left: -0.5px; background: var(--rule-2); }
 
 /* the journey strip: this question's scene on the ground line; the green route and the protagonist are ours,
    laid over it in strip units (360 × 120, ground at y 108 = 10% from the bottom) */
@@ -176,6 +213,11 @@ body.lang-en .v-find .f-back-n .unit { margin-left: 0.25em; }
 /* the question */
 .v-find .f-q-title { margin-top: var(--s-1); }
 .v-find .f-q-title:focus { outline: none; }
+/* 「なぜ聞くの」: a quiet text trigger right under the question; it opens in place */
+.v-find .f-q-body > .f-why { margin-top: calc(var(--s-4) * -1); }
+.v-find .f-why .more-inline > .more-btn { min-height: var(--tap); color: var(--ink-2); font-size: var(--t-meta); }
+.v-find .f-why .more-body { padding-bottom: var(--s-2); font-size: var(--t-meta); }
+.v-find .f-why-priv { color: var(--ink-3); }
 .v-find .f-why { display: grid; gap: 2px; margin-top: calc(var(--s-3) * -1); }
 .v-find .f-why-k { font-family: var(--font-display); font-size: var(--t-label); font-weight: 500; letter-spacing: var(--ls-label); color: var(--ink-3); line-height: var(--lh-ui); }
 .v-find .f-why-t { display: block; max-width: 40em; }
@@ -186,6 +228,28 @@ body.lang-en .v-find .f-back-n .unit { margin-left: 0.25em; }
 }
 .v-find .f-q-hint { margin-top: calc(var(--s-2) * -1); font-family: var(--font-display); font-size: var(--t-label); font-weight: 500; letter-spacing: var(--ls-label); color: var(--ink-3); }
 
+/* the chosen option fills with a colour sweep (SPEC-v5 Part A 5): a fill layer runs in from the left edge, then the
+   text turns over; single choice = solid green (it is the moment you move on), multi-select = the green tint (several
+   stay chosen). Reduced motion: the fill fades instead of travelling. */
+.v-find .f-opt { isolation: isolate; overflow: hidden; }
+.v-find .f-opt::after {
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: var(--action-fill); transform: scaleX(0); transform-origin: left center;
+  transition: transform 380ms cubic-bezier(0.3, 0, 0.1, 1);
+}
+.v-find .f-opt.opt-multi::after { inset: 2px; background: var(--action-tint); }
+.v-find .f-opt[aria-checked="true"]::after { transform: scaleX(1); }
+.v-find .f-opt[role="radio"][aria-checked="true"] { background: var(--paper); box-shadow: inset 0 0 0 2px var(--action-fill); color: var(--on-action-fill); }
+.v-find .f-opt[role="radio"] :is(.opt-title, .opt-hint) { transition: color 160ms linear 120ms; }
+.v-find .f-opt[role="radio"][aria-checked="true"] .opt-hint { color: var(--on-action-fill); opacity: 0.88; }
+.v-find .f-opt[role="radio"][aria-checked="true"] .opt-ind { background: var(--on-action-fill); color: var(--action-fill); --m-check-color: var(--action-fill); }
+.v-find .f-opt.opt-multi[aria-checked="true"] { background: var(--paper); box-shadow: inset 0 0 0 2px var(--action); }
+.v-find .f-opt.opt-multi[aria-checked="true"] .opt-ind { background: var(--action); color: var(--on-action); --m-check-color: var(--on-action); }
+.v-find .f-opt-urgent::after { background: var(--red-tint); }
+.v-find .f-opt-urgent[aria-checked="true"] { box-shadow: inset 0 0 0 2px var(--red); }
+.v-find .f-opt-urgent[aria-checked="true"] .opt-ind { background: var(--red); color: var(--on-red); }
+html.m-reduce .v-find .f-opt::after { transform: none; opacity: 0; transition: opacity 160ms linear; }
+html.m-reduce .v-find .f-opt[aria-checked="true"]::after { opacity: 1; }
 /* options (base §6.9). After an answer the others step back to 50% (.has-choice, 160ms) */
 .v-find .f-opts-grouped { display: grid; }
 .v-find .f-opts-grouped > .opt-group-label:first-child { padding-top: 0; }
@@ -286,6 +350,18 @@ html.f-qq .v-find .f-q-journey { view-transition-name: f-q-journey; }
 .v-find .f-res-main > .f-jump { margin-top: 0; }
 .v-find .f-res-main > .f-jump + * { margin-top: var(--s-6); }
 
+/* the "searching" beat (built by find.js on the first arrival for an answer set, then removed): a rail through the six
+   category stations over the arrival strip; a green line runs along it and each mark lights as it is reached */
+.v-find .f-scan {
+  position: absolute; inset: 0; z-index: 3; display: grid; align-content: center; gap: var(--s-3);
+  padding: 0 4px; background: var(--paper); pointer-events: none;
+}
+.v-find .f-scan-l { font-family: var(--font-display); font-size: var(--t-label); font-weight: 500; letter-spacing: var(--ls-label); color: var(--ink-3); }
+.v-find .f-scan-rail { position: relative; height: 32px; margin: 0 14px; }
+.v-find .f-scan-rail::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 4px; margin-top: -2px; background: var(--paper-3); }
+.v-find .f-scan-run { position: absolute; left: 0; right: 0; top: 50%; height: 4px; margin-top: -2px; display: block; background: var(--action); transform-origin: left center; }
+.v-find .f-scan-st { position: absolute; top: 50%; width: 28px; height: 28px; margin: -14px 0 0 -14px; display: grid; place-items: center; background: var(--paper); }
+.v-find .f-scan-st .cat-icon { --mark: 24px; }
 /* the arrival: 64件 stands on the strip's ground line (left), the protagonist reaches the house (right) */
 .v-find .f-res-head { display: grid; gap: var(--s-2); }
 .v-find .f-res-stage { position: relative; container-type: inline-size; max-width: 520px; margin-top: var(--s-1); }
@@ -427,7 +503,7 @@ body.is-ruby .v-find .f-top-item .pcard-mark { justify-content: flex-start; }   
 .v-find .f-nothere { display: grid; gap: var(--s-3); }
 .v-find .f-nothere .section-head + .list { border-top: 0; }
 .v-find .f-nothere > .btn { justify-self: start; }
-.v-find .f-private { display: grid; gap: 2px; padding-top: var(--s-4); border-top: 1px solid var(--rule); }
+.v-find .f-private { display: grid; padding-top: var(--s-3); border-top: 1px solid var(--rule); }
 .v-find .f-private-title { font-family: var(--font-display); font-weight: 700; }
 .v-find .f-private-body { font-size: var(--t-meta); color: var(--ink-2); }
 .v-find .f-reset {
@@ -464,7 +540,12 @@ body.is-ruby .v-find .f-top-item .pcard-mark { justify-content: flex-start; }   
 .v-find .f-cat-count { display: flex; align-items: baseline; gap: var(--s-1); margin: 0; }
 .v-find .f-cat-n { line-height: 1; }
 .v-find .f-cat-unit { font-family: var(--font-display); font-size: var(--t-ui); font-weight: 500; color: var(--ink-2); }
-.v-find .f-cat-intro { max-width: 40em; }
+.v-find .f-cat-intro { max-width: 40em; margin-top: calc(var(--s-2) * -1); }
+.v-find p.f-cat-intro { margin-top: 0; font-size: var(--t-ui); color: var(--ink-2); }
+.v-find .f-cat-intro .more-inline > .more-btn { min-height: var(--tap); }
+/* a card's 「ポイント」 tip opens in place under its facts */
+.v-find .pcard .pcard-more { margin-top: 2px; }
+.v-find .pcard .pcard-more > .more-btn { min-height: 36px; font-size: var(--t-meta); }
 .v-find .f-cat-sec { display: grid; }
 .v-find .f-cat-sec + .f-cat-sec { margin-top: var(--f-gap); }
 .v-find .f-cat-local { margin-top: var(--s-6); }
