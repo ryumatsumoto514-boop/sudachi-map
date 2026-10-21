@@ -124,8 +124,8 @@
     'plan.saved.sub': { ja: '{n}件', en: '{n} saved' },
     'plan.saved.more': { ja: 'さがす', en: 'Find more' },
     'plan.saved.remove': { ja: '外す', en: 'Remove' },
-    'plan.saved.removeLabel': { ja: '「{name}」をやることから外す', en: 'Remove “{name}” from my plan' },
-    'plan.saved.removed': { ja: '「{name}」を外しました', en: 'Removed “{name}”' },
+    'plan.saved.removeLabel': { ja: '保存から外す：{name}', en: 'Unsave: {name}' },   // FIX-B (F22): one verb, 保存
+    'plan.saved.removed': { ja: '「{name}」を保存から外しました', en: 'Unsaved “{name}”' },
     'plan.saved.undo': { ja: '元に戻す', en: 'Undo' },
     'plan.saved.restored': { ja: '元に戻しました', en: 'Restored' },
     'plan.empty.title': { ja: 'まだ保存なし', en: 'Nothing saved yet' },
@@ -142,8 +142,14 @@
     'plan.tl.now': { ja: 'いま', en: 'Now' },
     'plan.tl.nowEarly': { ja: 'まだ先。ゆっくりで大丈夫。', en: 'Plenty of time.' },
     'plan.tl.nowLate': { ja: '巣立ちから時間がたっていても、使える支援はあります。', en: 'Even long after leaving, there is support you can use.' },
-    'plan.tl.past': { ja: 'すぎた時期（{n}）', en: 'Earlier ({n})' },
-    'plan.tl.pastLeft': { ja: 'まだ {n}こ', en: '{n} left' },
+    'plan.tl.past': { ja: '前の時期（{n}）', en: 'Earlier ({n})' },   // FIX-B (F47): neutral, not "you are behind"
+    'plan.tl.pastLeft': { ja: '{n}こ', en: '{n} to do' },
+    // FIX-B (v6)
+    'plan.tl.asap': { ja: '早めに', en: 'Soon' },
+    'plan.nostore': { ja: 'この画面では保存できません。閉じると消えます。', en: 'This screen cannot save. It is lost when you close it.' },
+    'plan.nostoreGo': { ja: '設定を見る', en: 'Settings' },
+    'plan.empty.line': { ja: '☆で保存した支援がここに入ります。', en: 'Supports you save with ☆ appear here.' },
+    'plan.ics.fileAs': { ja: 'ファイルでは「{s}」', en: 'In the file: “{s}”' },
     'plan.tl.pastAll': { ja: 'ぜんぶできた', en: 'All done' },
     'plan.tl.pastNote': { ja: 'すぎていても、やる価値があります。', en: 'Still worth doing, even now.' },
     'plan.tl.count': { ja: '{done}/{total}', en: '{done}/{total}' },
@@ -462,6 +468,10 @@
     var base = { track: track, anchor: anchor, assumed: ai.assumed, now: now, saved: saved, leave: jr ? null : anchor, entry: jr ? anchor : null };
     if (!groups.length) { base.groups = []; base.cur = -1; base.beyond = false; base.total = 0; base.done = 0; base.due = 0; return base; }
 
+    // FIX-B (F14): the current period, known before saved programs are placed (a date that has passed goes to いま,
+    // so saving never grows the 「前の時期」 pile)
+    var cur0 = -1;
+    groups.forEach(function (g, i) { if (g.start <= now) cur0 = i; });
     // saved programs → dated items, placed in the right period
     saved.forEach(function (p) {
       var d = p.deadline;
@@ -472,6 +482,7 @@
         var target = groups[0];
         groups.forEach(function (g) { if (g.m <= n) target = g; });
         item = { date: addMonths(anchor, n), open: false, label: n === 0 ? t('ui.atleave') : t('plan.tl.byDate', { date: fmtMonth(addMonths(anchor, n)) }), short: n === 0 ? t('ui.atleave') : fmtMonth(addMonths(anchor, n)), target: target };
+        if (cur0 >= 0 && item.date < now && groups.indexOf(target) < cur0) { item.target = groups[cur0]; item.label = t('plan.tl.asap'); item.short = t('plan.tl.asap'); item.date = now; }
       } else if (d.months && d.months.length) {
         var w = windowInfo(d.months, now);
         if (w && w.date) {
@@ -806,6 +817,8 @@
     // the long explanation (仮の日付 / what 巣立ちの日 means) waits behind 「くわしく」 (SPEC-v5 Part B)
     var more = note ? (SM.ui.more ? SM.ui.more(null, '<p class="plan-date-note" data-m="note">' + esc(note) + '</p>', { inline: true, cls: 'plan-date-more' }) :
       '<p class="plan-date-note" data-m="note">' + esc(note) + '</p>') : '';
+    // FIX-B (S9): when this browser cannot keep anything, say so where the plan is (not only inside 設定)
+    if (SM.store && SM.store.available === false) count = count.replace(/<\/div>$/, '<p class="plan-nostore" role="note">' + esc(t('plan.nostore')) + ' <button type="button" class="plan-nostore-go" data-act="settings">' + esc(t('plan.nostoreGo')) + '</button></p></div>');
     return '<div class="plan-hero' + (art ? ' has-il' : '') + '" data-track="' + model.track + '">' + count + art +
       '<div class="plan-meta">' + (c.today ? '<p class="plan-count-sub" data-m="sub">' + esc(c.sub) + '</p>' : '') + date + more + progressHtml(model) + '</div>' +
     '</div>';
@@ -902,11 +915,11 @@
       '<button type="button" class="plan-remove" data-act="plan-remove" data-id="' + esc(p.id) + '" aria-label="' + esc(t('plan.saved.removeLabel', { name: name })) + '" title="' + esc(t('plan.saved.remove')) + '">' + ic('close') + '</button></div>';
   }
   /* later: the picture is put in after the transition (phone: this block is below the first screen) */
-  function savedEmptyHtml(later) {
+  /* FIX-B (F38): one line and a link (it filled a phone screen with a picture between the hero and the timeline) */
+  function savedEmptyHtml() {
     var answered = state().answered;
-    var action = SM.ui.button(answered ? t('plan.empty.results') : t('plan.empty.find'), { href: answered ? '#/find/results' : '#/find', variant: 'primary' });
-    return '<div class="plan-saved-empty"' + (later ? ' data-il-later="saved-empty"' : '') + '>' +
-      SM.ui.empty(t('plan.empty.title'), t('plan.empty.body'), action, later ? null : { illus: 'saved-empty' }) + '</div>';
+    return '<div class="plan-saved-empty is-line"><p class="plan-empty-line">' + esc(t('plan.empty.line')) + '</p>' +
+      '<a class="plan-empty-go" href="' + (answered ? '#/find/results' : '#/find') + '"><span>' + esc(answered ? t('plan.empty.results') : t('plan.empty.find')) + '</span>' + arrow() + '</a></div>';
   }
   function fillLaterArt(root) {
     var box = root && root.querySelector('.plan-saved-empty[data-il-later]');
@@ -932,7 +945,7 @@
   /* first: how many rows go in now (the rest is appended after the transition) */
   function savedHtml(model, first) {
     var body;
-    if (!model.saved.length) body = savedEmptyHtml(first === 0);
+    if (!model.saved.length) body = savedEmptyHtml();
     else {
       var n = first == null ? model.saved.length : Math.min(first, model.saved.length);
       body = '<div class="pcards plan-saved-list" data-reveal-stagger="40">' + model.saved.slice(0, n).map(savedRowHtml).join('') + '</div>';
@@ -945,8 +958,15 @@
      so the row scans as a to-do and the fact stays on the page */
   function taskText(text) {
     var m = /^(.+?)\s*([（(][^（()）]*[)）])\s*$/.exec(text || '');
-    if (!m || m[1].length < 6) return '<span class="tl-item-main">' + esc(text) + '</span>';
-    return '<span class="tl-item-main">' + esc(m[1]) + '</span><span class="tl-item-aside">' + esc(m[2]) + '</span>';
+    if (!m || m[1].length < 6) return '<span class="tl-item-main">' + jaRuns(text) + '</span>';
+    return '<span class="tl-item-main">' + jaRuns(m[1]) + '</span><span class="tl-item-aside">' + jaRuns(m[2]) + '</span>';
+  }
+  /* FIX-B (F24): in English, a Japanese word given as a gloss — "(資格確認書)" — is what the paper says, so it stays,
+     but as one unbreakable piece with lang="ja" (it broke after the bracket and read as 「資格確認書)」) */
+  function jaRuns(text) {
+    var h = esc(text);
+    if (!en()) return h;
+    return h.replace(/\(?[\u3000-\u30ff\u3400-\u9fff\uff00-\uffef]+\)?/g, function (w) { return '<span class="plan-ja" lang="ja">' + w + '</span>'; });
   }
   function itemId(key) { return 'pt-' + key.replace(/[^A-Za-z0-9-]/g, '_'); }
   function itemHtml(x, i) {
@@ -1050,11 +1070,12 @@
     var dl = function () { var d = Math.min(k, 4) * 50; k++; return d; };
     if (pastEnd > 0) {
       var left = pastLeft(model, pastEnd);
+      var touched = model.groups.slice(0, pastEnd).some(function (x) { return x.doneN > 0; });
       out.push('<li class="tl-past-wrap is-past" id="tl-past-li">' +
         '<span class="tl-mk" aria-hidden="true"></span>' +
         '<details class="tl-past" id="tl-past"' + (pastOpen ? ' open' : '') + '>' +
         '<summary class="tl-past-sum" data-act="plan-fold"><span class="tl-past-head"><span class="tl-past-title">' + esc(t('plan.tl.past', { n: pastEnd })) + '</span>' +
-        '<span class="tl-past-left' + (left ? '' : ' is-zero') + '">' + esc(left ? t('plan.tl.pastLeft', { n: left }) : t('plan.tl.pastAll')) + '</span></span>' + TOGGLE + '</summary>' +
+        '<span class="tl-past-left' + (left ? (touched ? ' is-warn' : '') : ' is-zero') + '">' + esc(left ? t('plan.tl.pastLeft', { n: left }) : t('plan.tl.pastAll')) + '</span></span>' + TOGGLE + '</summary>' +
         '<div class="tl-past-body"><p class="tl-past-note">' + esc(t('plan.tl.pastNote')) + '</p>' +
         '<ol class="tl tl-inner">' + g.slice(0, pastEnd).map(function (x) { return groupHtml(x, 'is-past'); }).join('') + '</ol></div>' +
         '</details></li>');
@@ -1201,6 +1222,13 @@
       var a = Math.min(1, pd / model.total), b = model.done / model.total;
       if (b > a) anim(fill, [{ transform: 'scaleX(' + a + ')' }, { transform: 'scaleX(' + b + ')' }], { duration: 760, delay: 380, easing: EASE('draw'), fill: 'backwards' });
     }
+    // FIX-B (motion): what was saved since the last visit arrives — its row slides in and its mark stamps
+    var newIds = [];
+    if (m && m.seen) {
+      var ids = (state().saved || []).slice();
+      var prevIds = m.seen('plan.savedIds', ids.join(','));
+      if (typeof prevIds === 'string') { var pv = prevIds ? prevIds.split(',') : []; newIds = ids.filter(function (x) { return pv.indexOf(x) === -1; }); }
+    }
     var toNow = !nowScrolled && !!(route.query && route.query.now === '1');
     if (toNow) nowScrolled = true;
     var after = function () {
@@ -1211,6 +1239,15 @@
         if (c) try { c.scrollIntoView({ block: 'start' }); } catch (e) { }
       }
       wireFill(root, { entrance: first });
+      if (newIds.length && first && canAnim()) {
+        newIds.slice(0, 4).forEach(function (id, i) {
+          var row = root.querySelector('.plan-saved-item[data-flip-key="' + (window.CSS && CSS.escape ? CSS.escape(id) : id) + '"]');
+          if (!row) return;
+          anim(row, [{ opacity: 0, transform: 'translateY(-14px)' }, { opacity: 1, transform: 'none' }], { spring: 'rise', delay: 120 + i * 60, fill: 'backwards', key: 'saved-in' });
+          var mark = row.querySelector('.pcard-mark > .cat-icon') || row.querySelector('.pcard-mark');
+          if (mark && m.stamp) setTimeout(function () { if (mark.isConnected) m.stamp(mark); }, 380 + i * 60);
+        });
+      }
     };
     if (m && m.afterTransition) m.afterTransition(after, { keep: true });
     else setTimeout(after, 0);
@@ -1556,8 +1593,9 @@
     // 1. the row answers the tap (box fill + check draw, next frame) 2. state (cheap, so leaving at once keeps it)
     // 3. the model (no DOM) for the toast's wording 4. counts / progress / band after the first painted frame
     // undo (opts.now): the row's state changes inside the reorder's FLIP (its first read comes before any write)
-    var inFlip = !!(opts.now && li && li.parentNode && canAnim() && M() && M().flip);
-    if (!inFlip) setRow(li, on, !opts.quiet);
+    // FIX-B (F13): no reorder while the reader is here — a done row moving away under the finger could not be
+    // found again to untick it. itemsHtml() puts done rows last on the next visit.
+    setRow(li, on, !opts.quiet);
     setDone(key, on);
     var model = build();
     lastModel = model;
@@ -1565,11 +1603,7 @@
     var nowComplete = !!(g && g.total && g.doneN === g.total);
     refreshSoon();
     if (on && nowComplete && !wasComplete) completeGroup(gEl);
-    var ul = li && li.parentNode;
-    if (ul && li) (ul._planMovers || (ul._planMovers = [])).push(li);
-    if (inFlip) reorder(ul, function () { setRow(li, on, !opts.quiet); }, opts.focus ? function () { focusQuiet(cb); } : null);
-    else if (opts.focus) focusQuiet(cb);
-    else if (opts.now) reorder(ul); else scheduleReorder(ul);
+    if (opts.focus) focusQuiet(cb);
     return { group: nowComplete && !wasComplete };
   }
 
@@ -1811,37 +1845,53 @@
     if (jr) {
       var ei = entryInfo();
       var y0 = assumedEntry(now, null).getFullYear();
+      var onOpt = false;
       var opts = [[y0, 'plan.jr.g3'], [y0 + 1, 'plan.jr.g2'], [y0 + 2, 'plan.jr.g1']].map(function (o) {
         var v = o[0] + '-04-01';
-        return optRow(t('plan.jr.date.opt', { y: o[0] }), t('plan.jr.date.optSub', { g: t(o[1]) }), 'plan-date-quick', v, !ei.assumed && state().hsDate === v);
+        var on = !ei.assumed && state().hsDate === v; if (on) onOpt = true;
+        return optRow(t('plan.jr.date.opt', { y: o[0] }), t('plan.jr.date.optSub', { g: t(o[1]) }), 'plan-date-quick', v, on);
       }).join('');
+      var ownJ = !ei.assumed && !onOpt;
       html = '<div class="plan-date-sheet stack">' +
         '<div class="stack-sm"><p class="plan-date-qlabel">' + esc(t('plan.jr.date.quick')) + '</p><div class="opts plan-date-opts">' + opts +
           optRow(t('plan.jr.date.unknown'), t('plan.jr.date.unknownSub'), 'plan-date-unknown', '', ei.assumed) + '</div></div>' +
         '<div class="field"><label for="plan-date-input">' + esc(t('plan.jr.date.field')) + '</label>' +
-        '<input type="date" class="input" id="plan-date-input" min="2000-01-01" max="2100-12-31" value="' + esc(iso(ei.date)) + '">' +
+        '<input type="date" class="input" id="plan-date-input" min="2000-01-01" max="2100-12-31" value="' + (ownJ ? esc(iso(ei.date)) : '') + '">' +
         '<p class="help">' + esc(t('plan.date.help')) + '</p></div>' +
         SM.ui.button(t('plan.date.save'), { act: 'plan-date-save', variant: 'primary', size: 'lg', block: true, arrow: true }) +
         '</div>';
-      SM.sheet(html, { title: t('plan.jr.date.title'), cls: 'v-plan plan-sheet' });
+      SM.sheet(html, { title: t('plan.jr.date.title'), cls: 'v-plan plan-sheet', mount: dateSheetWire });
       return;
     }
     var li = leaveInfo();
     var y1 = assumedLeave(now, null).getFullYear();
+    var onChip = false;
     var quick = [y1, y1 + 1].map(function (y) {
       var v = y + '-03-31';
-      return SM.ui.chip(t('plan.date.fy', { y: y }), { act: 'plan-date-quick', pressed: !li.assumed && state().leaveDate === v, attrs: 'data-value="' + v + '"' });
+      var on = !li.assumed && state().leaveDate === v; if (on) onChip = true;
+      return SM.ui.chip(t('plan.date.fy', { y: y }), { act: 'plan-date-quick', pressed: on, attrs: 'data-value="' + v + '"' });
     }).join('');
+    // FIX-B (F15): the field holds a date only when that date is the choice (not a chip, not 「まだ決まっていない」)
+    var own = !li.assumed && !onChip;
     html = '<div class="plan-date-sheet stack">' +
       '<div class="field"><label for="plan-date-input">' + esc(t('plan.date.field')) + '</label>' +
-      '<input type="date" class="input" id="plan-date-input" min="2000-01-01" max="2100-12-31" value="' + esc(iso(li.date)) + '">' +
+      '<input type="date" class="input" id="plan-date-input" min="2000-01-01" max="2100-12-31" value="' + (own ? esc(iso(li.date)) : '') + '">' +
       '<p class="help">' + esc(t('plan.date.help')) + '</p></div>' +
       '<div class="stack-sm"><p class="plan-date-qlabel">' + esc(t('plan.date.quick')) + '</p><div class="chips plan-date-chips">' + quick + '</div></div>' +
       SM.ui.button(t('plan.date.save'), { act: 'plan-date-save', variant: 'primary', size: 'lg', block: true, arrow: true }) +
       '<div class="opts">' + optRow(t('plan.date.unknown'), t('plan.date.unknownSub'), 'plan-date-unknown', '', li.assumed) + '</div>' +
       '</div>';
-    SM.sheet(html, { title: t('plan.date.title'), cls: 'v-plan plan-sheet', focus: '#plan-date-input' });
+    // FIX-B (F15): no autofocus on the date field (it opened the picker / keyboard over the sheet on phones)
+    SM.sheet(html, { title: t('plan.date.title'), cls: 'v-plan plan-sheet', mount: dateSheetWire });
   });
+  /* typing a date of one's own un-chooses the quick picks */
+  function dateSheetWire(dlg) {
+    var inp = dlg && dlg.querySelector ? dlg.querySelector('#plan-date-input') : document.getElementById('plan-date-input');
+    if (!inp) return;
+    inp.addEventListener('input', function () {
+      Array.prototype.forEach.call(document.querySelectorAll('.plan-date-sheet [aria-pressed="true"]'), function (b) { b.setAttribute('aria-pressed', 'false'); b.classList.remove('is-selected'); });
+    });
+  }
 
   /* the new date lands: the countdown rolls from the old N to the new one and the date line swaps */
   function applyAnchor(change, toastMsg) {
@@ -2189,9 +2239,13 @@
     }
     var ios = isIOS();
     var href = icsHref(evs, ios);
-    var show = evs.slice(0, 5);
-    var list = '<ul class="ics-list">' + show.map(function (ev) {
-      return '<li><span class="ics-date num"><b>' + esc(fmtShort(ev.date)) + '</b><small>' + esc(String(ev.date.getFullYear())) + '</small></span><span class="ics-sum">' + esc(ev.summary) + '</span></li>';
+    var real = planEvents(model, false);
+    var plainOn = icsPlain();
+    var show = real.slice(0, 5);
+    var list = '<ul class="ics-list">' + show.map(function (ev, i) {
+      var fileAs = evs[i] ? evs[i].summary : '';
+      return '<li><span class="ics-date num"><b>' + esc(fmtShort(ev.date)) + '</b><small>' + esc(String(ev.date.getFullYear())) + '</small></span><span class="ics-text"><span class="ics-sum">' + esc(ev.summary) + '</span>' +
+        '<small class="ics-file"' + (plainOn ? '' : ' hidden') + '>' + esc(t('plan.ics.fileAs', { s: fileAs })) + '</small></span></li>';
     }).join('') + '</ul>' + (evs.length > show.length ? '<p class="ics-more">' + esc(t('plan.ics.more', { n: evs.length - show.length })) + '</p>' : '');
     var fname = 'sudachi-map-plan-' + iso(today0()) + '.ics';
     html = '<div class="ics-sheet stack">' +
@@ -2225,8 +2279,14 @@
     var dl = document.getElementById('plan-ics-dl');
     if (!dl) { if (SM.acts['plan-ics']) SM.acts['plan-ics'](); return; }
     var evs = planEvents(build());
-    var sums = document.querySelectorAll('.plan-sheet .ics-list .ics-sum');
-    Array.prototype.forEach.call(sums, function (s, i) { if (evs[i]) swapOrSet(s, evs[i].summary); });
+    // FIX-B (F39): the real titles stay; the 「ファイルでは…」 line under each shows or goes
+    var files = document.querySelectorAll('.plan-sheet .ics-list .ics-file');
+    Array.prototype.forEach.call(files, function (f, i) {
+      if (evs[i]) f.textContent = t('plan.ics.fileAs', { s: evs[i].summary });
+      var show = !!el.checked;
+      if (show && f.hidden) { f.hidden = false; if (canAnim()) anim(f, [{ opacity: 0, transform: 'translateY(-4px)' }, { opacity: 1, transform: 'none' }], { duration: 200, delay: i * 30, easing: EASE('enter'), fill: 'backwards' }); }
+      else if (!show) f.hidden = true;
+    });
     dl.setAttribute('href', icsHref(evs, isIOS()));
   });
   SM.on('plan-ics-dl', function (el) {

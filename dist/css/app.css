@@ -568,17 +568,18 @@ body.lang-en :is(.eyebrow, .ts-label, .pcard-eyebrow, .section-num, .opt-group-l
 @media print { .appbar .brand::after { content: none; } }
 .appbar-actions { flex: none; display: flex; align-items: center; gap: 6px; }
 
-/* header buttons (class .pill kept for core markup): 36px rectangles with 44px hit areas */
+/* header buttons (class .pill kept for core markup): 44px rectangles (F11/F12: the controls a scared person
+   reaches for are full-size, not 36px boxes with a wider hit area) */
 .pill {
   position: relative;
   display: inline-flex; align-items: center; justify-content: center; gap: 4px;
-  height: 36px; padding: 0 12px;
+  height: 44px; padding: 0 12px;
   border-radius: var(--r-ctl);
   font-family: var(--font-display); font-size: var(--t-chrome); font-weight: 700; line-height: 1; letter-spacing: var(--ls-body);
   white-space: nowrap; word-break: keep-all; flex: none;
   transition: background-color var(--dur-quick) var(--ease-standard), color var(--dur-quick) var(--ease-standard);
 }
-.pill::before { content: ""; position: absolute; inset: -4px -3px; }
+.pill::before { content: ""; position: absolute; inset: 0 -3px; }
 .pill .icon { width: 14px; height: 14px; stroke-width: 2.5; }
 .pill-exit { background: var(--paper); color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
 .pill-sos { background: var(--red); color: var(--on-red); padding: 0 11px 0 9px; }
@@ -614,7 +615,7 @@ body.lang-en .pill { letter-spacing: 0; }
 @media (min-width: 900px) {
   .appbar { padding-left: max(24px, var(--safe-l)); padding-right: max(16px, var(--safe-r)); }
   .appbar-actions { gap: 8px; }
-  .pill { height: 36px; padding: 0 14px; font-size: var(--fs-sm); }
+  .pill { height: 44px; padding: 0 14px; font-size: var(--fs-sm); }
 }
 
 /* ---------- 8. Sub bar: back + title (phone); a back link above the H1 (desktop) ---------- */
@@ -664,7 +665,7 @@ body.lang-en .pill { letter-spacing: 0; }
    .is-active / [aria-current] with :has(), so it works with no JS; core sets it inline (inline wins).
    The 32px bar is the content box of a column-wide element (padding % = containing block width). */
 .tabbar {
-  --tab-count: 4;
+  --tab-count: 5;   /* SEARCH (v6): ホーム・さがす・きく・マップ・やること */
   --tab-index: 0;
   --tab-ind-o: 0;
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
@@ -677,6 +678,7 @@ body.lang-en .pill { letter-spacing: 0; }
 .tabbar:has(> .tab:nth-child(2):is(.is-active, [aria-current="page"])) { --tab-index: 1; --tab-ind-o: 1; }
 .tabbar:has(> .tab:nth-child(3):is(.is-active, [aria-current="page"])) { --tab-index: 2; --tab-ind-o: 1; }
 .tabbar:has(> .tab:nth-child(4):is(.is-active, [aria-current="page"])) { --tab-index: 3; --tab-ind-o: 1; }
+.tabbar:has(> .tab:nth-child(5):is(.is-active, [aria-current="page"])) { --tab-index: 4; --tab-ind-o: 1; }
 .tabbar::before {
   content: ""; position: absolute; top: -1px; left: var(--safe-l);
   width: calc((100% - var(--safe-l) - var(--safe-r)) / var(--tab-count)); height: 3px;
@@ -697,6 +699,15 @@ body.lang-en .pill { letter-spacing: 0; }
 .tab-label, .tab > span:not(.tab-badge) { white-space: nowrap; }
 .tab.is-active, .tab[aria-current="page"] { color: var(--ink); font-weight: 700; }
 .tab.is-active .icon, .tab[aria-current="page"] .icon { stroke-width: 2; }
+/* a tab whose view is still loading (slow network): the tap answers at once — the indicator is already there and
+   a short bar fills under the label until the files have run (core.js boardTab). Transform only. */
+.tab.is-boarding::after {
+  content: ""; position: absolute; left: 30%; right: 30%; bottom: 6px; height: 2px;
+  background: var(--action); transform-origin: 0 50%;
+  animation: tab-board 1600ms cubic-bezier(0.2, 0, 0, 1) both;
+}
+@keyframes tab-board { from { transform: scaleX(0); } to { transform: scaleX(0.9); } }
+html.m-reduce .tab.is-boarding::after { animation: none; transform: scaleX(0.5); }
 @media (hover: hover) { .tab:not(.is-active):not([aria-current="page"]):hover { color: var(--ink); } }
 .tab-badge {
   position: absolute; top: 7px; left: calc(50% + 7px);
@@ -747,7 +758,7 @@ body.is-big .tab { font-size: var(--fs-micro); }
   }
   .tab .icon { width: 20px; height: 20px; stroke-width: 2; }
   .tab-extra { display: flex; }
-  .tabbar:has(> .tab:nth-child(5):is(.is-active, [aria-current="page"])) { --tab-index: 4; --tab-ind-o: 1; }
+  .tabbar:has(> .tab:nth-child(6):is(.is-active, [aria-current="page"])) { --tab-index: 5; --tab-ind-o: 1; }   /* まなぶ is the 6th row (SEARCH v6) */
   .tabbar.is-extra { --tab-ind-o: 1; }
   .tab.is-active, .tab[aria-current="page"] { font-weight: 700; color: var(--ink); }
   @media (hover: hover) { .tab:not(.is-active):not([aria-current="page"]):hover { color: var(--ink); background: color-mix(in srgb, var(--paper-2) 60%, transparent); } }
@@ -966,7 +977,8 @@ body.is-big .tab { font-size: var(--fs-micro); }
 
 /* switch: 48×28 track in a 1.5px ink frame, one square 20px knob that slides 20px on the snappy spring.
    off = paper-3 track, ink knob at the start; on = ink track, paper knob at the end (the contrast flips, so the
-   state never rests on position alone). No オン/オフ text beside it: the native checkbox carries the state. */
+   state never rests on position alone). F45: the off knob is an outline (a filled knob read as 'on' on a dim
+   screen), and オン / オフ is written beside the switch (.switch-state, after it in the DOM, drawn before it). */
 .switch {
   -webkit-appearance: none; appearance: none; flex: none; cursor: pointer;
   position: relative; width: 48px; height: 28px; margin: 0; border-radius: var(--r-ctl);
@@ -975,11 +987,11 @@ body.is-big .tab { font-size: var(--fs-micro); }
 }
 .switch::before {
   content: ""; position: absolute; top: 4px; left: 4px; width: 20px; height: 20px; border-radius: 0;
-  background: var(--ink);
+  background: var(--paper); box-shadow: inset 0 0 0 2px var(--ink);
   transition: transform var(--spring-snappy-dur) var(--spring-snappy), background-color var(--dur-quick) var(--ease-standard);
 }
 .switch:checked { background: var(--ink); }
-.switch:checked::before { transform: translateX(20px); background: var(--paper); }
+.switch:checked::before { transform: translateX(20px); background: var(--paper); box-shadow: none; }
 .switch:active::before { transform: scale(0.9); }
 .switch:checked:active::before { transform: translateX(20px) scale(0.9); }
 @media (forced-colors: active) { .switch { border: 2px solid CanvasText; } .switch::before { background: CanvasText; } .switch:checked { background: Highlight; } .switch:checked::before { background: Canvas; } }
@@ -987,6 +999,13 @@ body.is-big .tab { font-size: var(--fs-micro); }
 .switch-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 56px; cursor: pointer; }
 .switch-row:not(.set-row) { padding: 8px 0; }
 .switch-row + .switch-row { border-top: 1px solid var(--rule); }
+.switch-row > .switch-text { order: 0; }
+.switch-row > .switch-state { order: 1; margin-left: auto; margin-right: -6px; min-width: 2.6em; text-align: right;
+  font-family: var(--font-display); font-size: var(--t-meta); font-weight: 700; color: var(--ink-3); white-space: nowrap; }
+.switch-row > .switch { order: 2; }
+.switch-state::before { content: attr(data-off); }
+.switch:checked + .switch-state::before { content: attr(data-on); }
+.switch:checked + .switch-state { color: var(--ink); }
 .switch-text { display: grid; gap: 2px; min-width: 0; }
 .switch-text b { font-family: var(--font-display); font-weight: 700; font-size: var(--fs-base); letter-spacing: var(--ls-0); }
 .switch-text small { font-size: var(--t-meta); color: var(--ink-3); line-height: 1.5; }
@@ -1499,6 +1518,18 @@ a:active > :is(.call-go, .contact-cta), :is(.call-go, .contact-cta):is(a, button
 .sheet-title { flex: 1; min-width: 0; font-family: var(--font-display); font-size: var(--fs-xl); font-weight: 700; line-height: 1.35; letter-spacing: var(--ls-0); }
 .sheet-head .sheet-exit { flex: none; }
 .sheet-head .sheet-sos-btn { flex: none; }
+/* F11: on phones (and with 文字を大きく) the controls take the top row and the title gets the whole width
+   below, so 「区市町村を選ぶ」 or 「カレンダーに入れる」 never breaks in two. すぐ閉じる and 緊急 stay 44px. */
+@media (max-width: 639px) {
+  .sheet-head { flex-wrap: wrap; row-gap: 0; padding-top: 6px; padding-bottom: 8px; }
+  .sheet-head .sheet-title { order: 2; flex: 1 0 100%; padding-top: 6px; }
+  .sheet-head .sheet-title:empty { display: none; }
+  .sheet-head .sheet-close { margin-left: auto; margin-right: -4px; }
+}
+body.is-big .sheet-head { flex-wrap: wrap; row-gap: 0; padding-bottom: 8px; }
+body.is-big .sheet-head .sheet-title { order: 2; flex: 1 0 100%; padding-top: 6px; }
+body.is-big .sheet-head .sheet-title:empty { display: none; }
+body.is-big .sheet-head .sheet-close { margin-left: auto; }
 /* the narrowest phones: the sheet's 緊急 keeps its red and its phone, the word goes (its name stays: aria-label) */
 @media (max-width: 339px) {
   .sheet-head .sheet-sos-btn { width: 40px; padding: 0; }
@@ -1673,6 +1704,10 @@ body.sheet-open { overflow: hidden; }
   opacity: 0; visibility: hidden; pointer-events: none;
   transition: opacity var(--dur-quick) var(--ease-exit), visibility 0s linear var(--dur-quick);
 }
+/* F10: over a sheet (the tab bar is under its scrim) a toast sits low, at the screen's foot; and a toast without an
+   action lets taps through to the sheet row under it */
+body.has-sheet .toast { bottom: calc(var(--safe-b) + 12px); }
+body.has-sheet .toast:not(.has-action) { pointer-events: none; }
 .toast.is-show, .toast.is-visible, .toast.is-on, .toast.show {
   opacity: 1; visibility: visible;
   transition: opacity var(--dur-base) var(--ease-enter), visibility 0s;
@@ -1936,6 +1971,9 @@ body.supporter .for-supporter { display: block; }
   position: absolute; pointer-events: none; border-radius: 50%;
   border: 2px solid var(--action, #0b6e44); opacity: 0;
 }
+/* a save that will not survive closing the page (storage blocked): the same flight, in amber */
+.m-fly-dot.is-warn { background: var(--amber, #b45309); }
+.m-land.is-warn { border-color: var(--amber, #b45309); }
 .m-check > i { position: absolute; display: block; background: var(--m-check-color, var(--paper, #fff)); transform-origin: 0 50%; }
 .m-checking > svg { opacity: 0 !important; }
 /* check(): a checkbox square's fill presses in by itself (the edge stays put, in the fill colour); uncheck(): the
@@ -2035,12 +2073,18 @@ html::view-transition-group(root) { animation: none; }
 html::view-transition-old(root),
 html::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
 /* the subbar itself stays; it only fades when it appears or disappears (tab root ↔ detail) */
-html::view-transition-old(sm-subbar):only-child { animation: m-fade-out var(--dur-instant) var(--ease-exit) both; }
-html::view-transition-new(sm-subbar):only-child { animation: m-fade-in 220ms var(--ease-enter) 70ms both; }
+html::view-transition-old(sm-subbar):only-child { animation: m-fade-out 160ms var(--ease-exit) both, m-y-out-n8 160ms var(--ease-exit) both; }
+html::view-transition-new(sm-subbar):only-child { animation: m-fade-in 220ms var(--ease-enter) 70ms both, m-y-in-n8 var(--spring-rise-dur) var(--spring-rise) 40ms both; }
 html::view-transition-old(sm-subbar-title) { animation: m-fade-out var(--dur-instant) var(--ease-exit) both; }
 
 @keyframes m-fade-out { from { opacity: 1; } to { opacity: 0; } }
 @keyframes m-fade-in  { from { opacity: 0; } to { opacity: 1; } }
+/* the subbar (戻る + title) drops 8px into place as a sub-page arrives, and lifts away going back to a tab root */
+@keyframes m-y-in-n8 { from { transform: translateY(-8px); } to { transform: none; } }
+@keyframes m-y-out-n8 { to { transform: translateY(-8px); } }
+/* 設定 › ふりがな on: the readings arrive a beat after their base text */
+html.m-ruby-in rt { animation: m-fade-in 260ms var(--ease-enter) 160ms both; }
+html.m-reduce.m-ruby-in rt { animation: none; }
 @keyframes m-x-out-l  { from { transform: none; } to { transform: translateX(-32px); } }
 @keyframes m-x-in-r   { from { transform: translateX(32px); } to { transform: none; } }
 @keyframes m-x-out-r  { from { transform: none; } to { transform: translateX(32px); } }
@@ -2325,8 +2369,10 @@ body.lang-en .v-home .h-main + .h-main { margin-top: 0.08em; }
   margin-top: var(--s-4); display: flex; flex-wrap: wrap; align-items: baseline; row-gap: var(--s-2);
   font-family: var(--font-display); font-weight: 700; font-size: var(--t-meta); line-height: 1.3; color: var(--ink);
 }
-.v-home .h-fact { display: inline-flex; align-items: baseline; gap: 4px; padding: 0 var(--s-3); border-left: 1px solid var(--rule-2); white-space: nowrap; }
-.v-home .h-fact:first-child { padding-left: 0; border-left: 0; }
+/* F42: every fact draws its divider on its left, 1px outside its box; the row is shifted left by one gap and clips
+   on x, so the divider (and the gap) of whichever fact starts a line falls outside: never a 「| 6問・3分」 line */
+.v-home .h-facts { overflow-x: clip; margin-left: calc(-1 * var(--s-3)); }
+.v-home .h-fact { display: inline-flex; align-items: baseline; gap: 4px; padding: 0 var(--s-3); margin-left: -1px; border-left: 1px solid var(--rule-2); white-space: nowrap; }
 .v-home .h-fact-k { color: var(--ink-2); font-weight: 500; }
 .v-home .h-fact:not(:first-child) .h-fact-k { color: var(--ink); font-weight: 700; }
 .v-home .h-fact-n { font-family: var(--font-num); font-weight: 700; font-size: 1.5rem; line-height: 1; letter-spacing: var(--ls-num); font-variant-numeric: tabular-nums; color: var(--ink); }
@@ -2350,8 +2396,10 @@ body.lang-en .v-home .h-fact:first-child .h-fact-k { color: var(--ink); font-wei
 .v-home .h-mark-num .h-mark-ink { bottom: 0.02em; height: 0.2em; }
 .v-home .h-title.is-none .h-kicker { font-size: var(--t-h1); font-weight: 700; line-height: var(--lh-heading); color: var(--ink); }
 /* the answers as a tag row, 変える at its end */
-.v-home .h-answers { margin: var(--s-4) 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); }
-.v-home .h-ans { min-height: 28px; padding: 0 var(--s-2); font-family: var(--font-display); font-weight: 700; font-size: var(--t-meta); color: var(--ink); }
+/* F25: the answers as plain text separated by ／ (each separator travels with the answer after it), 変える at its end */
+.v-home .h-answers { margin: var(--s-4) 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--s-2); }
+.v-home .h-ans { font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); color: var(--ink); white-space: nowrap; }
+.v-home .h-ans-sep { margin-right: var(--s-2); font-weight: 500; color: var(--ink-3); }
 .v-home .h-change {
   display: inline-flex; align-items: center; min-height: var(--tap); padding: 0 var(--s-1);
   font-family: var(--font-display); font-weight: 700; font-size: var(--t-meta); color: var(--action-text);
@@ -2461,7 +2509,9 @@ body.is-ruby .v-home .h-cat-mark { min-width: calc(var(--t-micro) * 4.4); justif
   padding: var(--s-4) 0 var(--s-2); border-bottom: 1px solid var(--rule);
 }
 .v-home .h-ln-name { margin: 0; font-family: var(--font-display); font-weight: 700; font-size: var(--t-h3); line-height: var(--lh-title); }
-.v-home .h-ln-name a { color: var(--ink); text-decoration: none; }
+.v-home .h-ln-name a { position: relative; color: var(--ink); text-decoration: none; }
+/* S15: the name is a 44px target (27px of text + 9px above and below) */
+.v-home .h-ln-name a::after { content: ""; position: absolute; inset: -9px 0; }
 @media (hover: hover) { .v-home .h-ln-name a:hover { text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 0.24em; } }
 .v-home .h-ln-sub { margin: var(--s-2) 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-1); }
 .v-home .h-free { flex: none; }
@@ -3402,8 +3452,13 @@ body.is-ruby .v-find .f-top-item .pcard-mark { justify-content: flex-start; }   
   .view.v-find, .subbar:not([hidden]) + .view.v-find { --f-stick: calc(var(--appbar-h) + var(--safe-t)); }
   /* まずはここから: the tint bleeds past the column instead of insetting its rows, so its marks and titles share
      the left edge of the sticky tabs, the group heads and every list below (one edge, no 24px step) */
-  .v-find .f-top.band { margin-inline: calc(var(--s-6) * -1); padding-inline: var(--s-6); }
+  /* F41: the band no longer overhangs the column: it sits inside it, rows inset like the red block above it */
+  .v-find .f-top.band { margin-inline: 0; padding-inline: var(--s-5); }
   .v-find .f-crisis { margin-inline: 0; padding-inline: var(--s-5); }
+  /* F41: the jump bar wraps instead of clipping 「話 相…」 (a mouse cannot swipe it); the chosen tab is underlined */
+  .v-find .f-jump-tabs { flex-wrap: wrap; overflow: visible; }
+  .v-find .f-jump-tabs > .f-jump-ind { display: none; }
+  .v-find .f-jump-tabs > .f-jump-b[aria-current="true"] { box-shadow: inset 0 -2px 0 var(--ink) !important; }
   .v-find .f-cat-sign .cat-icon.is-xl { --mark: 80px; }
   .v-find .f-cat-art { width: 184px; }
   /* the scene is 120px tall, so the question and its first options are in the first screen; its ground line runs
@@ -3449,7 +3504,7 @@ body.is-ruby .v-find .f-top-item .pcard-mark { justify-content: flex-start; }   
   .v-find .f-cats-slot .f-cats > li:nth-child(-n + 3) { border-top: 0; }
   .v-find .f-cats-slot .f-cats .list-item { min-height: 72px; }
   .v-find .f-res-main > .band, .v-find .f-res-main > .f-jump, .v-find .f-basis, .v-find .f-jump-tabs, .v-find .f-basis-tabs { margin-inline: 0; padding-inline: 0; }
-  .v-find .f-res-main > .band { margin-inline: calc(var(--s-6) * -1); padding-inline: var(--s-6); }   /* bleeds: rows keep the column edge */
+  .v-find .f-res-main > .band { margin-inline: 0; padding-inline: var(--s-5); }   /* F41: inside the column, inset like the red block */
   .v-find .f-res-main > .f-crisis, .v-find .f-cat-side > .f-crisis { padding-inline: var(--s-5); }
   .v-find .f-side .chips-scroll, .v-find .f-res-side .chips-scroll { flex-wrap: wrap; overflow: visible; margin-inline: 0; padding-inline: 0; -webkit-mask-image: none; mask-image: none; }
   .v-find .f-side .chips-scroll::after, .v-find .f-res-side .chips-scroll::after { content: none; }
@@ -3491,6 +3546,112 @@ html.m-reduce .v-find .f-q-fig-m { display: none; }
    desktop they lead the wide column (the side column is too narrow for a number and a 電話する button) */
 @media (max-width: 1099px) { .v-find .f-res-main > .f-crisis.is-wide { display: none; } }
 @media (min-width: 1100px) { .v-find .f-res-side > .f-crisis.is-narrow { display: none; } }
+
+/* ================================================================ v6 FIX-A
+   the さがす box on SM.search (F05 / F35), the inline numbers under 今、いる場所がない (F01), chat rows (F40),
+   the other-field tag (F31), the not-found topic (F17), the question strip on small screens (F26), the side column's
+   call rows (F03) */
+/* matched words: a 蛍光ペン band behind the letters; it sweeps in on a row that is new on screen */
+.v-find mark.f-hl { position: relative; z-index: 0; background: none; color: inherit; isolation: isolate; }
+.v-find mark.f-hl::after {
+  content: ""; position: absolute; z-index: -1; left: -0.04em; right: -0.04em; bottom: 0.04em; height: 0.48em;
+  background: var(--marker); transform-origin: 0 50%;
+}
+.v-find .is-new mark.f-hl::after { animation: f-sweep 420ms var(--ease-draw, ease-out) 160ms both; }
+@keyframes f-sweep { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+html.m-reduce .v-find .is-new mark.f-hl::after { animation: none; }
+@media (prefers-reduced-motion: reduce) { .v-find .is-new mark.f-hl::after { animation: none; } }
+
+/* groups of a search: 支援 · まなぶ · ツール · 場所 · やること, each under its own 2px rule */
+.v-find .f-sg { display: grid; min-width: 0; }
+.v-find .f-sg-h {
+  display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3);
+  padding-bottom: var(--s-2); border-bottom: 2px solid var(--ink);
+  font-family: var(--font-display); font-size: var(--t-h3); font-weight: 700; line-height: var(--lh-heading); letter-spacing: var(--ls-0);
+}
+.v-find .f-sg-n { font: 500 var(--t-meta)/1 var(--font-num); color: var(--ink-3); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.v-find .f-sg-n .unit { font-family: var(--font-display); font-size: inherit; margin-left: 1px; }
+.v-find .f-sg > .pcards > .pcard:first-child, .v-find .f-sg > .list > .list-item:first-child { border-top: 0; }
+.v-find .f-sg .more { margin-top: var(--s-1); }
+.v-find .f-s-local { margin-top: var(--s-2); border-top: 1px solid var(--rule); }
+.v-find .f-s-localpick { margin: var(--s-2) 0; }
+.v-find .f-s-localpick-a, .v-find .f-s-asklink, .v-find .f-s-tonightlink {
+  display: inline-flex; align-items: center; gap: var(--s-2); min-height: var(--tap);
+  font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); color: var(--ink);
+  text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 0.3em;
+}
+.v-find .f-s-ask { margin: 0; border-top: 1px solid var(--rule); padding-top: var(--s-2); }
+.v-find .f-s-tonight { margin: 0; }
+.v-find .f-s-tonightlink { color: var(--red-text); }
+.v-find .f-s-chips { display: grid; gap: var(--s-2); min-width: 0; }
+.v-find .f-s-chips-k { font-family: var(--font-display); font-size: var(--t-label); font-weight: 700; color: var(--ink-3); letter-spacing: var(--ls-label); }
+.v-find .f-s-chips .chips { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+.v-find .f-s-none-links { border-top: 1px solid var(--rule); }
+.v-find .f-talk .f-talk-all { margin-top: var(--s-3); }
+.v-find .f-sresults .f-count-q { overflow-wrap: anywhere; }
+
+/* F01: tonight's two numbers right under the option, with a red rule that draws down as they open */
+.v-find .f-q-urgent-wrap { position: relative; margin-top: -8px; }       /* .opts gap: nothing extra while closed */
+.v-find .f-q-urgent { position: relative; margin-top: 8px; padding: var(--s-1) 0 var(--s-2) var(--s-4); }
+.v-find .f-q-urgent::before {
+  content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--red);
+  transform-origin: 50% 0;
+}
+.v-find .f-q-urgent.is-drawn::before { animation: f-rule-down 420ms cubic-bezier(0.5, 0, 0.15, 1) both; }
+@keyframes f-rule-down { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+.v-find .f-q-urgent-lead { font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); color: var(--red-text); padding-bottom: var(--s-2); }
+.v-find .f-q-urgent .contact { border-top-color: color-mix(in srgb, var(--red) 22%, transparent); }
+.v-find .f-q-urgent .contact-item, .v-find .f-q-urgent .contact-hours { border-bottom-color: color-mix(in srgb, var(--red) 22%, transparent); }
+.v-find .f-q-urgent .contact > :last-child { border-bottom: 0; }
+.v-find .f-q-urgent .contact-hours { display: flex; gap: var(--s-2); padding: 0 0 var(--s-2); font-size: var(--t-meta); color: var(--ink-2); }
+.v-find .f-q-urgent .contact-hours-k { font-weight: 700; color: var(--ink-3); }
+html.m-reduce .v-find .f-q-urgent.is-drawn::before { animation: none; }
+
+/* F31: a row from another field inside a group says so, under its title */
+.v-find .f-xtag {
+  display: inline-block; justify-self: start; margin-top: 2px; padding: 1px 6px;
+  font-family: var(--font-display); font-size: var(--fs-micro, 12px); font-weight: 700; line-height: 1.5; letter-spacing: var(--ls-0);
+  color: var(--ink-2); box-shadow: inset 0 0 0 1px var(--rule-2); border-radius: var(--r-ctl);
+}
+
+/* S10: no answers yet: the way in, under the count */
+.v-find .f-res-start { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-3); }
+
+/* F40: chat rows: how (LINE / チャット), when, who, and one button that opens it */
+.v-find .f-chat-list { display: grid; border-top: 1px solid var(--rule); }
+.v-find .f-chat-row {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--s-2) var(--s-4);
+  padding: var(--s-4) 0; border-bottom: 1px solid var(--rule);
+}
+.v-find .f-chat-main { display: grid; gap: 4px; min-width: 0; }
+.v-find .f-chat-k { display: flex; flex-wrap: wrap; align-items: center; gap: 4px var(--s-2); }
+.v-find .f-chat-tag { background: var(--paper-2); color: var(--ink); }
+.v-find .f-chat-tag.is-line { background: var(--action-tint); color: var(--action-text); }
+.v-find .f-chat-hours { font-size: var(--t-meta); color: var(--ink-2); }
+.v-find .f-chat-name { font-family: var(--font-display); font-size: var(--t-ui); font-weight: 700; line-height: var(--lh-heading); }
+.v-find .f-chat-name a { color: var(--ink); text-decoration: underline; text-decoration-color: var(--rule-2); text-underline-offset: 0.3em; }
+.v-find .f-chat-hook { font-size: var(--t-meta); color: var(--ink-2); overflow-wrap: anywhere; }
+.v-find .f-chat-open { white-space: nowrap; }
+@media (max-width: 479px) {
+  .v-find .f-chat-row { grid-template-columns: minmax(0, 1fr); }
+  .v-find .f-chat-open { justify-self: start; }
+}
+body.is-big .v-find .f-chat-row { grid-template-columns: minmax(0, 1fr); }
+body.is-big .v-find .f-chat-open { justify-self: start; white-space: normal; }
+
+/* F17 */
+.v-find .f-cat-missing { display: grid; gap: var(--s-5); }
+
+/* F03: in the narrow side column the number never sits under its 電話する button: the button goes under it */
+.v-find :is(.f-cat-side, .f-res-side, .f-side) .contact-item { flex-wrap: wrap; row-gap: var(--s-2); }
+@media (min-width: 1100px) {
+  .v-find :is(.f-cat-side, .f-res-side) .contact-phone { flex-direction: column; align-items: flex-start; }
+  .v-find :is(.f-cat-side, .f-res-side) .contact-phone .contact-main { width: 100%; }
+}
+
+/* F26: on a short or 文字を大きく phone the scene gives its room to the question (the progress line stays) */
+@media (max-width: 899px) and (max-height: 719px) { .v-find .f-q-journey { display: none; } }
+@media (max-width: 899px) { body.is-big .v-find .f-q-journey { display: none; } }
 /* ---- css/program.css ---- */
 /* =====================================================================
    巣立ちマップ v4 — program.css  (owner: PROGRAM)
@@ -4722,6 +4883,80 @@ body.lang-en .v-tools :is(.tl-title, .tl-hub-t, .scr-label-title) { word-break: 
 .v-tools .scr-call { justify-content: space-between; }
 .v-tools .scr-call-n { font-family: var(--font-num); font-weight: 700; font-size: var(--fs-lg); letter-spacing: var(--ls-0); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .v-tools .tl-hub-row { min-height: 88px; }
+
+/* =====================================================================
+   FIX-B (v6): あなたの区市町村の窓口 (F04), the bar's office call, the report link (F12)
+   ===================================================================== */
+.v-program .pg-local {
+  display: grid; gap: 6px; min-width: 0;
+  padding: var(--s-3) 0 var(--s-2); border-top: 2px solid var(--rule-heavy); border-bottom: 1px solid var(--rule);
+}
+.v-program .pg-local-k {
+  display: flex; align-items: center; gap: 6px; margin: 0;
+  font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui); letter-spacing: var(--ls-label); color: var(--ink-3);
+}
+.v-program .pg-local-pin { display: inline-grid; place-items: center; flex: none; width: 20px; height: 20px; color: var(--action-text); }
+.v-program .pg-local-pin .icon { width: 18px; height: 18px; stroke-width: 2; }
+.v-program .pg-local-name { margin: 0; font-family: var(--font-display); font-weight: 700; font-size: var(--fs-base); line-height: var(--lh-title); overflow-wrap: anywhere; }
+.v-program .pg-local-tel { padding-top: 2px; }
+.v-program .pg-local-acts { display: flex; flex-wrap: wrap; gap: 0 var(--s-4); margin: 0; }
+/* no area answered (or no office on file): one ruled link row to the map */
+.v-program a.pg-local.is-find {
+  grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; column-gap: 10px;
+  min-height: 64px; padding: 10px 0; color: var(--ink); text-decoration: none;
+}
+.v-program .pg-local.is-find .pg-local-text { display: grid; gap: 2px; min-width: 0; }
+.v-program .pg-local.is-find .pg-local-k { display: block; }
+.v-program .pg-local-sub { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-2); }
+.v-program .pg-local-go { --arrow-s: 20px; color: var(--action-text); }
+@media (hover: hover) { .v-program a.pg-local.is-find:hover .pg-local-name { text-decoration: underline; text-underline-offset: 0.22em; } }
+
+/* sticky bar with the office's phone: three actions share the row (公式 shrinks to its icon + short word) */
+.v-program .pg-act-local { flex: 1 1 auto; justify-content: flex-start; padding: 0 14px; gap: 10px; background: var(--action-fill); border-color: var(--action-fill); color: var(--on-action-fill); }
+@media (hover: hover) { .v-program .pg-act-local:hover { background: var(--action-fill-hover); border-color: var(--action-fill-hover); } }
+.v-program .pg-act-local:active { background: var(--action-fill-press); border-color: var(--action-fill-press); }
+.v-program .pg-act-local .icon { width: 22px; height: 22px; stroke-width: 1.75; }
+.v-program .pg-bar.has-local .pg-act-web { flex: 0 1 auto; padding: 0 12px; gap: 6px; }
+.v-program .pg-bar.has-local .pg-act-save .save-label { white-space: nowrap; }
+@media (max-width: 399px) {
+  .v-program .pg-bar.has-local .pg-act-web > span:first-child { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .v-program .pg-bar.has-local .pg-act-web { min-width: 48px; }
+}
+
+/* まちがいを報告 → このサイトについて: a real 44px link, not a 12px inline word */
+.v-program .pg-report-about { font-size: var(--fs-sm); }
+
+/* ---------- FIX-B (v6): tools ---------- */
+/* F12 / F21: 用件 chips and 「ページを見る →」 are full 44px targets */
+.v-tools .scr-keys .chip { min-height: 44px; }
+.v-tools .scr-keys .chip::after { inset: 0; }
+.v-tools .ck-help-more { display: inline-flex; align-items: center; min-height: var(--tap); margin: -8px 0 4px; }
+/* F37: the script's first line under the chips (phone/tablet; the desktop shows the script beside them) */
+.v-tools .scr-peek {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: var(--s-3); align-items: center;
+  padding: var(--s-2) 0 0; border-top: 1px dashed var(--rule-2);
+}
+.v-tools .scr-peek-k { grid-column: 1 / -1; font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); color: var(--ink-3); letter-spacing: var(--ls-label); }
+.v-tools .scr-peek-t { min-width: 0; font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink); overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.v-tools .scr-peek-go {
+  display: inline-flex; align-items: center; gap: 4px; min-height: var(--tap); padding: 0;
+  font-family: var(--font-display); font-weight: 700; font-size: var(--fs-sm); color: var(--action-text); white-space: nowrap;
+}
+.v-tools .scr-peek-go:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+@media (min-width: 1100px) { .v-tools .scr-peek { display: none; } }
+/* F36: the example numbers read as an example (grey, 例), and a ✓ / ✕ sits beside the balance */
+.v-tools .mn-big.st-ex .mn-big-v { color: var(--ink-3); }
+.v-tools .mn-ex-tag {
+  display: inline-grid; place-items: center; min-height: 20px; margin-right: 8px; padding: 0 6px; vertical-align: 1px;
+  box-shadow: inset 0 0 0 1px var(--ink-3); color: var(--ink-2); font-weight: 700; font-size: var(--fs-micro, 11px); letter-spacing: var(--ls-0);
+}
+.v-tools .mn-mark { display: inline-block; margin-left: 0.3em; font-family: var(--font-display); font-size: 0.5em; font-weight: 700; line-height: 1; align-self: center; }
+.v-tools .mn-mark:empty { display: none; }
+.v-tools .tl-float-dot.st-ex { background: var(--ink-4); }
+/* F12: the べんりツール kicker link is a real 44px box (it relied on a stretched ::before), same place on the page */
+.v-tools .tl-kicker a { min-height: 44px; min-width: 44px; margin-block: -10px; }
+.v-tools .tl-kicker a::before { content: none; }
+.v-tools .tl-reset { min-width: 44px; }
 /* ---- css/map.css ---- */
 /* 巣立ちマップ v4 — css/map.css (MAP). Scoped under .v-map; tokens only (VISUAL-SPEC §2, §4, §7.10, §9).
    Phone / tablet (< 1100px): a stage — header + controls scroll away, the map frame sticks under the app bar
@@ -5566,6 +5801,37 @@ body.lang-en .v-tools :is(.tl-title, .tl-hub-t, .scr-label-title) { word-break: 
 @media (min-width: 1440px) {
   .view.v-map { width: calc(var(--shell-w) - var(--rail-w)); margin-left: calc((100% - var(--shell-w)) / 2 + var(--rail-w)); }
 }
+
+/* ---------- FIX-B (v6) ---------- */
+/* F12: the type chips are full 44px targets (they were 36px boxes with a stretched hit area) */
+.v-map .m-cats .chip { min-height: 44px; }
+.v-map .m-cats .chip::after { inset: 0; }
+/* F23: 児童相談所 is an extra layer after a rule, its 話 drawn in outline (not a part of すべて) */
+.v-map .m-cats-sep { align-self: center; width: 1px; height: 24px; margin: 0 2px 0 4px; background: var(--rule-2); }
+@media (min-width: 1100px) { .v-map .m-cats-sep { display: none; } }   /* a wrapping row: a rule would dangle at a line end */
+.v-map .m-cats .chip[data-cat="jisou"] .cat-mark { background: transparent; color: var(--cat-c); box-shadow: inset 0 0 0 1.5px var(--cat-c); }
+.v-map .m-cats .chip[data-cat="jisou"][aria-pressed="true"] .cat-mark { color: var(--paper); box-shadow: inset 0 0 0 1.5px var(--paper); }
+/* F24: English names first; the office's Japanese name (what the sign and the call use) as a quiet second line */
+.v-map .m-loc-ja { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3); overflow-wrap: anywhere; }
+/* F20: the place card's phone keeps its 「電話する」 label down to a 280px card (the number gives way first);
+   only a narrower card wraps the button under the number instead of hiding the word */
+.v-map .m-peek-tel .m-peek-num { font-size: min(var(--t-num-l), 8.2cqi); }
+@container (max-width: 359px) {
+  .v-map .m-peek-tel .call-go-t { position: static; width: auto; height: auto; overflow: visible; clip: auto; }
+  .v-map .m-peek-tel .call-go { width: auto; padding: 0 12px; }
+}
+@container (max-width: 259px) {
+  .v-map .m-peek-tel { flex-wrap: wrap; row-gap: 6px; }
+  .v-map .m-peek-tel .m-peek-num { font-size: min(var(--t-num-l), 11cqi); }
+}
+.v-map .m-peek-acts { gap: 0 16px; }
+/* motion: an area change slides each section head in on a rule that draws from the left */
+.v-map .m-list.is-swap .m-group > .section-head { animation: none; }
+.v-map .m-list.is-swap .m-group > .section-head > .section-head-text { animation: m-head-in 360ms var(--ease-standard) backwards; }
+.v-map .m-list.is-swap .m-group > .section-head > .m-count { animation: m-swap-in 320ms var(--ease-standard) 60ms backwards; }
+.v-map .m-list.is-swap .m-group > .section-head > .section-rule { animation: m-rule-draw 480ms cubic-bezier(0.16, 1, 0.3, 1) 40ms backwards; }
+@keyframes m-head-in { from { opacity: 0; transform: translateX(-14px); } }
+@keyframes m-rule-draw { from { transform: scaleX(0); } }
 /* ---- css/plan.css ---- */
 /* =====================================================================
    巣立ちマップ v4 — plan.css (PLAN)  #/plan やること
@@ -6099,6 +6365,38 @@ body.lang-en .tl-item .tl-seal { font-size: var(--t-micro); padding: 0 4px; }
   .v-plan .pp-foot { margin-top: 14px; font-size: 8.5pt; color: dimgray; }
 }
 .v-plan ol.pp-progs { list-style: decimal; padding-left: 1.4em; }
+
+/* ---------- FIX-B (v6) ---------- */
+/* F47: the earlier periods' count is neutral; amber only once the reader has ticked something there */
+.v-plan .tl-past-left { color: var(--ink-3); }
+.v-plan .tl-past-left::before { content: "・"; color: var(--ink-4); }
+.v-plan .tl-past-left.is-warn { color: var(--amber-text); }
+.v-plan .tl-past-left.is-zero { color: var(--action-text); }
+/* F38: the empty 保存した支援 is one line and a link */
+.v-plan .plan-saved-empty.is-line { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0 16px; padding: var(--s-3) 0 0; }
+.v-plan .plan-empty-line { flex: 1 1 14em; min-width: 0; font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-2); }
+.v-plan .plan-empty-go {
+  display: inline-flex; align-items: center; gap: 6px; min-height: var(--tap);
+  font-family: var(--font-display); font-weight: 700; font-size: var(--fs-sm); color: var(--action-text); text-decoration: none;
+}
+@media (hover: hover) { .v-plan .plan-empty-go:hover > span:not(.arrow) { text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 0.28em; } }
+.v-plan .plan-empty-go:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+/* F12: the quick date chips are full 44px targets */
+.v-plan .plan-date-chips .chip, .plan-sheet .plan-date-chips .chip { min-height: 44px; }
+.plan-sheet .plan-date-chips .chip::after { inset: 0; }
+/* F24: a Japanese gloss inside English text stays one piece */
+.v-plan .plan-ja { white-space: nowrap; }
+/* S9: storage unavailable */
+.v-plan .plan-nostore { margin-top: 6px; font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--amber-text); }
+.v-plan .plan-nostore-go {
+  display: inline; min-height: 0; padding: 0; border: 0; background: none; font: inherit; font-weight: 700; color: var(--action-text);
+  text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.25em; cursor: pointer; position: relative;
+}
+.v-plan .plan-nostore-go::after { content: ""; position: absolute; inset: -12px -6px; }
+/* F39: the real title, and what the calendar file will say under it */
+.plan-sheet .ics-text { display: grid; gap: 2px; min-width: 0; }
+.plan-sheet .ics-file { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3); }
+.plan-sheet .ics-file[hidden] { display: none; }
 /* ---- css/learn.css ---- */
 /* =====================================================================
    巣立ちマップ v4 — learn.css  (owner: LEARN) — まなぶ  #/learn  #/learn/ID
@@ -6743,3 +7041,190 @@ html.m-reduce .v-learn .ln-segs.is-full .ln-seg > i { transition-delay: 0ms; }
 
 /* the keyboard hint only where there is a keyboard */
 @media (hover: none), (pointer: coarse) { .v-learn .ln-keys { display: none !important; } }
+
+/* ---------- FIX-B (v6) ---------- */
+/* F32: 「あなたの答え」 sits inside the tried option's frame (top right), not across its top edge where it looked
+   clipped; the 正解 seal keeps its 割印 place on the edge */
+.v-learn .ln-opt-res:has(> .ln-yours) { top: 6px; right: 8px; }
+.v-learn .ln-opt.is-tried, .v-learn .ln-opt.is-chosen.is-wrong { padding-top: 30px; }
+/* F33: a half-read lesson says it resumes, with the way back to step 1 */
+.v-learn .ln-resume {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0 16px;
+  margin: 0 0 var(--s-3); padding: 0 0 0 var(--s-3); border-left: 2px solid var(--ink);
+}
+.v-learn .ln-resume-t { font-family: var(--font-display); font-weight: 500; font-size: var(--t-meta); color: var(--ink-2); }
+.v-learn .ln-resume-btn {
+  display: inline-flex; align-items: center; min-height: var(--tap); padding: 0;
+  font-family: var(--font-display); font-weight: 700; font-size: var(--fs-sm); color: var(--action-text);
+  text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.3em;
+}
+.v-learn .ln-resume-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+/* ---- css/ask.css ---- */
+/* 巣立ちマップ v6 — css/ask.css (owner: SEARCH) — 「きく」 (#/ask). Scoped to .v-ask; tokens from base.css only.
+   Flat 教科書×駅サイン: ruled rows, a 2px ink rule over the best answer, the crisis block under a 2px red rule,
+   kanji marks, no cards / pills / shadows (radius 0–3px). Motion is transform / opacity only (js/views/ask.js via
+   SM.motion); the CSS keyframes here (marker sweep, rule draw) are off under reduced motion (html.m-reduce / OS). */
+
+.v-ask .ask { display: grid; gap: var(--s-5); }
+.v-ask .ask > * { min-width: 0; }
+
+/* ---- head + box ---- */
+.v-ask .ask-head { display: grid; gap: var(--s-2); }
+.v-ask .ask-h1 {
+  font-family: var(--font-display); font-size: var(--t-h1); font-weight: 700;
+  line-height: var(--lh-heading); letter-spacing: var(--ls-0); text-wrap: balance;
+}
+.v-ask .ask-sub { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-2); }
+/* the box stays in reach while the answer scrolls under it */
+.v-ask .ask-box {
+  position: sticky; top: calc(var(--appbar-h) + var(--safe-t)); z-index: 5;
+  margin: calc(-1 * var(--s-2)) calc(-1 * var(--gutter)) 0; padding: var(--s-2) var(--gutter);
+  background: var(--paper);
+}
+.v-ask .ask-field { position: relative; }
+.v-ask .ask-field .search-clear[hidden] { display: none; }
+.v-ask .ask-field .input { font-size: var(--fs-lg); }
+
+/* ---- output ---- */
+.v-ask .ask-out { display: grid; gap: var(--s-8); min-width: 0; }
+.v-ask .ask-out > * { min-width: 0; }
+
+/* starters, もしかして */
+.v-ask .ask-start { display: grid; gap: var(--s-8); }
+.v-ask .ask-chips { display: grid; gap: var(--s-3); }
+.v-ask .ask-chips-k {
+  font-family: var(--font-display); font-weight: 700; font-size: var(--t-label);
+  line-height: var(--lh-ui); letter-spacing: var(--ls-label); color: var(--ink-2);
+}
+.v-ask .ask-ways { display: grid; gap: var(--s-2); }
+.v-ask .ask-maybe { padding: var(--s-3) 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+.v-ask .ask-maybe .ask-chips-k { color: var(--ink); }
+
+/* ---- (a) crisis: first, under a 2px red rule ---- */
+.v-ask .ask-crisis { display: grid; gap: var(--s-3); padding-top: var(--s-4); border-top: 2px solid var(--red); }
+.v-ask .ask-cr-h {
+  font-family: var(--font-display); font-size: var(--t-h2); font-weight: 700;
+  line-height: var(--lh-heading); letter-spacing: var(--ls-0); color: var(--ink);
+}
+.v-ask .ask-cr-lead { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-2); }
+.v-ask .ask-cr-list { border-top: 1px solid var(--rule); }
+.v-ask .ask-cr-list .sos-num { font-size: var(--t-num-l); }
+.v-ask .ask-cr-list .sos-num.ask-cr-act {
+  font-family: var(--font-display); font-size: var(--fs-base); text-decoration: underline;
+  text-decoration-thickness: 1.5px; text-underline-offset: 0.28em; white-space: normal;
+}
+.v-ask .ask-cr-list .sos-hours { font-size: var(--t-meta); color: var(--ink-2); }
+.v-ask .ask-cr-urgent { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-2); border-top: 0; }
+.v-ask .ask-cr-urgent .sos-li.is-urgent .sos-row { min-height: 64px; padding: 10px 14px 12px; }
+.v-ask .ask-cr-urgent .sos-li.is-urgent .sos-num { font-size: var(--fs-2xl); margin-bottom: 0; }
+.v-ask .ask-cr-urgent.is-big .sos-li.is-urgent .sos-row { min-height: 104px; padding: 14px 14px 16px; }
+.v-ask .ask-cr-urgent.is-big .sos-li.is-urgent .sos-num { font-size: var(--fs-3xl); margin-bottom: 4px; }
+.v-ask .ask-cr-urgent .sos-desc { color: var(--on-red); font-size: var(--t-meta); }
+.v-ask .ask-cr-k { font-size: var(--t-label); font-weight: 700; letter-spacing: var(--ls-label); color: var(--ink-2); margin-top: var(--s-2); }
+.v-ask .ask-cr-all { margin-top: var(--s-2); }
+
+/* ---- (b) the answer ---- */
+.v-ask .ask-answer { display: grid; gap: var(--s-4); }
+.v-ask .ask-qh {
+  font-family: var(--font-display); font-size: var(--t-h2); font-weight: 700;
+  line-height: var(--lh-heading); letter-spacing: var(--ls-0); overflow-wrap: anywhere;
+}
+.v-ask .ask-qh:focus { outline: none; }
+.v-ask .ask-qh-t { display: inline-block; max-width: 100%; transform-origin: 0 50%; }
+.v-ask .ask-topics { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 0.25em; row-gap: 2px; margin-top: calc(-1 * var(--s-2));
+  font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-2); }
+.v-ask .ask-topics-k { margin-right: 0.75em; color: var(--ink-3); }
+.v-ask .ask-topic { color: var(--ink); font-weight: 700; }
+.v-ask .ask-sep { color: var(--ink-3); }
+.v-ask .ask-near { font-size: var(--t-body); color: var(--ink-2); }
+
+.v-ask .ask-best-wrap { display: grid; gap: var(--s-2); }
+.v-ask .ask-kicker {
+  font-family: var(--font-display); font-weight: 700; font-size: var(--t-label);
+  line-height: var(--lh-ui); letter-spacing: var(--ls-label); color: var(--action-text);
+}
+.v-ask .ask-best {
+  position: relative;
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; column-gap: 14px;
+  padding: var(--s-5) 0 var(--s-6);
+  border-bottom: 1px solid var(--rule);
+}
+.v-ask .ask-best::before {
+  content: ""; position: absolute; left: 0; right: 0; top: 0; height: 2px; background: var(--ink);
+  transform-origin: 0 50%;
+}
+.v-ask .ask-best.is-new::before { animation: ask-draw 560ms var(--ease-draw, ease-out) 60ms both; }
+.v-ask .ask-best > * { min-width: 0; }
+.v-ask .ask-best-mark { padding-top: 2px; }
+.v-ask .ask-best-pin { display: inline-grid; place-items: center; width: 56px; height: 56px; border: 2px solid var(--ink); border-radius: var(--r-0, 0); color: var(--ink); }
+.v-ask .ask-best-pin .icon { width: 28px; height: 28px; }
+.v-ask .ask-best-main { display: grid; gap: var(--s-2); align-content: start; }
+.v-ask .ask-best-kind { font-size: var(--t-label); line-height: var(--lh-ui); letter-spacing: var(--ls-label); color: var(--ink-2); }
+.v-ask .ask-best-title {
+  font-family: var(--font-display); font-size: var(--t-h3); font-weight: 700;
+  line-height: var(--lh-title); letter-spacing: var(--ls-0);
+}
+.v-ask .ask-best-title a { color: var(--ink); text-decoration: none; }
+@media (hover: hover) { .v-ask .ask-best-title a:hover { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 0.2em; } }
+.v-ask .ask-best-what { font-size: var(--t-body); line-height: var(--lh); color: var(--ink-2); }
+.v-ask .ask-best-key { display: block; font-size: var(--fs-base); font-weight: 700; color: var(--ink); line-height: 1.4; }
+.v-ask .ask-best-k { display: block; margin-bottom: 2px; font-size: var(--t-label); font-weight: 400; letter-spacing: var(--ls-label); color: var(--ink-2); }
+.v-ask .ask-best-num { font-family: var(--font-num); font-size: var(--t-num-l); font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: var(--ls-0); white-space: nowrap; }
+.v-ask .ask-best-acts { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-5); margin-top: var(--s-2); }
+.v-ask .ask-best-save { margin: -10px -11px 0 0; }
+
+/* jump links: a station-sign index of the kinds of results */
+.v-ask .ask-jump { display: flex; flex-wrap: wrap; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); margin-top: calc(-1 * var(--s-4)); }
+.v-ask .ask-jump-b {
+  display: inline-flex; align-items: baseline; gap: 6px; min-height: 44px; padding: 10px 14px 10px 0; margin-right: 14px;
+  font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); color: var(--ink);
+  border-right: 1px solid var(--rule); border-radius: 0; background: none;
+}
+.v-ask .ask-jump-b:last-child { border-right: 0; }
+@media (hover: hover) { .v-ask .ask-jump-b:hover > span:first-child { text-decoration: underline; text-underline-offset: 0.28em; } }
+.v-ask .ask-jump-n { font-family: var(--font-num); font-weight: 700; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+
+/* ---- (c) groups ---- */
+.v-ask .ask-group { display: grid; min-width: 0; }
+.v-ask .ask-group .section-title { scroll-margin-top: calc(var(--appbar-h) + var(--safe-t) + 80px); }
+.v-ask .ask-group .section-title:focus { outline: none; }
+.v-ask .ask-count { font-family: var(--font-num); font-weight: 700; font-size: var(--t-num-inline); color: var(--ink-2); white-space: nowrap; align-self: end; }
+.v-ask .ask-count .unit { font-family: var(--font-display); font-size: var(--t-unit-inline); margin-left: 2px; }
+.v-ask .ask-rest[hidden] { display: none; }
+.v-ask .ask-rows.ask-rest { border-top: 0; }
+.v-ask .pcards.ask-rows:has(+ .ask-rest:not([hidden])) { border-bottom: 0; }
+.v-ask .ask-more {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--s-3);
+  width: 100%; min-height: 48px; padding: 0; border-bottom: 1px solid var(--rule); border-radius: 0; background: none;
+  font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); color: var(--ink); text-align: left;
+}
+@media (hover: hover) { .v-ask .ask-more:hover > span:first-child { text-decoration: underline; text-underline-offset: 0.28em; } }
+
+/* matched words: a 蛍光ペン band behind the letters; on a NEW row it sweeps in from the left */
+.v-ask mark.ask-hl { position: relative; z-index: 0; background: none; color: inherit; isolation: isolate; }
+.v-ask mark.ask-hl::after {
+  content: ""; position: absolute; z-index: -1; left: -0.04em; right: -0.04em; bottom: 0.04em; height: 0.48em;
+  background: var(--marker); transform-origin: 0 50%;
+}
+.v-ask .is-new mark.ask-hl::after { animation: ask-sweep 420ms var(--ease-draw, ease-out) 200ms both; }
+.v-ask .ask-rows > .is-new mark.ask-hl::after { animation-delay: 320ms; }
+
+@keyframes ask-sweep { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes ask-draw { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+/* no-result state */
+.v-ask .ask-answer .empty { padding-top: var(--s-2); }
+.v-ask .ask-answer .empty-action { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-5); }
+
+/* reduced motion: nothing sweeps or draws (the band and the rule are simply there) */
+html.m-reduce .v-ask .is-new mark.ask-hl::after,
+html.m-reduce .v-ask .ask-best.is-new::before { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .v-ask .is-new mark.ask-hl::after, .v-ask .ask-best.is-new::before { animation: none; }
+}
+
+/* desktop: the box is not sticky under a rail layout's bar, the answer gets a little more air */
+@media (min-width: 900px) {
+  .v-ask .ask { gap: var(--s-6); }
+  .v-ask .ask-best { column-gap: 20px; }
+}

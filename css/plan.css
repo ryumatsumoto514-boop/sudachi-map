@@ -530,3 +530,35 @@ body.lang-en .tl-item .tl-seal { font-size: var(--t-micro); padding: 0 4px; }
   .v-plan .pp-foot { margin-top: 14px; font-size: 8.5pt; color: dimgray; }
 }
 .v-plan ol.pp-progs { list-style: decimal; padding-left: 1.4em; }
+
+/* ---------- FIX-B (v6) ---------- */
+/* F47: the earlier periods' count is neutral; amber only once the reader has ticked something there */
+.v-plan .tl-past-left { color: var(--ink-3); }
+.v-plan .tl-past-left::before { content: "・"; color: var(--ink-4); }
+.v-plan .tl-past-left.is-warn { color: var(--amber-text); }
+.v-plan .tl-past-left.is-zero { color: var(--action-text); }
+/* F38: the empty 保存した支援 is one line and a link */
+.v-plan .plan-saved-empty.is-line { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0 16px; padding: var(--s-3) 0 0; }
+.v-plan .plan-empty-line { flex: 1 1 14em; min-width: 0; font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-2); }
+.v-plan .plan-empty-go {
+  display: inline-flex; align-items: center; gap: 6px; min-height: var(--tap);
+  font-family: var(--font-display); font-weight: 700; font-size: var(--fs-sm); color: var(--action-text); text-decoration: none;
+}
+@media (hover: hover) { .v-plan .plan-empty-go:hover > span:not(.arrow) { text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 0.28em; } }
+.v-plan .plan-empty-go:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+/* F12: the quick date chips are full 44px targets */
+.v-plan .plan-date-chips .chip, .plan-sheet .plan-date-chips .chip { min-height: 44px; }
+.plan-sheet .plan-date-chips .chip::after { inset: 0; }
+/* F24: a Japanese gloss inside English text stays one piece */
+.v-plan .plan-ja { white-space: nowrap; }
+/* S9: storage unavailable */
+.v-plan .plan-nostore { margin-top: 6px; font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--amber-text); }
+.v-plan .plan-nostore-go {
+  display: inline; min-height: 0; padding: 0; border: 0; background: none; font: inherit; font-weight: 700; color: var(--action-text);
+  text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.25em; cursor: pointer; position: relative;
+}
+.v-plan .plan-nostore-go::after { content: ""; position: absolute; inset: -12px -6px; }
+/* F39: the real title, and what the calendar file will say under it */
+.plan-sheet .ics-text { display: grid; gap: 2px; min-width: 0; }
+.plan-sheet .ics-file { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3); }
+.plan-sheet .ics-file[hidden] { display: none; }

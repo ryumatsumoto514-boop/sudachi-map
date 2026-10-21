@@ -641,3 +641,21 @@ html.m-reduce .v-learn .ln-segs.is-full .ln-seg > i { transition-delay: 0ms; }
 
 /* the keyboard hint only where there is a keyboard */
 @media (hover: none), (pointer: coarse) { .v-learn .ln-keys { display: none !important; } }
+
+/* ---------- FIX-B (v6) ---------- */
+/* F32: 「あなたの答え」 sits inside the tried option's frame (top right), not across its top edge where it looked
+   clipped; the 正解 seal keeps its 割印 place on the edge */
+.v-learn .ln-opt-res:has(> .ln-yours) { top: 6px; right: 8px; }
+.v-learn .ln-opt.is-tried, .v-learn .ln-opt.is-chosen.is-wrong { padding-top: 30px; }
+/* F33: a half-read lesson says it resumes, with the way back to step 1 */
+.v-learn .ln-resume {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0 16px;
+  margin: 0 0 var(--s-3); padding: 0 0 0 var(--s-3); border-left: 2px solid var(--ink);
+}
+.v-learn .ln-resume-t { font-family: var(--font-display); font-weight: 500; font-size: var(--t-meta); color: var(--ink-2); }
+.v-learn .ln-resume-btn {
+  display: inline-flex; align-items: center; min-height: var(--tap); padding: 0;
+  font-family: var(--font-display); font-weight: 700; font-size: var(--fs-sm); color: var(--action-text);
+  text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.3em;
+}
+.v-learn .ln-resume-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }

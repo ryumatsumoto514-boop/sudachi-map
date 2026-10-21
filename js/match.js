@@ -123,10 +123,13 @@
     if (d.always) return 50;
     return 40;
   }
+  /* F06: money you never pay back, by the same rule as the green 「返さなくていい」 line on every row
+     (SM.ui.repayLabel) and the about page's count: repay 'none', or a grant with no repay field. Free counselling
+     is not "money you do not pay back", so 返さなくていいだけ / 返さなくていい順 no longer keep (nearly) everything. */
   function isFree(p) {
-    if (p.repay === 'yes' || p.repay === 'conditional') return false;
-    if (p.kind === 'loan' || p.kind === 'loan_forgivable') return false;
-    return true;
+    if (!p) return false;
+    if (p.repay === 'none') return true;
+    return !p.repay && p.kind === 'grant';
   }
   function nearby(p, area) {
     var locs = p.locations || [];

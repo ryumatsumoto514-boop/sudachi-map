@@ -329,7 +329,10 @@
       if (SM.matchSummary) {
         summary = SM.matchSummary(answers()).filter(function (r) {
           return r.set && r.label && (r.key === 'stage' || r.key === 'path' || r.key === 'area');
-        }).map(function (r) { return '<span class="tag tag-neutral h-ans">' + esc(r.label) + '</span>'; }).join('');
+        }).map(function (r, i) {
+          // F25: plain text separated by ／ (a tag looked tappable; only 変える is)
+          return '<span class="h-ans">' + (i ? '<span class="h-ans-sep" aria-hidden="true">' + (en() ? '\u00b7' : '／') + '</span>' : '') + esc(r.label) + '</span>';
+        }).join('');
       }
     } catch (e) { summary = ''; }
     var unit = t('home.backUnit');

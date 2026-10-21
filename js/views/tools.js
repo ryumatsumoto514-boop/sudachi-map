@@ -111,7 +111,13 @@
     'tl.learnK': { ja: 'まなぶ', en: 'Learn' },
     'tl.learnMin': { ja: '{n}分', en: '{n} min' },
     'tl.learnDone': { ja: '読んだ', en: 'Read' },
-    'tl.more': { ja: 'くわしく', en: 'Details' },
+    'tl.more': { ja: 'ページを見る', en: 'Open page' },   // FIX-B (F21): it navigates, so it is not 「くわしく」
+    // FIX-B (v6)
+    'sc.peekK': { ja: '台本の書き出し', en: 'Script starts' },
+    'sc.peekGo': { ja: '台本を見る', en: 'See script' },
+    'mn.exTag': { ja: '例', en: 'Example' },
+    'mn.exTitle': { ja: '例の数字です', en: 'These are example numbers' },
+    'mn.exBody': { ja: '自分の数字に変えてみよう。入れた数字は、このスマホの中だけに残ります。', en: 'Change them to your own. What you enter stays on this phone only.' },
     'tl.toResult': { ja: '結果へ', en: 'Result' },
 
     /* script */
@@ -548,7 +554,7 @@
     var tips = (D().scriptTips || []).map(function (x) { return '<li>' + esc(L(x)) + '</li>'; }).join('');
 
     var left = '<section class="tl-sec scr-setup" aria-labelledby="scr-h1">' + secHead(1, 'scr-h1', t('sc.step1'), { seq: true }) +
-        '<div class="tl-sec-body">' + chips + '<p class="scr-label-title" id="scr-label">' + esc(L(s.label)) + '</p>' +
+        '<div class="tl-sec-body">' + chips + '<p class="scr-label-title" id="scr-label">' + esc(L(s.label)) + '</p>' + peekHtml(text) +
         '<div class="scr-mode" id="scr-mode">' + modeHtml(s) + '</div></div>' +
       '</section>' +
       '<section class="tl-sec" aria-labelledby="scr-h2">' + secHead(2, 'scr-h2', t('sc.step2'), { seq: true, action: actBtn('scr-reset', t('sc.reset')) }) +
@@ -575,6 +581,17 @@
       '</div>' + slot('rest', rest, defer) + '</div>';
   }
 
+  /* FIX-B (F37): the script is two screens below the chips on a phone — its first line shows here, so a tap on
+     another 用件 visibly changes something where the eye is, with a jump to the whole script */
+  function firstLine(text) {
+    var l = parseLines(text).filter(function (x) { return x.k === 'say' || x.k === 'q'; })[0];
+    return l ? l.s : '';
+  }
+  function peekHtml(text) {
+    return '<div class="scr-peek" id="scr-peek"><p class="scr-peek-k">' + esc(t('sc.peekK')) + '</p>' +
+      '<p class="scr-peek-t" id="scr-peek-t" lang="ja">' + esc(firstLine(text)) + '</p>' +
+      '<button type="button" class="scr-peek-go" data-act="tl-scroll" data-target="scr-h3"><span>' + esc(t('sc.peekGo')) + '</span>' + arrow('d') + '</button></div>';
+  }
   function currentProgram() { return prog(SCR.pid); }
   function refreshScript(fade) {
     var p = currentProgram();
@@ -584,6 +601,13 @@
     if (out) { if (fade) swapIn(out, html, function () { cascade(out.querySelectorAll('.scr-line, .scr-help'), 40, 120); }); else { out.innerHTML = html; ruby(out); } }
     var cp = document.getElementById('scr-copy');
     if (cp) cp.setAttribute('data-text', text);
+    var pk = document.getElementById('scr-peek-t'), line = firstLine(text);
+    if (pk && pk.textContent !== line) {
+      var m = M();
+      if (fade && m && m.swapText && !reduced()) { try { m.swapText(pk, line); } catch (e) { pk.textContent = line; } } else pk.textContent = line;
+      var go = document.querySelector('#scr-peek .scr-peek-go .arrow');
+      if (fade && go && m && m.animate && !reduced()) { try { m.animate(go, [{ transform: 'none' }, { transform: 'translateY(5px)', offset: 0.4 }, { transform: 'none' }], { duration: 520, delay: 160, easing: 'cubic-bezier(0.2, 0, 0, 1)', key: 'peek-go' }); } catch (e) { } }
+    }
   }
 
   SM.on('scr-key', function (el) {
@@ -1117,6 +1141,10 @@
     }
     return { inc: inc, out: out, bal: inc - out };
   }
+  /* FIX-B (F36): nothing entered yet = the example numbers. The hero says 例 in grey and the message invites an
+     edit, instead of an amber 「毎月 8,000円 足りません」 that read like the person's own verdict. */
+  function isEx(mode) { try { return SM.store.get(simKey(mode), null) == null; } catch (e) { return false; } }
+  function markOf(st) { return st === 'ex' ? '' : st === 'short' ? '✕' : '✓'; }
   function statusOf(r, mode) { return r.bal < 0 ? 'short' : r.bal < (mode === 'jr' ? 1000 : 20000) ? 'thin' : 'ok'; }
   function simTips(v, r, mode) {
     var tips = [];
@@ -1140,6 +1168,7 @@
     return tips;
   }
   function msgHtml(v, r, mode) {
+    if (isEx(mode)) return SM.ui.callout(esc(t('mn.exBody')), 'info', { title: t('mn.exTitle') });
     var st = statusOf(r, mode);
     var tone = st === 'short' ? 'warn' : st === 'thin' ? 'info' : 'safe';
     var title, body;
@@ -1166,7 +1195,7 @@
   function moneyResult(v, mode) {
     var c = simCfg(mode);
     var r = simCalc(v, mode);
-    var st = statusOf(r, mode);
+    var st = isEx(mode) ? 'ex' : statusOf(r, mode);
     var max = Math.max(r.inc, r.out, 1);
     var top = bdMax(c, v);
     var bd = (c.expenses || []).map(function (e) {
@@ -1178,9 +1207,10 @@
     }).join('');
     var unit = en() ? '' : '<span class="mn-unit-big">円</span>';
     return '<div class="mn-big st-' + st + '" id="mn-big">' +
-        '<p class="mn-big-k">' + esc(t(mode === 'jr' ? 'mn.balJr' : 'mn.bal')) + '</p>' +
+        '<p class="mn-big-k">' + (st === 'ex' ? '<span class="mn-ex-tag" id="mn-ex-tag">' + esc(t('mn.exTag')) + '</span>' : '') + esc(t(mode === 'jr' ? 'mn.balJr' : 'mn.bal')) + '</p>' +
         '<p class="mn-big-v"><span class="mn-sign' + (r.bal < 0 ? ' is-minus' : '') + '" id="mn-sign">' + signOf(r.bal) + '</span>' + (en() ? '<span class="mn-unit-big is-pre">¥</span>' : '') +
-          '<b class="mn-n" id="mn-n" data-count="' + Math.abs(r.bal) + '">' + fmt(r.bal) + '</b>' + unit + '</p>' +
+          '<b class="mn-n" id="mn-n" data-count="' + Math.abs(r.bal) + '">' + fmt(r.bal) + '</b>' + unit +
+          '<span class="mn-mark" id="mn-mark" aria-hidden="true">' + markOf(st) + '</span></p>' +
         (mode === 'jr' ? '<p class="mn-year" id="mn-year" data-neg="' + (r.bal < 0) + '">' + yearHtml(r) + '</p>' : '') +
         '<p class="sr-only" id="mn-sr" aria-live="polite">' + esc(srText(r, mode)) + '</p>' +
       '</div>' +
@@ -1202,7 +1232,7 @@
   }
   function floatHtml(v, mode) {
     var r = simCalc(v, mode);
-    var st = statusOf(r, mode);
+    var st = isEx(mode) ? 'ex' : statusOf(r, mode);
     return '<span class="tl-float-dot st-' + st + '" aria-hidden="true"></span><span class="tl-float-main">' + esc(t(mode === 'jr' ? 'mn.balJr' : 'mn.bal')) + '</span>' +
       '<span class="tl-float-num"><span id="mn-float-s"' + (r.bal < 0 ? ' class="is-minus"' : '') + '>' + signOf(r.bal) + '</span>' + (en() ? '¥' : '') + '<b class="tl-float-n" id="mn-float-n">' + fmt(r.bal) + '</b>' + (en() ? '' : '円') + '</span>' +
       '<span class="tl-float-go"><span>' + esc(t('tl.toResult')) + '</span>' + arrow('d') + '</span>';
@@ -1304,7 +1334,7 @@
     var root = document.querySelector('#view .tl-moneypage');
     if (!root) return;
     var direct = !!o.direct;
-    var c = simCfg(mode), r = simCalc(v, mode), st = statusOf(r, mode);
+    var c = simCfg(mode), r = simCalc(v, mode), st = isEx(mode) ? 'ex' : statusOf(r, mode);
     var max = Math.max(r.inc, r.out, 1);
     root.classList.toggle('is-live', direct);
     var big = root.querySelector('#mn-big');
@@ -1321,6 +1351,13 @@
         else roll(root.querySelector('#mn-year-n'), r.bal * 12, { direct: direct });
       }
       if (was && was !== st && !direct) stamp(root.querySelector('#mn-sign'), { ring: false });
+      // the 例 tag leaves on the first edit (or comes back after リセット)
+      var tag = root.querySelector('#mn-ex-tag'), bk = big.querySelector('.mn-big-k');
+      if (st !== 'ex' && tag) tag.parentNode.removeChild(tag);
+      else if (st === 'ex' && !tag && bk) bk.insertAdjacentHTML('afterbegin', '<span class="mn-ex-tag" id="mn-ex-tag">' + esc(t('mn.exTag')) + '</span>');
+      // ✓ / ✕ beside the number: it stamps in when the verdict crosses zero
+      var mk = root.querySelector('#mn-mark'), mt = markOf(st);
+      if (mk && mk.textContent !== mt) { mk.textContent = mt; if (mt && !direct) stamp(mk, { ring: false }); }
     }
     var set = function (id, p, n) {
       var b = root.querySelector('#' + id + '-bar');
@@ -1345,7 +1382,11 @@
       var mh = msgHtml(v, r, mode);
       if (msg.innerHTML !== mh) { msg.innerHTML = mh; ruby(msg); }
       msg.setAttribute('data-st', st);
-      if (wasSt !== st && !direct) stamp(msg.querySelector('.callout-title'), { ring: false });
+      if (wasSt !== st && !direct) {
+        // the verdict changes colour and words: a short cross-fade with a lift, then the title stamps
+        if (M() && M().animate && !reduced()) { try { M().animate(msg, [{ opacity: 0.25, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }], { duration: 260, easing: 'cubic-bezier(0.2, 0, 0, 1)', key: 'mn-msg' }); } catch (e) { } }
+        stamp(msg.querySelector('.callout-title'), { ring: false });
+      }
     }
     if (!direct) paintTips(v, mode);
     var fs = root.querySelector('#mn-float-s');
@@ -1495,7 +1536,8 @@
   SM.on('mn-reset', function () {
     var mode = curMode();
     var d = simDefault(mode);
-    saveVals(mode, d);
+    // FIX-B (F36): back to the example numbers, shown as 例 again
+    try { SM.store.remove(simKey(mode)); } catch (e) { saveVals(mode, d); }
     var segEl = document.getElementById('mn-preset-seg');
     if (segEl) Array.prototype.forEach.call(segEl.querySelectorAll('[data-value]'), function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-value') === d.preset ? 'true' : 'false'); });
     if (document.getElementById('mn-res-body')) applyVals(d, mode); else SM.render();

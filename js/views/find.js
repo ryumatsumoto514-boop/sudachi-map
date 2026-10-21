@@ -44,15 +44,34 @@
     'find.search.label': { ja: '支援をさがす', en: 'Search programs' },
     'find.search.clear': { ja: '入力を消す', en: 'Clear' },
     'find.search.try': { ja: 'よくさがされる言葉', en: 'Popular searches' },
-    'find.search.count': { ja: '「{q}」の支援', en: 'results for “{q}”' },
+    'find.search.count': { ja: '「{q}」の結果', en: 'results for “{q}”' },
     'find.search.unit': { ja: '件', en: '' },
     'find.search.none': { ja: '見つかりませんでした', en: 'Nothing found' },
     'find.search.noneBody': { ja: 'ちがう言葉か、下の困りごとから。', en: 'Try another word, or a topic below.' },
-    'find.cta.eyebrow': { ja: '質問は6つ・1分でおわります', en: '6 questions · about 1 minute' },
+    'find.search.maybe': { ja: 'もしかして', en: 'Did you mean' },
+    'find.search.starters': { ja: 'よくさがされる言葉', en: 'Popular searches' },
+    'find.search.ask': { ja: 'きくで探す', en: 'Search in Ask' },
+    'find.search.askNone': { ja: 'きくで、ふだんの言葉で聞いてみる', en: 'Ask in your own words' },
+    'find.search.tonight': { ja: '今夜いる場所がない', jr: '今、家にいられない', en: 'Nowhere to stay tonight' },
+    'find.search.talkNow': { ja: '今すぐだれかと話したいとき', en: 'If you need to talk to someone now' },
+    'find.search.sosAll': { ja: '緊急の相談先をすべて見る', en: 'See every emergency line' },
+    'find.search.loading': { ja: 'さがしています', en: 'Searching' },
+    'find.search.g.support': { ja: '支援', en: 'Support' },
+    'find.search.g.learn': { ja: 'まなぶ', en: 'Learn' },
+    'find.search.g.tools': { ja: 'ツール', en: 'Tools' },
+    'find.search.g.tasks': { ja: 'やること', en: 'To-dos' },
+    'find.search.g.places': { ja: '場所', en: 'Places' },
+    'find.search.local': { ja: '区や市の窓口・支援（{n}）', en: 'Ward & city offices and programs ({n})' },
+    'find.search.localPick': { ja: '住む所をえらぶ', en: 'Choose where you live' },
+    'find.search.live': { ja: '「{q}」：{n}件', en: '“{q}”: {n} results' },
+    'find.search.liveNone': { ja: '「{q}」：見つかりませんでした', en: '“{q}”: nothing found' },
+    'find.search.lesson': { ja: '{n}分で読める', en: '{n} min read' },
+    'find.search.places': { ja: 'か所', en: 'places' },
+    'find.cta.eyebrow': { ja: '質問は6つ・3分ほど', en: '6 questions · about 3 minutes' },
     // v5: the compact way in — one line + one button (+ a 「1分」 chip beside it)
     'find.cta.line': { ja: '6つの質問で、合う支援がわかる', jr: '6つの質問で、合う支援がわかる', en: '6 questions find what fits you' },
     'find.cta.go': { ja: '質問に答える', en: 'Answer' },
-    'find.cta.min': { ja: '1分', en: '1 min' },
+    'find.cta.min': { ja: '6問・3分', en: '6 questions · 3 min' },
     'find.search.tryAria': { ja: 'よくさがされる言葉', en: 'Popular searches' },
     'find.cta.title1': { ja: '答えるだけで、', en: 'Answer a few questions to find ' },
     'find.cta.mark': { ja: 'あなたに合う支援', en: 'the support that fits you' },
@@ -98,7 +117,11 @@
     'find.q.skipNext': { ja: '選ばずに次へ', en: 'Skip for now' },
     'find.q.toResults': { ja: '結果にもどる', en: 'Back to results' },
     'find.q.seeResults': { ja: '結果を見る', en: 'See results' },
-    'find.q.quit': { ja: 'あとで', en: 'Later' },
+    'find.q.quit': { ja: 'あとで答える', en: 'Answer later' },
+    'find.q.quitSr': { ja: '（質問をぬけます。答えは残ります）', en: ' (leaves the questions; your answers are kept)' },
+    'find.q.urgentGo': { ja: '今すぐ相談先を見る', jr: '今すぐ話せる所を見る', en: 'See who to call now' },
+    'find.q.urgentLead': { ja: '今すぐ電話できます。番号をタップ。', jr: '番号をタップすると電話がかかります。名前は言わなくて大丈夫。', en: 'You can call right now. Tap a number.' },
+    'find.q.urgentAria': { ja: '今すぐ電話できる相談先', jr: '今すぐ話せる所', en: 'Call now' },
     'find.q.multi': { ja: 'いくつでも選べます', en: 'Choose as many as you like' },
     'find.q.optional': { ja: '答えなくてOK', en: 'Optional' },
     'find.q.whyMore': { ja: 'なぜ聞くの', en: 'Why we ask' },
@@ -134,6 +157,9 @@
     'find.res.sub': { ja: '合いそうな順。決めるのは窓口です。', jr: '合いそうな順。決めるのは窓口の人。', en: 'By fit. The office decides.' },
     // v5 headline (≤14 chars): 64件 / あなたに合いそうな支援
     'find.res.h': { ja: 'あなたに合いそうな支援', jr: 'あなたに合いそうな支援', en: 'Programs that may fit you' },
+    'find.res.hAll': { ja: 'すべての支援', en: 'All programs' },
+    'find.res.subAll': { ja: '質問に答えると、あなたに合う順にしぼりこめます。', en: 'Answer the questions to narrow these to what fits you.' },
+    'find.res.srAll': { ja: '{n}件の', en: '{n}' },
     'find.res.scan': { ja: 'さがしています', en: 'Searching' },
     'find.res.noAnswers': { ja: '質問に答えると、あなたに合う順に並びます。', en: 'Answer the questions to sort these by fit.' },
     'find.res.answers': { ja: 'あなたの答え', en: 'Your answers' },
@@ -216,7 +242,16 @@
     // 緊急 sheet → 「話すのがこわいときは」: only places you can reach by LINE or chat
     'find.chat.h': { ja: 'LINE・チャットで話せるところ', jr: 'チャットで話せるところ', en: 'Talk by LINE or chat' },
     'find.chat.intro': { ja: '文字で相談できます。名前は言わなくて大丈夫。', jr: '文字で相談できるよ。名前は言わなくて大丈夫。', en: 'Type instead of calling. No name needed.' },
-    'find.chat.all': { ja: '電話の相談先もふくめて、すべて見る', en: 'See every place to talk, phone too' }
+    'find.chat.all': { ja: '電話の相談先もふくめて、すべて見る', en: 'See every place to talk, phone too' },
+    'find.chat.lineTag': { ja: 'LINE', en: 'LINE' },
+    'find.chat.chatTag': { ja: 'チャット', en: 'Chat' },
+    'find.chat.openLine': { ja: 'LINEをひらく', en: 'Open LINE' },
+    'find.chat.openChat': { ja: 'チャットをひらく', en: 'Open chat' },
+    'find.chat.page': { ja: 'くわしく', en: 'Details' },
+    'find.cat.notFound': { ja: 'その困りごとのページは見つかりませんでした', en: 'That topic page was not found' },
+    'find.cat.notFoundBody': { ja: '下の困りごとから選んでください。', en: 'Choose a topic below.' },
+    'find.cat.nav': { ja: '分野', en: 'Topics' },
+    'find.tag.from': { ja: '{c}の支援', en: '{c}' }
   });
   function t(k, v) { return SM.t(k, v); }
   function L(o) { return SM.L(o); }
@@ -399,7 +434,9 @@
       opts: [
         opt('a12', '12〜14歳', '12–14'), opt('a15', '15〜17歳', '15–17'), opt('a18', '18〜19歳', '18–19'),
         opt('a20', '20〜22歳', '20–22'), opt('a23', '23歳以上', '23 or older')
-      ] },
+      ],
+      // F16: 中学生 never see 18〜19 / 20〜22 / 23歳以上 (the flow also skips this question for them: qNext)
+      optsJr: [opt('a12', '12〜14歳', '12–14'), opt('a15', '15〜17歳', '15–17')] },
     { n: 6, key: 'care', optional: true,
       title: { ja: 'どこで暮らしてきた？', jr: '今、どこで暮らしている？', en: 'Where have you lived?' },
       why: { ja: '答えなくても大丈夫。答えると、施設や里親家庭で育った人向けの支援を、あなたに合う順に上にならべます。', jr: '答えなくても大丈夫。答えると、あなたに合う支援を上にならべます。', en: 'You do not have to answer. If you do, programs for people who grew up in care are sorted to fit you better.' },
@@ -771,11 +808,20 @@
         if (plain.length && key === prev) why = arr.filter(isExtraWhy);
         else if (plain.length) prev = key;
       }
-      return pcard(r.p, { why: why, compact: o.compact });
+      var html1 = pcard(r.p, { why: why, compact: o.compact });
+      // F31: inside a group, a row from another field says so (お金 › 学 rows: 「進学の支援」), next to its own mark
+      if (o.group && r.p.cat && r.p.cat[0] && r.p.cat[0] !== o.group) html1 = groupTag(html1, r.p.cat[0]);
+      return html1;
     });
     var first = o.first != null && mem.defer ? o.first : html.length;
     return '<div class="pcards"' + (o.block ? '' : R('data-reveal-stagger="40"')) + '>' + html.slice(0, first).join('') +
       (html.length > first ? lazyRows(html.slice(first).join('')) : '') + '</div>';
+  }
+  function groupTag(html, cat) {
+    var tag = '<span class="f-xtag" data-cat="' + esc(cat) + '">' + esc(t('find.tag.from', { c: catName(cat) })) + '</span>';
+    var i = html.indexOf('</h3>');
+    if (i === -1) i = html.indexOf('</h2>');
+    return i === -1 ? html : html.slice(0, i + 5) + tag + html.slice(i + 5);
   }
   function wide() { try { return !!(window.matchMedia && window.matchMedia('(min-width: 1100px)').matches); } catch (e) { return false; } }
 
@@ -891,7 +937,191 @@
       jrNote(hidden, 'all') + body + more + wardHint(base) + '</section>';
   }
 
+  /* ------------------------------------------------------------------ the さがす box (F05)
+     It runs on SM.search, the engine behind きく (kana / width folding, the everyday-word lexicon, programs AND
+     lessons, tools, やること and places). The engine's files load on first use (focus or a query in the address);
+     until they are in, the built-in search below answers, and the list is redrawn when the engine arrives.
+     Never a 「あなたに合いそうな理由」 line here (F07): a search is not a match. Other wards' and city windows wait in
+     one closed row (F08). A crisis word puts the right numbers first; a typo never does (F35). */
+  function engine() { return SM.search && typeof SM.search.query === 'function' ? SM.search : null; }
+  var engineWait = null, engineFailed = false, engineWarm = false;
+  function needEngine() {
+    if (engine() || engineWait || engineFailed || !SM.need) return;
+    var files = ((SM.lazy && SM.lazy.ask) || []).filter(function (f) { return !/views\/ask\.js$/.test(f); });
+    if (!files.length) return;
+    try {
+      engineWait = SM.need(files).then(function () {
+        engineWait = null;
+        if (mem.q.trim() && document.getElementById('f-browse-body')) refreshBrowseBody();
+      }, function () { engineWait = null; engineFailed = true; });
+    } catch (e) { engineWait = null; engineFailed = true; }
+  }
+  function engineQuery(q) {
+    var E = engine();
+    if (!E) return null;
+    var res = null;
+    try { res = E.query(q, { partial: !!(E.full && !E.full()) }); } catch (e) { console.error('[find] search', e); return null; }
+    // the rest of the index (body text, English) is built in idle slices; then the list is checked again
+    if (res && E.full && !E.full() && E.warm && !engineWarm) {
+      engineWarm = true;
+      try { E.warm(function () { if (mem.q.trim() && document.getElementById('f-browse-body')) refreshBrowseBody(); }); } catch (e) { }
+    }
+    return res;
+  }
+  // the matched words get a 蛍光ペン band (find.css .f-hl; it sweeps in on a row that is new on screen)
+  function hl(text, terms) {
+    text = String(text == null ? '' : text);
+    var E = engine();
+    if (!E || !E.highlight || !terms || !terms.length) return esc(text);
+    var r; try { r = E.highlight(text, terms) || []; } catch (e) { return esc(text); }
+    var out = '', at = 0;
+    r.forEach(function (x) {
+      if (x[0] < at || x[1] <= x[0]) return;
+      out += esc(text.slice(at, x[0])) + '<mark class="f-hl">' + esc(text.slice(x[0], x[1])) + '</mark>';
+      at = x[1];
+    });
+    return out + esc(text.slice(at));
+  }
+  // highlighted text in place of the escaped text a component rendered (the first occurrence after `after`)
+  function swapHl(html, text, terms, after) {
+    var e = esc(text);
+    if (!e || !terms || !terms.length) return html;
+    var from = after ? html.indexOf(after) : 0;
+    if (from < 0) return html;
+    var i = html.indexOf('>' + e + '<', from);
+    if (i < 0) return html;
+    return html.slice(0, i + 1) + hl(text, terms) + html.slice(i + 1 + e.length);
+  }
+  function askLink(q) {
+    return '<p class="f-s-ask"><a class="f-s-asklink" href="#/ask/' + encodeURIComponent(String(q || '').trim()) + '" data-press>' +
+      '<span>' + esc(t('find.search.ask')) + '</span>' + arrow('r') + '</a></p>';
+  }
+  function tonightLink() {
+    return '<p class="f-s-tonight"><a class="f-s-tonightlink" href="#/find/cat/housing"><span>' + esc(t('find.search.tonight')) + '</span>' + arrow('r') + '</a></p>';
+  }
+  function sChips(list, label, cls) {
+    if (!list || !list.length) return '';
+    return '<div class="f-s-chips' + (cls ? ' ' + cls : '') + '" role="group" aria-label="' + esc(label) + '"><p class="f-s-chips-k" aria-hidden="true">' + esc(label) + '</p>' +
+      '<div class="chips">' + list.map(function (x) {
+        var w = L(x.q || x.label || x);
+        return SM.ui.chip(L(x.label || x), { act: 'find-suggest', attrs: 'data-q="' + esc(w) + '"' });
+      }).join('') + '</div></div>';
+  }
+  // nothing found (F35): never the red card for a typo. もしかして, the popular words, きく, one quiet line for tonight
+  function noneHtml(q, res, jrRow, crisis) {
+    var maybe = res && res.suggest ? res.suggest : [];
+    var E = engine();
+    var starters = [];
+    try { starters = E && E.starters ? E.starters(junior()) : []; } catch (e) { starters = []; }
+    if (!starters.length) starters = (junior() && !en() ? SUGGEST_JR : SUGGEST).map(function (s) { return { label: L(s), q: L(s) }; });
+    return '<div class="f-sresults is-none"><p class="f-count"><span class="f-count-q">' + esc(t('find.search.none')) + '</span></p>' +
+      '<p class="f-snone-body">' + esc(t('find.search.noneBody')) + '</p>' + (jrRow || '') +
+      (crisis ? crisisCard({ withYori: true, id: '-s' }) : '') +
+      sChips(maybe, t('find.search.maybe'), 'f-s-maybe') +
+      sChips(maybe.length ? [] : starters.slice(0, 6), t('find.search.starters'), 'f-s-starters') +
+      '<div class="list f-s-none-links">' + SM.ui.listItem({ title: t('find.search.askNone'), href: '#/ask/' + encodeURIComponent(q.trim()), icon: 'line' }) + '</div>' +
+      (crisis ? '' : tonightLink()) +
+      catList() + '</div>';
+  }
+  // crisis words other than "nowhere to stay": who to talk to now (the lexicon's own lines), then every line (緊急)
+  function talkNow(kinds) {
+    var lx = (SM.data && SM.data.lexicon) || {}, CI = lx.crisisIds || {}, jr = junior(), ids = [];
+    kinds.forEach(function (k) { ((jr && CI[k + ':jr']) || CI[k] || []).forEach(function (id) { if (ids.indexOf(id) === -1) ids.push(id); }); });
+    var rows = '', n = 0;
+    ids.forEach(function (id) {
+      if (n >= 3) return;
+      var p = SM.program(id), c = p && p.contact;
+      if (!c) return;
+      if (c.phone) { rows += telRow(c.phone, L(c.phoneLabel) || L(p.name), { hours: L(c.hours) }); n++; }
+      else if (c.line || c.chat) { rows += linkRow(c.line || c.chat, L(p.name), true); n++; }
+    });
+    return '<section class="f-crisis f-talk" aria-labelledby="f-talk-h"><h2 class="f-crisis-title" id="f-talk-h">' + esc(t('find.search.talkNow')) + '</h2>' +
+      '<p class="f-crisis-lead">' + esc(t('find.crisis.lead')) + '</p>' +
+      (rows ? '<div class="contact f-crisis-rows">' + rows + '</div>' : '') +
+      '<button type="button" class="btn btn-sos btn-block f-talk-all" data-act="sos">' + ic('phone') + '<span>' + esc(t('find.search.sosAll')) + '</span></button></section>';
+  }
+  function sRow(h, terms) {
+    var title = L(h.title), rec = h.rec || {};
+    var o = { title: title, href: h.href, id: 's:' + h.key };
+    if (h.type === 'lesson') { o.cat = h.cat; o.sub = t('find.search.lesson', { n: rec.minutes || 3 }); }
+    else if (h.type === 'tool') { o.cat = h.cat; }
+    else if (h.type === 'area') { o.icon = 'pin'; o.meta = String(rec.count || 0); o.unit = t('find.search.places'); }
+    else if (h.type === 'task') { o.icon = 'check-list'; var g = rec.group; if (g && g.title) o.sub = L(g.title); }
+    o.vt = false;
+    return swapHl(SM.ui.listItem(o), title, terms, 'class="list-title"');
+  }
+  function sCard(p, terms) {
+    return swapHl(pcard(p, { compact: true }), L(p.name), terms, 'class="pcard-link"');
+  }
+  var S_CAPS = { support: 10, learn: 4, tools: 3, tasks: 4, places: 3 };
+  function sGroup(g, inner, n, rest) {
+    return '<section class="f-sg f-sg-' + g + '" aria-labelledby="f-sg-' + g + '">' +
+      '<h2 class="f-sg-h" id="f-sg-' + g + '" data-flip-key="sgh-' + g + '"><span>' + esc(t('find.search.g.' + g)) + '</span>' +
+      '<span class="f-sg-n">' + rollNum('sg-' + g, n, 'f-sg-num') + '<span class="unit">' + esc(t('find.search.unit')) + '</span></span></h2>' +
+      inner + (rest || '') + '</section>';
+  }
+  function engineResults(q, res) {
+    var terms = res.terms || [];
+    var area = answers().area;
+    var kinds = res.crisis && res.crisis.kinds ? res.crisis.kinds : [];
+    var nowhere = kinds.indexOf('nowhere') !== -1;
+    var other = kinds.filter(function (k) { return k !== 'nowhere'; });
+    var housingWords = intentsFor(q).some(function (it) { return it.crisis; });
+    // programs: 中学生 lists hold only what is open to them (a supporter can show all); other wards' and city
+    // windows go into one closed row unless they are for the person's own ward
+    var sup = res.groups.support || [];
+    var fits = null, jrHidden = 0;
+    if (jrFilter()) { fits = {}; SM.match(answers()).forEach(function (r) { fits[r.p.id] = 1; }); }
+    var main = [], locals = [], seen = {};
+    sup.forEach(function (h) {
+      var p = h.rec;
+      if (!p || seen[p.id]) return;
+      seen[p.id] = 1;
+      var r = { p: p };
+      if (fits && !fits[p.id]) { if (!otherWard(r)) jrHidden++; return; }
+      var ar = (p.for && p.for.areas) || [];
+      var mine = U().isWard(area) && ar.indexOf(area) !== -1;
+      if (isLocalItem(r) && !mine) locals.push(p); else main.push(p);
+    });
+    var lists = { learn: res.groups.learn || [], tools: res.groups.tools || [], tasks: res.groups.tasks || [], places: res.groups.places || [] };
+    var n = main.length + locals.length + lists.learn.length + lists.tools.length + lists.tasks.length + lists.places.length;
+    var jrRow = jrNote(jrHidden, 's');
+    mem.sLive = { q: q.trim(), n: n, crisis: !!kinds.length };
+    if (!n) return noneHtml(q, res, jrRow, nowhere || housingWords);
+    var out = '<div class="f-sresults"><p class="f-count">' + rollNum('s-n', n, 'f-count-n') + '<span class="f-count-u">' + esc(t('find.search.unit')) + '</span>' +
+      '<span class="f-count-q">' + esc(t('find.search.count', { q: q.trim() })) + '</span></p>' + jrRow;
+    // the right numbers first: the housing card for "nowhere to stay", the talk lines (and 緊急) for the rest
+    if (nowhere) out += crisisCard({ id: '-s', withYori: true });
+    if (other.length) out += talkNow(other);
+    else if (!nowhere && housingWords) out += tonightLink();
+    if (res.fuzzy && res.suggest && res.suggest.length) out += sChips(res.suggest, t('find.search.maybe'), 'f-s-maybe');
+    var cap = S_CAPS.support;
+    if (main.length || locals.length) {
+      var inner = main.length ? '<div class="pcards">' + main.slice(0, cap).map(function (p) { return sCard(p, terms); }).join('') + '</div>' : '';
+      var more = main.length > cap ? SM.ui.more(t('find.more', { n: main.length - cap }), '<div class="pcards">' + main.slice(cap).map(function (p) { return sCard(p, terms); }).join('') + '</div>', { inline: true, cls: 'f-s-more', closeLabel: t('find.less') }) : '';
+      var loc = locals.length ? '<div class="f-s-local">' + SM.ui.more(t('find.search.local', { n: locals.length }),
+        '<p class="f-s-localpick"><a href="#/find/q/3" class="f-s-localpick-a">' + esc(t('find.search.localPick')) + arrow('r') + '</a></p>' +
+        '<div class="pcards">' + locals.map(function (p) { return sCard(p, terms); }).join('') + '</div>', { inline: true, cls: 'f-s-localmore' }) + '</div>' : '';
+      out += sGroup('support', inner, main.length + locals.length, more + loc);
+    }
+    ['learn', 'tools', 'places', 'tasks'].forEach(function (g) {
+      var list = lists[g];
+      if (!list.length) return;
+      var c = S_CAPS[g] || 4;
+      var rows = function (arr) { return '<div class="list">' + arr.map(function (h) { return sRow(h, terms); }).join('') + '</div>'; };
+      out += sGroup(g, rows(list.slice(0, c)), list.length,
+        list.length > c ? SM.ui.more(t('find.more', { n: list.length - c }), rows(list.slice(c, 40)), { inline: true, cls: 'f-s-more', closeLabel: t('find.less') }) : '');
+    });
+    return out + askLink(q) + '</div>';
+  }
   function searchResults(q) {
+    var res = engine() ? engineQuery(q) : null;
+    if (res) return engineResults(q, res);
+    needEngine();
+    return legacyResults(q);
+  }
+
+  function legacyResults(q) {
     var intents = intentsFor(q);
     var pinned = intentRows(intents);
     var pinnedIds = {}; pinned.forEach(function (r) { pinnedIds[r.p.id] = 1; });
@@ -906,18 +1136,23 @@
       try { search(q).forEach(function (r) { if (!mine[r.p.id] && !otherWard(r)) jrHidden++; }); } finally { mem.jrAll = false; }
     }
     var jrRow = jrNote(jrHidden, 's');
+    // the engine is still coming in: a quiet 「さがしています」, never a 「見つかりませんでした」 that flips a moment later
+    if (!n && engineWait) {
+      mem.sLive = null;
+      return '<div class="f-sresults is-loading"><p class="f-count"><span class="f-count-q">' + esc(t('find.search.loading')) + '</span></p></div>';
+    }
     if (!n) {
       // never a dead end: who to call now, then the topics
-      return '<div class="f-sresults"><p class="f-count" role="status"><span class="f-count-q">' + esc(t('find.search.none')) + '</span></p>' +
-        '<p class="f-snone-body">' + esc(t('find.search.noneBody')) + '</p>' + jrRow +
-        crisisCard({ withYori: true, id: '-s' }) + catList() + '</div>';
+      mem.sLive = { q: q.trim(), n: 0, crisis: crisis };
+      return noneHtml(q, null, jrRow, crisis);
     }
-    return '<div class="f-sresults"><p class="f-count" role="status">' + rollNum('s-n', n, 'f-count-n') + '<span class="f-count-u">' + esc(t('find.search.unit')) + '</span>' +
+    mem.sLive = { q: q.trim(), n: n, crisis: crisis };
+    return '<div class="f-sresults"><p class="f-count">' + rollNum('s-n', n, 'f-count-n') + '<span class="f-count-u">' + esc(t('find.search.unit')) + '</span>' +
       '<span class="f-count-q">' + esc(t('find.search.count', { q: q.trim() })) + '</span></p>' + jrRow +
       (crisis ? crisisCard({ id: '-s' }) : '') +
       (pinned.length ? '<section class="f-intent" aria-labelledby="f-intent-h">' + SM.ui.sectionHeader(t('find.search.helpTitle'), { id: 'f-intent-h', level: 2, reveal: false }) +
-        cards(pinned) + '</section>' : '') +
-      (rows.length ? cards(rows) : '') +
+        cards(pinned, { noWhy: true }) + '</section>' : '') +
+      (rows.length ? cards(rows, { noWhy: true }) : '') + askLink(q) +
     '</div>';
   }
 
@@ -947,6 +1182,8 @@
             return SM.ui.chip(w, { act: 'find-suggest', pressed: mem.q.trim() === w, attrs: 'data-q="' + esc(w) + '"' + (mem.quiet ? '' : ' data-reveal-delay="140"') });
           }).join('') + '</div>' +
         '</div>' +
+        // F44: one polite status for the list under the box (count, or nothing found), said once typing pauses
+        '<p class="sr-only" role="status" aria-live="polite" aria-atomic="true" id="f-s-live"></p>' +
       '</div>' +
       '<div class="f-side-more" id="f-side-more">' + sideMore() + '</div>' +
       '</div></div>' +
@@ -960,29 +1197,83 @@
       b.setAttribute('aria-pressed', b.getAttribute('data-q') === q ? 'true' : 'false');
     });
   }
+  // the rows on screen (search results and the list), by key: only rows that were not there before sweep their 蛍光ペン
+  function shownKeys(root) {
+    var out = {};
+    if (root) Array.prototype.forEach.call(root.querySelectorAll('.pcard[data-id], .list-item[data-id]'), function (el) { out[el.getAttribute('data-id')] = 1; });
+    return out;
+  }
   function refreshBrowseBody() {
     var body = document.getElementById('f-browse-body');
     if (!body) return;
-    var was = mem.quiet; mem.quiet = true;           // typing: no reveal cascade on every keystroke
-    var wasDefer = mem.defer; mem.defer = false;
-    var rolls = snapRolls();
-    body.innerHTML = browseBody();
-    var more = document.getElementById('f-side-more');
-    var moreHtml = sideMore();
-    var moreChanged = !!more && (!moreHtml) !== (!more.innerHTML);
-    if (moreChanged) more.innerHTML = moreHtml;
-    var cats = document.getElementById('f-cats-slot');
-    var catsHtml = catsMore();
-    var catsChanged = !!cats && (!catsHtml) !== (!cats.innerHTML);
-    if (catsChanged) cats.innerHTML = catsHtml;
-    mem.quiet = was; mem.defer = wasDefer;
-    try { SM.applyRuby(body); if (moreChanged && moreHtml) SM.applyRuby(more); if (catsChanged && catsHtml) SM.applyRuby(cats); } catch (e) { }
-    mcall('mount', body, { instant: true });
-    if (moreChanged && moreHtml) mcall('mount', more, { instant: true });
-    if (catsChanged && catsHtml) mcall('mount', cats, { instant: true });
-    mem.rollFrom = rolls; playRolls(body);
-    paintSuggest();
-    wireTabs(body);
+    var before = shownKeys(body);
+    var hadRows = !!body.querySelector('.f-sresults');
+    var update = function () {
+      var was = mem.quiet; mem.quiet = true;           // typing: no reveal cascade on every keystroke
+      var wasDefer = mem.defer; mem.defer = false;
+      var rolls = snapRolls();
+      mem.sLive = null;
+      body.innerHTML = browseBody();
+      var more = document.getElementById('f-side-more');
+      var moreHtml = sideMore();
+      var moreChanged = !!more && (!moreHtml) !== (!more.innerHTML);
+      if (moreChanged) more.innerHTML = moreHtml;
+      var cats = document.getElementById('f-cats-slot');
+      var catsHtml = catsMore();
+      var catsChanged = !!cats && (!catsHtml) !== (!cats.innerHTML);
+      if (catsChanged) cats.innerHTML = catsHtml;
+      mem.quiet = was; mem.defer = wasDefer;
+      try { SM.applyRuby(body); if (moreChanged && moreHtml) SM.applyRuby(more); if (catsChanged && catsHtml) SM.applyRuby(cats); } catch (e) { }
+      // rows that were already on screen keep their band still; new rows get .is-new (their band sweeps in)
+      Array.prototype.forEach.call(body.querySelectorAll('.pcard[data-id], .list-item[data-id]'), function (el) {
+        if (!before[el.getAttribute('data-id')]) el.classList.add('is-new');
+      });
+      mcall('mount', body, { instant: true });
+      if (moreChanged && moreHtml) mcall('mount', more, { instant: true });
+      if (catsChanged && catsHtml) mcall('mount', cats, { instant: true });
+      mem.rollFrom = rolls; playRolls(body);
+      // coming back from a search the way in and the topics return: they rise in (not a jump)
+      if (animOn()) {
+        [moreChanged && moreHtml ? more : null, catsChanged && catsHtml ? cats : null].forEach(function (box, i) {
+          if (box) anim(box, [{ opacity: 0, transform: 'translateY(12px)' }, { opacity: 1, transform: 'none' }], { duration: 320, delay: 40 + i * 60, easing: 'cubic-bezier(0, 0, 0.2, 1)', fill: 'backwards' });
+        });
+      }
+      paintSuggest();
+      wireTabs(body);
+    };
+    // rows glide to their new places, new rows rise in, gone rows fade where they were (FLIP)
+    var m = M();
+    if (m && m.flip && hadRows && mem.q.trim()) { try { m.flip(body, update, { selector: '.pcard, .list-item[data-id], [data-flip-key]' }); } catch (e) { update(); } }
+    else update();
+    sayResults();
+    writeUrl();
+  }
+  // F44: the polite status (once typing has paused)
+  var liveT = null, urlT = null;
+  function sayResults() {
+    clearTimeout(liveT);
+    var st = mem.sLive;
+    liveT = setTimeout(function () {
+      var live = document.getElementById('f-s-live');
+      if (!live) return;
+      live.textContent = !st || !st.q ? '' : st.n ? t('find.search.live', { q: st.q, n: st.n }) : t('find.search.liveNone', { q: st.q });
+    }, st && st.crisis ? 60 : 700);
+  }
+  // F18: the query goes into the address (#/find?q=…) once typing pauses, so a reload or a shared link keeps it.
+  // Never a crisis word: nothing of that kind is kept in the address or the history.
+  function canonBrowse() {
+    var q = mem.q.trim();
+    return q && !(mem.sLive && mem.sLive.crisis) ? '#/find?q=' + encodeURIComponent(q) : '#/find';
+  }
+  function writeUrl(now) {
+    clearTimeout(urlT);
+    var go = function () {
+      if (!SM.replaceHash || !(SM.route && SM.route.name === 'find') || !document.getElementById('f-q')) return;
+      var h = canonBrowse();
+      if (SM.route.hash === h) return;
+      if (SM.replaceHash(h)) mem.lastHash = SM.route.hash;
+    };
+    if (now) go(); else urlT = setTimeout(go, 400);
   }
 
   function mountBrowse(root) {
@@ -997,19 +1288,41 @@
     var clear = root.querySelector('#f-q-clear');
     whenFlushed(root, wireTabs);
     if (!input) return;
-    var timer = null;
+    // the engine's files come in as soon as the box is used (or now, for a query from the address)
+    if (mem.q.trim()) {
+      needEngine();
+      sayResults();
+      // a query kept in memory and reached by the tab (#/find): the address follows (F18)
+      writeUrl(true);
+    }
+    ['focus', 'pointerdown'].forEach(function (ev) { input.addEventListener(ev, needEngine, { passive: true }); });
+    // otherwise once the page has settled (not on a data-saver or 2G/3G connection: then on first use only)
+    var lean = false;
+    try { var cn = navigator.connection; lean = !!(cn && (cn.saveData || /2g|3g/.test(cn.effectiveType || ''))); } catch (e) { }
+    if (!lean && !engine()) setTimeout(function () { if (document.getElementById('f-q') === input) needEngine(); }, 1600);
+    var timer = null, composing = false;
     function update() {
       mem.q = input.value;
       if (clear) clear.hidden = !mem.q;
       refreshBrowseBody();
     }
-    input.addEventListener('input', function () { clearTimeout(timer); timer = setTimeout(update, 120); });
+    /* S4 (IME): while a kana→kanji conversion is open the list follows more slowly (the text still changes under
+       the conversion); Enter and Esc then belong to the IME (never a search, a blur or the quick exit) */
+    input.addEventListener('compositionstart', function () { composing = true; });
+    input.addEventListener('compositionend', function () { composing = false; clearTimeout(timer); timer = setTimeout(update, 60); });
+    input.addEventListener('input', function (e) { clearTimeout(timer); timer = setTimeout(update, composing || (e && e.isComposing) ? 360 : 120); });
+    var touch = function () { try { return window.matchMedia('(pointer: coarse)').matches; } catch (er) { return false; } };
     input.addEventListener('keydown', function (e) {
+      if (composing || e.isComposing || e.keyCode === 229) return;
       // no stopPropagation: clearing also counts as the 1st Esc of the Esc×2 quick exit
-      if (e.key === 'Escape' && input.value) { input.value = ''; update(); }
-      if (e.key === 'Enter') { e.preventDefault(); clearTimeout(timer); update(); try { input.blur(); } catch (er) { } }
+      if (e.key === 'Escape' && input.value) { clearTimeout(timer); input.value = ''; update(); }
+      if (e.key === 'Enter') {
+        e.preventDefault(); clearTimeout(timer); update();
+        // a phone closes its keyboard so the list can be read; a desktop keeps typing
+        if (touch()) { try { input.blur(); } catch (er) { } }
+      }
     });
-    if (clear) clear.addEventListener('click', function () { input.value = ''; update(); input.focus(); });
+    if (clear) clear.addEventListener('click', function () { clearTimeout(timer); input.value = ''; update(); input.focus(); });
   }
   // underline tabs: the 2px indicator sits under the chosen tab and slides when it changes (the bar is rebuilt by
   // an in-place re-render, so its old position and scroll are carried over)
@@ -1039,6 +1352,7 @@
     // tapping the chosen word again clears it
     input.value = mem.q.trim() === w ? '' : w;
     mem.q = input.value;
+    needEngine();
     refreshBrowseBody();
     var clear = document.getElementById('f-q-clear'); if (clear) clear.hidden = !mem.q;
   });
@@ -1078,8 +1392,11 @@
   var EASE_DRAW = 'cubic-bezier(0.5, 0, 0.15, 1)';
   function qNext(n, query) {
     if (query && query.ret === 'results') return '#/find/results';
+    // F16: 中学生 skip 年齢 (their age follows from 中1〜中3: setStage), so 4 → 6
+    if (n === 4 && junior()) return '#/find/q/6';
     return n < TOTAL ? '#/find/q/' + (n + 1) : '#/find/results';
   }
+  function qPrev(n) { return n === 6 && junior() ? 4 : n - 1; }
   function retQ(query) { return query && query.ret === 'results' ? '?ret=results' : ''; }
   function qOpts(q) { return q.optsJr && junior() ? q.optsJr : q.opts; }
   // options arrive in reading order: 30ms apart from 120ms, capped at the 6th (MOTION-SPEC §4 Questions)
@@ -1138,7 +1455,7 @@
           '<span class="f-q-n" aria-hidden="true"><b class="f-q-cur">' + n + '</b><span class="f-q-of">/ ' + TOTAL + '</span></span>' +
           '<span class="sr-only">' + esc(t('find.q.of', { n: n, total: TOTAL })) + '</span></p>' +
         (q.optional ? '<span class="tag tag-neutral f-q-opt">' + esc(t('find.q.optional')) + '</span>' : '') +
-        '<a class="f-q-quit" href="' + (ret ? '#/find/results' : '#/find') + '">' + esc(t(ret ? 'find.q.toResults' : 'find.q.quit')) + '</a>' +
+        '<a class="f-q-quit" href="' + (ret ? '#/find/results' : '#/find') + '">' + esc(t(ret ? 'find.q.toResults' : 'find.q.quit')) + (ret ? '' : '<span class="sr-only">' + esc(t('find.q.quitSr')) + '</span>') + '</a>' +
       '</div>' +
       '<div class="f-q-line" role="progressbar" aria-label="' + esc(en() ? 'Progress' : '進みぐあい') + '" aria-valuemin="0" aria-valuemax="' + TOTAL + '" aria-valuenow="' + n + '" aria-valuetext="' + esc(t('find.q.of', { n: n, total: TOTAL })) + '">' +
         '<span class="f-q-rail" aria-hidden="true"><i class="f-q-run" style="transform:scaleX(' + (stX(n) / 100).toFixed(4) + ')"></i>' + st +
@@ -1188,14 +1505,15 @@
         '<button type="button" class="opt opt-multi f-opt f-opt-urgent' + (a.urgent ? ' is-selected' : '') + '" role="checkbox" aria-checked="' + (!!a.urgent) + '" data-act="find-urgent" data-press' + rv(k++) + '>' +
           '<span class="opt-ind">' + ic('check') + '</span>' +
           '<span class="opt-body"><span class="opt-title">' + esc(t('find.urgent.label')) + '</span><span class="opt-hint">' + esc(t('find.urgent.hint')) + '</span></span></button>' +
+        urgentInline(!!a.urgent) +
         catOrder().map(function (c) {
           var on = cs.indexOf(c) !== -1;
           return '<button type="button" class="opt opt-multi f-opt' + (on ? ' is-selected' : '') + '" role="checkbox" aria-checked="' + on + '" data-act="find-toggle" data-value="' + c + '" data-press' + rv(k++) + '>' +
             '<span class="opt-ind">' + ic('check') + '</span>' + SM.ui.catIcon(c, 'sm') +
             '<span class="opt-body"><span class="opt-title">' + esc(catName(c)) + '</span><span class="sr-only">' + esc(catHint(c)) + '</span></span></button>';
         }).join('') + '</div>';
-      foot = '<div class="q-foot f-q-foot"><button type="button" class="btn btn-primary btn-lg btn-block f-next' + (cs.length || ret ? ' is-ready' : '') + '" id="f-next" data-act="find-next" data-press>' +
-        '<span class="f-next-l">' + esc(concernBtnLabel(cs.length, ret)) + '</span>' + arrow('r') + '</button></div>';
+      foot = '<div class="q-foot f-q-foot"><button type="button" class="btn btn-primary btn-lg btn-block f-next' + (cs.length || ret || a.urgent ? ' is-ready' : '') + '" id="f-next" data-act="find-next" data-press>' +
+        '<span class="f-next-l">' + esc(concernBtnLabel(cs.length, ret, a.urgent)) + '</span>' + arrow('r') + '</button></div>';
     } else if (q.key === 'area') {
       body = '<div class="f-area-search"' + rv(k++) + '>' + SM.ui.searchField({ id: 'f-area-q', placeholder: t('find.area.search'), label: t('find.area.search') }) + '</div>' +
         '<div class="f-area" role="radiogroup" aria-labelledby="' + titleId + '">' +
@@ -1223,17 +1541,59 @@
         ((q.key === 'care' && a.care === 'skip') ? ' aria-pressed="true"' : '') + ' data-press' + rv(k++) + '>' +
         '<span class="opt-body"><span class="opt-title">' + esc(skipLabel ? L(skipLabel) : t('find.q.skip')) + '</span></span>' + '<span class="opt-end">' + arrow('r') + '</span></button>';
 
+    // F27: one way back to the question before (the bar's 戻る); here only 結果を見る, once there are results
     var see = (SM.state.answered || ret) && n < TOTAL && q.key !== 'concerns';
-    var nav = '<nav class="f-q-nav" aria-label="' + esc(en() ? 'Questions' : '質問の移動') + '">' +
-      (n > 1 ? '<a class="f-q-prev" href="#/find/q/' + (n - 1) + retQ(query) + '">' + arrow('l') + '<span>' + esc(t('find.q.prev')) + '</span></a>' : '<span></span>') +
-      (see ? '<a class="f-q-see" href="#/find/results" data-act="find-finish"><span>' + esc(t('find.q.seeResults')) + '</span>' + arrow('r') + '</a>' : '') +
-      '</nav>';
+    var nav = see ? '<nav class="f-q-nav" aria-label="' + esc(en() ? 'Questions' : '質問の移動') + '"><span></span>' +
+      '<a class="f-q-see" href="#/find/results" data-act="find-finish"><span>' + esc(t('find.q.seeResults')) + '</span>' + arrow('r') + '</a></nav>' : '';
     return '<div class="f-q f-q-' + q.key + '" data-n="' + n + '" data-next="' + esc(qNext(n, query)) + '">' + qProgress(n, q, query) + qJourney(n, q) +
       '<div class="f-q-body">' + title + why + body + skip + '</div>' + foot + nav + '</div>';
   }
-  function concernBtnLabel(k, ret) {
+  function concernBtnLabel(k, ret, urgent) {
     if (ret) return t('find.q.toResults');
+    // F01/F02: 今、いる場所がない goes straight to the numbers; the button says so (not a count)
+    if (urgent) return t('find.q.urgentGo');
     return k ? t('find.q.nextN', { n: k }) : t('find.q.skipNext');
+  }
+  /* F01: 今、いる場所がない opens two numbers right under the option (a call is one tap away on this screen).
+     Adults: TOKYOチャレンジネット (with today's hours) and よりそいホットライン (24h); 中学生: 189 and 子供SOSダイヤル. */
+  function urgentRows() {
+    var rows = '';
+    if (junior()) {
+      ['jiso-189', 'kodomo-sos'].forEach(function (pid) {
+        var p = SM.program(pid), c = p && p.contact;
+        if (c && c.phone) rows += telRow(c.phone, L(c.phoneLabel) || L(p.name), { hours: L(c.hours) });
+      });
+    } else {
+      var c = chalToday();
+      var hours = c.closedDay ? t('find.crisis.closed') : c.open ? c.label : c.label + '・' + t('find.crisis.after');
+      rows += telRow('0120-874-225', t('find.crisis.chal'), { hours: hours, hoursK: t('find.crisis.today'), open: c.open });
+      rows += telRow('0120-279-338', t('find.crisis.yori'));
+    }
+    return rows;
+  }
+  function urgentInline(on) {
+    return '<div class="f-q-urgent-wrap" id="f-q-urgent-wrap">' +
+      '<div class="f-q-urgent" id="f-q-urgent" role="region" aria-label="' + esc(t('find.q.urgentAria')) + '"' + (on ? '' : ' hidden') + '>' +
+      '<p class="f-q-urgent-lead">' + esc(t('find.q.urgentLead')) + '</p>' +
+      '<div class="contact f-crisis-rows">' + urgentRows() + '</div></div></div>';
+  }
+  // open / close the numbers in place: the options below slide down together, the red rule draws, the rows rise
+  function toggleUrgentRows(on) {
+    var wrap = document.getElementById('f-q-urgent-wrap'), box = document.getElementById('f-q-urgent');
+    if (!wrap || !box) return;
+    var set = function (v) { box.hidden = !v; };
+    var m = M();
+    if (!m || !m.expand) { set(on); return; }
+    mcall('expand', wrap, on, { setOpen: set, body: [] });
+    if (on && animOn()) {
+      anim(box.querySelector('.f-q-urgent-lead'), [{ opacity: 0, transform: 'translateY(-6px)' }, { opacity: 1, transform: 'none' }], { duration: 260, delay: 80, easing: 'cubic-bezier(0, 0, 0.2, 1)', fill: 'backwards' });
+      Array.prototype.forEach.call(box.querySelectorAll('.contact-item, .contact-hours'), function (r, i) {
+        anim(r, [{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }], { duration: 320, delay: 140 + i * 50, easing: 'cubic-bezier(0, 0, 0.2, 1)', fill: 'backwards' });
+      });
+      var ic2 = box.querySelector('.contact-cta svg');
+      if (ic2) setTimeout(function () { mcall('nudge', ic2); }, reduced() ? 0 : 620);
+    }
+    box.classList.toggle('is-drawn', !!on && animOn());
   }
 
   /* after an answer: the app moves on 260ms after the tap so the choice is seen to register; another tap in that
@@ -1262,6 +1622,9 @@
       if (isJr && a.path === 'study') SM.setAnswer('path', 'hs');
       else if (!isJr && a.path === 'hs') SM.setAnswer('path', 'study');
     }
+    // F16: 中1〜中3 are 12〜15 (match.js widens 12〜14 to 15 for 中3), so 年齢 is not asked; leaving 中学生 clears it
+    if (isJr && a.age !== 'a12' && a.age !== 'a15') SM.setAnswer('age', 'a12');
+    else if (!isJr && wasJr && a.age === 'a12') SM.setAnswer('age', null);
   }
   // the chosen ward cell: its ink block presses in like a hanko, on the same stamp spring as every other marker
   function stampCell(el) {
@@ -1309,8 +1672,9 @@
     if (!btn) return;
     var ret = SM.route && SM.route.query && SM.route.query.ret === 'results';
     var lab = btn.querySelector('.f-next-l');
-    var txt = concernBtnLabel(n, ret);
-    var was = btn.classList.contains('is-ready'), ready = n > 0 || !!ret;
+    var urgent = !!answers().urgent;
+    var txt = concernBtnLabel(n, ret, urgent);
+    var was = btn.classList.contains('is-ready'), ready = n > 0 || !!ret || urgent;
     // when the button also changes colour, the labels never overlap and the colour flips in the gap between them
     if (lab) { if (!M() || !M().swapText) lab.textContent = txt; else mcall('swapText', lab, txt, { flip: was !== ready, host: btn }); }
     btn.classList.toggle('is-ready', ready);
@@ -1339,11 +1703,14 @@
     el.setAttribute('aria-checked', on ? 'true' : 'false');
     el.classList.toggle('is-selected', on);
     if (on) mcall('check', el.querySelector('.opt-ind'));
+    toggleUrgentRows(on);
     setNextLabel(cs.length);
   });
   SM.on('find-next', function (el) {
     var box = el.closest('.f-q');
     var next = box ? box.getAttribute('data-next') : '#/find/results';
+    // F01: 今、いる場所がない: straight to the numbers (年齢・暮らし stay unanswered; they can be added on results)
+    if (answers().urgent && box && box.classList.contains('f-q-concerns')) next = '#/find/results';
     markAnsweredIfDone(next);
     leaveTo(next, 0);
   });
@@ -1574,15 +1941,27 @@
       list + '</details>';
   }
 
+  /* F06: a chip that would change nothing (its count is 0, or the whole list) is left out, unless it is on (so it
+     can always be turned off) */
   function filterBar(rows, delay) {
+    var total = applyFilters(rows).length;
+    var keys = ['free', 'now', 'near'].filter(function (k) {
+      if (ui.filters[k]) return true;
+      var n = countWith(rows, k);
+      return n > 0 && n < total;
+    });
+    if (!keys.length) return '';
     return '<div class="f-filters"' + R('data-reveal="fade" data-reveal-delay="' + delay + '"') + '><p class="f-filters-l eyebrow" id="f-filters-l">' + esc(t('find.res.filters')) + '</p>' +
-      '<div class="chips-scroll f-filter-chips" role="group" aria-labelledby="f-filters-l">' + ['free', 'now', 'near'].map(function (k) {
+      '<div class="chips-scroll f-filter-chips" role="group" aria-labelledby="f-filters-l">' + keys.map(function (k) {
         return SM.ui.chip(t('find.f.' + k), { act: 'find-filter', pressed: !!ui.filters[k], count: countWith(rows, k), attrs: 'data-value="' + k + '" id="f-f-' + k + '"' });
       }).join('') + '</div></div>';
   }
 
-  function pickTop(rows) {
+  // the programs the red 今夜 block names (F30: まずはこれ shows the next best instead of repeating them)
+  var CRISIS_IDS = { 'tokyo-challenge-net': 1, 'yorisoi': 1, 'seikatsu-hogo': 1, 'b4s-line-soudan': 1, 'jiso-189': 1, 'kodomo-sos': 1 };
+  function pickTop(rows, skip) {
     var top = [], used = {};
+    if (skip) for (var sk in skip) if (Object.prototype.hasOwnProperty.call(skip, sk)) used[sk] = 1;
     var concerns = answers().concerns || [];
     // one per concern first (in the order the user picked them), then by rank
     concerns.forEach(function (c) {
@@ -1597,7 +1976,7 @@
 
   // the three picks: on a phone only the first is on the first screen, the other two come after the transition
   function topItems(top) {
-    var item = function (r, i, attrs) { return '<li class="f-top-item" data-rank="0' + (i + 1) + '"' + attrs + '>' + pcard(r.p, { why: r.why }) + '</li>'; };
+    var item = function (r, i, attrs) { return '<li class="f-top-item" data-rank="0' + (i + 1) + '"' + attrs + '>' + pcard(r.p, { why: answeredAny() ? r.why : null }) + '</li>'; };
     var now = mem.defer && !wide() ? 1 : top.length;
     return top.slice(0, now).map(function (r, i) { return item(r, i, R('data-reveal-delay="440"')); }).join('') +
       lazy(top.slice(now).map(function (r, i) { return item(r, i + now, ' data-reveal="up"'); }).join(''));
@@ -1617,7 +1996,16 @@
 
   // 64件 standing on the strip's ground line, the protagonist arriving at the house on the right; one headline
   // (あなたに合いそうな支援, its 蛍光ペン drawn after it rises) and one short caveat line
-  function resHead(n) {
+  function resHead(n, all) {
+    if (all) {
+      // F07 / S10: no answers, no claim of fit: 「すべての支援 84件」 and how to narrow it
+      return '<header class="f-res-head is-all">' +
+        '<div class="f-res-stage" aria-hidden="true">' + ill('results-arrive', { size: 'strip', cls: 'f-res-art' }) +
+          '<p class="f-res-count"><b class="f-res-n" id="f-res-n" data-n="' + n + '">' + esc(fmtN(n)) + '</b><span class="unit">' + esc(t('find.res.unit')) + '</span></p></div>' +
+        '<h1 class="f-res-title"' + R('data-reveal="line" data-reveal-delay="140"') + '><span class="sr-only">' + esc(t('find.res.srAll', { n: n })) + '</span>' + esc(t('find.res.hAll')) + '</h1>' +
+        '<p class="f-res-sub ui-wrap"' + R('data-reveal="fade" data-reveal-delay="240"') + '>' + esc(t('find.res.subAll')) + '</p>' +
+        '<p class="sr-only" role="status" id="f-res-status"></p></header>';
+    }
     return '<header class="f-res-head">' +
       '<div class="f-res-stage" aria-hidden="true">' + ill('results-arrive', { size: 'strip', cls: 'f-res-art' }) +
         '<p class="f-res-count"><b class="f-res-n" id="f-res-n" data-n="' + n + '">' + esc(fmtN(n)) + '</b><span class="unit">' + esc(t('find.res.unit')) + '</span></p></div>' +
@@ -1657,30 +2045,39 @@
 
     // 今、住む場所がない: the crisis numbers come first, under a calm headline (before the answers and filters)
     // (two copies, one per layout: under the headline on phones, at the top of the wide column on desktop; CSS shows one)
-    if (a.urgent) { side.push(resHeadUrgent(rows.length)); side.push(crisisCard({ id: '-r', cls: 'is-narrow' })); body.push(crisisCard({ id: '-rw', cls: 'is-wide' })); }
-    else side.push(resHead(rows.length));
-    if (!any) side.push('<div' + R('data-reveal="fade" data-reveal-delay="300"') + '>' + SM.ui.callout(esc(t('find.res.noAnswers')) + '<div class="f-callout-act">' + SM.ui.button(t('find.cta.start'), { href: '#/find/q/1', size: 'sm' }) + '</div>', 'info') + '</div>');
+    var urgentLead = null;
+    if (a.urgent) { urgentLead = side.length; side.push(''); side.push(crisisCard({ id: '-r', cls: 'is-narrow' })); body.push(crisisCard({ id: '-rw', cls: 'is-wide' })); }
+    else side.push(resHead(rows.length, !any));
+    if (!any) side.push('<div class="f-res-start"' + R('data-reveal="fade" data-reveal-delay="300"') + '>' + SM.ui.button(t('find.cta.start'), { href: '#/find/q/1', attrs: 'data-press' }) + '<span class="tag tag-neutral f-way-min">' + esc(t('find.cta.min')) + '</span></div>');
     if (any) side.push(answersBar(300));
     if (a.area === 'other') side.push(SM.ui.callout(esc(t('find.other.note')), 'info'));
     side.push(filterBar(main, 340));
 
     if (!rows.length) {
+      if (urgentLead != null) side[urgentLead] = resHeadUrgent(0);
       body.push(filtersOn ?
         SM.ui.empty(t('find.empty.filter'), t('find.empty.filterBody'), SM.ui.button(t('find.empty.clear'), { act: 'find-filter-clear', variant: 'secondary' }), { illus: 'results-empty' }) :
         SM.ui.empty(t('find.empty.none'), t('find.empty.noneBody'), SM.ui.button(t('find.cta.change'), { href: '#/find/q/1', variant: 'secondary' }), { illus: 'results-empty' }));
     } else {
-      var top = rows.length > 3 ? pickTop(rows) : rows.slice();
+      // F30: what the red block names is not repeated in まずはこれ
+      var skip = a.urgent ? CRISIS_IDS : null;
+      var top = rows.length > 3 ? pickTop(rows, skip) : rows.slice();
       if (a.urgent && U().urgentIds) {
         // "今、住む場所がない": tonight's places come first, even if other answers would hide them
         var byId = {}; all.forEach(function (r) { byId[r.p.id] = r; });
-        top = U().urgentIds(a).map(function (id) {
+        var ut = U().urgentIds(a).filter(function (id) { return !CRISIS_IDS[id]; }).map(function (id) {
           var r = byId[id], pr = SM.program(id);
           if (!pr) return null;
           return { p: pr, why: [{ ja: '今、いる場所がないと答えたので', jr: '今、家にいられないと答えたので', en: 'You said you have nowhere to stay now' }], group: (r && r.group) || 'housing' };
         }).filter(Boolean).slice(0, 3);
+        // then the best fits that the red block does not already name
+        if (ut.length < 3) { var have = {}; ut.forEach(function (r) { have[r.p.id] = 1; }); pickTop(rows, CRISIS_IDS).forEach(function (r) { if (ut.length < 3 && !have[r.p.id]) { ut.push(r); have[r.p.id] = 1; } }); }
+        top = ut;
       }
       var topIds = {}; top.forEach(function (r) { topIds[r.p.id] = 1; });
       var rest = rows.filter(function (r) { return !topIds[r.p.id]; });
+      // F29: the urgent lead counts what is listed below it
+      if (urgentLead != null) side[urgentLead] = resHeadUrgent(rest.length);
       var groups = {}; rest.forEach(function (r) { (groups[r.group] = groups[r.group] || []).push(r); });
       var order = groupOrder().filter(function (g) { return groups[g] && groups[g].length; });
       var cs = a.concerns || [];
@@ -1709,7 +2106,7 @@
         return '<section class="f-group cat-' + g + (mine ? ' is-mine' : '') + '" id="f-g-' + g + '" aria-labelledby="f-gh-' + g + '">' +
           groupHead(g, list.length, mine) +
           (g === 'housing' && !a.urgent ? crisisCard({ id: '-g' }) : '') +
-          cards(shown, { dedupWhy: true }) +
+          cards(shown, { dedupWhy: true, noWhy: !any, group: g }) +
           (list.length > limit ? '<button type="button" class="f-more" id="f-more-' + g + '" data-act="find-more" data-g="' + g + '" aria-expanded="' + open + '">' +
             '<span>' + esc(open ? t('find.less') : t('find.more', { n: list.length - limit })) + '</span>' + arrow(open ? 'u' : 'd') + '</button>' : '') +
         '</section>';
@@ -1937,6 +2334,10 @@
       }
     }
     playRolls(root);
+    // F09: the ふりがな offer for 中学生 comes after the results have landed, as a toast (never above the count)
+    if (!mem.quiet && SM.offerJrRuby && junior() && !answers().urgent) {
+      setTimeout(function () { if (SM.route && SM.route.hash === '#/find/results') { try { SM.offerJrRuby(); } catch (e) { } } }, reduced() ? 600 : 2200);
+    }
   }
   /* ================================================================== CATEGORY
      The arrival morph lands in .f-cat-sign (the tapped row's kanji tile flies up and grows); the title line
@@ -1959,7 +2360,11 @@
     '</header>';
   }
   function renderCat(key, query) {
-    if (!SM.CATS || !SM.CATS[key]) return renderBrowse();
+    // F17: an unknown topic says so (with the topics to choose from), never a different page under the wrong address
+    if (!SM.CATS || !SM.CATS[key]) {
+      return '<div class="f-cat-missing"><header class="f-head"><h1 class="f-h1"' + R('data-reveal="line"') + '>' + esc(t('find.cat.notFound')) + '</h1></header>' +
+        '<p class="f-snone-body"' + R('data-reveal="fade" data-reveal-delay="80"') + '>' + esc(t('find.cat.notFoundBody')) + '</p>' + catList() + '</div>';
+    }
     var inCat = function (r) { return (r.p.cat || []).indexOf(key) !== -1; };
     var jr = jrFilter();
     // 中学生: the category shows only what is open to them
@@ -2032,7 +2437,7 @@
         '<div class="pcards">' + localSet.map(function (r) { return pcard(r.p, { why: r.why, compact: true }); }).join('') + '</div></div></details>';
     }
     // way-finding: the other topics, as a row of kanji marks (each one morphs into its own page)
-    tail += '<nav class="f-cat-others" aria-labelledby="f-co-h"><p class="eyebrow f-co-h" id="f-co-h">' + esc(t('find.cat.others')) + '</p>' +
+    tail += '<nav class="f-cat-others" aria-label="' + esc(t('find.cat.others')) + '"><p class="eyebrow f-co-h" id="f-co-h">' + esc(t('find.cat.others')) + '</p>' +
       '<ul class="f-co-list" role="list">' + catOrder().filter(function (k) { return k !== key; }).map(function (k) {
         return '<li><a class="f-co" href="#/find/cat/' + k + '" data-id="cat:' + k + '" data-press>' + SM.ui.catIcon(k, 'sm', { vt: true }) + '<span>' + esc(catName(k)) + '</span></a></li>';
       }).join('') + '</ul></nav>';
@@ -2048,9 +2453,26 @@
     rows = first.concat(rows.filter(function (r) { return first.indexOf(r) === -1; }));
     var side = catHero('consult', t('find.chat.h'), catName('consult'), rows.length, t('find.chat.intro'), { introOpen: true });
     var list = jrNote(jrHidden, 'chat') +
-      (rows.length ? cards(rows.map(function (r) { return { p: r.p }; }), { first: 3 }) : SM.ui.empty(t('find.none.basis'), '', '', { illus: 'results-empty' })) +
+      (rows.length ? '<ul class="f-chat-list" role="list"' + R('data-reveal-stagger="50"') + '>' + rows.map(chatRow).join('') + '</ul>' : SM.ui.empty(t('find.none.basis'), '', '', { illus: 'results-empty' })) +
       '<p class="f-chat-all">' + SM.ui.button(t('find.chat.all'), { href: '#/find/cat/consult', variant: 'text' }) + '</p>';
     return '<div class="f-catv wide-layout"><div class="f-cat-side">' + side + '</div><div class="f-cat-main">' + list + '</div></div>';
+  }
+  /* F40: in chat mode each row says how to reach them (LINE / チャット), and opens it in one tap; the name opens
+     the program page */
+  function chatRow(r) {
+    var p = r.p, c = p.contact || {};
+    var isLine = !!c.line, url = c.line || c.chat;
+    var chatty = !isLine && /chat|talk/i.test(url || '');
+    var tag = isLine ? t('find.chat.lineTag') : t('find.chat.chatTag');
+    var open = isLine ? t('find.chat.openLine') : chatty ? t('find.chat.openChat') : (en() ? 'Open the page' : '相談ページをひらく');
+    var hours = L(c.hours);
+    return '<li class="f-chat-row" data-id="' + esc(p.id) + '"' + R('data-reveal="up"') + '>' +
+      '<div class="f-chat-main"><p class="f-chat-k"><span class="tag f-chat-tag' + (isLine ? ' is-line' : '') + '">' + esc(tag) + '</span>' +
+        (hours ? '<span class="f-chat-hours">' + esc(hours) + '</span>' : '') + '</p>' +
+        '<h3 class="f-chat-name"><a href="#/p/' + encodeURIComponent(p.id) + '">' + esc(L(p.name)) + '</a></h3>' +
+        (L(p.hook) ? '<p class="f-chat-hook">' + esc(L(p.hook)) + '</p>' : '') + '</div>' +
+      '<a class="btn btn-secondary f-chat-open" href="' + esc(url) + '" target="_blank" rel="noopener" data-press>' + ic(isLine ? 'line' : 'external') +
+        '<span>' + esc(open) + '</span><span class="sr-only">' + esc(t('core.newtab')) + '</span></a></li>';
   }
   function isLocalItem(r) {
     var ar = (r.p.for && r.p.for.areas) || [];
@@ -2060,7 +2482,7 @@
     countIn(root, 20);   // the digits are already rolling when the count line (+80) fades in: never a bare 件の支援
     // the list after the header (before the engine's mount: it reads these delays; a scrolled-to reveal ignores them)
     if (!mem.quiet && !(SM.route && SM.route.instant)) {
-      Array.prototype.forEach.call(root.querySelectorAll('.f-cat-main > .f-cat-sec, .f-cat-main > .pcards, .f-cat-main > .empty'), function (sec, si) {
+      Array.prototype.forEach.call(root.querySelectorAll('.f-cat-main > .f-cat-sec, .f-cat-main > .pcards, .f-cat-main > .f-chat-list, .f-cat-main > .empty'), function (sec, si) {
         var base = 200 + si * 40;
         // the section's own heading (あなたに合いそう・17件・答えを変える) arrives with its list, never ahead of the
         // header above it (sectionHeader only reveals its rule; the text would stand there from the first frame)
@@ -2120,7 +2542,7 @@
       if (args[0] === 'q') {
         if (query && query.ret === 'results') return '#/find/results';
         var n = parseInt(args[1], 10) || 1;
-        return n > 1 ? '#/find/q/' + (n - 1) : '#/find';
+        return n > 1 ? '#/find/q/' + qPrev(n) : '#/find';
       }
       if (args[0] === 'results' || args[0] === 'cat') return '#/find';
       return null;
@@ -2146,6 +2568,12 @@
       mem.fromQ = pm ? parseInt(pm[1], 10) : null;
       mem.fromOutside = !mem.quiet && !pm && kind !== 'none';
       var html;
+      mem.canon = null;
+      // F18: a query in the address (#/find?q=…) fills the box (a reload or a shared link keeps the search)
+      if (!args[0] && !mem.quiet && query && typeof query.q === 'string') mem.q = query.q;
+      // F17: an address that does not exist is shown as what it is: #/find/q/9 → question 1 (and the address says so)
+      if (args[0] === 'q') { var qn = parseInt(args[1], 10); if (!(qn >= 1 && qn <= TOTAL)) mem.canon = '#/find/q/1' + retQ(query); }
+      if (args[0] && args[0] !== 'q' && args[0] !== 'results' && args[0] !== 'cat') mem.canon = '#/find';
       if (args[0] === 'q') html = renderQuestion(args[1], query || {});
       else if (args[0] === 'results') html = renderResults();
       else if (args[0] === 'cat') html = renderCat(args[1], query || {});
@@ -2154,6 +2582,7 @@
     },
     mount: function (root, args) {
       args = args || [];
+      if (mem.canon && SM.replaceHash) { try { if (SM.replaceHash(mem.canon)) mem.lastHash = SM.route.hash; } catch (e) { } mem.canon = null; }
       if (args[0] === 'q') mountQuestion(root);
       else if (args[0] === 'results') mountResults(root);
       else if (args[0] === 'cat') mountCat(root);

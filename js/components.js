@@ -47,8 +47,10 @@
 
   /* ---------- strings ---------- */
   var STR = {
-    'ui.save': { ja: 'やることに追加', en: 'Save to my list' },
-    'ui.saved': { ja: 'やることに追加ずみ', en: 'Saved to my list' },
+    // F22: one verb for one action — 保存 (it lands on やること; the title and the toast say so)
+    'ui.save': { ja: '保存', en: 'Save' },
+    'ui.saved': { ja: '保存ずみ', en: 'Saved' },
+    'ui.saveHint': { ja: '保存（やることに入ります）', en: 'Save (adds it to your to-do list)' },
     'ui.amount': { ja: 'もらえる・使える', en: 'What you get' },
     'ui.amountMore': { ja: 'ほか', en: 'and more' },
     'ui.repay.none': { ja: '返さなくていい', en: 'No need to pay back' },
@@ -611,7 +613,7 @@
     var why = w ? '<p class="pcard-why"><span class="pcard-why-k" aria-hidden="true">' + esc(t('ui.whyShort')) + '</span><span><span class="sr-only">' + esc(t('ui.why')) + ': </span>' + esc(w) + '</span></p>' : '';
 
     var save = showSave ?
-      '<button type="button" class="pcard-save" data-act="save" data-id="' + esc(p.id) + '" aria-pressed="' + saved + '" aria-label="' + esc(t('ui.save') + '：' + name) + '" title="' + esc(t('ui.save')) + '">' +
+      '<button type="button" class="pcard-save" data-act="save" data-id="' + esc(p.id) + '" aria-pressed="' + saved + '" aria-label="' + esc(t('ui.save') + '：' + name) + '" title="' + esc(t('ui.saveHint')) + '">' +
       icon(saved ? 'star-fill' : 'star') + '</button>' : '';
 
     return '<article class="pcard' + (o.compact ? ' pcard-compact' : '') + (saved ? ' is-saved' : '') + '" data-id="' + esc(p.id) + '" data-cat="' + esc(cat) + '">' +
@@ -649,7 +651,7 @@
       '<p class="pcard-why"><span class="pcard-why-k" aria-hidden="true">' + esc(t('ui.whyShort')) + '</span><span><span class="sr-only">' + esc(t('ui.why')) + ': </span>' + esc(w) + '</span></p>' :
       '<p class="sr-only">' + esc(t('ui.why')) + ': ' + esc(w) + '</p>';
     var save = showSave ?
-      '<button type="button" class="pcard-save" data-act="save" data-id="' + esc(p.id) + '" aria-pressed="' + saved + '" aria-label="' + esc(t('ui.save') + '：' + name) + '" title="' + esc(t('ui.save')) + '">' +
+      '<button type="button" class="pcard-save" data-act="save" data-id="' + esc(p.id) + '" aria-pressed="' + saved + '" aria-label="' + esc(t('ui.save') + '：' + name) + '" title="' + esc(t('ui.saveHint')) + '">' +
       icon(saved ? 'star-fill' : 'star') + '</button>' : '';
     return '<article class="pcard pcard-lean' + (o.compact ? ' pcard-compact' : '') + (saved ? ' is-saved' : '') + '" data-id="' + esc(p.id) + '" data-cat="' + esc(cat) + '">' +
       '<div class="pcard-mark">' + SM.ui.catIcon(cat, null, { vt: o.vt !== false }) + '</div>' +
@@ -841,7 +843,9 @@
   SM.ui.switchRow = function (label, o) {
     o = o || {};
     return '<label class="switch-row"><span class="switch-text"><b>' + esc(L(label)) + '</b>' + (o.sub ? '<small>' + esc(L(o.sub)) + '</small>' : '') + '</span>' +
-      '<input type="checkbox" class="switch" role="switch"' + (o.id ? ' id="' + esc(o.id) + '"' : '') + (o.checked ? ' checked' : '') + (o.act ? ' data-act="' + esc(o.act) + '"' : '') + attrs(o.attrs) + '></label>';
+      '<input type="checkbox" class="switch" role="switch"' + (o.id ? ' id="' + esc(o.id) + '"' : '') + (o.checked ? ' checked' : '') + (o.act ? ' data-act="' + esc(o.act) + '"' : '') + attrs(o.attrs) + '>' +
+      // F45: オン / オフ in words beside the switch (base.css draws it from the checkbox state)
+      '<span class="switch-state" aria-hidden="true" data-on="' + (en() ? 'On' : 'オン') + '" data-off="' + (en() ? 'Off' : 'オフ') + '"></span></label>';
   };
 
   /* marker(text) — 蛍光ペン highlight for the ONE key phrase on a screen */

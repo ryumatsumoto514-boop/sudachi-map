@@ -182,6 +182,9 @@
   position: absolute; pointer-events: none; border-radius: 50%;
   border: 2px solid var(--action, #0b6e44); opacity: 0;
 }
+/* a save that will not survive closing the page (storage blocked): the same flight, in amber */
+.m-fly-dot.is-warn { background: var(--amber, #b45309); }
+.m-land.is-warn { border-color: var(--amber, #b45309); }
 .m-check > i { position: absolute; display: block; background: var(--m-check-color, var(--paper, #fff)); transform-origin: 0 50%; }
 .m-checking > svg { opacity: 0 !important; }
 /* check(): a checkbox square's fill presses in by itself (the edge stays put, in the fill colour); uncheck(): the
@@ -281,12 +284,18 @@ html::view-transition-group(root) { animation: none; }
 html::view-transition-old(root),
 html::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
 /* the subbar itself stays; it only fades when it appears or disappears (tab root ↔ detail) */
-html::view-transition-old(sm-subbar):only-child { animation: m-fade-out var(--dur-instant) var(--ease-exit) both; }
-html::view-transition-new(sm-subbar):only-child { animation: m-fade-in 220ms var(--ease-enter) 70ms both; }
+html::view-transition-old(sm-subbar):only-child { animation: m-fade-out 160ms var(--ease-exit) both, m-y-out-n8 160ms var(--ease-exit) both; }
+html::view-transition-new(sm-subbar):only-child { animation: m-fade-in 220ms var(--ease-enter) 70ms both, m-y-in-n8 var(--spring-rise-dur) var(--spring-rise) 40ms both; }
 html::view-transition-old(sm-subbar-title) { animation: m-fade-out var(--dur-instant) var(--ease-exit) both; }
 
 @keyframes m-fade-out { from { opacity: 1; } to { opacity: 0; } }
 @keyframes m-fade-in  { from { opacity: 0; } to { opacity: 1; } }
+/* the subbar (戻る + title) drops 8px into place as a sub-page arrives, and lifts away going back to a tab root */
+@keyframes m-y-in-n8 { from { transform: translateY(-8px); } to { transform: none; } }
+@keyframes m-y-out-n8 { to { transform: translateY(-8px); } }
+/* 設定 › ふりがな on: the readings arrive a beat after their base text */
+html.m-ruby-in rt { animation: m-fade-in 260ms var(--ease-enter) 160ms both; }
+html.m-reduce.m-ruby-in rt { animation: none; }
 @keyframes m-x-out-l  { from { transform: none; } to { transform: translateX(-32px); } }
 @keyframes m-x-in-r   { from { transform: translateX(32px); } to { transform: none; } }
 @keyframes m-x-out-r  { from { transform: none; } to { transform: translateX(32px); } }

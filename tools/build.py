@@ -6,7 +6,7 @@ This writes dist/index.html (same page) that loads one dist/css/app.css and one 
 in the same order. Lazy views, map files, images and fonts are untouched and still load from the root.
 Run from the repo root:  python3 tools/build.py
 """
-import os, re, sys
+import hashlib, os, re, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DIST = os.path.join(ROOT, 'dist')
@@ -31,18 +31,32 @@ open(os.path.join(DIST, 'css', 'app.css'), 'w', encoding='utf-8').write(bundle(c
 # each script ends its own statements; ';' guards against a file ending in an expression.
 open(os.path.join(DIST, 'js', 'app.js'), 'w', encoding='utf-8').write(bundle(js, ';\n/* ---- %s ---- */\n'))
 
+# Build id: a hash of every file the app can load. index.html's head gate exposes it as window.__smV and every
+# lazy file is requested as file?v=<id>; the bundles get the same query. The host caches files for a year, so a
+# new id is what makes returning phones fetch this release instead of mixing it with the last one.
+h = hashlib.sha1()
+for top in ('index.html', 'js', 'css', 'data', 'assets'):
+    base = os.path.join(ROOT, top)
+    paths = [base] if os.path.isfile(base) else sorted(os.path.join(d, f) for d, _, fs in os.walk(base) for f in fs)
+    for path in paths:
+        h.update(os.path.relpath(path, ROOT).encode()); h.update(open(path, 'rb').read())
+BUILD = h.hexdigest()[:10]
+
 lines_css = ''.join('<link rel="stylesheet" href="%s">\n' % f for f in css)
 lines_js = ''.join('<script src="%s"></script>\n' % f for f in js)
-out = html.replace(lines_css, '<link rel="stylesheet" href="css/app.css">\n', 1)
+out = html.replace(lines_css, '<link rel="stylesheet" href="css/app.css?v=%s">\n' % BUILD, 1)
 # scripts are not contiguous (a comment sits before boot.js), so swap them one by one: first -> bundle, rest -> gone
 first = True
 for f in js:
     tag = '<script src="%s"></script>\n' % f
-    out = out.replace(tag, '<script src="js/app.js"></script>\n' if first else '', 1)
+    out = out.replace(tag, '<script src="js/app.js?v=%s"></script>\n' % BUILD if first else '', 1)
     first = False
 # start fetching the script bundle together with the stylesheet instead of after it
-out = out.replace('</head>', '<link rel="preload" as="script" href="js/app.js">\n</head>', 1)
+out = out.replace('</head>', '<link rel="preload" as="script" href="js/app.js?v=%s">\n</head>' % BUILD, 1)
+out, n = re.subn(r"(w\.__smV = ')([^']+)(')", lambda m: m.group(1) + m.group(2).split('+')[0] + '+' + BUILD + m.group(3), out, count=1)
+if n != 1:
+    sys.exit('build id stamp failed')
 if out.count('<link rel="stylesheet"') != 1 or out.count('<script src=') != 1:
     sys.exit('replacement failed')
 open(os.path.join(DIST, 'index.html'), 'w', encoding='utf-8').write(out)
-print('css %d files, js %d files -> dist/' % (len(css), len(js)))
+print('css %d files, js %d files -> dist/ (build %s)' % (len(css), len(js), BUILD))

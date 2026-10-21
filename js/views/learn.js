@@ -162,6 +162,9 @@
     'ln.prev': { ja: 'もどる', en: 'Back' },
     'ln.next': { ja: 'つぎへ', en: 'Next' },
     'ln.skip': { ja: '答えずに、つぎへ', jr: 'とばして、つぎへ', en: 'Skip' },
+    // FIX-B (v6, F33)
+    'ln.resume': { ja: '続きから（{n}/{total}）', en: 'Picking up where you left off ({n}/{total})' },
+    'ln.resumeStart': { ja: 'はじめから', en: 'Start over' },
     'ln.toEnd': { ja: 'まとめを見る', en: 'See the summary' },
     'ln.keys': { ja: 'キーボードの ← → でも進めます', en: 'You can also use the ← → keys' },
     'ln.k.compare': { ja: 'くらべる', en: 'Compare' },
@@ -591,6 +594,7 @@
       S = fresh(l.id);
       S.step = getPos(l.id);
       if (S.step >= total) S.step = 0;
+      S.resumed = S.step;   // FIX-B (F33): a half-read lesson says that it resumes, and offers the start
     } else if (!onScreen && S.step >= total) {
       S = fresh(l.id);
     }
@@ -1337,7 +1341,9 @@
   }
   function nextState(l, idx) {
     var total = l.steps.length, s = l.steps[idx] || {};
-    var unanswered = s.type === 'quiz' && typeof S.answers[idx] !== 'number';
+    // FIX-B (F32): a wrong try is an answer too — the button no longer offers 「答えずに、つぎへ」 after it
+    var tried = S.tried && S.tried[idx] && S.tried[idx].length;
+    var unanswered = s.type === 'quiz' && typeof S.answers[idx] !== 'number' && !tried;
     return { primary: !unanswered, label: unanswered ? t('ln.skip') : idx === total - 1 ? t('ln.toEnd') : t('ln.next') };
   }
   function navHtml(l, idx) {
@@ -1416,11 +1422,26 @@
         '<h1 class="ln-title" data-reveal="line" data-reveal-delay="60">' + esc(L(l.title)) + '</h1>' +
         '<div id="ln-prog">' + progHtml(l, idx) + '</div>' +
       '</header>' +
+      resumeHtml(l, idx) +
       '<div class="ln-stage" id="ln-stage">' + stepHtml(l, idx) + '</div>' +
       '<div class="q-foot ln-nav" id="ln-nav">' + navHtml(l, idx) + '</div>' +
       '<p class="ln-keys" aria-hidden="true">' + esc(t('ln.keys')) + '</p>' +
       '<div id="ln-srcbox">' + sourcesHtml(l, idx >= l.steps.length) + '</div>' +
     '</article>';
+  }
+  function resumeHtml(l, idx) {
+    var total = l.steps.length;
+    if (!(S.resumed > 0) || idx !== S.resumed || idx >= total) return '';
+    return '<div class="ln-resume" id="ln-resume" role="note"><p class="ln-resume-t">' + esc(t('ln.resume', { n: idx + 1, total: total })) + '</p>' +
+      '<button type="button" class="ln-resume-btn" data-act="ln-restart"><span>' + esc(t('ln.resumeStart')) + '</span></button></div>';
+  }
+  function dropResume() {
+    S.resumed = 0;
+    var rb = byId('ln-resume');
+    if (!rb) return;
+    var gone = function () { if (rb.parentNode) rb.parentNode.removeChild(rb); };
+    var a = !reduced() ? anim(rb, [{ opacity: 1 }, { opacity: 0 }], { duration: 140, easing: E('exit'), fill: 'forwards' }) : null;
+    if (a && a.finished) a.finished.then(gone, gone); else gone();
   }
   /* the arrival: the step's numbers start at 0 in the new page's first frame and roll up while it settles in
      (no layout reads here — this runs inside the transition's update) */
@@ -1511,6 +1532,7 @@
     var total = l.steps.length;
     n = clamp(n, 0, total);
     if (n === S.step) return;
+    dropResume();
     if (swap) swap.land();
     var from = S.step;
     S.step = n;
@@ -1742,6 +1764,7 @@
       var hint0 = el.parentNode.parentNode.querySelector('.ln-quiz-hint');
       if (hint0) hint0.classList.add('is-gone');   // fades, keeps its line: the options never move under the finger
       setFb(retryHtml(s, i), 100);
+      try { syncNav(l, idx, true); } catch (e) { }
       return;
     }
     revealQuiz(l, idx, s, i, el.parentNode);

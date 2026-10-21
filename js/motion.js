@@ -774,6 +774,36 @@
     off.forEach(function (el) { try { io.unobserve(el); io.observe(el); } catch (e) { } });
   }
   function sweepSoon(ms) { clearTimeout(sweepT); sweepT = setTimeout(function () { if (!holds) sweep(); else whenReleased(function () { sweepSoon(300); }); }, ms || 0); }
+  /* S17: a jump of more than a screen (End, a scrollbar drag, find-in-page, a screen reader moving on) skips
+     blocks that never intersected on the way. Once the scroll rests, every pending block ABOVE the viewport is
+     shown at once (no animation: nobody is looking at it), and the ones on screen get the usual late fade. */
+  var jumpY = 0, jumpT = 0;
+  function afterJump() {
+    var y = window.scrollY || 0, vh = window.innerHeight || 800;
+    if (Math.abs(y - jumpY) <= vh) { jumpY = y; return; }
+    jumpY = y;
+    if (!io) return;
+    var list = document.querySelectorAll('.m-pending'), above = [];
+    for (var i = 0; i < list.length && i < 600; i++) {
+      var r = list[i].getBoundingClientRect();
+      if (r.width + r.height > 0 && r.bottom <= 0) above.push(list[i]);
+    }
+    above.forEach(function (el) {
+      try { io.unobserve(el); } catch (e) { }
+      el.classList.remove('m-pending');
+      if (el.hasAttribute('data-draw')) clearDash(el);
+      if (el.hasAttribute('data-count')) finishDataCount(el);
+    });
+    sweep();
+  }
+  if (typeof window !== 'undefined' && window.addEventListener) {
+    window.addEventListener('scroll', function () {
+      clearTimeout(jumpT);
+      jumpT = setTimeout(afterJump, 140);
+    }, { passive: true });
+    // find-in-page on hidden="until-found" content, and printing: everything shows
+    document.addEventListener('beforematch', function () { revealAll(document); }, true);
+  }
   if (typeof document !== 'undefined' && document.addEventListener) {
     document.addEventListener('toggle', function (ev) {
       var t = ev.target;
@@ -865,6 +895,22 @@
     list = root.querySelectorAll('[data-reveal], [data-draw]');
     for (i = 0; i < list.length; i++) watch(list[i]);
     if (root !== document && root.hasAttribute && (root.hasAttribute('data-reveal') || root.hasAttribute('data-draw'))) watch(root);
+
+    /* S12: on a forward push the incoming page used to slide in blank and cascade only after the slide. Now its
+       first three blocks (document order: the heading, the key facts, the first action) start their entrance
+       inside the push, 40ms apart, so the page arrives readable; everything after them still reveals on scroll.
+       No layout is read here (this runs inside the transition's update). */
+    var rk = SM.route && SM.route.kind;
+    if (!instant && rk === 'forward' && root.id === 'view' && !reduced()) {
+      var firsts = root.querySelectorAll('.m-pending'), took = 0;
+      for (i = 0; i < firsts.length && took < 3; i++) {
+        var f0 = firsts[i];
+        if (f0.closest('[hidden], details:not([open]), template')) continue;
+        try { io.unobserve(f0); } catch (e) { }
+        revealEl(f0, 70 + took * 40, false);
+        took++;
+      }
+    }
 
     list = root.querySelectorAll('[data-count]');
     for (i = 0; i < list.length; i++) {
@@ -1187,6 +1233,8 @@
     var h0 = container.getBoundingClientRect().height;
     var fol = followers(container).filter(function (el) {
       if (el.offsetParent === null) return false;
+      // a sticky / fixed bar (the question's 次へ) stays where it is: moving it with the blocks below looked broken
+      try { var ps = getComputedStyle(el).position; if (ps === 'sticky' || ps === 'fixed') return false; } catch (e) { }
       var r = el.getBoundingClientRect();
       return r.bottom > -40 && r.top < vh + 40;
     });
@@ -1459,7 +1507,8 @@
      never crosses the toast's 元に戻す on its way down to the tab */
   var flightEnd = 0;
   function flightLeft() { return Math.max(0, flightEnd - now()); }
-  /* flyTo(fromEl, toEl, {duration, onArrive, ghost}) -> Promise
+  /* flyTo(fromEl, toEl, {duration, onArrive, ghost, tone}) -> Promise   tone:'warn' = an amber dot and ring (a save
+     that cannot persist: storage blocked, FIX-A S9)
      v5 save feedback (SPEC-v5 Part A.7): a green station dot leaves the save button, lifts clear of it, arcs down into
      the やること tab and lands there: the tab icon pops, its badge bumps (onArrive usually rolls the count) and a
      thin ring spreads from the tab. ghost:true flies a copy of fromEl instead of the dot (v4 behaviour).
@@ -1484,7 +1533,7 @@
     } else {
       size = 14;
       g = document.createElement('span');
-      g.className = 'm-fly-dot';
+      g.className = 'm-fly-dot' + (o.tone === 'warn' ? ' is-warn' : '');
       g.style.cssText = 'left:' + (a.left + a.width / 2 - size / 2) + 'px;top:' + (a.top + a.height / 2 - size / 2) + 'px;';
     }
     g.setAttribute('aria-hidden', 'true');
@@ -1504,18 +1553,18 @@
     ], { duration: dur, easing: 'linear', fill: 'forwards' });
     return settled([ax, ay]).then(function () {
       if (g.parentNode) g.parentNode.removeChild(g);
-      landOn(to, target);
+      landOn(to, target, o.tone);
       arrive();
     });
   }
   /* the landing: tab icon pops, a ring spreads from the tab, the badge bumps */
-  function landOn(to, target) {
+  function landOn(to, target, tone) {
     if (isSvgEl(target)) prepSvg(target);
     animate(target, [{ scale: '0.8' }, { scale: '1.18', offset: 0.4 }, { scale: '1' }], { duration: 420, easing: 'ease-out', key: 'arrive' });
     var host = to;
     if (host && host.appendChild && !isSvgEl(host)) {
       var ring = document.createElement('span');
-      ring.className = 'm-land';
+      ring.className = 'm-land' + (tone === 'warn' ? ' is-warn' : '');
       ring.setAttribute('aria-hidden', 'true');
       try {
         var hr = host.getBoundingClientRect(), r = target.getBoundingClientRect();

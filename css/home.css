@@ -121,8 +121,10 @@ body.lang-en .v-home .h-main + .h-main { margin-top: 0.08em; }
   margin-top: var(--s-4); display: flex; flex-wrap: wrap; align-items: baseline; row-gap: var(--s-2);
   font-family: var(--font-display); font-weight: 700; font-size: var(--t-meta); line-height: 1.3; color: var(--ink);
 }
-.v-home .h-fact { display: inline-flex; align-items: baseline; gap: 4px; padding: 0 var(--s-3); border-left: 1px solid var(--rule-2); white-space: nowrap; }
-.v-home .h-fact:first-child { padding-left: 0; border-left: 0; }
+/* F42: every fact draws its divider on its left, 1px outside its box; the row is shifted left by one gap and clips
+   on x, so the divider (and the gap) of whichever fact starts a line falls outside: never a 「| 6問・3分」 line */
+.v-home .h-facts { overflow-x: clip; margin-left: calc(-1 * var(--s-3)); }
+.v-home .h-fact { display: inline-flex; align-items: baseline; gap: 4px; padding: 0 var(--s-3); margin-left: -1px; border-left: 1px solid var(--rule-2); white-space: nowrap; }
 .v-home .h-fact-k { color: var(--ink-2); font-weight: 500; }
 .v-home .h-fact:not(:first-child) .h-fact-k { color: var(--ink); font-weight: 700; }
 .v-home .h-fact-n { font-family: var(--font-num); font-weight: 700; font-size: 1.5rem; line-height: 1; letter-spacing: var(--ls-num); font-variant-numeric: tabular-nums; color: var(--ink); }
@@ -146,8 +148,10 @@ body.lang-en .v-home .h-fact:first-child .h-fact-k { color: var(--ink); font-wei
 .v-home .h-mark-num .h-mark-ink { bottom: 0.02em; height: 0.2em; }
 .v-home .h-title.is-none .h-kicker { font-size: var(--t-h1); font-weight: 700; line-height: var(--lh-heading); color: var(--ink); }
 /* the answers as a tag row, 変える at its end */
-.v-home .h-answers { margin: var(--s-4) 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); }
-.v-home .h-ans { min-height: 28px; padding: 0 var(--s-2); font-family: var(--font-display); font-weight: 700; font-size: var(--t-meta); color: var(--ink); }
+/* F25: the answers as plain text separated by ／ (each separator travels with the answer after it), 変える at its end */
+.v-home .h-answers { margin: var(--s-4) 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--s-2); }
+.v-home .h-ans { font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); color: var(--ink); white-space: nowrap; }
+.v-home .h-ans-sep { margin-right: var(--s-2); font-weight: 500; color: var(--ink-3); }
 .v-home .h-change {
   display: inline-flex; align-items: center; min-height: var(--tap); padding: 0 var(--s-1);
   font-family: var(--font-display); font-weight: 700; font-size: var(--t-meta); color: var(--action-text);
@@ -257,7 +261,9 @@ body.is-ruby .v-home .h-cat-mark { min-width: calc(var(--t-micro) * 4.4); justif
   padding: var(--s-4) 0 var(--s-2); border-bottom: 1px solid var(--rule);
 }
 .v-home .h-ln-name { margin: 0; font-family: var(--font-display); font-weight: 700; font-size: var(--t-h3); line-height: var(--lh-title); }
-.v-home .h-ln-name a { color: var(--ink); text-decoration: none; }
+.v-home .h-ln-name a { position: relative; color: var(--ink); text-decoration: none; }
+/* S15: the name is a 44px target (27px of text + 9px above and below) */
+.v-home .h-ln-name a::after { content: ""; position: absolute; inset: -9px 0; }
 @media (hover: hover) { .v-home .h-ln-name a:hover { text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 0.24em; } }
 .v-home .h-ln-sub { margin: var(--s-2) 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-1); }
 .v-home .h-free { flex: none; }

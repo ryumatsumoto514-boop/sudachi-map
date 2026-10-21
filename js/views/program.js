@@ -102,6 +102,16 @@
     'pg.report.msg': { ja: '報告の文をコピーしました。運営（Economix JP）に送ってください', en: 'Report text copied. Please send it to Economix JP.' },
     'pg.report.note': { ja: '報告用の文をコピーします。送り方：', en: 'Copies a report template. How to send:' },
     'pg.report.about': { ja: 'このサイトについて', en: 'About this site' },
+    /* FIX-B (v6, F04): the person's own 区市町村 window, when the program is applied for there */
+    'pg.local.k': { ja: 'あなたの区市町村の窓口', en: 'Your local office' },
+    'pg.local.kArea': { ja: '{area}の窓口', en: 'Office for {area}' },
+    'pg.local.map': { ja: '地図で見る', en: 'On the map' },
+    'pg.local.page': { ja: '窓口のページ', en: 'Office page' },
+    'pg.local.find': { ja: '近くの窓口をさがす', en: 'Find your local office' },
+    'pg.local.findSub': { ja: '住んでいる区市町村の窓口で申し込みます', en: 'You apply at the office where you live' },
+    'pg.local.none': { ja: '{area}の窓口を地図で見る', en: 'See offices near {area}' },
+    'pg.local.call': { ja: '窓口に電話', en: 'Call office' },
+    'pg.local.callLong': { ja: '{name}に電話する {num}', en: 'Call {name} {num}' },
     'pg.related': { ja: '同じ「{cat}」の支援', en: 'More for {cat}' },
     'pg.related.all': { ja: 'すべて見る', en: 'See all' },
     'pg.bar': { ja: 'この制度でできること', en: 'Actions' },
@@ -209,6 +219,71 @@
   function list(a) { return Array.isArray(a) ? a.filter(function (x) { return x != null && String(L(x)).trim() !== ''; }) : []; }
   function newTab() { return '<span class="sr-only">' + esc(t('pg.newtab')) + '</span>'; }
   function webOf(p) { var c = p.contact || {}; return c.web || (p.source && p.source.url) || ''; }
+
+  /* ---------------------------------------------------------------- the person's own 区市町村 window (FIX-B v6, F04)
+   * A national / Tokyo-wide program applied for at "区市町村の自立相談支援機関（くらしの相談窓口）" names no office.
+   * The app holds those offices (data/programs-local.js: <slug>-jiritsu-sodan, one per 区市, with its location), the
+   * same records the map shows. With an answered 区市町村: that office (name, phone, 地図で見る). Without: one row to
+   * the map. Facts come only from the data (nothing invented). */
+  var LOCAL_RE = /自立相談支援機関|くらしの(困りごと)?相談/;
+  function jaText(x) { return x && typeof x === 'object' ? (x.ja || '') : String(x || ''); }
+  function localKind(p) {
+    if (!p || /-jiritsu-sodan$/.test(p.id)) return null;
+    var as = (p.for && p.for.areas) || [];
+    if (as.length && as.indexOf('13') === -1) return null;
+    return LOCAL_RE.test(jaText(p.where) + ' ' + jaText(p.how)) ? 'jiritsu' : null;
+  }
+  function myArea() {
+    var a = SM.state && SM.state.answers ? SM.state.answers.area : null;
+    return typeof a === 'string' && /^13\d{3}$/.test(a) ? a : null;
+  }
+  function localOffice(code) {
+    if (!code) return null;
+    var ps = (SM.data && SM.data.programs) || [];
+    for (var i = 0; i < ps.length; i++) {
+      var x = ps[i];
+      if (!x || !/-jiritsu-sodan$/.test(x.id)) continue;
+      var as = (x.for && x.for.areas) || [];
+      if (as.indexOf(code) === -1) continue;
+      var locs = Array.isArray(x.locations) ? x.locations : [];
+      var li = 0;
+      for (var j = 0; j < locs.length; j++) if (locs[j] && locs[j].area === code) { li = j; break; }
+      var loc = locs[li] || null;
+      var phone = (loc && loc.phone) || (x.contact && x.contact.phone) || '';
+      return { p: x, loc: loc, i: li, phone: phone, name: loc && loc.name ? loc.name : L(x.name) };
+    }
+    return null;
+  }
+  SM.localOffice = SM.localOffice || localOffice;
+  function localInfo(p) {
+    if (!localKind(p)) return null;
+    var code = myArea();
+    return { code: code, office: localOffice(code) };
+  }
+  function localHtml(p, o) {
+    var li = localInfo(p);
+    if (!li) return '';
+    var area = li.code ? areaName(li.code) : '';
+    var off = li.office;
+    var pin = '<span class="pg-local-pin" aria-hidden="true">' + ic('pin') + '</span>';
+    if (!off) {
+      var href = li.code ? '#/map/' + enc(li.code) : '#/map';
+      return '<a class="pg-local is-find" href="' + esc(href) + '" data-press="ink"' + (o.still ? '' : rv('up', 320)) + '>' + pin +
+        '<span class="pg-local-text"><span class="pg-local-k">' + esc(li.code ? t('pg.local.kArea', { area: area }) : t('pg.local.k')) + '</span>' +
+        '<span class="pg-local-name">' + esc(li.code ? t('pg.local.none', { area: area }) : t('pg.local.find')) + '</span>' +
+        (li.code ? '' : '<span class="pg-local-sub">' + esc(t('pg.local.findSub')) + '</span>') + '</span>' + arrow('r', 'pg-local-go') + '</a>';
+    }
+    var nmAttr = en() && !(off.p.name && off.p.name.en) ? ' lang="ja"' : '';
+    var nm = en() && off.p.name && off.p.name.en ? off.p.name.en : off.name;
+    var acts = '<a class="pg-tlink" href="#/map/' + enc(li.code) + '/' + enc(off.p.id + '~' + off.i) + '"><span>' + esc(t('pg.local.map')) + '</span>' + arrow('r') + '</a>' +
+      '<a class="pg-tlink" href="#/p/' + enc(off.p.id) + '"><span>' + esc(t('pg.local.page')) + '</span>' + arrow('r') + '</a>';
+    return '<section class="pg-local" aria-labelledby="pg-h-local"' + (o.still ? '' : rv('up', 320)) + '>' +
+      '<h2 class="pg-local-k" id="pg-h-local">' + pin + '<span>' + esc(t('pg.local.kArea', { area: area })) + '</span></h2>' +
+      '<p class="pg-local-name"' + nmAttr + '>' + esc(nm) + '</p>' +
+      (off.phone ? '<div class="pg-tel-row pg-local-tel"><a class="pg-tel-num" href="' + esc(telHref(off.phone)) + '" tabindex="-1" aria-hidden="true" data-noruby>' + esc(off.phone) + '</a>' +
+        '<a class="btn btn-secondary btn-sm pg-tel-call" href="' + esc(telHref(off.phone)) + '" data-press aria-label="' + esc(t('pg.local.callLong', { name: nm, num: off.phone })) + '">' + ic('phone') + '<span>' + esc(t('pg.call')) + '</span></a></div>' : '') +
+      '<p class="pg-local-acts">' + acts + '</p></section>';
+  }
 
   function repayInfo(p) {
     if (p.repay === 'none' || (!p.repay && p.kind === 'grant')) return { v: t('ui.repay.none'), tone: 'free' };
@@ -438,14 +513,18 @@
     var web = webOf(p);
     var st = c.phone ? statusOf(c) : null;
     var main = '';
+    // FIX-B (F04): a program applied for at the person's own office: that office's phone rides in the bar too
+    var li = !c.phone ? localInfo(p) : null, off = li && li.office && li.office.phone ? li.office : null;
+    var local = off ? '<a class="pg-act pg-act-local" href="' + esc(telHref(off.phone)) + '" data-press aria-label="' + esc(t('pg.local.callLong', { name: off.name, num: off.phone })) + '">' + ic('phone') +
+      '<span class="pg-act-call-t"><b>' + esc(t('pg.local.call')) + '</b><small data-noruby>' + esc(off.phone) + '</small></span></a>' : '';
     if (c.phone) {
       main = '<a class="pg-act pg-act-call" href="' + esc(telHref(c.phone)) + '" data-press aria-label="' + esc(t('pg.callLong', { name: shortName(p), num: c.phone }) + (st ? '（' + st.text + '）' : '')) + '">' + ic('phone') +
         '<span class="pg-act-call-t"><b>' + esc(t('pg.call')) + '</b><small data-noruby>' + esc(c.phone) + '</small></span></a>';
     } else if (web) {
-      main = '<a class="pg-act pg-act-web" href="' + esc(web) + '" target="_blank" rel="noopener noreferrer" aria-label="' + esc(t('pg.bar.webLong')) + '"><span>' + esc(t('pg.bar.webFull')) + '</span>' + ic('external') + '</a>';
+      main = '<a class="pg-act pg-act-web' + (local ? ' is-short' : '') + '" href="' + esc(web) + '" target="_blank" rel="noopener noreferrer" aria-label="' + esc(t('pg.bar.webLong')) + '"><span>' + esc(t('pg.bar.webFull')) + '</span>' + ic('external') + '</a>';
     }
-    return '<div class="pg-bar no-print' + (main ? '' : ' is-solo') + '" id="pg-bar" role="group" aria-label="' + esc(t('pg.bar')) + '">' +
-      saveBtn(p, 'pg-act pg-act-save', t('pg.bar.saved'), t('pg.bar.save'), t('ui.save') + '：' + shortName(p)) + main + '</div>';
+    return '<div class="pg-bar no-print' + (main || local ? '' : ' is-solo') + (local ? ' has-local' : '') + '" id="pg-bar" role="group" aria-label="' + esc(t('pg.bar')) + '">' +
+      saveBtn(p, 'pg-act pg-act-save', t('pg.bar.saved'), t('pg.bar.save'), t('ui.save') + '：' + shortName(p)) + main + local + '</div>';
   }
 
   /* ---------------------------------------------------------------- collapsed sections */
@@ -647,7 +726,7 @@
       '<p class="pg-src-warn">' + esc(t('pg.src.warn')) + '</p>' +
       '<div class="pg-report">' +
         SM.ui.button(t('pg.report'), { act: 'copy', variant: 'text', size: 'sm', icon: 'copy', attrs: 'data-text="' + esc(report) + '" data-msg="' + esc(t('pg.report.msg')) + '"' }) +
-        '<p>' + esc(t('pg.report.note')) + ' <a href="#/about">' + esc(t('pg.report.about')) + '</a></p>' +
+        '<p>' + esc(t('pg.report.note')) + '</p><a class="pg-tlink pg-report-about" href="#/about"><span>' + esc(t('pg.report.about')) + '</span>' + arrow('r') + '</a>' +
       '</div>' +
     '</div>';
   }
@@ -849,10 +928,21 @@
     setBar(false);
     var art = root.querySelector('.pg[data-id]') || root;
     var ticking = false;
+    /* FIX-B (F46): the bar takes the tab bar's place only while you read on down. Scrolling back up (heading for
+       the tabs) or reaching the end of the page (まなぶ / 同じ分野の支援) gives the tab bar back. */
+    var lastY = window.scrollY || 0, upRun = 0, downRun = 0, wantUp = false;
     var paint = function () {
       ticking = false;
       if (!art.isConnected) { stopObservers(); return; }
-      setBar(acts.getBoundingClientRect().bottom <= chromeBottom() + 1);
+      var y = window.scrollY || 0, dy = y - lastY;
+      lastY = y;
+      if (dy < 0) { upRun -= dy; downRun = 0; } else if (dy > 0) { downRun += dy; upRun = 0; }
+      if (upRun > 48) wantUp = true;
+      if (downRun > 24) wantUp = false;
+      var past = acts.getBoundingClientRect().bottom <= chromeBottom() + 1;
+      var vh = window.innerHeight || 800;
+      var end = (document.documentElement.scrollHeight || 0) - (y + vh) < 120;
+      setBar(past && !wantUp && !end);
     };
     SCROLL = function () { if (!ticking) { ticking = true; requestAnimationFrame(paint); } };
     window.addEventListener('scroll', SCROLL, { passive: true });
@@ -1082,6 +1172,11 @@
       wireTitle(root);
       wireAside(root);
       after(function () { fitRuby(root); });
+      // FIX-B (v6 motion): your office lifts in after the key facts and its map pin drops beside it, once
+      var pin = root.querySelector('.pg-local-pin');
+      if (pin && M && M.animate && !reduced() && !(SM.route && SM.route.instant)) {
+        try { M.animate(pin, [{ translate: '0 -22px', scale: '0.6', opacity: 0 }, { translate: '0 0', scale: '1', opacity: 1 }], { spring: 'stamp', delay: 620, fill: 'backwards', key: 'pg-pin' }); } catch (e) { }
+      }
     },
     render: function (args) {
       var id = args && args[0];
@@ -1100,7 +1195,7 @@
       return '<article class="pg wide-layout" data-id="' + esc(p.id) + '">' +
         head(p, o) +
         '<div class="pg-body">' +
-          '<aside class="pg-aside">' + facts(p, o) + actions(p, o) + '</aside>' +
+          '<aside class="pg-aside">' + facts(p, o) + actions(p, o) + localHtml(p, o) + '</aside>' +
           '<div class="pg-main">' + tokyoNote(p) + sections(p, o) + '</div>' +
         '</div>' +
         slot('rest', lessons(p) + related(p), defer) +

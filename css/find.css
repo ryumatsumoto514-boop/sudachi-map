@@ -565,8 +565,13 @@ body.is-ruby .v-find .f-top-item .pcard-mark { justify-content: flex-start; }   
   .view.v-find, .subbar:not([hidden]) + .view.v-find { --f-stick: calc(var(--appbar-h) + var(--safe-t)); }
   /* まずはここから: the tint bleeds past the column instead of insetting its rows, so its marks and titles share
      the left edge of the sticky tabs, the group heads and every list below (one edge, no 24px step) */
-  .v-find .f-top.band { margin-inline: calc(var(--s-6) * -1); padding-inline: var(--s-6); }
+  /* F41: the band no longer overhangs the column: it sits inside it, rows inset like the red block above it */
+  .v-find .f-top.band { margin-inline: 0; padding-inline: var(--s-5); }
   .v-find .f-crisis { margin-inline: 0; padding-inline: var(--s-5); }
+  /* F41: the jump bar wraps instead of clipping 「話 相…」 (a mouse cannot swipe it); the chosen tab is underlined */
+  .v-find .f-jump-tabs { flex-wrap: wrap; overflow: visible; }
+  .v-find .f-jump-tabs > .f-jump-ind { display: none; }
+  .v-find .f-jump-tabs > .f-jump-b[aria-current="true"] { box-shadow: inset 0 -2px 0 var(--ink) !important; }
   .v-find .f-cat-sign .cat-icon.is-xl { --mark: 80px; }
   .v-find .f-cat-art { width: 184px; }
   /* the scene is 120px tall, so the question and its first options are in the first screen; its ground line runs
@@ -612,7 +617,7 @@ body.is-ruby .v-find .f-top-item .pcard-mark { justify-content: flex-start; }   
   .v-find .f-cats-slot .f-cats > li:nth-child(-n + 3) { border-top: 0; }
   .v-find .f-cats-slot .f-cats .list-item { min-height: 72px; }
   .v-find .f-res-main > .band, .v-find .f-res-main > .f-jump, .v-find .f-basis, .v-find .f-jump-tabs, .v-find .f-basis-tabs { margin-inline: 0; padding-inline: 0; }
-  .v-find .f-res-main > .band { margin-inline: calc(var(--s-6) * -1); padding-inline: var(--s-6); }   /* bleeds: rows keep the column edge */
+  .v-find .f-res-main > .band { margin-inline: 0; padding-inline: var(--s-5); }   /* F41: inside the column, inset like the red block */
   .v-find .f-res-main > .f-crisis, .v-find .f-cat-side > .f-crisis { padding-inline: var(--s-5); }
   .v-find .f-side .chips-scroll, .v-find .f-res-side .chips-scroll { flex-wrap: wrap; overflow: visible; margin-inline: 0; padding-inline: 0; -webkit-mask-image: none; mask-image: none; }
   .v-find .f-side .chips-scroll::after, .v-find .f-res-side .chips-scroll::after { content: none; }
@@ -654,3 +659,109 @@ html.m-reduce .v-find .f-q-fig-m { display: none; }
    desktop they lead the wide column (the side column is too narrow for a number and a 電話する button) */
 @media (max-width: 1099px) { .v-find .f-res-main > .f-crisis.is-wide { display: none; } }
 @media (min-width: 1100px) { .v-find .f-res-side > .f-crisis.is-narrow { display: none; } }
+
+/* ================================================================ v6 FIX-A
+   the さがす box on SM.search (F05 / F35), the inline numbers under 今、いる場所がない (F01), chat rows (F40),
+   the other-field tag (F31), the not-found topic (F17), the question strip on small screens (F26), the side column's
+   call rows (F03) */
+/* matched words: a 蛍光ペン band behind the letters; it sweeps in on a row that is new on screen */
+.v-find mark.f-hl { position: relative; z-index: 0; background: none; color: inherit; isolation: isolate; }
+.v-find mark.f-hl::after {
+  content: ""; position: absolute; z-index: -1; left: -0.04em; right: -0.04em; bottom: 0.04em; height: 0.48em;
+  background: var(--marker); transform-origin: 0 50%;
+}
+.v-find .is-new mark.f-hl::after { animation: f-sweep 420ms var(--ease-draw, ease-out) 160ms both; }
+@keyframes f-sweep { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+html.m-reduce .v-find .is-new mark.f-hl::after { animation: none; }
+@media (prefers-reduced-motion: reduce) { .v-find .is-new mark.f-hl::after { animation: none; } }
+
+/* groups of a search: 支援 · まなぶ · ツール · 場所 · やること, each under its own 2px rule */
+.v-find .f-sg { display: grid; min-width: 0; }
+.v-find .f-sg-h {
+  display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3);
+  padding-bottom: var(--s-2); border-bottom: 2px solid var(--ink);
+  font-family: var(--font-display); font-size: var(--t-h3); font-weight: 700; line-height: var(--lh-heading); letter-spacing: var(--ls-0);
+}
+.v-find .f-sg-n { font: 500 var(--t-meta)/1 var(--font-num); color: var(--ink-3); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.v-find .f-sg-n .unit { font-family: var(--font-display); font-size: inherit; margin-left: 1px; }
+.v-find .f-sg > .pcards > .pcard:first-child, .v-find .f-sg > .list > .list-item:first-child { border-top: 0; }
+.v-find .f-sg .more { margin-top: var(--s-1); }
+.v-find .f-s-local { margin-top: var(--s-2); border-top: 1px solid var(--rule); }
+.v-find .f-s-localpick { margin: var(--s-2) 0; }
+.v-find .f-s-localpick-a, .v-find .f-s-asklink, .v-find .f-s-tonightlink {
+  display: inline-flex; align-items: center; gap: var(--s-2); min-height: var(--tap);
+  font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); color: var(--ink);
+  text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 0.3em;
+}
+.v-find .f-s-ask { margin: 0; border-top: 1px solid var(--rule); padding-top: var(--s-2); }
+.v-find .f-s-tonight { margin: 0; }
+.v-find .f-s-tonightlink { color: var(--red-text); }
+.v-find .f-s-chips { display: grid; gap: var(--s-2); min-width: 0; }
+.v-find .f-s-chips-k { font-family: var(--font-display); font-size: var(--t-label); font-weight: 700; color: var(--ink-3); letter-spacing: var(--ls-label); }
+.v-find .f-s-chips .chips { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+.v-find .f-s-none-links { border-top: 1px solid var(--rule); }
+.v-find .f-talk .f-talk-all { margin-top: var(--s-3); }
+.v-find .f-sresults .f-count-q { overflow-wrap: anywhere; }
+
+/* F01: tonight's two numbers right under the option, with a red rule that draws down as they open */
+.v-find .f-q-urgent-wrap { position: relative; margin-top: -8px; }       /* .opts gap: nothing extra while closed */
+.v-find .f-q-urgent { position: relative; margin-top: 8px; padding: var(--s-1) 0 var(--s-2) var(--s-4); }
+.v-find .f-q-urgent::before {
+  content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--red);
+  transform-origin: 50% 0;
+}
+.v-find .f-q-urgent.is-drawn::before { animation: f-rule-down 420ms cubic-bezier(0.5, 0, 0.15, 1) both; }
+@keyframes f-rule-down { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+.v-find .f-q-urgent-lead { font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); color: var(--red-text); padding-bottom: var(--s-2); }
+.v-find .f-q-urgent .contact { border-top-color: color-mix(in srgb, var(--red) 22%, transparent); }
+.v-find .f-q-urgent .contact-item, .v-find .f-q-urgent .contact-hours { border-bottom-color: color-mix(in srgb, var(--red) 22%, transparent); }
+.v-find .f-q-urgent .contact > :last-child { border-bottom: 0; }
+.v-find .f-q-urgent .contact-hours { display: flex; gap: var(--s-2); padding: 0 0 var(--s-2); font-size: var(--t-meta); color: var(--ink-2); }
+.v-find .f-q-urgent .contact-hours-k { font-weight: 700; color: var(--ink-3); }
+html.m-reduce .v-find .f-q-urgent.is-drawn::before { animation: none; }
+
+/* F31: a row from another field inside a group says so, under its title */
+.v-find .f-xtag {
+  display: inline-block; justify-self: start; margin-top: 2px; padding: 1px 6px;
+  font-family: var(--font-display); font-size: var(--fs-micro, 12px); font-weight: 700; line-height: 1.5; letter-spacing: var(--ls-0);
+  color: var(--ink-2); box-shadow: inset 0 0 0 1px var(--rule-2); border-radius: var(--r-ctl);
+}
+
+/* S10: no answers yet: the way in, under the count */
+.v-find .f-res-start { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-3); }
+
+/* F40: chat rows: how (LINE / チャット), when, who, and one button that opens it */
+.v-find .f-chat-list { display: grid; border-top: 1px solid var(--rule); }
+.v-find .f-chat-row {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--s-2) var(--s-4);
+  padding: var(--s-4) 0; border-bottom: 1px solid var(--rule);
+}
+.v-find .f-chat-main { display: grid; gap: 4px; min-width: 0; }
+.v-find .f-chat-k { display: flex; flex-wrap: wrap; align-items: center; gap: 4px var(--s-2); }
+.v-find .f-chat-tag { background: var(--paper-2); color: var(--ink); }
+.v-find .f-chat-tag.is-line { background: var(--action-tint); color: var(--action-text); }
+.v-find .f-chat-hours { font-size: var(--t-meta); color: var(--ink-2); }
+.v-find .f-chat-name { font-family: var(--font-display); font-size: var(--t-ui); font-weight: 700; line-height: var(--lh-heading); }
+.v-find .f-chat-name a { color: var(--ink); text-decoration: underline; text-decoration-color: var(--rule-2); text-underline-offset: 0.3em; }
+.v-find .f-chat-hook { font-size: var(--t-meta); color: var(--ink-2); overflow-wrap: anywhere; }
+.v-find .f-chat-open { white-space: nowrap; }
+@media (max-width: 479px) {
+  .v-find .f-chat-row { grid-template-columns: minmax(0, 1fr); }
+  .v-find .f-chat-open { justify-self: start; }
+}
+body.is-big .v-find .f-chat-row { grid-template-columns: minmax(0, 1fr); }
+body.is-big .v-find .f-chat-open { justify-self: start; white-space: normal; }
+
+/* F17 */
+.v-find .f-cat-missing { display: grid; gap: var(--s-5); }
+
+/* F03: in the narrow side column the number never sits under its 電話する button: the button goes under it */
+.v-find :is(.f-cat-side, .f-res-side, .f-side) .contact-item { flex-wrap: wrap; row-gap: var(--s-2); }
+@media (min-width: 1100px) {
+  .v-find :is(.f-cat-side, .f-res-side) .contact-phone { flex-direction: column; align-items: flex-start; }
+  .v-find :is(.f-cat-side, .f-res-side) .contact-phone .contact-main { width: 100%; }
+}
+
+/* F26: on a short or 文字を大きく phone the scene gives its room to the question (the progress line stays) */
+@media (max-width: 899px) and (max-height: 719px) { .v-find .f-q-journey { display: none; } }
+@media (max-width: 899px) { body.is-big .v-find .f-q-journey { display: none; } }

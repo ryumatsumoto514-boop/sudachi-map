@@ -80,7 +80,7 @@
     'map.more': { ja: 'もっと見る（あと{n}か所）', en: 'Show {n} more' },
     'map.dist': { ja: '約{d}km', en: '~{d} km' },
     'map.gmaps': { ja: 'Google マップで開く', en: 'Open in Google Maps' },
-    'map.detail': { ja: 'くわしく見る', en: 'Details' },
+    'map.detail': { ja: 'この支援のページ', en: 'About this support' },   // FIX-B (F21): it navigates, so it is not 「くわしく」
     'map.howto': { ja: '住所・行き方', en: 'Address & directions' },
     'map.hoursK': { ja: '受付', en: 'Hours' },
     'map.addrK': { ja: '住所', en: 'Address' },
@@ -130,7 +130,12 @@
     'map.sheetClose': { ja: '地図を広げる', en: 'Show the map' },
     'map.toMap': { ja: '地図を見る', en: 'Show map' },
     'map.hint': { ja: '地図の区市町村をタップしても選べます。', en: 'You can also tap the map.' },
-    'map.askGo': { ja: '{name}を見る', en: 'Show {name}' }
+    'map.askGo': { ja: '{name}を見る', en: 'Show {name}' },
+    // FIX-B (v6)
+    'map.badArea': { ja: 'その区市町村は見つかりませんでした。東京都ぜんぶを表示しています。', en: 'That area was not found. Showing all of Tokyo.' },
+    'map.badPlace': { ja: 'その場所は見つかりませんでした。一覧から選んでください。', en: 'That place was not found. Pick one from the list.' },
+    'map.progPage': { ja: 'この支援のページ', en: 'About this support' },
+    'map.areasShort': { ja: '区市町村', en: 'Areas' }
   };
   if (SM.strings) SM.strings(STR);
 
@@ -342,8 +347,12 @@
     // only while the map is the page: a late callback (flight end, peek close) must never rewrite the URL of
     // the page the reader has already moved on to (INTEGRATOR)
     if (!/^#\/map(\/|$|\?)/.test(location.hash || '') || !S.root || !S.root.isConnected) return;
-    var h = '#/map' + (S.code ? '/' + S.code : (S.focus ? '/all' : '')) + (S.focus ? '/' + encodeURIComponent(S.focus) : '');
+    // FIX-B (F17): 東京都ぜんぶ is written as /all whenever a bare #/map would open the reader's own area instead,
+    // so the address always reopens what is on screen (a bad #/map/99999 is normalised the same way)
+    var h = '#/map' + (S.code ? '/' + S.code : (S.focus || mineCode() ? '/all' : '')) + (S.focus ? '/' + encodeURIComponent(S.focus) : '');
     if (location.hash === h) return;
+    // FIX-B (S16): the router's own quiet URL update when there is one (keeps its back stack in step)
+    if (typeof SM.replaceHash === 'function') { try { if (SM.replaceHash(h)) return; } catch (e) { } }
     try { history.replaceState(history.state, '', h); } catch (e) { /* file:// may refuse; ignore */ }
     // the router skips a hashchange to the hash it last routed: keep it in step with the replaced URL, or a link
     // back to the first area (#/map/13104 after the map moved on to 13120) would be ignored
@@ -353,9 +362,12 @@
   /* ================================================================== render */
   function render(args) {
     var a = routeArgs(args);
+    S.bad = null;
     var code = a[0];
     if (code === 'all' || code === '13') code = null;
     else if (!isCode(code)) {
+      // FIX-B (F17): an unknown code (#/map/99999) shows all of Tokyo and says so; mount() fixes the address
+      S.bad = a[0] ? 'area' : null;
       code = null;
       if (!a[0]) code = mineCode();
     }
@@ -364,6 +376,7 @@
     // engine: decided once (the probe usually ran in idle time already), so the first frame is the right one
     if (S.engine == null) S.engine = hasWebGL() ? 'gl' : 'svg';
     S.focus = a[1] ? findFocusKey(a[1], inScope(code)) : null;
+    if (a[1] && !S.focus && !S.bad) S.bad = 'place';
     if (S.focus) unhide(byKey(S.focus));
     var U = ui();
     // phone: a compact title + one-line lead, the picker, then the map; the list sheet opens with its count row
@@ -417,13 +430,15 @@
     var chips = [U.chip ? U.chip(t('map.catAll'), { act: 'map-cat', pressed: !S.cat, attrs: 'data-cat=""', count: scope.filter(inAll).length }) : ''];
     // 児童相談所 is a kind of 相談 place: a sub-filter right after 相談・こころ, with its 話 mark (every chip in the
     // row reads the same way: mark · name · count)
-    var jis = counts.jisou || S.cat === 'jisou' ? U.chip(catLabel('jisou'), { act: 'map-cat', pressed: S.cat === 'jisou', cat: 'consult', count: counts.jisou || 0, attrs: 'data-cat="jisou"' }) : '';
+    /* FIX-B (F23): 児童相談所 is an extra layer, not a part of すべて (すべて leaves it out). It sits after a rule,
+       with an outlined 話, and carries no count: 「すべて 19 … 児童相談所 22」 read as a part bigger than the
+       whole. Picking it shows its count in the list head like any other filter. */
+    var jis = counts.jisou || S.cat === 'jisou' ? U.chip(catLabel('jisou'), { act: 'map-cat', pressed: S.cat === 'jisou', cat: 'consult', attrs: 'data-cat="jisou"' }) : '';
     catOrder().forEach(function (k) {
       if (!counts[k] && S.cat !== k) return;
       chips.push(U.chip(catLabel(k), { act: 'map-cat', pressed: S.cat === k, cat: k, count: counts[k] || 0, attrs: 'data-cat="' + esc(k) + '"' }));
-      if (k === 'consult' && jis) { chips.push(jis); jis = ''; }
     });
-    if (jis) chips.push(jis);
+    if (jis) chips.push('<span class="m-cats-sep" aria-hidden="true"></span>' + jis);
     return '<div class="m-area">' + picker + back + '</div>' + jr +
       '<div class="chips-scroll m-cats" role="group" aria-label="' + esc(t('map.filter')) + '">' + chips.join('') + '</div>';
   }
@@ -587,10 +602,23 @@
       '<span class="m-tel-go call-go' + (sub ? ' is-quiet' : '') + '">' + icon('phone') + '<span class="m-tel-go-t call-go-t">' + esc(t('map.call')) + '</span></span></a>';
   }
   function rowId(key) { return 'mloc-' + String(key).replace(/[^\w-]/g, '_'); }
+  /* FIX-B (F24): a place's display name. Japanese: the office's own name. English: the program's English name
+     (plus the area when one program has offices in many areas); the Japanese office name stays as a small
+     second line (lang="ja"), since that is what the sign and the phone call use. Japanese is the fallback only
+     when there is no English name at all. */
+  function locName(r) {
+    var p = r.p, loc = r.loc, ja = loc.name || L(p.name);
+    if (lang() !== 'en') return { text: ja, ja: false, sub: '' };
+    var pen = p.name && typeof p.name === 'object' ? p.name.en : '';
+    if (!pen) return { text: ja, ja: true, sub: '' };
+    var text = pen, ar = loc.area ? areaBy(loc.area) : null;
+    if (ar && (p.locations || []).length > 1) { var an = areaName(ar); if (an && pen.indexOf(an) === -1) text = pen + ' (' + an + ')'; }
+    return { text: text, ja: false, sub: loc.name && loc.name !== text ? loc.name : '' };
+  }
   function rowHtml(r, dist) {
     var p = r.p, loc = r.loc, U = ui();
     var ar = loc.area ? areaBy(loc.area) : null;
-    var name = loc.name || L(p.name);
+    var ln = locName(r), name = ln.text;
     var meta = [];
     // v5: the kanji mark already says the kind; the section says the area. Only facts that change the choice stay:
     // who it is for (age) and how far it is.
@@ -600,9 +628,10 @@
     if (dist != null) meta.push('<span class="m-loc-dist">' + esc(t('map.dist', { d: dist < 10 ? dist.toFixed(1) : Math.round(dist) })) + '</span>');
     var prog = name.indexOf(L(p.name)) === -1 ? '<a class="m-loc-prog" href="#/p/' + esc(encodeURIComponent(p.id)) + '"><span class="sr-only">' + esc(t('map.program')) + ': </span><span>' + esc(L(p.name)) + '</span>' + arrow('r') + '</a>' : '';
     var head = '<div class="m-loc-head"><div class="m-loc-titles">' +
-      '<h3 class="m-loc-name"' + (loc.name && lang() === 'en' ? ' lang="ja"' : '') + '>' + esc(name) + '</h3>' +
+      '<h3 class="m-loc-name"' + (ln.ja ? ' lang="ja"' : '') + '>' + esc(name) + '</h3>' +
+      (ln.sub ? '<p class="m-loc-ja" lang="ja">' + esc(ln.sub) + '</p>' : '') +
       (meta.length ? '<p class="m-loc-meta">' + meta.join('') + '</p>' : '') + '</div>' +
-      (r.hasGeo ? '<button type="button" class="m-loc-pin" data-act="map-show" data-key="' + esc(r.key) + '" aria-label="' + esc(t('map.onMap') + '：' + name) + '">' + icon('pin') + '<span class="m-lp-l" aria-hidden="true">' + esc(t('map.onMap')) + '</span><span class="m-lp-s" aria-hidden="true">' + esc(t('map.onMapShort')) + '</span></button>' : '') +
+      (r.hasGeo ? '<button type="button" class="m-loc-pin" data-act="map-show" data-key="' + esc(r.key) + '" aria-label="' + esc(t('map.onMap') + (lang() === 'en' ? ': ' : '：') + name) + '">' + icon('pin') + '<span class="m-lp-l" aria-hidden="true">' + esc(t('map.onMap')) + '</span><span class="m-lp-s" aria-hidden="true">' + esc(t('map.onMapShort')) + '</span></button>' : '') +
       '</div>';
     var tels = loc.phone ? telHtml(loc.phone, null, false) : '';
     var c = p.contact, subTel = '';
@@ -614,7 +643,7 @@
     var note = loc.note ? '<p class="m-loc-kv"><span class="m-k">' + esc(t('map.noteK')) + '</span><span>' + esc(L(loc.note)) + '</span></p>' : '';
     var acts = '<div class="btn-row m-loc-acts">' +
       (r.hasLL && U.button ? U.button(t('map.gmaps'), { href: gmaps(loc), variant: 'secondary', size: 'sm', external: true }) : '') +
-      (U.button ? U.button(t('map.detail'), { href: '#/p/' + encodeURIComponent(p.id), variant: 'text', size: 'sm', arrow: true }) : '') +
+      (U.button ? U.button(t('map.progPage'), { href: '#/p/' + encodeURIComponent(p.id), variant: 'text', size: 'sm', arrow: true }) : '') +
       '</div>';
     var more = '<details class="m-more"' + (S.focus === r.key ? ' open' : '') + '><summary><span>' + esc(t('map.more2')) + '</span></summary>' +
       '<div class="m-more-body">' + subTel + hours + addr + note + prog + acts + '</div></details>';
@@ -684,7 +713,8 @@
       var picked = S.focus ? list.filter(function (r) { return r.key === S.focus; })[0] : null;
       html += note;
       if (picked) html += '<section class="m-group">' + head('', t('map.picked'), null) + '<div class="m-locs">' + rowHtml(picked, null) + '</div></section>';
-      html += '<section class="m-group">' + head('01', t('map.areas'), list.length, null, roll);
+      // FIX-B (F43): a narrow or big-text sheet head keeps to one line next to its count
+      html += '<section class="m-group">' + head('01', t(bigText() || window.innerWidth < 360 ? 'map.areasShort' : 'map.areas'), list.length, null, roll);
       if (first) return html + '</section>';
       ['23ku', 'tama', 'islands'].forEach(function (gk) {
         var codes = areas().filter(function (x) { return x.group === gk && ag[x.code]; });
@@ -746,8 +776,8 @@
   function pinLabel(m, it) {
     if (it && it.chip) return t(it.chip === 'area' ? 'map.chipArea' : 'map.chipRegion', { name: chipName(it), n: m.length });
     if (m.length > 1) return t('map.clusterBtn', { n: m.length });
-    var r = m[0], nm = r.loc.name || L(r.p.name);
-    return nm + '（' + catLabel(fcat(r)) + '）';
+    var r = m[0], nm = locName(r).text;
+    return nm + (lang() === 'en' ? ' (' + catLabel(fcat(r)) + ')' : '（' + catLabel(fcat(r)) + '）');
   }
   function pinNode(key, m, it) {
     var b = document.createElement('button');
@@ -1127,7 +1157,7 @@
       return;
     }
     GL.map = map;
-    try { SM.mapStyle.attach(map, { theme: GL.theme, detailDelay: false, busy: function () { return GL.flying || !!GL.draw; } }); } catch (e) { }
+    try { SM.mapStyle.attach(map, { theme: GL.theme, detailDelay: false, busy: function () { return GL.flying || !!GL.draw || now() < (GL.restUntil || 0); } }); } catch (e) { }
     var loaded = false;
     map.on('error', function (ev) {
       if (loaded) return;
@@ -2214,7 +2244,7 @@
   function peekHtml(m, key) {
     var U = ui(), x = '<button type="button" class="m-peek-x" data-act="map-peek-close" aria-label="' + esc(t('map.close')) + '">' + icon('close') + '</button>';
     if (m.length === 1) {
-      var r = m[0], loc = r.loc, nm = loc.name || L(r.p.name);
+      var r = m[0], loc = r.loc, pln = locName(r), nm = pln.text;
       var ar = loc.area ? areaBy(loc.area) : null;
       var meta = [];
       void ar;   // v5: name + phone; the mark says the kind, the age line stays (it decides who can go)
@@ -2222,10 +2252,11 @@
       return '<div class="m-peek-grip" aria-hidden="true"></div>' +
         '<div class="m-peek-row">' + (U.catIcon ? U.catIcon(r.cat, 'sm') : '') +
         '<div class="m-peek-text">' + (meta.length ? '<p class="m-peek-meta">' + meta.join('<i aria-hidden="true"></i>') + '</p>' : '') +
-        '<h3 class="m-peek-name"><button type="button" class="m-peek-go" data-act="map-tolist" data-key="' + esc(r.key) + '" aria-label="' + esc(nm + (lang() === 'en' ? ': ' : '：') + t('map.toList')) + '">' + esc(nm) + '</button></h3>' +
+        '<h3 class="m-peek-name"' + (pln.ja ? ' lang="ja"' : '') + '><button type="button" class="m-peek-go" data-act="map-tolist" data-key="' + esc(r.key) + '" aria-label="' + esc(nm + (lang() === 'en' ? ': ' : '：') + t('map.toList')) + '">' + esc(nm) + '</button></h3>' +
         '</div>' + x + '</div>' +
         (loc.phone ? '<a class="m-peek-tel" href="' + esc(telHref(loc.phone)) + '" data-press><span class="m-peek-num">' + esc(loc.phone) + '</span><span class="call-go">' + icon('phone') + '<span class="call-go-t">' + esc(t('map.call')) + '</span></span></a>' : '') +
         '<div class="m-peek-acts">' +
+          '<a class="m-peek-link" href="#/p/' + esc(encodeURIComponent(r.p.id)) + '"><span>' + esc(t('map.progPage')) + '</span>' + arrow('r') + '</a>' +
           '<button type="button" class="m-peek-link" data-act="map-tolist" data-key="' + esc(r.key) + '"><span>' + esc(t('map.toList')) + '</span>' + arrow('d') + '</button>' +
           (r.hasLL ? '<a class="m-peek-link" href="' + esc(gmaps(loc)) + '" target="_blank" rel="noopener"><span>' + esc(t('map.gmaps')) + '</span>' + arrow('ne') + '<span class="sr-only">' + esc(t('core.newtab')) + '</span></a>' : '') +
         '</div>';
@@ -2233,9 +2264,9 @@
     return '<div class="m-peek-grip" aria-hidden="true"></div>' +
       '<div class="m-peek-row"><div class="m-peek-text"><h3 class="m-peek-name">' + esc(t('map.cluster', { n: m.length })) + '</h3></div>' + x + '</div>' +
       '<ul class="m-peek-list">' + m.map(function (r) {
-        var nm2 = r.loc.name || L(r.p.name);
+        var ln2 = locName(r), nm2 = ln2.text;
         return '<li><button type="button" class="m-peek-item' + (r.key === key ? ' is-on' : '') + '" data-act="map-tolist" data-key="' + esc(r.key) + '">' + (U.catIcon ? U.catIcon(r.cat, 'xs') : '') +
-          '<span class="m-peek-text"><span class="m-peek-iname">' + esc(nm2) + '</span>' + (r.loc.phone ? '<span class="m-peek-isub num">' + esc(r.loc.phone) + '</span>' : '') + '</span>' + icon('chevron-right') + '</button></li>';
+          '<span class="m-peek-text"><span class="m-peek-iname"' + (ln2.ja ? ' lang="ja"' : '') + '>' + esc(nm2) + '</span>' + (r.loc.phone ? '<span class="m-peek-isub num">' + esc(r.loc.phone) + '</span>' : '') + '</span>' + icon('chevron-right') + '</button></li>';
       }).join('') + '</ul>';
   }
   var peekDrag = null;
@@ -2494,9 +2525,18 @@
     var c = S.root.querySelector('#m-controls');
     if (c) {
       var cs = c.querySelector('.m-cats'), sl = cs ? cs.scrollLeft : 0;
+      // FIX-B (motion): the chip counts roll to the new area's numbers like the list count does
+      var was = {};
+      Array.prototype.forEach.call(c.querySelectorAll('.m-cats .chip[data-cat]'), function (b) { var n = b.querySelector('.chip-count'); if (n) was[b.getAttribute('data-cat')] = +n.textContent; });
       keepFocus(c, function () { c.innerHTML = controlsHtml(); });
       var cs2 = c.querySelector('.m-cats'); if (cs2) cs2.scrollLeft = sl;
       ruby(c);
+      if (opts.move && motion('odometer') && !reduced()) {
+        Array.prototype.forEach.call(c.querySelectorAll('.m-cats .chip[data-cat]'), function (b) {
+          var n = b.querySelector('.chip-count'), k = b.getAttribute('data-cat'), v = n ? +n.textContent : NaN;
+          if (n && was[k] != null && isFinite(v) && v !== was[k]) { try { SM.motion.odometer(n, v, { from: was[k], duration: 420 }); } catch (e) { } }
+        });
+      }
     }
     var l = S.root.querySelector('#m-list');
     if (l) {
@@ -2902,6 +2942,8 @@
     if (row) {
       row.classList.add('is-focus');
       var d = row.querySelector('.m-more'); void d;
+      // FIX-B (motion): the row answers the pin — its mark and name slide in from the focus bar while the pin pulses
+      if (!reduced()) anim(row, [{ transform: 'translateX(10px)', opacity: 0.55 }, { transform: 'none', opacity: 1 }], { spring: 'rise', key: 'row-lift' });
       if (wide()) { try { row.scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', block: 'nearest' }); } catch (e) { } }
     }
   }
@@ -2930,6 +2972,15 @@
     }
     stageBind(root);
     sheetIn(root);
+    // FIX-B (F17): a wrong deep link — put the address right and say what is shown instead
+    if (S.bad) {
+      var bad = S.bad; S.bad = null;
+      after(function () {
+        if (gen !== S.gen || !root.isConnected) return;
+        setHash();
+        if (SM.toast) { try { SM.toast(t(bad === 'area' ? 'map.badArea' : 'map.badPlace')); } catch (e) { } }
+      });
+    }
     // the rest of the list (render() returned its first screen only)
     after(function () {
       if (gen !== S.gen || !root.isConnected) return;
@@ -2976,6 +3027,8 @@
         S.focus = routeFocus;
         // back on the map: the pins drop again and the camera settles in from a little further out
         var settle = !routeFocus && GL.code === S.code && !reduced() && !(S.root && S.root.querySelector('.m-loc.is-focus'));
+        // FIX-B (S7): a return visit holds the detail feed until the camera has rested 600ms (it froze the settle)
+        GL.restUntil = now() + 1300;
         glSync({ route: true, drop: !routeFocus });
         if (!routeFocus) markSel();
         if (settle) {

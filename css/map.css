@@ -841,3 +841,34 @@
 @media (min-width: 1440px) {
   .view.v-map { width: calc(var(--shell-w) - var(--rail-w)); margin-left: calc((100% - var(--shell-w)) / 2 + var(--rail-w)); }
 }
+
+/* ---------- FIX-B (v6) ---------- */
+/* F12: the type chips are full 44px targets (they were 36px boxes with a stretched hit area) */
+.v-map .m-cats .chip { min-height: 44px; }
+.v-map .m-cats .chip::after { inset: 0; }
+/* F23: 児童相談所 is an extra layer after a rule, its 話 drawn in outline (not a part of すべて) */
+.v-map .m-cats-sep { align-self: center; width: 1px; height: 24px; margin: 0 2px 0 4px; background: var(--rule-2); }
+@media (min-width: 1100px) { .v-map .m-cats-sep { display: none; } }   /* a wrapping row: a rule would dangle at a line end */
+.v-map .m-cats .chip[data-cat="jisou"] .cat-mark { background: transparent; color: var(--cat-c); box-shadow: inset 0 0 0 1.5px var(--cat-c); }
+.v-map .m-cats .chip[data-cat="jisou"][aria-pressed="true"] .cat-mark { color: var(--paper); box-shadow: inset 0 0 0 1.5px var(--paper); }
+/* F24: English names first; the office's Japanese name (what the sign and the call use) as a quiet second line */
+.v-map .m-loc-ja { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3); overflow-wrap: anywhere; }
+/* F20: the place card's phone keeps its 「電話する」 label down to a 280px card (the number gives way first);
+   only a narrower card wraps the button under the number instead of hiding the word */
+.v-map .m-peek-tel .m-peek-num { font-size: min(var(--t-num-l), 8.2cqi); }
+@container (max-width: 359px) {
+  .v-map .m-peek-tel .call-go-t { position: static; width: auto; height: auto; overflow: visible; clip: auto; }
+  .v-map .m-peek-tel .call-go { width: auto; padding: 0 12px; }
+}
+@container (max-width: 259px) {
+  .v-map .m-peek-tel { flex-wrap: wrap; row-gap: 6px; }
+  .v-map .m-peek-tel .m-peek-num { font-size: min(var(--t-num-l), 11cqi); }
+}
+.v-map .m-peek-acts { gap: 0 16px; }
+/* motion: an area change slides each section head in on a rule that draws from the left */
+.v-map .m-list.is-swap .m-group > .section-head { animation: none; }
+.v-map .m-list.is-swap .m-group > .section-head > .section-head-text { animation: m-head-in 360ms var(--ease-standard) backwards; }
+.v-map .m-list.is-swap .m-group > .section-head > .m-count { animation: m-swap-in 320ms var(--ease-standard) 60ms backwards; }
+.v-map .m-list.is-swap .m-group > .section-head > .section-rule { animation: m-rule-draw 480ms cubic-bezier(0.16, 1, 0.3, 1) 40ms backwards; }
+@keyframes m-head-in { from { opacity: 0; transform: translateX(-14px); } }
+@keyframes m-rule-draw { from { transform: scaleX(0); } }

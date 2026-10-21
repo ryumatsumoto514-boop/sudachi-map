@@ -68,9 +68,11 @@
   var MAP_JS = ['js/vendor/maplibre-gl.js', 'data/map/base.js', 'data/map/style.js'];
   var mapP = null;
   function mapReady() { return !!(w.maplibregl && SM.mapStyle && SM.data && SM.data.mapMeta); }
+  // S1: this build's copy of each file (?v=<build id>), never last release's from the cache
+  function vs(src) { return SM._vsrc ? SM._vsrc(src) : (w.__smV ? src + '?v=' + encodeURIComponent(w.__smV) : src); }
   function hasTag(sel, attr, src) {
-    var list = d.querySelectorAll(sel);
-    for (var i = 0; i < list.length; i++) if (list[i].getAttribute(attr) === src) return list[i];
+    var list = d.querySelectorAll(sel), v = vs(src);
+    for (var i = 0; i < list.length; i++) { var a = list[i].getAttribute(attr); if (a === src || a === v) return list[i]; }
     return null;
   }
   SM.loadMapLib = function (cb) {
@@ -100,14 +102,14 @@
         }
         if (!hasTag('link[rel="stylesheet"]', 'href', MAP_CSS)) {
           var l = d.createElement('link');
-          l.rel = 'stylesheet'; l.href = MAP_CSS;
+          l.rel = 'stylesheet'; l.href = vs(MAP_CSS);
           d.head.appendChild(l);
         }
         var last = null;
         MAP_JS.forEach(function (src) {
           if (hasTag('script', 'src', src)) return; // someone else added it; the poll below notices when it ran
           var s = d.createElement('script');
-          s.src = src; s.async = false; // execute in insertion order
+          s.src = vs(src); s.async = false; // execute in insertion order
           s.onerror = function () { fail(src); };
           s.addEventListener('load', function () { s._smOk = true; });
           d.body.appendChild(s);

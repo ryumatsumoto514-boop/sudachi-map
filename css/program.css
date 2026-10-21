@@ -1228,3 +1228,77 @@ body.lang-en .v-tools :is(.tl-title, .tl-hub-t, .scr-label-title) { word-break: 
 .v-tools .scr-call { justify-content: space-between; }
 .v-tools .scr-call-n { font-family: var(--font-num); font-weight: 700; font-size: var(--fs-lg); letter-spacing: var(--ls-0); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .v-tools .tl-hub-row { min-height: 88px; }
+
+/* =====================================================================
+   FIX-B (v6): あなたの区市町村の窓口 (F04), the bar's office call, the report link (F12)
+   ===================================================================== */
+.v-program .pg-local {
+  display: grid; gap: 6px; min-width: 0;
+  padding: var(--s-3) 0 var(--s-2); border-top: 2px solid var(--rule-heavy); border-bottom: 1px solid var(--rule);
+}
+.v-program .pg-local-k {
+  display: flex; align-items: center; gap: 6px; margin: 0;
+  font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui); letter-spacing: var(--ls-label); color: var(--ink-3);
+}
+.v-program .pg-local-pin { display: inline-grid; place-items: center; flex: none; width: 20px; height: 20px; color: var(--action-text); }
+.v-program .pg-local-pin .icon { width: 18px; height: 18px; stroke-width: 2; }
+.v-program .pg-local-name { margin: 0; font-family: var(--font-display); font-weight: 700; font-size: var(--fs-base); line-height: var(--lh-title); overflow-wrap: anywhere; }
+.v-program .pg-local-tel { padding-top: 2px; }
+.v-program .pg-local-acts { display: flex; flex-wrap: wrap; gap: 0 var(--s-4); margin: 0; }
+/* no area answered (or no office on file): one ruled link row to the map */
+.v-program a.pg-local.is-find {
+  grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; column-gap: 10px;
+  min-height: 64px; padding: 10px 0; color: var(--ink); text-decoration: none;
+}
+.v-program .pg-local.is-find .pg-local-text { display: grid; gap: 2px; min-width: 0; }
+.v-program .pg-local.is-find .pg-local-k { display: block; }
+.v-program .pg-local-sub { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-2); }
+.v-program .pg-local-go { --arrow-s: 20px; color: var(--action-text); }
+@media (hover: hover) { .v-program a.pg-local.is-find:hover .pg-local-name { text-decoration: underline; text-underline-offset: 0.22em; } }
+
+/* sticky bar with the office's phone: three actions share the row (公式 shrinks to its icon + short word) */
+.v-program .pg-act-local { flex: 1 1 auto; justify-content: flex-start; padding: 0 14px; gap: 10px; background: var(--action-fill); border-color: var(--action-fill); color: var(--on-action-fill); }
+@media (hover: hover) { .v-program .pg-act-local:hover { background: var(--action-fill-hover); border-color: var(--action-fill-hover); } }
+.v-program .pg-act-local:active { background: var(--action-fill-press); border-color: var(--action-fill-press); }
+.v-program .pg-act-local .icon { width: 22px; height: 22px; stroke-width: 1.75; }
+.v-program .pg-bar.has-local .pg-act-web { flex: 0 1 auto; padding: 0 12px; gap: 6px; }
+.v-program .pg-bar.has-local .pg-act-save .save-label { white-space: nowrap; }
+@media (max-width: 399px) {
+  .v-program .pg-bar.has-local .pg-act-web > span:first-child { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .v-program .pg-bar.has-local .pg-act-web { min-width: 48px; }
+}
+
+/* まちがいを報告 → このサイトについて: a real 44px link, not a 12px inline word */
+.v-program .pg-report-about { font-size: var(--fs-sm); }
+
+/* ---------- FIX-B (v6): tools ---------- */
+/* F12 / F21: 用件 chips and 「ページを見る →」 are full 44px targets */
+.v-tools .scr-keys .chip { min-height: 44px; }
+.v-tools .scr-keys .chip::after { inset: 0; }
+.v-tools .ck-help-more { display: inline-flex; align-items: center; min-height: var(--tap); margin: -8px 0 4px; }
+/* F37: the script's first line under the chips (phone/tablet; the desktop shows the script beside them) */
+.v-tools .scr-peek {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: var(--s-3); align-items: center;
+  padding: var(--s-2) 0 0; border-top: 1px dashed var(--rule-2);
+}
+.v-tools .scr-peek-k { grid-column: 1 / -1; font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); color: var(--ink-3); letter-spacing: var(--ls-label); }
+.v-tools .scr-peek-t { min-width: 0; font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink); overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.v-tools .scr-peek-go {
+  display: inline-flex; align-items: center; gap: 4px; min-height: var(--tap); padding: 0;
+  font-family: var(--font-display); font-weight: 700; font-size: var(--fs-sm); color: var(--action-text); white-space: nowrap;
+}
+.v-tools .scr-peek-go:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+@media (min-width: 1100px) { .v-tools .scr-peek { display: none; } }
+/* F36: the example numbers read as an example (grey, 例), and a ✓ / ✕ sits beside the balance */
+.v-tools .mn-big.st-ex .mn-big-v { color: var(--ink-3); }
+.v-tools .mn-ex-tag {
+  display: inline-grid; place-items: center; min-height: 20px; margin-right: 8px; padding: 0 6px; vertical-align: 1px;
+  box-shadow: inset 0 0 0 1px var(--ink-3); color: var(--ink-2); font-weight: 700; font-size: var(--fs-micro, 11px); letter-spacing: var(--ls-0);
+}
+.v-tools .mn-mark { display: inline-block; margin-left: 0.3em; font-family: var(--font-display); font-size: 0.5em; font-weight: 700; line-height: 1; align-self: center; }
+.v-tools .mn-mark:empty { display: none; }
+.v-tools .tl-float-dot.st-ex { background: var(--ink-4); }
+/* F12: the べんりツール kicker link is a real 44px box (it relied on a stretched ::before), same place on the page */
+.v-tools .tl-kicker a { min-height: 44px; min-width: 44px; margin-block: -10px; }
+.v-tools .tl-kicker a::before { content: none; }
+.v-tools .tl-reset { min-width: 44px; }

@@ -437,3 +437,29 @@ Short, kind, plain (中学生でも読める). Never use deficit language. 申�
 The app is always light (white paper) by default, even when the phone is in dark mode, because Ryu found the dark background
 hard to read. Dark is opt-in only: 設定 › 暗い画面 sets `settings.dark`, which core maps to `<html data-theme="dark">`. Do not add
 `prefers-color-scheme` rules.
+
+## v6 additions (FIX-A, 2026-10-21)
+- **Tabs**: one list, `SM.tabs` (core.js) — key, href, icon. The tab bar, the desktop rail, TAB_ROOTS and the
+  lazy-view preload all read it. A new tab = one entry there + its files in index.html `__smLazy`. Re-tapping the
+  current tab scrolls to the top and focuses the h1 (never a re-render). While a tab's view file loads, the tab shows
+  `.is-boarding` (a fill bar) and the indicator has already moved.
+- **Switches** say their state in words: `.switch-state` (オン / オフ) sits after the input; the off knob is a
+  paper outline, the on knob solid. `SM.ui.switchRow` adds it; hand-written switches must too.
+- **Sheet header**: under 640px and under 文字を大きく the title takes its own row under すぐ閉じる / 緊急 / ×
+  (緊急 stays in every sheet). Pills are 44px.
+- **Toasts**: a toast never covers a sheet's actions (inside a sheet it sits low and lets taps through unless it
+  has an action); opening a sheet or navigating hides a toast older than 250 / 700 ms. `SM.hideToast({ifOlder})`.
+- **Saves**: `SM.save()` returns ok. When storage is not available, the save flight lands amber
+  (`SM.motion.flyTo(..., {tone:'warn'})`) and the toast says it will be lost on close (once, with a 設定 link).
+- **IME**: `SM.composing(ev)` — every Enter / Esc handler ignores keys sent while a kana→kanji conversion is
+  open (the quick exit too). Search boxes redraw on `compositionend`.
+- **Lazy files** carry the build id: `SM._vsrc(src)` → `src?v=<__smV>`. Use it for any script a view adds itself.
+- **Search rows**: the さがす box and きく share SM.search. Matched words are `<mark class="f-hl">` / `ask-hl`, a
+  marker band behind the letters that sweeps in only on rows new on screen. Never a 「合いそうな理由」 line in a search.
+- **Crisis first, never on a typo**: a crisis word puts the right numbers first (the housing card for nowhere to
+  stay, the talk lines + 緊急 for the rest); an unknown word gets もしかして, popular words, きく and one quiet line.
+- **Inline urgent numbers**: an option that means "now" (今、いる場所がない) opens its numbers right under itself
+  (SM.motion.expand, a red rule drawing down); its button names the action (今すぐ相談先を見る), never a count.
+- **Facts rows** draw dividers on the left of each item and clip the row on x, so no line starts with a divider.
+- **Answers shown back** (home, results) are plain text separated by ／ (EN ·), never tag-shaped: only 変える is
+  a control.

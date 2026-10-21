@@ -185,11 +185,6 @@
     return D && ms ? a + ' data-reveal-delay="' + ms + '"' : a;
   }
 
-  // blank until the board starts rolling (see home.js rollCls); only when the number will roll
-  function rollCls(key, n) {
-    if (!D) return '';
-    try { return SM.motion && SM.motion.seen && SM.motion.seen(key) !== n ? ' x-rolls' : ''; } catch (e) { return ''; }
-  }
 
   /* ------------------------------------------------------------ numbers: a 2×2 ruled grid (4 across on desktop) */
   function stats() {
@@ -204,6 +199,16 @@
     var u = t('about.unit');
     var nl = lessons().length;
     var total = SM.ui && SM.ui.listedCount ? SM.ui.listedCount() : ps.length;
+    // FIX-B (F29): one source for the counts when the app has it (SM.counts), so about, home and さがす agree
+    try {
+      var C = typeof SM.counts === 'function' ? SM.counts() : null;
+      if (C && typeof C === 'object') {
+        if (typeof C.total === 'number') total = C.total;
+        if (typeof C.free === 'number') free = C.free;
+        if (typeof C.local === 'number') local = C.local;
+        if (typeof C.lessons === 'number') nl = C.lessons;
+      }
+    } catch (e) { /* keep the local counts */ }
     var cells = [
       ['total', total, u],
       ['free', free, u],
@@ -213,7 +218,8 @@
     // dt first (screen readers: "のせている支援 222件"); the grid shows the number on top
     var grid = cells.map(function (c, i) {
       return '<div class="ab-stat"' + rv('up', 200 + i * 60) + '><dt class="ab-stat-k">' + esc(t('about.stat.' + c[0])) + '</dt>' +
-        '<dd class="ab-stat-v"><b class="num' + rollCls('about.' + c[0], c[1]) + '" data-count="' + c[1] + '" data-count-seen="about.' + c[0] + '" data-count-dur="900">' + c[1] + '</b>' +
+        // FIX-B (motion): the board rolls on every forward arrival (it only rolled when a number had changed)
+        '<dd class="ab-stat-v"><b class="num' + (D ? ' x-rolls' : '') + '" data-count="' + c[1] + '"' + (D ? '' : ' data-count-seen="about.' + c[0] + '"') + ' data-count-dur="900">' + c[1] + '</b>' +
         (c[2] ? '<span class="ab-stat-u">' + esc(c[2]) + '</span>' : '') + '</dd></div>';
     }).join('');
     return '<section class="ab-numbers' + (cells.length === 3 ? ' is-3' : '') + '" aria-labelledby="ab-num-h">' +
@@ -446,6 +452,21 @@
       try { if (SM.motion && SM.motion.revealAll) SM.motion.revealAll(target); } catch (e) { /* ignore */ }
       target.scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', block: 'start' });
       try { target.focus({ preventScroll: true }); } catch (e) { /* ignore */ }
+      // FIX-B (motion): the tapped 目次 numeral stamps; the section's rule draws again once the page has arrived
+      var M = SM.motion;
+      if (M && !reduced()) {
+        var nEl = el.querySelector('.ab-toc-n');
+        try { if (nEl && M.stamp) M.stamp(nEl, { ring: false }); } catch (e) { /* ignore */ }
+        var rule = target.querySelector('.section-rule');
+        var head = target.querySelector('.section-head-text');
+        setTimeout(function () {
+          if (!target.isConnected || !M.animate) return;
+          try {
+            if (rule) M.animate(rule, [{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], { duration: 520, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', key: 'ab-rule' });
+            if (head) M.animate(head, [{ transform: 'translateX(-10px)', opacity: 0.4 }, { transform: 'none', opacity: 1 }], { duration: 360, easing: 'cubic-bezier(0.2, 0, 0, 1)', key: 'ab-head' });
+          } catch (e) { /* ignore */ }
+        }, 420);
+      }
     });
   }
 

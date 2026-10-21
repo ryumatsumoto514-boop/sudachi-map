@@ -9,8 +9,8 @@
   'use strict';
 
   var SM = window.SM = window.SM || {};
-  SM.version = '4.0.0';
-  SM.updated = '2026-10-17';
+  SM.version = window.__smV || '6.0.0';
+  SM.updated = '2026-10-21';
   SM.data = SM.data || {};
   var D = SM.data;
   if (!Array.isArray(D.programs)) D.programs = [];
@@ -24,6 +24,15 @@
   if (!Array.isArray(D.lessons)) D.lessons = [];
   SM.views = SM.views || {};
   SM.acts = SM.acts || {};
+  /* S16: the one list of tabs. boot.js paints the tab bar from it, the router derives its tab roots from it
+     (plus まなぶ, the desktop rail's extra row). A new tab also needs its lazy entry in index.html (__smLazy). */
+  SM.tabs = [
+    { key: 'home', href: '#/', icon: 'home' },
+    { key: 'find', href: '#/find', icon: 'search' },
+    { key: 'ask', href: '#/ask', icon: 'line' },   // SEARCH (v6): 「きく」
+    { key: 'map', href: '#/map', icon: 'map' },
+    { key: 'plan', href: '#/plan', icon: 'check-list' }
+  ];
 
   /* ------------------------------------------------------------------ utils */
   var ESC = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
@@ -100,9 +109,11 @@
   };
 
   /* ------------------------------------------------------------------ state */
+  var STATE_V = 1;
   function defaults() {
     return {
-      answers: { stage: null, path: null, area: null, concerns: [], age: null, care: null },
+      v: STATE_V,
+      answers: { stage: null, path: null, area: null, concerns: [], age: null, care: null, urgent: false },
       answered: false,
       saved: [],
       done: [],
@@ -113,20 +124,74 @@
       settings: { big: false, ruby: false, lang: 'ja', supporter: false, dark: false, motion: 'auto' }
     };
   }
+  /* Type-safe merge (FIX-A S2): a stored value only replaces a default of the same type, so a
+     corrupt or hand-edited sm2:state can never put null into answers or a string into saved.
+     Keys the defaults do not know are kept (other views may add their own). */
+  function kind(x) { return x === null ? 'null' : Array.isArray(x) ? 'array' : typeof x; }
   function merge(base, over) {
-    if (!over || typeof over !== 'object' || Array.isArray(over)) return base;
+    if (!over || kind(over) !== 'object') return base;
     Object.keys(over).forEach(function (k) {
-      var b = base[k], o = over[k];
-      if (b && typeof b === 'object' && !Array.isArray(b) && o && typeof o === 'object' && !Array.isArray(o)) merge(b, o);
-      else if (Array.isArray(b)) { if (Array.isArray(o)) base[k] = o; }
-      else base[k] = o;
+      if (k === '__proto__' || k === 'constructor' || k === 'prototype') return;
+      var b = base[k], o = over[k], kb = kind(b), ko = kind(o);
+      if (!Object.prototype.hasOwnProperty.call(base, k)) { base[k] = o; return; }
+      if (kb === 'object') { if (ko === 'object') merge(b, o); return; }
+      if (kb === 'array') { if (ko === 'array') base[k] = o; return; }
+      if (kb === 'null') { if (ko === 'string' || ko === 'null') base[k] = o; return; }  // enum / date slots
+      if (kb === ko) base[k] = o;
     });
     return base;
   }
-  SM.state = merge(defaults(), SM.store.get('state', null));
-  if (!Array.isArray(SM.state.answers.concerns)) SM.state.answers.concerns = [];
-  if (!Array.isArray(SM.state.learned)) SM.state.learned = [];
-  if (!SM.state.hints || typeof SM.state.hints !== 'object') SM.state.hints = { jrRuby: false };
+  /* Older shapes → current (v missing = v0). Each step is idempotent. */
+  function migrate(s) {
+    if (!s || kind(s) !== 'object') return s;
+    if (!s.v) {
+      // v0 (≤ v5.x): answers.urgent was never in the defaults; settings.motion could be a boolean
+      if (s.settings && typeof s.settings.motion === 'boolean') s.settings.motion = s.settings.motion ? 'auto' : 'reduce';
+      s.v = 1;
+    }
+    return s;
+  }
+  var DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+  function idList(a) {
+    var seen = {};
+    return (Array.isArray(a) ? a : []).filter(function (x) {
+      if (typeof x !== 'string' || !x || x.length > 80 || seen[x]) return false;
+      seen[x] = 1; return true;
+    });
+  }
+  // Enum checks run after SM.ENUMS exists (below); kept here so the shape rules live in one place.
+  function validate(s) {
+    var E = SM.ENUMS, a = s.answers;
+    function en(v, list) { return list.indexOf(v) !== -1 ? v : null; }
+    a.stage = en(a.stage, E.stage);
+    a.path = en(a.path, E.path);
+    a.age = en(a.age, E.age);
+    a.care = en(a.care, E.care);
+    if (a.area !== null && (typeof a.area !== 'string' || a.area.length > 40)) a.area = null;
+    a.concerns = idList(a.concerns).filter(function (c) { return c.length <= 24; });
+    a.urgent = a.urgent === true;
+    s.answered = s.answered === true;
+    s.saved = idList(s.saved);
+    s.done = idList(s.done);
+    s.learned = idList(s.learned);
+    if (s.leaveDate !== null && !DATE_RE.test(s.leaveDate)) s.leaveDate = null;
+    if (s.hsDate !== null && !DATE_RE.test(s.hsDate)) s.hsDate = null;
+    var st = s.settings;
+    ['big', 'ruby', 'supporter', 'dark'].forEach(function (k) { st[k] = st[k] === true; });
+    if (st.lang !== 'ja' && st.lang !== 'en') st.lang = 'ja';
+    if (['auto', 'reduce', 'full'].indexOf(st.motion) === -1) st.motion = 'auto';
+    s.hints.jrRuby = s.hints.jrRuby === true;
+    return s;
+  }
+  var rawState = null;
+  try {
+    rawState = SM.store.get('state', null);
+    SM.state = merge(defaults(), migrate(rawState));
+  } catch (e) {
+    // keep what was there so nothing is silently lost, then start clean
+    try { if (rawState) SM.store.set('state.bad', rawState); } catch (e2) { }
+    SM.state = defaults();
+  }
 
   /* ------------------------------------------------------------------ enums (SPEC.md + SPEC-v3 §3) */
   // Display order of the options (views own the labels). Old values are unchanged.
@@ -156,7 +221,24 @@
     return on;
   };
 
-  SM.save = function () { SM.store.set('state', SM.state); };
+  try { validate(SM.state); } catch (e) { SM.state = defaults(); }
+
+  /* SM.save() -> true when it reached storage. The first time it cannot (private mode, quota, blocked
+     storage) the person is told once that this screen forgets on close (FIX-A S9). */
+  var saveWarned = false;
+  SM.save = function () {
+    var ok = SM.store.set('state', SM.state);
+    if (!ok) SM.store.available = false;
+    // a caller that tells the person itself (boot's save: the amber flight + its own toast) sets store.quiet
+    if (!ok && SM.store.quiet) saveWarned = true;
+    if (!ok && !saveWarned) {
+      saveWarned = true;
+      setTimeout(function () {
+        if (SM.toast) SM.toast(SM.t('core.noStore'), { ms: 7000, action: { label: SM.t('core.noStoreAct'), fn: function () { if (SM.acts.settings) SM.acts.settings(); } } });
+      }, 0);
+    }
+    return ok;
+  };
   SM.setAnswer = function (key, value) {
     SM.state.answers[key] = value;
     SM.save();
@@ -244,8 +326,9 @@
   };
 
   SM.strings({
-    'core.saved': { ja: 'やることに追加しました', en: 'Added to your to-do list' },
-    'core.unsaved': { ja: 'やることから外しました', en: 'Removed from your to-do list' },
+    'core.saved': { ja: '保存しました（やることに入りました）', en: 'Saved (added to your to-do list)' },
+    'core.unsaved': { ja: '保存を外しました', en: 'Removed from saved' },
+    'core.savedTemp': { ja: '保存しました。ただ、この画面を閉じると消えます', en: 'Saved for now, but it goes when you close this page' },
     'core.copied': { ja: 'コピーしました', en: 'Copied' },
     'core.copyFail': { ja: 'コピーできません。長押しで選んでください', en: 'Couldn’t copy. Press and hold to select.' },
     'core.close': { ja: '閉じる', en: 'Close' },
@@ -260,6 +343,9 @@
     'core.newtab': { ja: '（新しいタブで開きます）', en: '(opens in a new tab)' },
     'core.undo': { ja: '元に戻す', en: 'Undo' },
     'core.undone': { ja: '元に戻しました', en: 'Undone' },
+    'core.noStore': { ja: 'この画面では保存できません。閉じると消えます', en: 'This browser can’t save here. Your answers go when you close it.' },
+    'core.noStoreAct': { ja: '設定', en: 'Settings' },
+    'core.notFound': { ja: 'そのページは見つかりませんでした。ホームを開きました', en: 'That page wasn’t found, so Home is open.' },
     'core.offline': { ja: 'オフラインです。公式ページは開けません（一覧・地図・やることは使えます）', en: 'Offline: official pages won’t open (the list, map and to-do still work).' }
   });
 
@@ -449,6 +535,17 @@
       mAnimate(el, [{ opacity: 0, translate: '0 32px' }, { opacity: 1, translate: '0 0' }], { spring: 'rise', key: 'toast' });
     }
     toastArm(el, ms);
+    toastAt = Date.now();
+  };
+  /* F10: a toast belongs to the moment it was raised. A sheet opening, or a move to another screen, puts it
+     away (a toast raised in the same breath — erase → home, save → flight — is kept: under 700ms old). */
+  var toastAt = 0;
+  SM.hideToast = function (o) {
+    var el = document.getElementById('toast');
+    if (!el) return;
+    if (o && o.ifOlder && Date.now() - toastAt < o.ifOlder) return;
+    toastSeq++;                       // a toast still waiting for a save flight to land is dropped too
+    if (el.classList.contains('is-show') && !toastHiding) toastHide(el);
   };
   /** SM.announce(text): say something to screen readers without showing a toast. */
   SM.announce = function (text) {
@@ -540,6 +637,11 @@
       if (SKIP_TAGS[tag]) return true;
       if (tag === 'A') { var h = el.getAttribute('href') || ''; if (/^tel:/i.test(h)) return true; }
       if (el.hasAttribute && (el.hasAttribute('data-noruby') || el.isContentEditable)) return true;
+      // readings inside screen-reader-only text are heard twice (「貸付かしつけ」), and svg text cannot hold <ruby> (S14)
+      if (tag === 'SVG' || el.namespaceURI === 'http://www.w3.org/2000/svg') return true;
+      if (el.getAttribute && el.getAttribute('aria-hidden') === 'true') return true;
+      var cl = el.classList;
+      if (cl && (cl.contains('sr-only') || cl.contains('visually-hidden'))) return true;
       el = el.parentNode;
     }
     return false;
@@ -587,11 +689,20 @@
      Runs a frame after applyRuby, for every view and sheet (views may also call it after partial updates). */
   SM.fitRuby = function (root) {
     if (!root || !document.body.classList.contains('is-ruby')) return;
-    Array.prototype.forEach.call(root.querySelectorAll('ruby:not(.is-long)'), function (r) {
+    // one read pass, then one write pass: a class write between reads would force a layout per ruby (S14).
+    // A ruby of three characters or fewer (base + reading) cannot outgrow a line, so it is not measured.
+    var list = root.querySelectorAll('ruby:not(.is-long)'), boxW = new Map(), long = [];
+    for (var i = 0; i < list.length; i++) {
+      var r = list[i];
+      if ((r.textContent || '').length < 7) continue;
       var box = r.parentElement;
       while (box && box !== root && /^inline/.test(getComputedStyle(box).display)) box = box.parentElement;
-      if (box && box.clientWidth && r.getBoundingClientRect().width > box.clientWidth + 1) r.classList.add('is-long');
-    });
+      if (!box) continue;
+      var w = boxW.get(box);
+      if (w === undefined) { w = box.clientWidth; boxW.set(box, w); }
+      if (w && r.getBoundingClientRect().width > w + 1) long.push(r);
+    }
+    long.forEach(function (r) { r.classList.add('is-long'); });
   };
   function fitRubyLater(root) {
     if (!root || !SM.state.settings.ruby || SM.lang() !== 'ja') return;
@@ -641,6 +752,24 @@
     if (!fn) { console.warn('[SM] no act registered:', name); return; }
     try { fn(el, ev); } catch (e) { console.error('[SM] act "' + name + '" failed', e); }
   }
+  /* S11: a tab tap is always a tab move: the indicator slides, the page cross-fades and starts at the top,
+     whatever the history looks like. Tapping the tab you are on scrolls back to its top (and from a page under
+     it, e.g. a category under さがす, goes to the tab's first screen). */
+  function tabTap(a) {
+    var href = a.getAttribute('href') || '#/';
+    var here = current.hash || '#/';
+    if (href === here || (isHomeHash(href) && isHomeHash(here))) {
+      var reduce = reducedMotion();
+      try { window.scrollTo({ top: 0, left: 0, behavior: reduce ? 'instant' : 'smooth' }); } catch (e) { window.scrollTo(0, 0); }
+      var h1 = document.querySelector('#view h1');
+      if (h1) { if (!h1.hasAttribute('tabindex')) h1.setAttribute('tabindex', '-1'); try { h1.focus({ preventScroll: true }); } catch (e) { } }
+      var ic0 = a.querySelector('.icon');
+      if (ic0 && SM.motion && SM.motion.nudge && !reduce) { try { SM.motion.nudge(ic0); } catch (e) { } }
+      return;
+    }
+    SM.go(href, { transition: 'tab' });
+  }
+  SM._tabTap = tabTap;
   SM._bindEvents = function () {
     document.addEventListener('click', function (ev) {
       var t = ev.target;
@@ -669,7 +798,9 @@
         var link = t.closest('a[href^="#/"], a[href="#"]');
         if (link && !link.hasAttribute('download') && !link.target) {
           ev.preventDefault();
-          SM.go(link.getAttribute('href'));
+          var tabA = link.closest('.tabbar') ? link : null;
+          if (tabA) tabTap(tabA);
+          else SM.go(link.getAttribute('href'));
         }
         return;
       }
@@ -706,7 +837,8 @@
   };
 
   /* ------------------------------------------------------------------ sheet */
-  var sheetState = null; // { opener, onClose, dlg, overlay, ctl, title }
+  var sheetState = null; // { opener, onClose, dlg, overlay, ctl, title, pushed }
+  var sheetPopping = false; // closeSheet stepped back off the sheet's own guard: its popstate is not a Back
   var FOCUSABLE = 'a[href], area[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"]), summary';
 
   function focusables(root) {
@@ -810,7 +942,14 @@
           ctl = SM.motion.sheet(dlg, ov, { fast: sos, onDismiss: function (v) { if (sheetState && sheetState.dlg === dlg) SM.closeSheet({ velocity: v }); } });
         } catch (e) { console.error(e); ctl = null; }
       }
-      sheetState = { opener: opener, onClose: opts.onClose || null, dlg: dlg, overlay: ov, ctl: ctl, title: title };
+      sheetState = { opener: opener, onClose: opts.onClose || null, dlg: dlg, overlay: ov, ctl: ctl, title: title, pushed: false };
+      // S3: on home there is no guard entry above the page's own, so Android's Back would leave the app with
+      // 緊急 or 設定 open. A sheet opened there pushes one (marked smSheet); closing it from the UI steps back off it.
+      if (!hasGuard() && !(window.__lx && window.__lx.leaving)) {
+        markBase();
+        try { history.pushState({ smGuard: 1, smSheet: 1 }, '', location.hash || '#/'); sheetState.pushed = true; } catch (e) { }
+      }
+      SM.hideToast({ ifOlder: 250 });
       document.body.classList.add('sheet-open', 'has-sheet');
       setPageHidden(true);
       if (ctl) ctl.open();
@@ -831,6 +970,11 @@
     if (!sheetState) return;
     var st = sheetState;
     sheetState = null;
+    // a guard this sheet pushed (home, S3) goes again, so the next Back still leaves the app as before
+    if (st.pushed && !opts.noHistory) {
+      var hs = null; try { hs = history.state; } catch (e) { }
+      if (hs && hs.smSheet) { sheetPopping = true; try { history.back(); } catch (e) { sheetPopping = false; } }
+    }
     document.body.classList.remove('sheet-open', 'has-sheet');
     setPageHidden(false);
     var dlg = st.dlg, ov = st.overlay, ctl = st.ctl;
@@ -988,13 +1132,17 @@
     for (var i = 0; i < list.length; i++) if (list[i].getAttribute('src') === src && !list[i]._smLazy) return true;
     return false;
   }
+  /* S1: every lazy file carries the build id (?v=, set by index.html as window.__smV), so a returning phone with
+     last week's files in its cache fetches this build's instead of mixing old and new. file:// ignores the query. */
+  function vsrc(src) { var v = window.__smV; return v && src.indexOf('?') === -1 ? src + '?v=' + encodeURIComponent(v) : src; }
+  SM._vsrc = vsrc;
   function loadScript(src) {
     if (needP[src]) return needP[src];
-    if (hasStatic(src)) return (needP[src] = Promise.resolve());
+    if (hasStatic(src) || hasStatic(vsrc(src))) return (needP[src] = Promise.resolve());
     needP[src] = new Promise(function (resolve, reject) {
       var el = document.createElement('script');
       el._smLazy = true;
-      el.src = src; el.async = false;
+      el.src = vsrc(src); el.async = false;
       el.onload = function () { resolve(); };
       el.onerror = function () {
         delete needP[src];
@@ -1032,6 +1180,21 @@
     var h = mainEl.querySelector('h1');
     if (h) { try { h.focus({ preventScroll: true }); } catch (e) { } }
   }
+  /* A tab whose view is still loading answers the tap at once (slow network): the indicator slides to it and
+     the tab shows a boarding state (its mark fills, base.css .is-boarding) until the files have run. */
+  function boardTab(name) {
+    var key = name === 'home' ? 'home' : name;
+    var nav = document.querySelector('.tabbar');
+    if (!nav || pendingKind !== 'tab') return null;
+    var tabs = nav.querySelectorAll('.tab'), a = null, idx = -1;
+    for (var i = 0; i < tabs.length; i++) if (tabs[i].getAttribute('data-tab') === key) { a = tabs[i]; idx = i; }
+    if (!a) return null;
+    Array.prototype.forEach.call(tabs, function (x) { x.classList.toggle('is-active', x === a); });
+    a.classList.add('is-boarding');
+    placeTabIndicator(idx);
+    return a;
+  }
+  function unboard(a) { if (a) a.classList.remove('is-boarding'); }
   /* A view that reads another view's helpers on its first screen waits for them: home's やること preview counts
      down to 高校入学 for 中学生 (SM.plan.anchor in plan.js). Tried once per name, so a broken file can't loop. */
   var depsTried = {};
@@ -1041,21 +1204,54 @@
     if (name === 'home' && !SM.plan && SM.isJunior() && ((st.saved || []).length || st.hsDate)) return lazyFiles('plan');
     return null;
   }
-  /* Idle preload: the views people open next first (さがす, a program page), then the rest. On data saver or a
-     2g/3g connection only those two. One group at a time, each in its own idle slot. */
-  var preloaded = false;
+  /* S6: after start, the files of the views people open next are fetched WITHOUT running (<link rel=prefetch>),
+     so the home entrance never stutters under a 100ms script task. A view's files run on intent: a finger or
+     the pointer coming down on (or hovering, or focusing) a link to it, a few hundred ms before the route needs
+     them. さがす and 制度ページ also run in idle time once the page is quiet (a long idle slot, no transition).
+     On data saver or a 2g/3g connection nothing is fetched ahead. */
+  var preloaded = false, prefetched = {};
+  function prefetch(name) {
+    (lazyFiles(name) || []).forEach(function (src) {
+      if (prefetched[src] || needP[src] || hasStatic(src)) return;
+      prefetched[src] = true;
+      try {
+        var l = document.createElement('link');
+        l.rel = 'prefetch'; l.as = 'script'; l.href = vsrc(src);
+        document.head.appendChild(l);
+      } catch (e) { }
+    });
+  }
   SM.preloadViews = function () {
     if (preloaded) return;
     preloaded = true;
     var c = navigator.connection, lean = !!(c && (c.saveData || /2g|3g/.test(c.effectiveType || '')));
-    var order = lean ? ['find', 'p'] : ['find', 'p', 'plan', 'learn', 'map', 'tools', 'about'];
-    var idle = window.requestIdleCallback ? function (f) { window.requestIdleCallback(f, { timeout: 3000 }); } : function (f) { setTimeout(f, 300); };
+    if (lean) return;
+    var later = ['plan', 'ask', 'learn', 'map', 'tools', 'about'];   // SEARCH (v6): + ask
+    var run = ['find', 'p'];
+    ['find', 'p'].concat(later).forEach(prefetch);
+    var ric = window.requestIdleCallback;
     (function next() {
-      var name = order.shift();
+      var name = run[0];
       if (!name) return;
-      idle(function () { SM.needView(name).then(next, next); });
+      var slot = function (dl) {
+        var busy = SM.motion && SM.motion.inTransition && SM.motion.inTransition();
+        if (busy || (dl && !dl.didTimeout && dl.timeRemaining() < 40)) { setTimeout(next, 400); return; }
+        run.shift();
+        SM.needView(name).then(next, next);
+      };
+      if (ric) ric(slot, { timeout: 6000 }); else setTimeout(slot, 1200);
     })();
   };
+  // intent: run a view's files when a link to it is about to be used
+  function onIntent(ev) {
+    var t = ev.target, a = t && t.closest ? t.closest('a[href^="#/"]') : null;
+    if (!a) return;
+    var name = parseHash(a.getAttribute('href')).name;
+    if (!findView(name) && lazyFiles(name)) SM.needView(name).catch(function () { });
+  }
+  ['pointerdown', 'focusin', 'mouseover'].forEach(function (type) {
+    document.addEventListener(type, onIntent, { passive: true, capture: true });
+  });
 
   function paintChrome() {
     var found = findView(current.name);
@@ -1077,6 +1273,8 @@
     // tabs (pages without a tab, e.g. tools / program pages, highlight none).
     // まなぶ (#/learn…) is not a tab but has its own row on the desktop rail.
     var tab = view ? view.tab : null;
+    // F19: a tool (and まなぶ on phones) is not part of any tab: no tab says "you are here" there
+    if (current.key === 'tools' || current.key === 'learn') tab = null;
     if (tab) lastTab = tab;
     var activeTab = tab || (current.key === 'learn' ? 'learn' : null);
     var idx = -1;
@@ -1207,7 +1405,8 @@
   var firstRoute = true;
   var pendingKind = null;     // transition kind requested through SM.go(hash, { transition })
   var homing = null;          // SM.go to home is stepping back off the guard entry (see "browser Back")
-  var TAB_ROOTS = { '#/': 1, '#/find': 1, '#/map': 1, '#/plan': 1, '#/learn': 1 };
+  var TAB_ROOTS = { '#/learn': 1 };   // + every SM.tabs href (S16)
+  SM.tabs.forEach(function (tb) { TAB_ROOTS[tb.href] = 1; });
   var visited = {};           // hashes rendered this session (returns mount instantly, §3.8)
   var openerMem = {};         // hash -> focus signature of the element that opened the next screen
 
@@ -1262,14 +1461,18 @@
     if (missing || deps) {
       if (deps) depsTried[r.name] = true;
       lazyLoading(true);
+      var boarding = boardTab(r.name);
       SM.need(missing || deps).then(function () {
         lazyLoading(false);
+        unboard(boarding);
         var now = location.hash && location.hash !== '#' ? location.hash : '#/';
         if (now === current.hash && current.name) return;   // routed meanwhile (e.g. another load finished first)
         if (!findView(parseHash(now).name) && parseHash(now).name === r.name) { lazyFailed(); return; }
         SM._route();
       }, function (e) {
         lazyLoading(false);
+        unboard(boarding);
+        paintChrome();
         console.error(e);
         if (deps) { SM._route(); return; }   // the view itself is here: show it without the extra
         if (parseHash(location.hash).name === r.name) lazyFailed();
@@ -1277,11 +1480,18 @@
       return;
     }
     if (!findView(r.name)) {
-      if (r.name !== 'home') { location.replace('#/'); return; }
+      if (r.name !== 'home') {
+        // F17: an address that names no screen opens home and says so (the address is corrected too)
+        SM.go('#/', { transition: 'tab' });
+        setTimeout(function () { SM.toast(SM.t('core.notFound'), 4000); }, 350);
+        return;
+      }
     }
     var hash = raw && raw !== '#' ? raw : '#/';
+    // a tab tap is never "back", even when the tab is the screen before this one (S11)
+    var tabTapped = pendingKind === 'tab' && TAB_ROOTS[hash.split('?')[0]];
     // detect "back": target equals the entry before the current one
-    var isBack = navStack.length > 1 && navStack[navStack.length - 2] === hash;
+    var isBack = !tabTapped && navStack.length > 1 && navStack[navStack.length - 2] === hash;
     if (isBack) navStack.pop();
     else if (navStack[navStack.length - 1] !== hash) navStack.push(hash);
     if (navStack.length > 50) navStack.splice(0, navStack.length - 50);
@@ -1302,6 +1512,8 @@
     // instantly (Back must restore the scroll position onto a finished page, MOTION-SPEC §3.8)
     var instant = kind === 'back' || (kind === 'none' && !firstRoute);
     var restoreY = kind === 'back' && scrollMem[hash] ? scrollMem[hash] : 0;
+    // F10: a toast from the screen being left goes with it (one raised in the same breath stays)
+    if (kind !== 'none' && SM.hideToast) SM.hideToast({ ifOlder: 700 });
     // remember what opened the next screen, so Back can put focus there again
     if (prevHash && kind === 'forward') {
       var ae = document.activeElement, sig = null;
@@ -1368,13 +1580,28 @@
 
     navTransition(kind, function () {
       // an open sheet belongs to the old page: it leaves with the old snapshot, never over the new page
-      if (SM.sheetOpen()) SM.closeSheet({ noFocus: true, instant: true });
+      if (SM.sheetOpen()) SM.closeSheet({ noFocus: true, instant: true, noHistory: true });
       doRender(true, { instant: instant });
       // scroll, then focus: the only two steps that may read layout (MOTION-SPEC §3.3)
       try { window.scrollTo({ top: restoreY, left: 0, behavior: 'instant' }); } catch (e) { window.scrollTo(0, restoreY); }
       var main = document.getElementById('view');
       if (!wasFirst && main) focusAfterNav(kind, hash, main);
     }, { from: prevHash, to: hash, sameTitle: sameTitle });
+  };
+
+  /* SEARCH (v6, 「きく」): SM.replaceHash(hash) — a view that keeps its state in the hash (#/ask/<query>) updates the
+     address as you type WITHOUT routing (no render, no transition, no hashchange). The history entry, the route
+     state and the in-app Back stack follow, so Back from a result and a reload land on the same answer.
+     Same view only; returns false (and changes nothing) otherwise. */
+  SM.replaceHash = function (hash) {
+    if (!hash || hash.indexOf('#/') !== 0 || !current.key) return false;
+    var r = parseHash(hash), f = findView(r.name);
+    if (!f || f.key !== current.key) return false;
+    if (hash === current.hash) return true;
+    try { history.replaceState(history.state, '', hash); } catch (e) { return false; }
+    if (navStack.length && navStack[navStack.length - 1] === current.hash) navStack[navStack.length - 1] = hash;
+    current.args = r.args; current.query = r.query; current.hash = hash;
+    return true;
   };
 
   /** SM.go(hash[, { transition: 'forward'|'back'|'tab'|'none' }]) — the option overrides the automatic direction. */
@@ -1393,6 +1620,10 @@
     // style and layout (about 55ms on a phone) right before the transition snapshots it. The
     // hashchange listeners (router, map warm-up, plan, tools) still get their event.
     var oldURL = location.href;
+    // a sheet opened on home pushed its own guard: navigating from inside it keeps that entry as the screen's
+    // ordinary guard (the sheet closes with the old page and must not step back)
+    if (sheetState) sheetState.pushed = false;
+    try { if (history.state && history.state.smSheet) history.replaceState({ smGuard: 1 }, ''); } catch (e) { }
     // the phone's Back: home is the page's own history entry, every other screen the one guard entry above it
     // (see "browser Back" below). Going home from the guard steps back onto the page's entry (popstate routes it),
     // so the next Back leaves the app as it should.
@@ -1443,6 +1674,14 @@
   window.addEventListener('popstate', function () {
     var L = window.__lx || {};
     if (L.leaving) return;                 // quick exit: the head gate replaces this entry
+    if (sheetPopping) {                    // closeSheet stepped off the guard its sheet pushed (S3)
+      sheetPopping = false;
+      // a new sheet opened before this pop arrived: give it a guard of its own
+      if (sheetState && !hasGuard()) {
+        try { history.pushState({ smGuard: 1, smSheet: 1 }, '', location.hash || '#/'); sheetState.pushed = true; } catch (e) { }
+      }
+      return;
+    }
     if (hasGuard()) return;                // Forward onto the guard: its hashchange routes it
     var hm = homing; homing = null;
     if (hm) {                              // SM.go('#/') stepped back onto the page's entry
@@ -1457,7 +1696,8 @@
     // the user's Back. An open sheet or full-screen mode closes first; the screen stays.
     var x = document.querySelector('.pg-show .pg-show-x, .tl-read .rd-close');
     if (sheetState || x) {
-      if (sheetState) SM.closeSheet(); else x.click();
+      // Back closes like a flick down (the drag-close spring with a little velocity), not a cut
+      if (sheetState) { sheetState.pushed = false; SM.closeSheet({ velocity: 0.9 }); } else x.click();
       if (current.hash && !isHomeHash(current.hash)) guardPush(current.hash);
       return;
     }
@@ -1705,8 +1945,10 @@
 
   /* ---------- strings ---------- */
   var STR = {
-    'ui.save': { ja: 'やることに追加', en: 'Save to my list' },
-    'ui.saved': { ja: 'やることに追加ずみ', en: 'Saved to my list' },
+    // F22: one verb for one action — 保存 (it lands on やること; the title and the toast say so)
+    'ui.save': { ja: '保存', en: 'Save' },
+    'ui.saved': { ja: '保存ずみ', en: 'Saved' },
+    'ui.saveHint': { ja: '保存（やることに入ります）', en: 'Save (adds it to your to-do list)' },
     'ui.amount': { ja: 'もらえる・使える', en: 'What you get' },
     'ui.amountMore': { ja: 'ほか', en: 'and more' },
     'ui.repay.none': { ja: '返さなくていい', en: 'No need to pay back' },
@@ -2269,7 +2511,7 @@
     var why = w ? '<p class="pcard-why"><span class="pcard-why-k" aria-hidden="true">' + esc(t('ui.whyShort')) + '</span><span><span class="sr-only">' + esc(t('ui.why')) + ': </span>' + esc(w) + '</span></p>' : '';
 
     var save = showSave ?
-      '<button type="button" class="pcard-save" data-act="save" data-id="' + esc(p.id) + '" aria-pressed="' + saved + '" aria-label="' + esc(t('ui.save') + '：' + name) + '" title="' + esc(t('ui.save')) + '">' +
+      '<button type="button" class="pcard-save" data-act="save" data-id="' + esc(p.id) + '" aria-pressed="' + saved + '" aria-label="' + esc(t('ui.save') + '：' + name) + '" title="' + esc(t('ui.saveHint')) + '">' +
       icon(saved ? 'star-fill' : 'star') + '</button>' : '';
 
     return '<article class="pcard' + (o.compact ? ' pcard-compact' : '') + (saved ? ' is-saved' : '') + '" data-id="' + esc(p.id) + '" data-cat="' + esc(cat) + '">' +
@@ -2307,7 +2549,7 @@
       '<p class="pcard-why"><span class="pcard-why-k" aria-hidden="true">' + esc(t('ui.whyShort')) + '</span><span><span class="sr-only">' + esc(t('ui.why')) + ': </span>' + esc(w) + '</span></p>' :
       '<p class="sr-only">' + esc(t('ui.why')) + ': ' + esc(w) + '</p>';
     var save = showSave ?
-      '<button type="button" class="pcard-save" data-act="save" data-id="' + esc(p.id) + '" aria-pressed="' + saved + '" aria-label="' + esc(t('ui.save') + '：' + name) + '" title="' + esc(t('ui.save')) + '">' +
+      '<button type="button" class="pcard-save" data-act="save" data-id="' + esc(p.id) + '" aria-pressed="' + saved + '" aria-label="' + esc(t('ui.save') + '：' + name) + '" title="' + esc(t('ui.saveHint')) + '">' +
       icon(saved ? 'star-fill' : 'star') + '</button>' : '';
     return '<article class="pcard pcard-lean' + (o.compact ? ' pcard-compact' : '') + (saved ? ' is-saved' : '') + '" data-id="' + esc(p.id) + '" data-cat="' + esc(cat) + '">' +
       '<div class="pcard-mark">' + SM.ui.catIcon(cat, null, { vt: o.vt !== false }) + '</div>' +
@@ -2499,7 +2741,9 @@
   SM.ui.switchRow = function (label, o) {
     o = o || {};
     return '<label class="switch-row"><span class="switch-text"><b>' + esc(L(label)) + '</b>' + (o.sub ? '<small>' + esc(L(o.sub)) + '</small>' : '') + '</span>' +
-      '<input type="checkbox" class="switch" role="switch"' + (o.id ? ' id="' + esc(o.id) + '"' : '') + (o.checked ? ' checked' : '') + (o.act ? ' data-act="' + esc(o.act) + '"' : '') + attrs(o.attrs) + '></label>';
+      '<input type="checkbox" class="switch" role="switch"' + (o.id ? ' id="' + esc(o.id) + '"' : '') + (o.checked ? ' checked' : '') + (o.act ? ' data-act="' + esc(o.act) + '"' : '') + attrs(o.attrs) + '>' +
+      // F45: オン / オフ in words beside the switch (base.css draws it from the checkbox state)
+      '<span class="switch-state" aria-hidden="true" data-on="' + (en() ? 'On' : 'オン') + '" data-off="' + (en() ? 'Off' : 'オフ') + '"></span></label>';
   };
 
   /* marker(text) — 蛍光ペン highlight for the ONE key phrase on a screen */
@@ -3876,6 +4120,36 @@
     off.forEach(function (el) { try { io.unobserve(el); io.observe(el); } catch (e) { } });
   }
   function sweepSoon(ms) { clearTimeout(sweepT); sweepT = setTimeout(function () { if (!holds) sweep(); else whenReleased(function () { sweepSoon(300); }); }, ms || 0); }
+  /* S17: a jump of more than a screen (End, a scrollbar drag, find-in-page, a screen reader moving on) skips
+     blocks that never intersected on the way. Once the scroll rests, every pending block ABOVE the viewport is
+     shown at once (no animation: nobody is looking at it), and the ones on screen get the usual late fade. */
+  var jumpY = 0, jumpT = 0;
+  function afterJump() {
+    var y = window.scrollY || 0, vh = window.innerHeight || 800;
+    if (Math.abs(y - jumpY) <= vh) { jumpY = y; return; }
+    jumpY = y;
+    if (!io) return;
+    var list = document.querySelectorAll('.m-pending'), above = [];
+    for (var i = 0; i < list.length && i < 600; i++) {
+      var r = list[i].getBoundingClientRect();
+      if (r.width + r.height > 0 && r.bottom <= 0) above.push(list[i]);
+    }
+    above.forEach(function (el) {
+      try { io.unobserve(el); } catch (e) { }
+      el.classList.remove('m-pending');
+      if (el.hasAttribute('data-draw')) clearDash(el);
+      if (el.hasAttribute('data-count')) finishDataCount(el);
+    });
+    sweep();
+  }
+  if (typeof window !== 'undefined' && window.addEventListener) {
+    window.addEventListener('scroll', function () {
+      clearTimeout(jumpT);
+      jumpT = setTimeout(afterJump, 140);
+    }, { passive: true });
+    // find-in-page on hidden="until-found" content, and printing: everything shows
+    document.addEventListener('beforematch', function () { revealAll(document); }, true);
+  }
   if (typeof document !== 'undefined' && document.addEventListener) {
     document.addEventListener('toggle', function (ev) {
       var t = ev.target;
@@ -3967,6 +4241,22 @@
     list = root.querySelectorAll('[data-reveal], [data-draw]');
     for (i = 0; i < list.length; i++) watch(list[i]);
     if (root !== document && root.hasAttribute && (root.hasAttribute('data-reveal') || root.hasAttribute('data-draw'))) watch(root);
+
+    /* S12: on a forward push the incoming page used to slide in blank and cascade only after the slide. Now its
+       first three blocks (document order: the heading, the key facts, the first action) start their entrance
+       inside the push, 40ms apart, so the page arrives readable; everything after them still reveals on scroll.
+       No layout is read here (this runs inside the transition's update). */
+    var rk = SM.route && SM.route.kind;
+    if (!instant && rk === 'forward' && root.id === 'view' && !reduced()) {
+      var firsts = root.querySelectorAll('.m-pending'), took = 0;
+      for (i = 0; i < firsts.length && took < 3; i++) {
+        var f0 = firsts[i];
+        if (f0.closest('[hidden], details:not([open]), template')) continue;
+        try { io.unobserve(f0); } catch (e) { }
+        revealEl(f0, 70 + took * 40, false);
+        took++;
+      }
+    }
 
     list = root.querySelectorAll('[data-count]');
     for (i = 0; i < list.length; i++) {
@@ -4289,6 +4579,8 @@
     var h0 = container.getBoundingClientRect().height;
     var fol = followers(container).filter(function (el) {
       if (el.offsetParent === null) return false;
+      // a sticky / fixed bar (the question's 次へ) stays where it is: moving it with the blocks below looked broken
+      try { var ps = getComputedStyle(el).position; if (ps === 'sticky' || ps === 'fixed') return false; } catch (e) { }
       var r = el.getBoundingClientRect();
       return r.bottom > -40 && r.top < vh + 40;
     });
@@ -4561,7 +4853,8 @@
      never crosses the toast's 元に戻す on its way down to the tab */
   var flightEnd = 0;
   function flightLeft() { return Math.max(0, flightEnd - now()); }
-  /* flyTo(fromEl, toEl, {duration, onArrive, ghost}) -> Promise
+  /* flyTo(fromEl, toEl, {duration, onArrive, ghost, tone}) -> Promise   tone:'warn' = an amber dot and ring (a save
+     that cannot persist: storage blocked, FIX-A S9)
      v5 save feedback (SPEC-v5 Part A.7): a green station dot leaves the save button, lifts clear of it, arcs down into
      the やること tab and lands there: the tab icon pops, its badge bumps (onArrive usually rolls the count) and a
      thin ring spreads from the tab. ghost:true flies a copy of fromEl instead of the dot (v4 behaviour).
@@ -4586,7 +4879,7 @@
     } else {
       size = 14;
       g = document.createElement('span');
-      g.className = 'm-fly-dot';
+      g.className = 'm-fly-dot' + (o.tone === 'warn' ? ' is-warn' : '');
       g.style.cssText = 'left:' + (a.left + a.width / 2 - size / 2) + 'px;top:' + (a.top + a.height / 2 - size / 2) + 'px;';
     }
     g.setAttribute('aria-hidden', 'true');
@@ -4606,18 +4899,18 @@
     ], { duration: dur, easing: 'linear', fill: 'forwards' });
     return settled([ax, ay]).then(function () {
       if (g.parentNode) g.parentNode.removeChild(g);
-      landOn(to, target);
+      landOn(to, target, o.tone);
       arrive();
     });
   }
   /* the landing: tab icon pops, a ring spreads from the tab, the badge bumps */
-  function landOn(to, target) {
+  function landOn(to, target, tone) {
     if (isSvgEl(target)) prepSvg(target);
     animate(target, [{ scale: '0.8' }, { scale: '1.18', offset: 0.4 }, { scale: '1' }], { duration: 420, easing: 'ease-out', key: 'arrive' });
     var host = to;
     if (host && host.appendChild && !isSvgEl(host)) {
       var ring = document.createElement('span');
-      ring.className = 'm-land';
+      ring.className = 'm-land' + (tone === 'warn' ? ' is-warn' : '');
       ring.setAttribute('aria-hidden', 'true');
       try {
         var hr = host.getBoundingClientRect(), r = target.getBoundingClientRect();
@@ -10622,10 +10915,13 @@
     if (d.always) return 50;
     return 40;
   }
+  /* F06: money you never pay back, by the same rule as the green 「返さなくていい」 line on every row
+     (SM.ui.repayLabel) and the about page's count: repay 'none', or a grant with no repay field. Free counselling
+     is not "money you do not pay back", so 返さなくていいだけ / 返さなくていい順 no longer keep (nearly) everything. */
   function isFree(p) {
-    if (p.repay === 'yes' || p.repay === 'conditional') return false;
-    if (p.kind === 'loan' || p.kind === 'loan_forgivable') return false;
-    return true;
+    if (!p) return false;
+    if (p.repay === 'none') return true;
+    return !p.repay && p.kind === 'grant';
   }
   function nearby(p, area) {
     var locs = p.locations || [];
@@ -11276,7 +11572,10 @@
       if (SM.matchSummary) {
         summary = SM.matchSummary(answers()).filter(function (r) {
           return r.set && r.label && (r.key === 'stage' || r.key === 'path' || r.key === 'area');
-        }).map(function (r) { return '<span class="tag tag-neutral h-ans">' + esc(r.label) + '</span>'; }).join('');
+        }).map(function (r, i) {
+          // F25: plain text separated by ／ (a tag looked tappable; only 変える is)
+          return '<span class="h-ans">' + (i ? '<span class="h-ans-sep" aria-hidden="true">' + (en() ? '\u00b7' : '／') + '</span>' : '') + esc(r.label) + '</span>';
+        }).join('');
       }
     } catch (e) { summary = ''; }
     var unit = t('home.backUnit');
@@ -11815,6 +12114,7 @@
     'shell.nav': { ja: 'メイン', en: 'Main' },
     'tab.home': { ja: 'ホーム', en: 'Home' },
     'tab.find': { ja: 'さがす', en: 'Find' },
+    'tab.ask': { ja: 'きく', en: 'Ask' },   // SEARCH (v6): 「きく」 tab
     'tab.map': { ja: 'マップ', en: 'Map' },
     'tab.plan': { ja: 'やること', en: 'To-do' },
     'tab.planCount': { ja: 'やること（保存 {n}件）', en: 'To-do ({n} saved)' },
@@ -11906,16 +12206,14 @@
     'set.confirmBody': { ja: '答え・保存した支援・チェック・日付・まなぶの記録が消えます。元には戻せません。', en: 'Your answers, saved items, checks, dates and lesson progress will be removed. This can\'t be undone.' },
     'set.confirmYes': { ja: 'すべて消す', en: 'Erase all' },
     'set.confirmNo': { ja: 'やめる', en: 'Cancel' },
-    'set.erased': { ja: '記録を消しました', en: 'Everything was erased' }
+    'set.erased': { ja: '記録を消しました', en: 'Everything was erased' },
+    'set.on': { ja: 'オン', en: 'On' },
+    'set.off': { ja: 'オフ', en: 'Off' }
   });
 
   /* ------------------------------------------------------------------ shell */
-  var TABS = [
-    { key: 'home', href: '#/', icon: 'home' },
-    { key: 'find', href: '#/find', icon: 'search' },
-    { key: 'map', href: '#/map', icon: 'map' },
-    { key: 'plan', href: '#/plan', icon: 'check-list' }
-  ];
+  // S16: the tab list lives in core.js (SM.tabs), where the router also reads it
+  var TABS = SM.tabs;
 
   // まなぶ exists when its view is loaded or can be loaded on first use (index.html window.__smLazy)
   function hasLearn() { return !!(SM.views.learn || (SM.lazy && SM.lazy.learn)); }
@@ -12003,6 +12301,9 @@
     // not during the question flow (it pushed the options below the fold): first offered on results / home
     var h = (SM.route && SM.route.hash) || location.hash || '';
     if (/^#\/find\/q(\/|$|\?)/.test(h)) return false;
+    // F09: never above the count on the results the person waited for: there it is offered as a toast once the
+    // results have landed (SM.offerJrRuby, called by find.js)
+    if (/^#\/find\/results/.test(h)) return false;
     // never push crisis numbers down: not while the answers say 「今、家にいられない」
     if (s.answers && s.answers.urgent) return false;
     return document.body.classList.contains('is-junior') && !s.settings.ruby && SM.lang() === 'ja' && !(s.hints && s.hints.jrRuby);
@@ -12029,7 +12330,18 @@
     if (!SM.state.hints || typeof SM.state.hints !== 'object') SM.state.hints = {};
     SM.state.hints.jrRuby = true;
   }
-  SM.on('jr-ruby', function () {
+  /* F09: the same offer as a one-line toast with its button (results: after the count has rolled). Shown once:
+     showing it counts as the answer, so the banner does not come back on home. */
+  SM.offerJrRuby = function () {
+    var s = SM.state;
+    if (!document.body.classList.contains('is-junior') || s.settings.ruby || SM.lang() !== 'ja' || (s.hints && s.hints.jrRuby)) return false;
+    if (s.answers && s.answers.urgent) return false;
+    jrAnswered();
+    SM.save();
+    SM.toast(t('jr.title'), { ms: 9000, action: { label: t('jr.yes'), fn: turnRubyOn } });
+    return true;
+  };
+  function turnRubyOn() {
     jrAnswered();
     SM.state.settings.ruby = true;
     SM.save();
@@ -12043,7 +12355,8 @@
       try { h1.focus({ preventScroll: true }); } catch (e) { }
     }
     SM.toast(t('jr.done'));
-  });
+  }
+  SM.on('jr-ruby', turnRubyOn);
   SM.on('jr-dismiss', function () {
     jrAnswered();
     SM.save();
@@ -12102,16 +12415,19 @@
     });
   }
   function setSaved(id, on, src, undo) {
-    SM.toggleSave(id, { quiet: true, on: on });
+    SM.store.quiet = true;
+    try { SM.toggleSave(id, { quiet: true, on: on }); } finally { SM.store.quiet = false; }
     paintSaveButtons(id, on);
     var mo = SM.motion;
     var tab = document.querySelector('.tabbar .tab[data-tab="plan"]');
     var star = src && src.isConnected ? src.querySelector('svg') : null;
     var landed = false;
     var land = function () { if (landed) return; landed = true; SM.updateBadge({ roll: true }); };
+    // S9: a save that will not outlive this page (storage blocked or full) flies in amber and says so
+    var temp = !SM.store.available;
     if (on && !undo && star && mo && !mo.reduced()) {
       if (mo.stamp) mo.stamp(star);
-      if (mo.flyTo && tab) setTimeout(function () { mo.flyTo(star, tab, { onArrive: land }); }, 90);
+      if (mo.flyTo && tab) setTimeout(function () { mo.flyTo(star, tab, { onArrive: land, tone: temp ? 'warn' : '' }); }, 90);
       else land();
     } else land();
     var v = SM.views[SM.route.key];
@@ -12120,7 +12436,7 @@
     document.dispatchEvent(new CustomEvent('sm:save', { detail: { id: id, saved: on, undo: !!undo } }));
     if (undo) { SM.toast(t('core.undone'), 1600); return; }
     setTimeout(function () {
-      SM.toast(t(on ? 'core.saved' : 'core.unsaved'), {
+      SM.toast(t(on ? (temp ? 'core.savedTemp' : 'core.saved') : 'core.unsaved'), {
         action: { label: t('core.undo'), fn: function () { setSaved(id, !on, null, true); } }
       });
     }, on ? 120 : 0);
@@ -12272,9 +12588,31 @@
         '<a class="sos-chat-link" href="#/find/cat/consult?chat=1">' + esc(t('sos.chatBtn')) + ic('chevron-right') + '</a></div>' +
       '</div>' +
       '<p class="sos-foot">' + esc(t('sos.checked', { date: SM.fmtDate(SM.updated) })) + '</p>';
-    SM.sheet(html, { title: t('sos.title'), cls: 'sheet-sos' });
+    SM.sheet(html, { title: t('sos.title'), cls: 'sheet-sos', mount: sosEnter });
   }
   SM.openSOS = openSOS;
+  /* The SOS list lands with the sheet: rows rise 12px into place 30ms apart (transform only: every number is
+     readable from the first frame), the 110 / 119 phone marks stamp, and each other phone mark nudges once.
+     Reduced motion: the sheet's own fade only. */
+  function sosEnter(dlg) {
+    var mo = SM.motion;
+    if (!mo || !mo.animate || (mo.reduced && mo.reduced())) return;
+    var rows = dlg.querySelectorAll('.sos-li, .sos-chat');
+    Array.prototype.forEach.call(rows, function (li, i) {
+      if (i > 9) return;
+      mo.animate(li, [{ transform: 'translateY(12px)' }, { transform: 'none' }], { spring: 'smooth', delay: 60 + i * 30, fill: 'backwards' });
+    });
+    setTimeout(function () {
+      if (!dlg.isConnected) return;
+      Array.prototype.forEach.call(dlg.querySelectorAll('.sos-li.is-urgent .sos-ic svg'), function (svg, i) {
+        setTimeout(function () { if (svg.isConnected && mo.stamp) mo.stamp(svg, { ring: true }); }, i * 70);
+      });
+      Array.prototype.forEach.call(dlg.querySelectorAll('.sos-li:not(.is-urgent) .sos-ic'), function (ic0, i) {
+        if (i > 6) return;
+        setTimeout(function () { if (ic0.isConnected && mo.nudge) mo.nudge(ic0); }, 140 + i * 30);
+      });
+    }, 160);
+  }
 
   function btn(label, o) {
     if (SM.ui && typeof SM.ui.button === 'function') {
@@ -12292,6 +12630,8 @@
         '<small id="' + id + '-d">' + esc(t('set.' + key + 'd')) + '</small></span>' +
       '<input type="checkbox" role="switch" class="switch" id="' + id + '" data-act="setting" data-key="' + key + '"' +
         ' aria-describedby="' + id + '-d"' + (checked ? ' checked' : '') + '>' +
+      // F45: the state in words beside the switch (a filled knob alone read as 'on' on a dim screen)
+      '<span class="switch-state" aria-hidden="true" data-on="' + esc(t('set.on')) + '" data-off="' + esc(t('set.off')) + '"></span>' +
     '</label>';
   }
 
@@ -12342,16 +12682,28 @@
       SM.render();
       // re-paint the sheet (language / furigana may have changed) and keep focus on the same switch
       openSettings('#set-' + key);
+      // the re-painted switch is a new element: its knob still slides across on the snappy spring
+      var sw = document.getElementById('set-' + key);
+      if (sw && sw.animate && !(SM.motion && SM.motion.reduced && SM.motion.reduced())) {
+        try {
+          sw.animate([{ transform: 'translateX(' + (on ? 0 : 20) + 'px)' }, { transform: 'translateX(' + (on ? 20 : 0) + 'px)' }],
+            { duration: 260, easing: 'cubic-bezier(0.2, 0.9, 0.3, 1.04)', pseudoElement: '::before' });
+        } catch (e) { }
+      }
     };
     var mo = SM.motion;
     // theme: a 200ms cross-fade of the whole screen, nothing moves (MOTION-SPEC §3.5)
     if (key === 'dark' && mo && mo.transition) { mo.transition('theme', apply); return; }
-    apply();
-    // language: the page cross-fades 120ms after the re-render; size, furigana and motion change instantly
-    if (key === 'lang' && mo && mo.animate) {
-      var v = document.getElementById('view');
-      if (v) mo.animate(v, [{ opacity: 0 }, { opacity: 1 }], { duration: 120, easing: 'linear' });
+    // 文字を大きく / ふりがな / English re-flow the whole page: it cross-fades (the old page out 160ms, the new one in
+    // 200ms) instead of snapping; furigana arrive a beat after their base text (motion.css html.m-ruby-in), so
+    // the change reads as "readings added". The switch's knob has already slid on its spring.
+    if ((key === 'big' || key === 'ruby' || key === 'lang') && mo && mo.transition && !(mo.reduced && mo.reduced())) {
+      var de = document.documentElement;
+      if (key === 'ruby' && on) { de.classList.add('m-ruby-in'); setTimeout(function () { de.classList.remove('m-ruby-in'); }, 900); }
+      mo.transition('fade', apply);
+      return;
     }
+    apply();
   });
 
   SM.on('erase', function () {
@@ -12381,8 +12733,12 @@
      themselves and stop it, and must never be able to swallow the quick exit. onKey below still closes a
      sheet and shows the "press again" hint on the first press. */
   var lastEscW = 0;
+  // S4: an Esc (or Enter) that belongs to a kana→kanji conversion is the input method's, never the app's
+  function composing(ev) { return !!(ev.isComposing || ev.keyCode === 229); }
+  SM.composing = composing;
   function onEscFirst(ev) {
     if (ev.key !== 'Escape' && ev.key !== 'Esc') return;
+    if (composing(ev)) return;
     var n = Date.now();
     if (n - lastEscW < 1000) { ev.preventDefault(); ev.stopImmediatePropagation(); quickExit(); return; }
     lastEscW = n;
@@ -12413,6 +12769,7 @@
   function onKey(ev) {
     if (ev.key === 'Tab') { SM._trapTab(ev); return; }
     if (ev.key !== 'Escape' && ev.key !== 'Esc') return;
+    if (composing(ev)) return;
     var now = Date.now();
     // the 2nd Esc within 1s always exits, even if the 1st one closed a sheet or cleared a search box
     if (now - lastEsc < 1000) { ev.preventDefault(); quickExit(); return; }
@@ -12432,8 +12789,10 @@
     } else setTimeout(go, 600);   // no opening: after the first screen has settled
   }
   SM.start = function () {
-    if (SM._started) return;
-    SM._started = true;
+    if (SM._started || SM._starting) return;
+    // S2: _started (read by the head gate's "could not start" card) is set only once the first screen is up, so a
+    // start that throws shows that card, with its 保存した内容を消して開く button, instead of a blank page
+    SM._starting = true;
     SM.applySettings();
     SM.paintShell();
     SM._bindEvents();
@@ -12445,6 +12804,7 @@
     if (SM._guardStart) SM._guardStart();   // a deep link: the phone's Back goes to the parent screen, not out
     document.documentElement.classList.add('js');
     SM._route();
+    SM._started = true;
     // 緊急 tapped before the app started: the static list (index.html #sos-static) hands over to the full sheet,
     // which slides up over it; the list goes once the sheet covers it
     var sst = document.getElementById('sos-static');
@@ -12551,9 +12911,11 @@
   var MAP_JS = ['js/vendor/maplibre-gl.js', 'data/map/base.js', 'data/map/style.js'];
   var mapP = null;
   function mapReady() { return !!(w.maplibregl && SM.mapStyle && SM.data && SM.data.mapMeta); }
+  // S1: this build's copy of each file (?v=<build id>), never last release's from the cache
+  function vs(src) { return SM._vsrc ? SM._vsrc(src) : (w.__smV ? src + '?v=' + encodeURIComponent(w.__smV) : src); }
   function hasTag(sel, attr, src) {
-    var list = d.querySelectorAll(sel);
-    for (var i = 0; i < list.length; i++) if (list[i].getAttribute(attr) === src) return list[i];
+    var list = d.querySelectorAll(sel), v = vs(src);
+    for (var i = 0; i < list.length; i++) { var a = list[i].getAttribute(attr); if (a === src || a === v) return list[i]; }
     return null;
   }
   SM.loadMapLib = function (cb) {
@@ -12583,14 +12945,14 @@
         }
         if (!hasTag('link[rel="stylesheet"]', 'href', MAP_CSS)) {
           var l = d.createElement('link');
-          l.rel = 'stylesheet'; l.href = MAP_CSS;
+          l.rel = 'stylesheet'; l.href = vs(MAP_CSS);
           d.head.appendChild(l);
         }
         var last = null;
         MAP_JS.forEach(function (src) {
           if (hasTag('script', 'src', src)) return; // someone else added it; the poll below notices when it ran
           var s = d.createElement('script');
-          s.src = src; s.async = false; // execute in insertion order
+          s.src = vs(src); s.async = false; // execute in insertion order
           s.onerror = function () { fail(src); };
           s.addEventListener('load', function () { s._smOk = true; });
           d.body.appendChild(s);
