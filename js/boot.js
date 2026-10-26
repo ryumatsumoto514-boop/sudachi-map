@@ -7,10 +7,32 @@
   var SM = window.SM;
   var esc = SM.esc, t = SM.t, ic = SM._ic;
 
+  /* v7 (SYSTEM): the programs come from five data files (国・東京都・都内の区市町村・関東南部・関東北部). A file that
+     failed to load just adds nothing; a record without an id or a Japanese name, or a second record with an id
+     already listed, is set aside here (in place: views hold the same array), so no view meets a broken row. */
+  (function () {
+    var ps = SM.data && SM.data.programs;
+    if (!Array.isArray(ps)) return;
+    var seen = {}, out = [], bad = [];
+    ps.forEach(function (p) {
+      var ok = p && typeof p.id === 'string' && p.id && !seen[p.id] && p.name && (typeof p.name === 'string' || p.name.ja);
+      if (!ok) { bad.push(p && p.id); return; }
+      seen[p.id] = 1;
+      if (!p.for || typeof p.for !== 'object') p.for = {};
+      if (!Array.isArray(p.cat) || !p.cat.length) p.cat = ['procedures'];
+      out.push(p);
+    });
+    if (bad.length) {
+      ps.length = 0;
+      Array.prototype.push.apply(ps, out);
+      if (SM.dev) { try { console.warn('[SM] set aside ' + bad.length + ' program record(s): ' + bad.join(', ')); } catch (e) { } }
+    }
+  })();
+
   /* ------------------------------------------------------------------ strings */
   SM.strings({
     'shell.brand': { ja: '巣立ちマップ', en: 'Sudachi Map' },
-    'shell.docTitle': { ja: '巣立ちマップ｜施設や里親家庭を出る人の支援ガイド（東京）', en: 'Sudachi Map | Support for young people leaving care in Tokyo' },
+    'shell.docTitle': { ja: '巣立ちマップ｜施設や里親家庭を出る人の支援ガイド（関東）', en: 'Sudachi Map | Support for young people leaving care in Kanto' },
     'shell.skip': { ja: '本文へ', en: 'Skip to content' },
     'shell.exit': { ja: 'すぐ閉じる', en: 'Quick exit' },
     'shell.exitHint': { ja: 'すぐに天気の検索に切りかえます（Esc 2回でも）', en: 'Switch to a weather search at once (or Esc twice)' },
@@ -419,13 +441,13 @@
       { k: '119', num: '119', urgent: true }
     ] },
     { g: 'sos.gHome', home: true, items: [
-      { k: 'chal', num: '0120-874-225', hours: 'sos.chalh' },
+      { k: 'chal', num: '0120-874-225', hours: 'sos.chalh', tokyo: true },
       { k: '189', num: '189' }
     ] },
     { g: 'sos.g2', items: [
       { k: 'yori', num: '0120-279-338', hours: 'sos.yorih' },
       { k: 'inochi', num: '0120-061-338', hours: 'sos.free' },
-      { k: 'waka', num: '03-3267-0808', hours: 'sos.wakah' }
+      { k: 'waka', num: '03-3267-0808', hours: 'sos.wakah', tokyo: true }
     ] },
     { g: 'sos.g3', items: [
       { k: '188', num: '188' }
@@ -456,6 +478,15 @@
     try { jr = document.body.classList.contains('is-junior') || SM.isJunior(); } catch (e) { jr = false; }
     return jr ? SOS_JR : SOS;
   }
+  /* v7 (Kanto): the two Tokyo-only lines (tokyo: true) are for people who may live in Tokyo: a Tokyo answer, or
+     none yet. Someone in another prefecture (or outside Kanto) sees the national lines only. */
+  function sosItems(grp) {
+    var a = SM.state && SM.state.answers ? SM.state.answers.area : null;
+    var U = SM.matchUtil, pf = null;
+    try { pf = U && U.prefOf ? U.prefOf(a) : null; } catch (e) { pf = null; }
+    var tokyo = !a || pf === '13';
+    return grp.items.filter(function (it) { return !it.tokyo || tokyo; });
+  }
 
   function sosRow(it) {
     var name = t('sos.' + it.k);
@@ -482,8 +513,10 @@
     var html =
       '<p class="sos-lead">' + esc(t(jr ? 'sos.jr.lead' : 'sos.lead')) + '</p>' +
       list.map(function (grp) {
-        return '<section class="sos-group' + (grp.items[0].urgent ? ' sos-group-urgent' : '') + '"><h3 class="sos-gtitle">' + esc(t(grp.g)) + '</h3>' +
-          '<ul class="sos-list">' + grp.items.map(sosRow).join('') + '</ul>' +
+        var items = sosItems(grp);
+        if (!items.length) return '';
+        return '<section class="sos-group' + (items[0].urgent ? ' sos-group-urgent' : '') + '"><h3 class="sos-gtitle">' + esc(t(grp.g)) + '</h3>' +
+          '<ul class="sos-list">' + items.map(sosRow).join('') + '</ul>' +
           (grp.home ? '<a class="sos-chat-link sos-home-link" href="#/p/seikatsu-hogo"><span>' + esc(t('sos.seikatsuBtn')) + '<small class="sos-desc">' + esc(t('sos.seikatsud')) + '</small></span>' + ic('chevron-right') + '</a>' : '') +
           '</section>';
       }).join('') +

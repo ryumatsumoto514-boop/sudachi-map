@@ -403,7 +403,7 @@
     run(cap, [{ opacity: 1 }, { opacity: 0 }], { duration: 90, easing: 'cubic-bezier(0, 0, 0.2, 1)', fill: 'forwards' });
     run(paper, [{ opacity: 1 }, { opacity: 0 }], { duration: 180, delay: skipped ? 0 : 60, easing: 'linear', fill: 'both' });
     if (tabbar) {
-      run(tabbar, [{ transform: wide ? 'translateX(-100%)' : 'translateY(100%)' }, { transform: 'none' }],
+      run(tabbar, wide ? [{ opacity: 0, transform: 'translateX(-12px)' }, { opacity: 1, transform: 'none' }] : [{ transform: 'translateY(100%)' }, { transform: 'none' }],
         { duration: dur, delay: skipped ? 0 : 80, easing: 'cubic-bezier(0.2, 0.9, 0.3, 1)', fill: 'both' }, true);
     }
 

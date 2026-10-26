@@ -5,6 +5,14 @@
  * The track follows SM.isJunior() (body.is-junior) unless the user picks one with the 高校受験 / 巣立ち switch
  * (stored as SM.store 'plan:track'). Saved programs, .ics export and the 相談シート work for both tracks.
  *
+ * v7 (SPEC-v7 §3, usability): the first screen is what to do NOW. A compact status strip (days left · the day it
+ *   counts to + 変える, with one plain line when it is a stand-in · できたこと n/N and one bar; the old 「いまの時期まで」
+ *   tick and the lone 「くわしく ＋」 are gone), then the timeline starting at いま (past periods folded into one row
+ *   above it), checkable in place. 保存した支援 and 見せる・残す (calendar / 相談シート, each with what it is for) follow;
+ *   on desktop they stand beside the timeline. Nothing saved = an invitation (how saving works, supports from the
+ *   timeline, the way to find more). A finished current period shows 「ぜんぶできた → つぎ」. Kanto: tasks built around a
+ *   Tokyo-only program get general wording for people outside 東京都 (LOCAL_TASK); related links drop records the
+ *   person's area cannot use.
  * v4 (VISUAL-SPEC §7.8, MOTION-SPEC §4.2 Plan):
  *   - countdown: num-hero digits roll in from 0 on the first view (SM.motion.odometer), later only when N changed
  *     since the last visit (SM.motion.seen 'plan.days.<track>'); a date change rolls old N → new N.
@@ -57,8 +65,6 @@
     'plan.changeLabel': { ja: '{what}を変える（いまは{date}）', en: 'Change {what} (now {date})' },
     'plan.progress': { ja: 'できたこと', en: 'Done' },
     'plan.progressOf': { ja: '{done} / {total}', en: '{done} of {total}' },
-    'plan.progressDue': { ja: '{done} / {total}（いまの時期までの目安は{due}）', en: '{done} of {total} (about {due} by now)' },
-    'plan.due': { ja: 'いまの時期まで', en: 'By now' },
 
     'plan.jr.anchor': { ja: '高校入学', en: 'High school starts' },
     'plan.jr.count.k': { ja: '高校入学まで', en: 'Until high school' },
@@ -118,7 +124,21 @@
     'plan.act.ics': { ja: 'カレンダーに入れる', en: 'Add to calendar' },
     'plan.act.icsSub': { ja: 'やることの日をスマホのカレンダーへ', en: 'Put your to-do dates in your phone' },
     'plan.act.sheet': { ja: '相談シートをつくる', en: 'Make a talk sheet' },
-    'plan.act.sheetSub': { ja: '職員や先生に見せるメモ', en: 'A note to show staff or a teacher' },
+    'plan.act.sheetSub': { ja: '職員や先生に見せるメモ', jr: '先生や家の人に見せるメモ', en: 'A note to show staff or a teacher' },
+    // v7: the plan's first screen (SPEC-v7 §3)
+    'plan.assumedLine': { ja: '決まるまで、3月31日で計算', en: 'Counting to March 31 until it is set' },
+    'plan.jr.assumedLine': { ja: 'いま{g}として計算しています', en: 'Counting as if you are in {g} now' },
+    'plan.progressK': { ja: 'できたこと', en: 'Done' },
+    'plan.progressAll': { ja: 'ぜんぶできた', en: 'All done' },
+    'plan.tools.h': { ja: '見せる・残す', en: 'Share and keep' },
+    'plan.cur.done': { ja: 'この時期は、ぜんぶできた', en: 'This period is done' },
+    'plan.cur.next': { ja: 'つぎ：{t}（{from}）', en: 'Next: {t} ({from})' },
+    'plan.cur.go': { ja: 'つぎへ', en: 'Go to next' },
+    'plan.empty.k': { ja: 'まだ保存なし', en: 'Nothing saved yet' },
+    'plan.empty.how': { ja: '気になる支援を☆で保存すると、ここと道のりに入ります。', jr: '気になる支援を☆で保存すると、ここに入ります。', en: 'Star a support to keep it here and in your timeline.' },
+    'plan.empty.rel': { ja: '道のりに出てくる支援', en: 'Supports in your timeline' },
+    'plan.saved.why': { ja: '締切は道のりにも出ます', en: 'Deadlines show in the timeline too' },
+    'plan.tl.lead': { ja: 'チェックすると、このスマホに残ります', en: 'Ticks stay on this phone' },
 
     'plan.saved.h': { ja: '保存した支援', en: 'Saved' },
     'plan.saved.sub': { ja: '{n}件', en: '{n} saved' },
@@ -143,7 +163,7 @@
     'plan.tl.nowEarly': { ja: 'まだ先。ゆっくりで大丈夫。', en: 'Plenty of time.' },
     'plan.tl.nowLate': { ja: '巣立ちから時間がたっていても、使える支援はあります。', en: 'Even long after leaving, there is support you can use.' },
     'plan.tl.past': { ja: '前の時期（{n}）', en: 'Earlier ({n})' },   // FIX-B (F47): neutral, not "you are behind"
-    'plan.tl.pastLeft': { ja: '{n}こ', en: '{n} to do' },
+    'plan.tl.pastLeft': { ja: 'のこり{n}こ', en: '{n} left' },
     // FIX-B (v6)
     'plan.tl.asap': { ja: '早めに', en: 'Soon' },
     'plan.nostore': { ja: 'この画面では保存できません。閉じると消えます。', en: 'This screen cannot save. It is lost when you close it.' },
@@ -332,6 +352,71 @@
       .sort(function (a, b) { return track === 'junior' ? (a.seq - b.seq) : (a.m - b.m); });
   }
 
+  /* ------------------------------------------------------------------ Kanto (SPEC-v7) */
+  /* For someone who lives outside 東京都 (another Kanto prefecture, or 'other'), a task written around a Tokyo-only
+     program gets general wording here (data/timeline.js stays as it is: these only drop the Tokyo-specific part or
+     turn it into "ask whether …"), and a task that only exists because of a Tokyo-only program (受験生チャレンジ
+     receipts and forgiveness) is left out. Area not answered: the data as written. Keys: done-key prefix + task id
+     (the done keys themselves never change). Related-support links drop records the person cannot use. */
+  var HIDE = {};
+  var LOCAL_TASK = {
+    'tl:start': { ja: '住む都県に、ひとり暮らしをはじめるときの支援があるか聞く', en: 'Ask whether your prefecture has support for starting life on your own' },
+    'jr:challenge': { ja: '塾代や受験料が心配なら、区市町村の窓口で使える支援がないか聞く', jr: '塾代や受験料が心配なら、窓口で支援がないか聞く', en: 'Worried about cram school or exam fees? Ask your city office what help there is' },
+    'jr:hikaku': { ja: '公立と私立で、授業料と支援がどうちがうか知る', jr: '公立と私立で、お金がどうちがうか知る', en: 'Learn how tuition and support differ between public and private schools' },
+    'jr:ryoshusho': HIDE, 'jr:jukenryo': HIDE, 'jr:ryoshusho2': HIDE, 'jr:menjo': HIDE,
+    'jr:nyugaku': { ja: '合格したら入学の手続き。入学料の金額と払う期限を、合格の案内で確かめる', jr: '合格したら、入学の手つづき。入学料の期限をたしかめる', en: 'After passing, enrol. Check the entry fee and when it is due in your acceptance papers' },
+    'jr:shugakushien': { ja: '学校から案内が来たら「就学支援金」を申請する', en: 'When school sends instructions, apply for the tuition support fund' },
+    'jr:souki': { ja: '奨学給付金の「新入生の早めの申請」ができるか、学校に聞く', jr: '奨学給付金を早めにもらえるか、学校に聞く', en: 'Ask school whether you can claim the scholarship benefit early as a new student' },
+    'jr:kyufukin': { ja: '「奨学給付金」を申請する（時期と方法は、学校や都県の案内で確かめる）', jr: '「奨学給付金」を申請する', en: 'Apply for the scholarship benefit (check when and how with your school or prefecture)' },
+    'jr:shiritsu': { ja: '私立高校の人は、住む都県に授業料の独自の支援があるか、学校に聞く', jr: '私立の人は、授業料の支援があるか学校に聞く', en: 'At a private school? Ask whether your prefecture adds its own tuition support' },
+    'jr:maitoshi': { ja: '奨学給付金は毎年の申請が必要。就学支援金も、学校から案内が来たら必ず手続きする', jr: '給付金の申請は毎年。来年の分もカレンダーに入れる', en: 'The scholarship benefit needs a new application every year. For the tuition support fund, always act when school sends instructions' }
+  };
+  function myArea() { var a = answers().area; return typeof a === 'string' && a ? a : null; }
+  function outsideTokyo() {
+    var a = myArea();
+    if (!a) return false;
+    if (a === 'other') return true;
+    var mu = SM.matchUtil, pf = mu && mu.prefOf ? mu.prefOf(a) : (/^(\d{2})(\d{3})?$/.exec(a) || [])[1];
+    return !!pf && pf !== '13';
+  }
+  /* can this person use the program at all (their area)? unknown area / no helper: yes */
+  function usable(id) {
+    var p = SM.program(id);
+    if (!p) return false;
+    var u = SM.matchUtil && SM.matchUtil.usableIn;
+    if (!u) return true;
+    try { return u(p, myArea()) !== false; } catch (e) { return true; }
+  }
+  /* v7: one support, one link. A national scheme each 都県 runs itself (自立支援資金貸付, サポステ) links the person's
+     prefecture's version (match.js ownVersion: kanagawa-jiritsu-shikin …; area unknown or outside Kanto: the national
+     record); the aftercare place adds the prefecture's own place first (existing records only). */
+  var KYOTEN = { '14': 'kanagawa-asunaro', '11': 'saitama-clover-house', '12': 'chiba-cans', '10': 'gunma-ippo' };
+  function ownIds(ids) {
+    var a = myArea(), mu = SM.matchUtil || {}, out = [];
+    var known = a && a !== 'other';
+    (ids || []).forEach(function (id) {
+      var p = SM.program(id);
+      if (!p) return;
+      var add = [];
+      var base = mu.versioned && mu.versioned[id] ? id : (mu.versionBase ? mu.versionBase(p) : null);
+      if (base) add.push(known && mu.ownVersion ? mu.ownVersion(base, a) : base);
+      else {
+        var k = id === 'yogo-kyoten' && known && mu.prefOf ? KYOTEN[mu.prefOf(a)] : null;
+        if (k && SM.program(k)) add.push(k);
+        add.push(id);
+      }
+      add.forEach(function (x) { if (out.indexOf(x) === -1) out.push(x); });
+    });
+    return out;
+  }
+  function localTask(prefix, tk) {
+    if (!outsideTokyo()) return tk;
+    var o = LOCAL_TASK[prefix + tk.id];
+    if (o === HIDE) return null;
+    if (!o) return tk;
+    return { id: tk.id, ja: o.ja, jr: o.jr || o.ja, en: o.en, p: tk.p, paths: tk.paths, href: tk.href, hrefLabel: tk.hrefLabel };
+  }
+
   /* The 3/31 we assume when the leaving day is not set. Stage-aware: people who already left get a past 3/31. */
   function assumedLeave(now, stage) {
     now = now || today0();
@@ -409,14 +494,15 @@
     return function (tk) { return !tk.paths || !tk.paths.length || !path || path === 'unsure' || tk.paths.indexOf(path) !== -1; };
   }
   function mkTask(key, tk) {
-    return { key: key, kind: 'task', text: L(tk), href: tk.href || null, hrefLabel: tk.hrefLabel ? L(tk.hrefLabel) : '', p: tk.p || [], done: isDone(key) };
+    return { key: key, kind: 'task', text: L(tk), href: tk.href || null, hrefLabel: tk.hrefLabel ? L(tk.hrefLabel) : '', p: ownIds(tk.p).filter(usable), done: isDone(key) };
   }
 
   function leavingGroups(leave) {
     var path = answers().path;
     return timelineOf('leaving').map(function (g) {
       var date = addMonths(leave, g.m);
-      var tasks = (g.tasks || []).filter(taskFilter(path)).map(function (tk) { return mkTask('tl:' + g.m + ':' + tk.id, tk); });
+      var tasks = (g.tasks || []).filter(taskFilter(path)).map(function (tk) { return localTask('tl:', tk); }).filter(Boolean)
+        .map(function (tk) { return mkTask('tl:' + g.m + ':' + tk.id, tk); });
       return {
         m: g.m, key: 'g' + g.m, title: L(g.title), sub: g.sub ? L(g.sub) : '',
         when: relLabel(g.m), dateLabel: g.m === 0 ? fmtDateW(date) : fmtMonth(monthStart(date)),
@@ -446,7 +532,8 @@
         dateLabel = t('plan.jr.until', { date: fmtMonth(end) });
       }
       if (g.grade === 'hs1' && milestoneAt === -1) milestoneAt = out.length;
-      var tasks = (g.tasks || []).map(function (tk) { return mkTask('jr:' + g.id + ':' + tk.id, tk); });
+      var tasks = (g.tasks || []).map(function (tk) { return localTask('jr:', tk); }).filter(Boolean)
+        .map(function (tk) { return mkTask('jr:' + g.id + ':' + tk.id, tk); });
       out.push({ id: g.id, key: 'j-' + g.id, title: L(g.title), sub: g.sub ? L(g.sub) : '', when: L(g.when), dateLabel: dateLabel,
         date: start, start: start, end: end, milestone: false, tasks: tasks, progs: [] });
     });
@@ -772,141 +859,74 @@
       '<h1 class="plan-h1" id="plan-h1" data-reveal="line">' + esc(t('plan.h1')) + '</h1>' + switchHtml(ti) + '</header>';
   }
 
+  /* できたこと: one number pair and one bar. (v7: the 「いまの時期まで」 tick is gone: it was never explained.) */
   function progressHtml(model) {
     var pct = model.total ? model.done / model.total : 0;
-    var due = model.due || 0;
-    var showDue = model.total > 0 && due > 0.001 && due < 0.999;
-    var vt = showDue ? t('plan.progressDue', { done: model.done, total: model.total, due: model.dueN }) : t('plan.progressOf', { done: model.done, total: model.total });
-    return '<div class="plan-prog' + (showDue ? ' has-due' : '') + '" id="plan-prog" data-flip-key="ph-prog" data-reveal="" data-reveal-delay="220" style="--due:' + due.toFixed(4) + '">' +
-      '<p class="plan-prog-row"><span class="plan-prog-k">' + esc(t('plan.progress')) + '</span>' +
+    var all = model.total > 0 && model.done === model.total;
+    var vt = t('plan.progressOf', { done: model.done, total: model.total });
+    return '<div class="plan-prog' + (all ? ' is-all' : '') + '" id="plan-prog" data-flip-key="ph-prog">' +
+      '<p class="plan-prog-row"><span class="plan-prog-k" data-m="pk">' + esc(t(all ? 'plan.progressAll' : 'plan.progressK')) + '</span>' +
         '<span class="plan-prog-num num"><b id="plan-prog-done" data-m="pd" data-count="' + model.done + '" data-count-seen="plan.done.' + model.track + '">' + model.done + '</b>' +
         '<span class="plan-prog-of"> / <span id="plan-prog-total" data-m="pt">' + model.total + '</span></span></span></p>' +
-      '<div class="plan-prog-bar" role="progressbar" aria-label="' + esc(t('plan.progress')) + '" aria-valuemin="0" aria-valuemax="' + model.total + '" aria-valuenow="' + model.done + '" aria-valuetext="' + esc(vt) + '">' +
-        '<i class="plan-prog-fill m-bar" style="transform:scaleX(' + pct.toFixed(4) + ')"></i>' +
-        '<span class="plan-prog-tick" aria-hidden="true"></span></div>' +
-      '<p class="plan-prog-due" aria-hidden="true"><span>' + esc(t('plan.due')) + '</span></p>' +
+      '<div class="plan-prog-bar" role="progressbar" aria-label="' + esc(t('plan.progressK')) + '" aria-valuemin="0" aria-valuemax="' + model.total + '" aria-valuenow="' + model.done + '" aria-valuetext="' + esc(vt) + '">' +
+        '<i class="plan-prog-fill m-bar" style="transform:scaleX(' + pct.toFixed(4) + ')"></i></div>' +
     '</div>';
   }
 
+  /* The status strip: how long is left (count), the day it counts to (date + 変える, and one plain line when the
+     date is a stand-in), and how much is done. One compact band, so the current period's tasks are on the first
+     screen right under it (SPEC-v7 §3). Desktop: one row with the person walking to the door. */
   function heroHtml(model) {
     var jr = model.track === 'junior';
     var c = countInfo(model);
     var count;
     if (c.today) {
       count = '<div class="plan-count is-today"><p class="plan-count-k" data-m="k">' + esc(c.k) + '</p>' +
-        '<p class="plan-count-big"><b class="plan-count-today" id="plan-count-n" data-m="n">' + esc(c.big) + '</b></p></div>';
+        '<p class="plan-count-big"><b class="plan-count-today" id="plan-count-n" data-m="n">' + esc(c.big) + '</b></p>' +
+        '<p class="plan-count-sub" data-m="sub">' + esc(c.sub) + '</p></div>';
     } else {
       count = '<div class="plan-count' + (c.n >= 1000 ? ' is-long' : '') + '"><p class="plan-count-k" data-m="k">' + esc(c.k) + '</p>' +
         '<p class="plan-count-big">' + (c.pre ? '<span class="plan-count-pre" data-m="pre">' + esc(c.pre) + '</span>' : '') +
           '<b class="plan-count-num num" id="plan-count-n" data-m="n" data-n="' + c.n + '">' + esc(c.text) + '</b>' +
           '<span class="plan-count-unit" data-m="u">' + esc(c.unit) + '</span></p></div>';
     }
+    // FIX-B (S9): when this browser cannot keep anything, say so where the plan is (not only inside 設定)
+    if (SM.store && SM.store.available === false) count = count.replace(/<\/div>$/, '<p class="plan-nostore" role="note">' + esc(t('plan.nostore')) + ' <button type="button" class="plan-nostore-go" data-act="settings">' + esc(t('plan.nostoreGo')) + '</button></p></div>');
     var art = il(jr ? 'plan-jr-hero' : 'plan-hero', { size: 'spot', cls: 'plan-hero-il' + (jr ? ' is-jr' : '') }) ||
       (jr ? il('plan-hero', { size: 'spot', cls: 'plan-hero-il' }) : '');
     var what = jr ? t('plan.jr.anchor') : t('plan.leave.label');
-    var note = '';
-    if (model.assumed) {
-      note = jr ? t('plan.jr.assumedNote', { date: fmtMonth(model.anchor), g: gradeFor(model.anchor, model.now) }) : t('plan.assumedNote', { date: fmtDate(model.anchor) }) + ' ' + t('plan.leave.def');
-    } else if (jr) note = t('plan.jr.def');
-    var date = '<div class="plan-date" data-flip-key="ph-date" data-reveal="" data-reveal-delay="140">' +
+    // a stand-in date says so in one plain line (it was a lone 「くわしく ＋」)
+    var note = model.assumed ? (jr ? t('plan.jr.assumedLine', { g: gradeFor(model.anchor, model.now) }) : t('plan.assumedLine')) : '';
+    var date = '<div class="plan-date" data-flip-key="ph-date">' +
       '<div class="plan-date-main">' +
         '<p class="plan-date-k"><span data-m="dk">' + esc(what) + '</span>' + (model.assumed ? '<span class="tag tag-deadline plan-assumed">' + esc(t('plan.assumed')) + '</span>' : '') + '</p>' +
-        '<p class="plan-date-v" data-m="dv">' + esc(fmtDateW(model.anchor)) + '</p></div>' +
+        '<p class="plan-date-v" data-m="dv">' + esc(fmtDateW(model.anchor)) + '</p>' +
+        (note ? '<p class="plan-date-note" data-m="note">' + esc(note) + '</p>' : '') + '</div>' +
       '<button type="button" class="btn btn-secondary btn-sm plan-date-edit" id="plan-date-btn" data-act="plan-date" aria-label="' + esc(t('plan.changeLabel', { what: what, date: fmtDate(model.anchor) })) + '"><span>' + esc(t('plan.change')) + '</span></button>' +
     '</div>';
-    // the long explanation (仮の日付 / what 巣立ちの日 means) waits behind 「くわしく」 (SPEC-v5 Part B)
-    var more = note ? (SM.ui.more ? SM.ui.more(null, '<p class="plan-date-note" data-m="note">' + esc(note) + '</p>', { inline: true, cls: 'plan-date-more' }) :
-      '<p class="plan-date-note" data-m="note">' + esc(note) + '</p>') : '';
-    // FIX-B (S9): when this browser cannot keep anything, say so where the plan is (not only inside 設定)
-    if (SM.store && SM.store.available === false) count = count.replace(/<\/div>$/, '<p class="plan-nostore" role="note">' + esc(t('plan.nostore')) + ' <button type="button" class="plan-nostore-go" data-act="settings">' + esc(t('plan.nostoreGo')) + '</button></p></div>');
-    return '<div class="plan-hero' + (art ? ' has-il' : '') + '" data-track="' + model.track + '">' + count + art +
-      '<div class="plan-meta">' + (c.today ? '<p class="plan-count-sub" data-m="sub">' + esc(c.sub) + '</p>' : '') + date + more + progressHtml(model) + '</div>' +
-    '</div>';
+    return '<div class="plan-hero' + (art ? ' has-il' : '') + '" data-track="' + model.track + '" data-reveal="" data-reveal-delay="80">' +
+      '<div class="plan-hero-in">' + count + art + date + progressHtml(model) + '</div></div>';
   }
 
-  /* "いま" band: what to do right now. Variants: now · early (before the timeline) · done (this period is all
-     done → plan-done) · empty (no tasks in this period → plan-empty) · late (after the timeline) · all (everything) */
-  function bandVariant(model) {
-    var g = model.groups, cur = model.cur;
-    if (!g.length) return 'none';
-    if (model.total && model.done === model.total) return 'all';
-    if (model.beyond) return 'late';
-    if (cur === -1) return 'early';
-    var c = g[cur];
-    if (!c.total) return 'empty';
-    if (c.doneN === c.total) return 'done';
-    return 'now';
-  }
+  /* the period after `cur` that has something in it (or the milestone) */
   function nextAfter(model) {
     var g = model.groups;
     for (var i = Math.max(0, model.cur + 1); i < g.length; i++) if (g[i].total || g[i].milestone) return g[i];
     return null;
   }
   function fromLabel(g) { return t('plan.now.from', { date: g.milestone ? fmtDate(g.date) : fmtMonth(g.start) }); }
-  function nowHtml(model) {
-    var v = bandVariant(model);
-    if (v === 'none') return '';
-    var jr = model.track === 'junior';
-    var g = model.groups, cur = model.cur, c = cur >= 0 ? g[cur] : null;
-    var nx = nextAfter(model);
-    var art = '', kHtml = '', title = '', body = '', btn = '';
-    var tag = '<span class="plan-now-tag">' + esc(t('plan.now.k')) + '</span>';
-    // "done" pictures: the leaving track shows the new door (plan-done); a 中学生's period is study, not moving
-    // out, so theirs is the booklet held up with the green seal (learn-done)
-    var doneArt = jr && SM.illus && SM.illus.has && SM.illus.has('learn-done') ? 'learn-done' : 'plan-done';
-    var jump = function (target, label) {
-      return SM.ui.button(label, { act: 'plan-jump', variant: 'ink', block: true, arrow: 'down', cls: 'plan-jump', attrs: 'data-target="' + esc(target) + '"' });
-    };
-    if (v === 'now') {
-      var left = c.total - c.doneN;
-      kHtml = tag + '<span class="plan-now-when">' + esc([c.when, c.dateLabel].filter(Boolean).join('・')) + '</span>';
-      title = SM.ui.marker(c.title);
-      // 「のこり 3こ（全3こ）」 / "3 of 3 left": the unit stays with its number, the total reads as a quiet aside
-      var nOf = '<span class="plan-now-of num">' + esc(t('plan.now.of', { n: c.total })) + '</span>';
-      body = '<p class="plan-now-left" id="plan-now-left">' + (t('plan.now.left') ? '<span>' + esc(t('plan.now.left')) + '</span>' : '') +
-        '<b class="plan-now-n num">' + left + '</b>' + (en() ? nOf + '<span>' + esc(t('plan.now.unit')) + '</span>' : '<span>' + esc(t('plan.now.unit')) + '</span>' + nOf) + '</p>';
-      btn = jump('tl-' + c.key, t('plan.now.jump'));
-    } else if (v === 'early') {
-      // the reassurance is a sentence, so it reads as text (meta), not as a label beside the tag
-      var first = g[0];
-      kHtml = tag;
-      title = '<span class="plan-now-next">' + esc(t('plan.now.next')) + '</span>' + SM.ui.marker(first.title);
-      body = '<p class="plan-now-from">' + esc(fromLabel(first)) + '</p>';
-      btn = jump('tl-' + first.key, t('plan.now.jumpNext'));
-    } else if (v === 'done' || v === 'empty') {
-      art = il(v === 'done' ? doneArt : 'plan-empty', { size: 'spot', cls: 'plan-now-il' });
-      kHtml = tag + '<span class="plan-now-when">' + esc([c.when, c.dateLabel].filter(Boolean).join('・')) + '</span>';
-      title = esc(t(v === 'done' ? 'plan.now.doneT' : 'plan.now.emptyT'));
-      body = v === 'empty' && t('plan.now.emptyB') ? '<p class="plan-now-meta">' + esc(t('plan.now.emptyB')) + '</p>' : '';
-      if (nx) body += '<p class="plan-now-meta plan-now-nx"><b>' + esc(t('plan.now.next')) + '</b><span>' + esc(nx.title) + '（' + esc(fromLabel(nx)) + '）</span></p>';
-      btn = nx ? jump('tl-' + nx.key, t('plan.now.jumpNext')) : jump('tl-' + c.key, t('plan.now.jump'));
-    } else if (v === 'late') {
-      art = il('plan-empty', { size: 'spot', cls: 'plan-now-il' });
-      kHtml = tag;
-      title = esc(t(jr ? 'plan.now.jrLateT' : 'plan.now.lateT'));
-      body = '<p class="plan-now-meta">' + esc(t(jr ? 'plan.jr.nowLate' : 'plan.now.lateB')) + '</p>';
-      btn = SM.ui.button(t('plan.now.consult'), { href: '#/find/cat/consult', variant: 'ink', block: true, cls: 'plan-jump' });
-    } else {   // all
-      art = il(doneArt, { size: 'spot', cls: 'plan-now-il' });
-      title = esc(t('plan.all.t'));
-      body = '<p class="plan-now-meta">' + esc(t('plan.all.b')) + '</p>';
-      btn = SM.ui.button(t('plan.now.consult'), { href: '#/find/cat/consult', variant: 'text', cls: 'plan-now-link' });
-    }
-    return '<section class="plan-now is-' + v + (art ? ' has-il' : '') + '" id="plan-now" data-v="' + v + '" aria-labelledby="plan-now-h" data-reveal="" data-reveal-delay="300">' + art +
-      '<div class="plan-now-text">' +
-        (kHtml ? '<p class="plan-now-k">' + kHtml + '</p>' : '') +
-        '<h2 class="plan-now-title" id="plan-now-h">' + title + '</h2>' + body + '</div>' + btn +
-    '</section>';
-  }
 
+  /* 見せる・残す: the calendar file and the 相談シート, each with the few words that say what it is for */
   function toolsHtml() {
     var row = function (act, icon, title, sub) {
       return SM.ui.listItem({ title: title, sub: sub, icon: icon, act: act, attrs: 'data-press="ink"' });
     };
-    return '<div class="list plan-tools">' +
-      row('plan-ics', 'calendar', t('plan.act.ics'), null) +
-      row('plan-sheet', 'print', t('plan.act.sheet'), null) +
-      '</div>';
+    return '<section class="plan-tools" id="plan-tools" aria-labelledby="plan-tools-h">' +
+      SM.ui.sectionHeader(t('plan.tools.h'), { id: 'plan-tools-h', level: 2, cls: 'plan-side-head' }) +
+      '<div class="list plan-tools-list">' +
+      row('plan-ics', 'calendar', t('plan.act.ics'), t('plan.act.icsSub')) +
+      row('plan-sheet', 'print', t('plan.act.sheet'), t('plan.act.sheetSub')) +
+      '</div></section>';
   }
 
   function savedRowHtml(p) {
@@ -914,32 +934,43 @@
     return '<div class="plan-saved-item" data-flip-key="' + esc(p.id) + '">' + SM.ui.programCard(p, { compact: true, showSave: false }) +
       '<button type="button" class="plan-remove" data-act="plan-remove" data-id="' + esc(p.id) + '" aria-label="' + esc(t('plan.saved.removeLabel', { name: name })) + '" title="' + esc(t('plan.saved.remove')) + '">' + ic('close') + '</button></div>';
   }
-  /* later: the picture is put in after the transition (phone: this block is below the first screen) */
-  /* FIX-B (F38): one line and a link (it filled a phone screen with a picture between the hero and the timeline) */
+  /* the programs the current (or the first coming) period's tasks point at, that this person can use */
+  function nowRelated(model, max) {
+    var g = model.groups;
+    var from = model.cur >= 0 ? model.cur : 0;
+    var ids = [];
+    for (var i = from; i < g.length && ids.length < 8; i++) {
+      g[i].tasks.forEach(function (x) { x.p.forEach(function (id) { if (ids.indexOf(id) === -1 && SM.program(id)) ids.push(id); }); });
+      if (ids.length) break;
+    }
+    var seen = {};
+    return ids.filter(function (id) {
+      var nm = L(SM.program(id).name).replace(/[（(].*$/, '');
+      if (seen[nm]) return false;
+      seen[nm] = true; return true;
+    }).slice(0, max || 3).map(function (id) { return SM.program(id); });
+  }
+  /* v7: nothing saved is an invitation, not an empty column: one line on how saving works, the supports that belong
+     to this period (kanji mark + name), and the way to find more */
   function savedEmptyHtml() {
     var answered = state().answered;
-    return '<div class="plan-saved-empty is-line"><p class="plan-empty-line">' + esc(t('plan.empty.line')) + '</p>' +
-      '<a class="plan-empty-go" href="' + (answered ? '#/find/results' : '#/find') + '"><span>' + esc(answered ? t('plan.empty.results') : t('plan.empty.find')) + '</span>' + arrow() + '</a></div>';
-  }
-  function fillLaterArt(root) {
-    var box = root && root.querySelector('.plan-saved-empty[data-il-later]');
-    var em = box && box.querySelector(':scope > .empty');
-    if (!box) return;
-    var name = box.getAttribute('data-il-later');
-    box.removeAttribute('data-il-later');
-    var art = em ? il(name, { size: 'spot', cls: 'empty-il' }) : '';
-    if (!art) return;
-    em.insertAdjacentHTML('afterbegin', art);
-    em.classList.add('has-il');
-    if (M() && M().mount) M().mount(em, { instant: !!(SM.route && SM.route.instant) });
+    var model = lastModel || build();
+    var rel = nowRelated(model, 3);
+    var go = '<a class="plan-empty-go" href="' + (answered ? '#/find/results' : '#/find') + '"><span>' + esc(answered ? t('plan.empty.results') : t('plan.empty.find')) + '</span>' + arrow() + '</a>';
+    return '<div class="plan-saved-empty">' +
+      '<p class="plan-empty-k">' + esc(t('plan.empty.k')) + '</p>' +
+      '<p class="plan-empty-line">' + esc(t('plan.empty.how')) + '</p>' +
+      (rel.length ? '<p class="plan-empty-relk">' + esc(t('plan.empty.rel')) + '</p><div class="list plan-empty-rel">' + rel.map(function (p) {
+        return SM.ui.listItem({ title: L(p.name).replace(/[（(].*$/, ''), cat: (p.cat && p.cat[0]) || 'procedures', href: '#/p/' + encodeURIComponent(p.id) });
+      }).join('') + '</div>' : '') + go + '</div>';
   }
   /* the count in the sub line is its own element, so it can roll when a support is removed or put back */
   function savedHeadHtml(model) {
     var n = model.saved.length;
     return SM.ui.sectionHeader(t('plan.saved.h'), {
-      sub: n ? t('plan.saved.sub', { n: '\u0001' }) : null,
+      sub: n ? t('plan.saved.sub', { n: '\u0001' }) + (en() ? ' · ' : '・') + t('plan.saved.why') : null,
       action: n ? { label: t('plan.saved.more'), href: state().answered ? '#/find/results' : '#/find' } : null,
-      id: 'plan-saved-h'
+      id: 'plan-saved-h', cls: 'plan-side-head'
     }).replace('\u0001', '<span class="plan-saved-n num">' + n + '</span>');
   }
   /* first: how many rows go in now (the rest is appended after the transition) */
@@ -1025,7 +1056,14 @@
     return '<span class="tl-count num" data-gcount="' + g.key + '" aria-label="' + esc(t('plan.progress') + ' ' + t('plan.progressOf', { done: g.doneN, total: g.total })) + '">' +
       '<b class="tl-count-n">' + g.doneN + '</b><span class="tl-count-of">/' + g.total + '</span></span>';
   }
-  function groupHtml(g, cls, fold, delay) {
+  /* the current period, once every row in it is ticked: one line that says so and points at the next period
+     (CSS shows it only on .is-complete, so ticking and unticking never re-render the period) */
+  function curDoneHtml(nx) {
+    return '<div class="tl-cur-done"><p class="tl-cur-done-t"><span class="tl-cur-done-mk" aria-hidden="true"></span>' + esc(t('plan.cur.done')) + '</p>' +
+      (nx ? '<button type="button" class="tl-cur-go" data-act="plan-jump" data-target="tl-' + esc(nx.key) + '"><span>' + esc(t('plan.cur.next', { t: nx.title, from: fromLabel(nx) })) + '</span>' + arrow('down') + '</button>' : '') +
+    '</div>';
+  }
+  function groupHtml(g, cls, fold, delay, nx) {
     var allDone = g.total > 0 && g.doneN === g.total;
     var isCur = cls.indexOf('is-current') !== -1;
     // tag + period + date wrap together in column 1; the n/total count always holds column 2 of the first line
@@ -1036,7 +1074,7 @@
     var titleHtml = '<h3 class="tl-title">' + esc(g.title) + '</h3>';
     // one line per task; the period's kind sub-line is dropped (SPEC-v5: no repeated reassurance)
     var bodyHtml = (g.all.length ? '<ul class="tl-items" data-reveal-stagger="50">' + itemsHtml(g.all) + '</ul>' : '') +
-      relatedHtml(g);
+      (isCur && g.total ? curDoneHtml(nx) : '') + relatedHtml(g);
     var inner = fold ?
       '<details class="tl-fold" data-fold="' + esc(g.key) + '"' + (foldOpen[g.key] ? ' open' : '') + '>' +
         '<summary class="tl-fold-sum" data-act="plan-fold"><span class="tl-fold-head">' + whenHtml + titleHtml + '</span>' + TOGGLE + '</summary>' +
@@ -1089,15 +1127,19 @@
     }
     // expanded: いま + the next period (and the milestone itself); everything later is folded to a header row
     var openUntil = Math.max(pastEnd, cur) + 1;
+    out.firstN = out.length;
     for (var j = Math.max(pastEnd, 0); j < g.length; j++) {
       var cls = j === cur ? 'is-current' : 'is-future';
-      out.push(groupHtml(g[j], cls, j > openUntil && !g[j].milestone, dl()));
+      out.push(groupHtml(g[j], cls, j > openUntil && !g[j].milestone, dl(), j === cur ? nextAfter(model) : null));
+      if (j <= openUntil) out.firstN = out.length;
     }
     if (model.beyond) {
       out.push('<li class="tl-now-only is-current is-end"><span class="tl-mk" aria-hidden="true"></span>' +
         '<div class="tl-body" data-reveal=""><p class="tl-when" data-noruby><span class="tl-when-l"><span class="tl-now">' + esc(t('plan.tl.now')) + '</span><span class="tl-date">' + esc(fmtDate(model.now)) + '</span></span></p>' +
-        '<p class="tl-now-text">' + esc(t(jr ? 'plan.jr.nowLate' : 'plan.tl.nowLate')) + '</p></div></li>');
+        '<p class="tl-now-text">' + esc(t(jr ? 'plan.jr.nowLate' : 'plan.tl.nowLate')) + '</p>' +
+        '<p class="tl-now-go"><a class="tl-link" href="#/find/cat/consult"><span>' + esc(t('plan.now.consult')) + '</span>' + arrow() + '</a></p></div></li>');
     }
+    if (out.firstN == null) out.firstN = out.length;
     return out;
   }
   function tlHeadHtml(model) {
@@ -1114,23 +1156,18 @@
       '<p class="plan-note">' + esc(t(jr ? 'plan.jr.note' : 'plan.tl.note')) + '</p></section>';
   }
 
-  /* the body under the hero: [いま band, tools, 01 saved] + 02 timeline. opts.full renders everything now. */
+  /* the body under the status strip: the timeline first (its いま period = what to do now, checkable, on the first
+     screen), then 保存した支援 and 見せる・残す. Desktop: the timeline is the wide column, the other two sit beside it.
+     What is past the next period (folded rows) and saved rows after the 3rd come after the transition. */
   function bodyParts(model, full) {
-    var desk = wide();
-    // phone: the whole timeline comes after the transition, so even its HTML is built then (a thunk)
-    var lazy = !full && !desk && model.groups.length > 0;
-    var items = lazy ? [] : tlItems(model);
-    // desktop: the first two stations (すぎた時期 + いま, or いま + the next) fill the first screen of the right column
-    var nowN = full ? items.length : desk ? Math.min(items.length, 2) : 0;
-    // phone: the saved rows sit below the first screen, so they come with the timeline right after the entrance
-    var savedN = full ? null : desk ? 3 : 0;
+    var items = tlItems(model);
+    var nowN = full ? items.length : (items.firstN || items.length);
+    var savedN = full ? null : 3;
     var html = '<div class="plan-body" data-flip-key="ph-body">' +
-      // 保存した支援 first (it is the content; the calendar / 相談シート tools serve it), so the left column's
-      // first heading sits level with the timeline's on the desktop
-      '<div class="plan-flow">' + nowHtml(model) + savedHtml(model, savedN) + toolsHtml() + '</div>' +
       timelineHtml(model, items.slice(0, nowN)) +
+      '<div class="plan-flow">' + savedHtml(model, savedN) + toolsHtml() + '</div>' +
     '</div>';
-    return { html: html, restItems: lazy ? function () { return tlItems(model); } : items.slice(nowN), restSaved: full ? [] : model.saved.slice(savedN) };
+    return { html: html, restItems: items.slice(nowN), restSaved: full ? [] : model.saved.slice(savedN) };
   }
 
   /* ------------------------------------------------------------------ view */
@@ -1148,8 +1185,7 @@
     var full = calm || inPlace || deep || (route.query && route.query.now === '1') || !M() || typeof M().afterTransition !== 'function';
     var parts = bodyParts(model, full);
     var gen = renderGen;
-    var restN = typeof parts.restItems === 'function' ? 1 : parts.restItems.length;
-    deferred = (restN || parts.restSaved.length || !model.saved.length) ? { gen: gen, items: parts.restItems, saved: parts.restSaved, done: false } : null;
+    deferred = (parts.restItems.length || parts.restSaved.length) ? { gen: gen, items: parts.restItems, saved: parts.restSaved, done: false } : null;
     lastCalm = calm || inPlace;
     calm = false;
     return headHtml(ti) + heroHtml(model) + parts.html + '<div class="plan-print" aria-hidden="true"></div>';
@@ -1174,8 +1210,7 @@
         if (M() && M().mount) M().mount(list, { instant: instant });
       }
     }
-    fillLaterArt(root);
-    var items = typeof d.items === 'function' ? d.items() : d.items;
+    var items = d.items;
     if (items.length) {
       var ol = root.querySelector('.tl-wrap > ol.tl');
       if (ol) {
@@ -1402,27 +1437,28 @@
       return el.offsetParent !== null;
     };
     var eDone = root.querySelector('#plan-prog-done'), eTotal = root.querySelector('#plan-prog-total');
-    var nlEl = root.querySelector('.plan-now-n');
     var gEls = model.groups.map(function (g) {
       var el = root.querySelector('[data-gcount="' + g.key + '"]');
       var n = el && el.querySelector('.tl-count-n');
       return { el: el, n: n, v: vis(n) };
     });
-    var vDone = vis(eDone), vTotal = vis(eTotal), vNl = vis(nlEl);
+    var vDone = vis(eDone), vTotal = vis(eTotal);
     if (m && m.seen) m.seen('plan.done.' + model.track, model.done);
     rollNum(eDone, model.done, vDone);
     rollNum(eTotal, model.total, vTotal);
     var prog = root.querySelector('#plan-prog');
     if (prog) {
-      var due = model.due || 0;
-      var showDue = model.total > 0 && due > 0.001 && due < 0.999;
-      prog.style.setProperty('--due', due.toFixed(4));
-      prog.classList.toggle('has-due', showDue);
+      var allDone = model.total > 0 && model.done === model.total;
+      if (prog.classList.contains('is-all') !== allDone) {
+        prog.classList.toggle('is-all', allDone);
+        var pk = prog.querySelector('.plan-prog-k');
+        if (pk) swapOrSet(pk, t(allDone ? 'plan.progressAll' : 'plan.progressK'));
+      }
       var bar = prog.querySelector('.plan-prog-bar');
       if (bar) {
         bar.setAttribute('aria-valuenow', model.done);
         bar.setAttribute('aria-valuemax', model.total);
-        bar.setAttribute('aria-valuetext', showDue ? t('plan.progressDue', { done: model.done, total: model.total, due: model.dueN }) : t('plan.progressOf', { done: model.done, total: model.total }));
+        bar.setAttribute('aria-valuetext', t('plan.progressOf', { done: model.done, total: model.total }));
         var f = bar.querySelector('.plan-prog-fill');
         if (f) f.style.transform = 'scaleX(' + (model.total ? model.done / model.total : 0).toFixed(4) + ')';
       }
@@ -1441,14 +1477,6 @@
       var cmp = g.total > 0 && g.doneN === g.total;
       if (li && li.classList.contains('is-complete') !== cmp) li.classList.toggle('is-complete', cmp);
     });
-    var nl = nlEl;
-    if (nl && model.cur >= 0 && model.groups[model.cur]) {
-      var c = model.groups[model.cur];
-      rollNum(nl, c.total - c.doneN, vNl);
-      var nof = root.querySelector('.plan-now-of');
-      var nofT = t('plan.now.of', { n: c.total });
-      if (nof && nof.textContent !== nofT) nof.textContent = nofT;
-    }
     var sum = root.querySelector('.tl-past-left');
     if (sum) {
       var pastEnd = model.beyond ? model.groups.length : model.cur;
@@ -1457,32 +1485,7 @@
       if (sum.textContent !== txt) { if (m && m.swapText && !rubyOn()) m.swapText(sum, txt); else sum.textContent = txt; }
       sum.classList.toggle('is-zero', !lf);
     }
-    syncBand(model);
     return model;
-  }
-
-  /* the いま band changes variant (now ⇄ done ⇄ all) in place: the new one fades in where the old one was and
-     everything after it moves by FLIP; its picture plays */
-  function syncBand(model) {
-    var root = view();
-    if (!root) return;
-    var old = root.querySelector('#plan-now');
-    var v = bandVariant(model);
-    if (!old || old.getAttribute('data-v') === v) return;
-    var flow = old.parentNode;
-    var tmp = document.createElement('div');
-    tmp.innerHTML = nowHtml(model);
-    var nb = tmp.firstElementChild;
-    if (!nb) return;
-    applyRuby(nb);
-    var swap = function () { flow.replaceChild(nb, old); if (M() && M().mount) M().mount(nb, { instant: true }); };
-    var m = M();
-    if (m && m.flip && canAnim()) {
-      m.flip(flow, swap);
-      anim(nb.querySelector('.plan-now-text') || nb, [{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }], { duration: 300, delay: 80, easing: EASE('enter'), fill: 'backwards' });
-      var fig = nb.querySelector('.il');
-      if (fig && SM.illus && SM.illus.play) SM.illus.play(fig);
-    } else swap();
   }
 
   /* ------------------------------------------------------------------ 済み */
@@ -1581,6 +1584,13 @@
     var m = M();
     var mk = gEl && gEl.querySelector(':scope > .tl-mk');
     if (mk && m && m.stamp && canAnim()) setTimeout(function () { m.stamp(mk); }, 260);
+    // the current period: its 「ぜんぶできた → つぎ」 line rises in under the last row once the stamp has landed
+    var dn = gEl && gEl.classList.contains('is-current') ? gEl.querySelector('.tl-cur-done') : null;
+    if (!dn) return;
+    gEl.classList.add('is-complete');
+    if (!m) return;
+    if (canAnim()) anim(dn, [{ opacity: 0, transform: 'translateY(16px)' }, { opacity: 1, transform: 'none' }], { duration: 440, delay: 360, easing: EASE('enter'), fill: 'backwards', key: 'curdone' });
+    else anim(dn, [{ opacity: 0 }, { opacity: 1 }], { duration: 180, easing: 'linear' });
   }
 
   function markDone(key, on, opts) {
@@ -1708,8 +1718,6 @@
     Array.prototype.forEach.call(old.querySelectorAll('[data-m]'), function (e) { before[e.getAttribute('data-m')] = textOf(e); });
     var oldBar = old.querySelector('.plan-prog-fill');
     var oldScale = oldBar ? oldBar.style.transform : '';
-    var oldProg = old.querySelector('#plan-prog');
-    var oldDue = oldProg && oldProg.classList.contains('has-due') ? parseFloat(oldProg.style.getPropertyValue('--due')) : NaN;
     var m = M();
     var live = m && canAnim();
     // what has no counterpart in the new hero (the other track's picture, its note) fades where it stood
@@ -1751,16 +1759,6 @@
     if (nb && oldScale && oldScale !== nb.style.transform) {
       anim(nb, [{ transform: oldScale }, { transform: nb.style.transform }], { spring: 'smooth', maxDuration: 520 });
     }
-    // the いまの時期まで tick slides to where the other track's 'now' falls
-    var np = nh.querySelector('#plan-prog');
-    var newDue = np && np.classList.contains('has-due') ? parseFloat(np.style.getPropertyValue('--due')) : NaN;
-    if (!isNaN(oldDue) && !isNaN(newDue) && Math.abs(oldDue - newDue) > 0.005) {
-      var tick = np.querySelector('.plan-prog-tick'), lab = np.querySelector('.plan-prog-due > span');
-      var o = { spring: 'smooth', maxDuration: 520 };
-      if (tick) anim(tick, [{ left: (oldDue * 100) + '%' }, { left: (newDue * 100) + '%' }], o);
-      if (lab) anim(lab, [{ left: (oldDue * 100) + '%', transform: 'translateX(' + (-oldDue * 100) + '%)' },
-        { left: (newDue * 100) + '%', transform: 'translateX(' + (-newDue * 100) + '%)' }], o);
-    }
   }
 
   function bodyNode(model) {
@@ -1783,8 +1781,6 @@
       if (live) {
         anim(nb, [{ opacity: 0 }, { opacity: 1 }], { duration: 260, easing: EASE('enter'), fill: 'backwards', key: 'slideO' });
         anim(nb, [{ transform: 'translateX(' + (48 * dir) + 'px)' }, { transform: 'none' }], { spring: 'rise', fill: 'backwards', key: 'slide' });
-        var fig = nb.querySelector('#plan-now .il');
-        if (fig && SM.illus && SM.illus.play) SM.illus.play(fig);
       }
     };
     if (!live) {
@@ -1852,7 +1848,7 @@
         return optRow(t('plan.jr.date.opt', { y: o[0] }), t('plan.jr.date.optSub', { g: t(o[1]) }), 'plan-date-quick', v, on);
       }).join('');
       var ownJ = !ei.assumed && !onOpt;
-      html = '<div class="plan-date-sheet stack">' +
+      html = '<div class="plan-date-sheet stack">' + '<p class="plan-date-def">' + esc(t('plan.jr.def')) + '</p>' +
         '<div class="stack-sm"><p class="plan-date-qlabel">' + esc(t('plan.jr.date.quick')) + '</p><div class="opts plan-date-opts">' + opts +
           optRow(t('plan.jr.date.unknown'), t('plan.jr.date.unknownSub'), 'plan-date-unknown', '', ei.assumed) + '</div></div>' +
         '<div class="field"><label for="plan-date-input">' + esc(t('plan.jr.date.field')) + '</label>' +
@@ -1873,7 +1869,8 @@
     }).join('');
     // FIX-B (F15): the field holds a date only when that date is the choice (not a chip, not 「まだ決まっていない」)
     var own = !li.assumed && !onChip;
-    html = '<div class="plan-date-sheet stack">' +
+    // what 巣立ちの日 means lives here, next to where it is set (it was a 「くわしく」 on the page)
+    html = '<div class="plan-date-sheet stack">' + '<p class="plan-date-def">' + esc(t('plan.leave.def')) + '</p>' +
       '<div class="field"><label for="plan-date-input">' + esc(t('plan.date.field')) + '</label>' +
       '<input type="date" class="input" id="plan-date-input" min="2000-01-01" max="2100-12-31" value="' + (own ? esc(iso(li.date)) : '') + '">' +
       '<p class="help">' + esc(t('plan.date.help')) + '</p></div>' +

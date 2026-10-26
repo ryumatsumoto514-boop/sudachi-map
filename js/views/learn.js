@@ -163,7 +163,7 @@
     'ln.next': { ja: 'つぎへ', en: 'Next' },
     'ln.skip': { ja: '答えずに、つぎへ', jr: 'とばして、つぎへ', en: 'Skip' },
     // FIX-B (v6, F33)
-    'ln.resume': { ja: '続きから（{n}/{total}）', en: 'Picking up where you left off ({n}/{total})' },
+    'ln.resumeAt': { ja: 'つづきから（{n}/{total}）', en: 'Picking up where you left off ({n}/{total})' },
     'ln.resumeStart': { ja: 'はじめから', en: 'Start over' },
     'ln.toEnd': { ja: 'まとめを見る', en: 'See the summary' },
     'ln.keys': { ja: 'キーボードの ← → でも進めます', en: 'You can also use the ← → keys' },
@@ -271,7 +271,13 @@
   }
   function isDone(id) { return SM.isLearned ? SM.isLearned(id) : ((SM.state.learned || []).indexOf(id) !== -1); }
   function posMap() { var p = SM.store.get('learnPos', {}); return p && typeof p === 'object' ? p : {}; }
-  function getPos(id) { var p = posMap()[id]; return typeof p === 'number' && p > 0 ? p : 0; }
+  // a saved step past the lesson's end (an older, longer copy of the lesson) is no place to resume from
+  function getPos(id) {
+    var p = posMap()[id];
+    if (typeof p !== 'number' || !(p > 0)) return 0;
+    var l = lessonById(id);
+    return l && l.steps && p >= l.steps.length ? 0 : Math.floor(p);
+  }
   function setPos(id, step) {
     var p = posMap();
     if (step > 0) p[id] = step; else delete p[id];
@@ -1432,7 +1438,7 @@
   function resumeHtml(l, idx) {
     var total = l.steps.length;
     if (!(S.resumed > 0) || idx !== S.resumed || idx >= total) return '';
-    return '<div class="ln-resume" id="ln-resume" role="note"><p class="ln-resume-t">' + esc(t('ln.resume', { n: idx + 1, total: total })) + '</p>' +
+    return '<div class="ln-resume" id="ln-resume" role="note"><p class="ln-resume-t">' + esc(t('ln.resumeAt', { n: idx + 1, total: total })) + '</p>' +
       '<button type="button" class="ln-resume-btn" data-act="ln-restart"><span>' + esc(t('ln.resumeStart')) + '</span></button></div>';
   }
   function dropResume() {

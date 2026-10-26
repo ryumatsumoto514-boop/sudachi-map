@@ -26,6 +26,8 @@
   function esc(s) { return SM.esc(s); }
   function L(o) { return SM.L(o); }
   function t(k, v) { return SM.t(k, v); }
+  // the template with its {placeholders} kept, for strings split around a number set in its own element
+  function tRaw(k) { return SM.tRaw ? SM.tRaw(k) : SM.t(k); }
   function ic(n, c) { try { return SM.icon ? SM.icon(n, c) : ''; } catch (e) { return ''; } }
   function en() { return SM.lang() === 'en'; }
   function D() { return SM.data || {}; }
@@ -53,6 +55,17 @@
   function fmt(n) { return Math.round(Math.abs(n || 0)).toLocaleString(en() ? 'en-US' : 'ja-JP'); }
   function yen(n) { return en() ? '¥' + fmt(n) : fmt(n) + '円'; }
   function answers() { return (SM.state && SM.state.answers) || {}; }
+  /* v7 (Kanto): the person's prefecture from answers.area ('14100' → '14', '14' → '14'; null / 'other' → null) */
+  function myPref() {
+    var a = answers().area, U = SM.matchUtil;
+    if (U && U.prefOf) { try { return U.prefOf(a); } catch (e) { } }
+    a = a == null ? '' : String(a);
+    return /^\d{5}$/.test(a) ? a.slice(0, 2) : /^\d{2}$/.test(a) ? a : null;
+  }
+  // may live in Tokyo: a Tokyo area, or no answer yet (Tokyo-only programs are offered, as before v7)
+  function tokyoSide() { var a = answers().area; return !a || myPref() === '13'; }
+  var PREF_SLUG = { '08': 'ibaraki', '09': 'tochigi', '10': 'gunma', '11': 'saitama', '12': 'chiba', '13': 'tokyo', '14': 'kanagawa' };
+  function prefSlug() { var p = answers().area ? myPref() : '13'; return (p && PREF_SLUG[p]) || ''; }
   function junior() { try { return !!(SM.isJunior && SM.isJunior()); } catch (e) { return false; } }
   // under 18 (未成年): 中学生, age 15–17, or 高1・高2
   function minor() { var a = answers(); return junior() || a.age === 'a15' || a.stage === 'hs12'; }
@@ -244,7 +257,10 @@
     'mn.wage.unitD': { ja: '日', en: 'days' },
     'mn.wage.apply': { ja: 'バイト代に入れる', en: 'Use this' },
     'mn.wage.applied': { ja: 'バイト代に入れました', en: 'Added as part-time pay' },
-    'mn.wage.note': { ja: '東京都の最低賃金 時給{n}（{d}から）。これより低いのは違法。', jr: '東京都の時給は{n}より下げてはいけないきまり（{d}から）。', en: 'Tokyo minimum wage: {n}/h (from {d}). Less is illegal.' }
+    'mn.wage.note': { ja: '東京都の最低賃金 時給{n}（{d}から）。これより低いのは違法。', jr: '東京都の時給は{n}より下げてはいけないきまり（{d}から）。', en: 'Tokyo minimum wage: {n}/h (from {d}). Less is illegal.' },
+    // v7 (Kanto): the number above is Tokyo's; said once for people who live in another prefecture
+    'mn.wage.other': { ja: '最低賃金は都道府県ごとに決まっています。', jr: '時給のきまりは、都道府県ごとに決まっています。', en: 'Each prefecture sets its own minimum wage.' },
+    'mn.preset.other': { ja: 'この例は東京の数字です。家賃は自分の数字に変えてみよう。', en: 'These examples are Tokyo figures. Change the rent to your own.' }
   });
 
   /* ================================================================= shared pieces */
@@ -940,7 +956,7 @@
     return s;
   }
   function floatCount(n) {
-    var parts = String(t('ck.short')).split('{n}');
+    var parts = String(tRaw('ck.short')).split('{n}');
     return esc(parts[0] || '') + '<b class="tl-float-n" id="ck-float-n">' + n + '</b>' + esc(parts.slice(1).join('{n}')) +
       '<span class="tl-float-of"> / ' + checkItems().length + '</span>';
   }
@@ -987,7 +1003,7 @@
         secHead(0, 'ck-h-res', t('ck.result'), { action: actBtn('ck-reset', t('ck.reset'), ev.hit.length ? '' : ' hidden') }) +
         '<div class="ck-meter lvl-' + ev.lvl + '" data-lvl="' + ev.lvl + '" data-fill="' + ev.fill + '">' +
           '<div class="ck-meter-top"><p class="ck-lvl" id="ck-lvl" role="status" data-lvl="' + ev.lvl + '">' + esc(t('ck.lv.' + ev.lvl)) + '</p>' +
-          '<p class="ck-count"><b class="ck-count-n" id="ck-count-n">' + ev.hit.length + '</b><span>' + esc(String(t('ck.count')).replace('{n}', '').trim()) + '</span></p></div>' +
+          '<p class="ck-count"><b class="ck-count-n" id="ck-count-n">' + ev.hit.length + '</b><span>' + esc(String(tRaw('ck.count')).replace('{n}', '').trim()) + '</span></p></div>' +
           gaugeHtml(ev) +
         '</div>' +
         '<div class="ck-advice" id="ck-advice">' + checkAdvice(ev) + '</div>' +
@@ -1151,13 +1167,14 @@
     var add = function (id, key) { var p = prog(id); if (p && !tips.some(function (x) { return x.p.id === id; })) tips.push({ p: p, text: t(key) }); };
     if (mode === 'jr') {
       add('koko-kyufukin', 'mn.t.kyufukin');
-      if (answers().area !== 'other') add('tokyo-juken-challenge', 'mn.t.juken');
+      if (tokyoSide()) add('tokyo-juken-challenge', 'mn.t.juken');
       return tips;
     }
-    var area = answers().area;
-    var inTokyo = area !== 'other';
+    var inTokyo = tokyoSide();
     if (r.bal < 0) {
-      if (!(v.shien && v.yachin)) add(inTokyo && prog('tokyo-jiritsu-shikin') ? 'tokyo-jiritsu-shikin' : 'jiritsu-shikin', 'mn.t.shikin');
+      // 自立支援資金貸付 is run by each 都県: the person's own one when the app has it, else the national page
+      var own = prefSlug() ? prefSlug() + '-jiritsu-shikin' : '';
+      if (!(v.shien && v.yachin)) add(own && prog(own) ? own : 'jiritsu-shikin', 'mn.t.shikin');
       add('jukyo-kakuho', 'mn.t.jukyo');
       add('jiritsu-sodan', 'mn.t.sodan');
       add('seikatsu-hogo', 'mn.t.hogo');
@@ -1183,7 +1200,7 @@
   }
   function signOf(n) { return n < 0 ? '−' : n > 0 ? '+' : ''; }
   function yearHtml(r) {
-    var parts = String(t(r.bal < 0 ? 'mn.yearShort' : 'mn.year')).split('{n}');
+    var parts = String(tRaw(r.bal < 0 ? 'mn.yearShort' : 'mn.year')).split('{n}');
     return esc(parts[0] || '') + '<b class="mn-year-n" id="mn-year-n">' + fmt(r.bal * 12) + '</b>' + esc(parts.slice(1).join('{n}'));
   }
   function srText(r, mode) {
@@ -1269,7 +1286,7 @@
       '</div>' +
       '<div class="mn-w-out"><p class="mn-w-sum"><span aria-hidden="true">＝</span>' + (en() ? '<span class="mn-unit">¥</span>' : '') + '<b class="mn-w-total" id="mn-w-total">' + fmt(wageTotal(v)) + '</b>' + (en() ? '' : '<span class="mn-unit">円</span>') + '</p>' +
         '<button type="button" class="btn btn-secondary btn-sm" data-act="mn-wage-apply" data-press>' + esc(t('mn.wage.apply')) + '</button></div>' +
-      '<p class="help">' + esc(t('mn.wage.note', { n: yen(w.yen), d: w.from ? SM.fmtDate(w.from) : '' })) + '</p>' +
+      '<p class="help">' + esc(t('mn.wage.note', { n: yen(w.yen), d: w.from ? SM.fmtDate(w.from) : '' })) + (tokyoSide() ? '' : ' ' + esc(t('mn.wage.other'))) + '</p>' +
     '</details>';
   }
   function presetSeg(mode, v) {
@@ -1297,7 +1314,8 @@
     var rest = learnBlock(c.lessons || [], t('mn.learnH')) +
       '<div class="mn-foot">' + '<button type="button" class="tl-reset" data-act="mn-reset">' + esc(t('mn.reset')) + '</button>' + '</div>' +
       (c.note ? '<p class="tl-note">' + esc(L(c.note)) + '</p>' : '');
-    return '<div class="mn-preset"><p class="tl-label">' + esc(t(mode === 'jr' ? 'mn.presetJr' : 'mn.preset')) + '</p><div id="mn-preset-seg">' + presetSeg(mode, v) + '</div></div>' +
+    return '<div class="mn-preset"><p class="tl-label">' + esc(t(mode === 'jr' ? 'mn.presetJr' : 'mn.preset')) + '</p><div id="mn-preset-seg">' + presetSeg(mode, v) + '</div>' +
+      (mode !== 'jr' && !tokyoSide() ? '<p class="help mn-preset-note">' + esc(t('mn.preset.other')) + '</p>' : '') + '</div>' +
       '<div class="tl-split mn-split">' +
         '<div class="tl-side mn-side">' + result + '</div>' +
         '<div class="tl-main mn-main">' + slot('inputs', inputs + tips, defer) + '</div>' +

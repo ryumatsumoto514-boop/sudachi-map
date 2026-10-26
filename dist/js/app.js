@@ -9,8 +9,8 @@
   'use strict';
 
   var SM = window.SM = window.SM || {};
-  SM.version = window.__smV || '6.0.0';
-  SM.updated = '2026-10-21';
+  SM.version = window.__smV || '7.0.0';
+  SM.updated = '2026-10-26';
   SM.data = SM.data || {};
   var D = SM.data;
   if (!Array.isArray(D.programs)) D.programs = [];
@@ -298,8 +298,27 @@
   /* ------------------------------------------------------------------ i18n */
   var STR = {};
   SM.lang = function () { return SM.state.settings.lang === 'en' ? 'en' : 'ja'; };
+  /* v7 (SYSTEM): one shared table; a later SM.strings call REPLACES a key another file already set (in development
+     the console names it; tools/strings-check.js finds duplicates inside a file and collisions between files).
+     SM.t never shows a raw {placeholder}: one with no value (no vars, or vars[n] undefined / null) is dropped with
+     one neighbouring space, and in development the console names the key, once. A missing key still returns the
+     key itself (callers test s === key to fall back to their own table), with a warning in development.
+     SM.tRaw(key) keeps the placeholders, for the few callers that split a string around a number they set apart. */
+  var DEV = (function () {
+    try { var l = window.location; return l.protocol === 'file:' || /^(localhost|127\.0\.0\.1|\[::1\])$/.test(l.hostname) || /[?&]dev\b/.test(l.search); } catch (e) { return false; }
+  })();
+  SM.dev = DEV;
+  var warned = {};
+  function warnOnce(id, msg) {
+    if (!DEV || warned[id]) return;
+    warned[id] = 1;
+    try { console.warn('[SM.t] ' + msg); } catch (e) { }
+  }
   SM.strings = function (obj) {
-    if (obj) Object.keys(obj).forEach(function (k) { STR[k] = obj[k]; });
+    if (obj) Object.keys(obj).forEach(function (k) {
+      if (DEV && STR[k] && JSON.stringify(STR[k]) !== JSON.stringify(obj[k])) warnOnce('d:' + k, 'key "' + k + '" defined twice; the later one wins');
+      STR[k] = obj[k];
+    });
   };
   // 中学生 copy: {ja, jr, en} — jr wins (in Japanese) while body.is-junior
   function useJr() {
@@ -308,14 +327,24 @@
     return b ? b.classList.contains('is-junior') : SM.isJunior();
   }
   SM.useJr = useJr;
+  function pick(key) {
+    var e = STR[key];
+    if (!e) { warnOnce('k:' + key, 'no string for key "' + key + '"'); return String(key); }
+    if (typeof e === 'string') return e;
+    if (e.jr && useJr()) return e.jr;
+    var v = e[SM.lang()];
+    return (v !== undefined && v !== null) ? String(v) : (e.ja || '');
+  }
+  SM.tRaw = pick;
   SM.t = function (key, vars) {
-    var e = STR[key], s;
-    if (!e) s = key;
-    else if (typeof e === 'string') s = e;
-    else if (e.jr && useJr()) s = e.jr;
-    else { var v = e[SM.lang()]; s = (v !== undefined && v !== null) ? v : (e.ja || ''); }
-    if (vars) s = s.replace(/\{(\w+)\}/g, function (m, n) { return vars[n] !== undefined && vars[n] !== null ? vars[n] : m; });
-    return s;
+    var s = pick(key);
+    if (s.indexOf('{') === -1) return s;
+    return s.replace(/( ?)\{(\w+)\}( ?)/g, function (m, a, n, b) {
+      var v = vars ? vars[n] : undefined;
+      if (v !== undefined && v !== null) return a + v + b;
+      warnOnce('v:' + key + ':' + n, 'key "' + key + '" needs {' + n + '}');
+      return a && b ? ' ' : '';
+    });
   };
   SM.L = function (obj) {
     if (obj === null || obj === undefined) return '';
@@ -1963,6 +1992,7 @@
     'ui.kind.loan': { ja: '貸付', en: 'Loan' },
     'ui.basis.national': { ja: '国の制度', en: 'National' },
     'ui.basis.tokyo': { ja: '東京都', en: 'Tokyo' },
+    'ui.basis.pref': { ja: '県の制度', en: 'Prefecture' },
     'ui.basis.local': { ja: '区市町村', en: 'Local' },
     'ui.basis.npo': { ja: '民間の団体', en: 'Nonprofit' },
     'ui.right': { ja: '申請は権利', en: 'Your right' },
@@ -2119,17 +2149,57 @@
     return null;
   }
 
+  /* v7: application months → windows. Consecutive months form one window (12 → 1 counts as consecutive, so a
+     window can wrap the year end). One window: 「4月〜6月」 / 'Apr–Jun'. Two or three: 「4〜5月・8〜9月・12〜1月」 /
+     'Apr–May, Aug–Sep, Dec–Jan'. More than three: 「年4回」 / '4×/year' — the number of windows, never of months. */
+  function monthRuns(months) {
+    var seen = {}, m = [];
+    (months || []).forEach(function (x) { x = +x; if (x >= 1 && x <= 12 && !seen[x]) { seen[x] = 1; m.push(x); } });
+    m.sort(function (a, b) { return a - b; });
+    var runs = [];
+    m.forEach(function (x) {
+      var r = runs[runs.length - 1];
+      if (r && x === r[1] + 1) r[1] = x; else runs.push([x, x]);
+    });
+    // wrap: a window that ends in December and one that starts in January are the same window
+    if (runs.length > 1 && runs[0][0] === 1 && runs[runs.length - 1][1] === 12) {
+      var first = runs.shift();
+      runs[runs.length - 1][1] = first[1];
+    }
+    return runs;
+  }
+  function monthsText(months, isEn) {
+    var runs = monthRuns(months);
+    if (!runs.length) return '';
+    var M = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    if (runs.length === 1) {
+      var r = runs[0];
+      if (r[0] === r[1]) return isEn ? M[r[0] - 1] : r[0] + '月';
+      if (r[1] === r[0] - 1 || (r[0] === 1 && r[1] === 12)) return isEn ? 'All year' : '1年中';
+      return isEn ? M[r[0] - 1] + '–' + M[r[1] - 1] : r[0] + '月〜' + r[1] + '月';
+    }
+    if (runs.length > 3) return isEn ? runs.length + '×/year' : '年' + runs.length + '回';
+    return runs.map(function (r) {
+      if (r[0] === r[1]) return isEn ? M[r[0] - 1] : r[0] + '月';
+      return isEn ? M[r[0] - 1] + '–' + M[r[1] - 1] : r[0] + '〜' + r[1] + '月';
+    }).join(isEn ? ', ' : '・');
+  }
+  /* break chances where the script changes (よこはま若者|サポートステーション) and before a bracket: a name wider than its
+     column breaks between words, never inside a katakana word (auto-phrase + overflow-wrap would cut it anywhere).
+     Takes and returns escaped HTML; English text has no such boundaries, so it is unchanged. */
+  SM.ui.wbrJa = function (html) {
+    if (en()) return String(html);
+    return String(html).replace(/([\u3041-\u309f\u4e00-\u9fff々])(?=[\u30a1-\u30fa\u30fc])|([\u30a1-\u30fa\u30fc])(?=[\u4e00-\u9fff々])|(?=[（(])/g, function (m) { return m + '<wbr>'; });
+  };
+  SM.ui.monthRuns = monthRuns;
+  SM.ui.monthsText = monthsText;
+
   /* deadline → {text (full, v2 format), label (short dt), value (dd), tone} */
   function deadlineInfo(d) {
     if (!d) return null;
     if (d.months && d.months.length) {
-      var m = d.months.slice().sort(function (a, b) { return a - b; });
-      var M = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      var f = function (x) { return en() ? M[x - 1] : x + '月'; };
-      var s = m.length === 1 ? f(m[0]) : f(m[0]) + (en() ? '–' : '〜') + f(m[m.length - 1]);
-      var contiguous = m.every(function (x, i) { return i === 0 || x === m[i - 1] + 1; });
-      if (!contiguous) s = m.length > 3 ? (en() ? m.length + '×/year' : '年' + m.length + '回') : m.map(f).join(en() ? ', ' : '・');
-      return { text: t('ui.months', { m: s }), label: t('ui.fact.apply'), value: s, tone: 'deadline' };
+      var s = monthsText(d.months, en());
+      if (s) return { text: t('ui.months', { m: s }), label: t('ui.fact.apply'), value: s, tone: 'deadline' };
     }
     if (typeof d.leaveMonths === 'number') {
       var n = d.leaveMonths, v;
@@ -2152,13 +2222,31 @@
   }
   SM.ui.repayLabel = function (p) { var r = repayInfo(p || {}); return r ? r.text : ''; };
 
+  /* v7 (Kanto): who runs it, as a short label. 'tokyo' → 東京都 · 'pref' → that prefecture (神奈川県 …, from
+     p.pref) · 'local' → the one city it belongs to (for.areas, else the one city all its windows are in: 横浜市),
+     else 区市町村 · 'national' / 'npo' as before. An unknown basis shows nothing (never a raw key). */
+  function prefLabel(code) {
+    var U = SM.matchUtil;
+    try { if (U && U.prefName) { var n = U.prefName(code, en()); if (n) return n; } } catch (e) { }
+    var list = (SM.data && SM.data.prefs) || [];
+    for (var i = 0; i < list.length; i++) if (list[i] && String(list[i].code) === String(code)) return en() ? (list[i].en || list[i].name) : list[i].name;
+    return '';
+  }
+  SM.ui.prefLabel = prefLabel;
   function basisLabel(p) {
     if (p.basis === 'local') {
-      var codes = (p.for && p.for.areas) || [];
+      var codes = ((p.for && p.for.areas) || []).map(String);
       var nm = codes.length === 1 && codes[0].length === 5 ? areaName(codes[0]) : null;
+      if (!nm && !codes.some(function (c) { return c.length === 5; })) {
+        var la = {};
+        (Array.isArray(p.locations) ? p.locations : []).forEach(function (l) { if (l && /^\d{5}$/.test(String(l.area || ''))) la[String(l.area)] = 1; });
+        var one = Object.keys(la);
+        if (one.length === 1) nm = areaName(one[0]);
+      }
       return nm || t('ui.basis.local');
     }
-    return p.basis ? t('ui.basis.' + p.basis) : '';
+    if (p.basis === 'pref') return prefLabel(p.pref) || t('ui.basis.pref');
+    return p.basis && STR['ui.basis.' + p.basis] ? t('ui.basis.' + p.basis) : '';
   }
   SM.ui.basisLabel = function (p) { return basisLabel(p || {}); };
 
@@ -2518,7 +2606,7 @@
       '<div class="pcard-mark">' + SM.ui.catIcon(cat, null, { vt: o.vt !== false }) + '</div>' +
       '<div class="pcard-main">' +
         '<p class="pcard-eyebrow">' + eyebrow.join('<span class="pcard-sep" aria-hidden="true">／</span>') + '</p>' +
-        '<' + h + ' class="pcard-title"' + (o.vt !== false ? ' data-vt="title"' : '') + '><a class="pcard-link" href="' + esc(href) + '">' + esc(name) + '</a></' + h + '>' +
+        '<' + h + ' class="pcard-title"' + (o.vt !== false ? ' data-vt="title"' : '') + '><a class="pcard-link" href="' + esc(href) + '">' + SM.ui.wbrJa(esc(name)) + '</a></' + h + '>' +
         (line ? '<p class="pcard-hook">' + esc(line) + '</p>' : '') +
         (amt && !o.compact ? '<p class="pcard-amount"><span class="sr-only">' + esc(t('ui.amount')) + ': </span>' + amountHtml(amt.text) +
           (amt.more ? '<span class="pcard-amount-more">' + esc(t('ui.amountMore')) + '</span>' : '') + '</p>' : '') +
@@ -2554,7 +2642,7 @@
     return '<article class="pcard pcard-lean' + (o.compact ? ' pcard-compact' : '') + (saved ? ' is-saved' : '') + '" data-id="' + esc(p.id) + '" data-cat="' + esc(cat) + '">' +
       '<div class="pcard-mark">' + SM.ui.catIcon(cat, null, { vt: o.vt !== false }) + '</div>' +
       '<div class="pcard-main">' +
-        '<' + h + ' class="pcard-title"' + (o.vt !== false ? ' data-vt="title"' : '') + '><a class="pcard-link" href="' + esc(href) + '">' + esc(name) + '</a></' + h + '>' +
+        '<' + h + ' class="pcard-title"' + (o.vt !== false ? ' data-vt="title"' : '') + '><a class="pcard-link" href="' + esc(href) + '">' + SM.ui.wbrJa(esc(name)) + '</a></' + h + '>' +
         (hook ? '<p class="pcard-hook">' + esc(hook) + '</p>' : '') +
         key + tags + why +
       '</div>' + save +
@@ -5786,78 +5874,358 @@
 })();
 ;
 /* ---- data/areas.js ---- */
-/* 巣立ちマップ v2 — data/areas.js (A6)
-   All 62 区市町村 of Tokyo, in 全国地方公共団体コード order (5 digits, without the check digit).
-   Codes and names checked against 国土数値情報 行政区域データ (N03, attribute N03_007 / N03_004).
-   type: ku 区 / shi 市 / machi 町 / mura 村.  group: 23ku / tama (多摩・西多摩) / islands (島しょ). */
+/* 巣立ちマップ v7 — data/areas.js (MAP)
+   Every 区市町村 of 関東 (茨城 08・栃木 09・群馬 10・埼玉 11・千葉 12・東京 13・神奈川 14): 316 entries
+   (08: 44, 09: 25, 10: 35, 11: 63, 12: 54, 13: 62, 14: 33), in 全国地方公共団体コード order (5 digits, without the
+   check digit). 政令指定都市 are ONE entry with the city code (11100 さいたま市, 12100 千葉市, 14100 横浜市, 14130 川崎市,
+   14150 相模原市), not their wards.
+   Source: 総務省「全国地方公共団体コード」(令和6年1月1日現在の団体, https://www.soumu.go.jp/denshijiti/code.html,
+   main_content/000925835.xlsx) for codes, names and readings (half-width kana → hiragana; the list writes 拗音 with
+   full-size kana in a few names, corrected: 中之条 行田 本庄 羽生 九十九里 御宿 鋸南). Cross-checked code by code with
+   国土数値情報 行政区域データ N03 (2024-01-01, N03_007 / N03_004): all 316 match (政令市 wards fold into the city).
+   en: modified Hepburn without macrons (station-sign style), the same rule as the Tokyo entries; 美里町 = 'Misato Town'
+   (三郷市 is 'Misato' in the same prefecture).
+   type: ku 区 (東京23区) / shi 市 / machi 町 (まち or ちょう) / mura 村 (むら or そん).
+   group: Tokyo keeps 23ku / tama (多摩・西多摩) / islands (島しょ); every other entry has group = its prefecture code.
+   pref: the 2-digit prefecture code. SM.data.prefs: the 7 prefectures in code order (UI may put 東京 first). */
 (function () {
   'use strict';
   var SM = window.SM = window.SM || {};
   SM.data = SM.data || {};
-  function a(code, name, kana, en, type, group) { return { code: code, name: name, kana: kana, en: en, type: type, group: group }; }
+  function a(code, name, kana, en, type, group, pref) { return { code: code, name: name, kana: kana, en: en, type: type, group: group, pref: pref }; }
+  SM.data.prefs = [
+    { code: '08', name: '茨城県', short: '茨城', kana: 'いばらきけん', en: 'Ibaraki' },
+    { code: '09', name: '栃木県', short: '栃木', kana: 'とちぎけん', en: 'Tochigi' },
+    { code: '10', name: '群馬県', short: '群馬', kana: 'ぐんまけん', en: 'Gunma' },
+    { code: '11', name: '埼玉県', short: '埼玉', kana: 'さいたまけん', en: 'Saitama' },
+    { code: '12', name: '千葉県', short: '千葉', kana: 'ちばけん', en: 'Chiba' },
+    { code: '13', name: '東京都', short: '東京', kana: 'とうきょうと', en: 'Tokyo' },
+    { code: '14', name: '神奈川県', short: '神奈川', kana: 'かながわけん', en: 'Kanagawa' }
+  ];
   SM.data.areas = [
-    a('13101', '千代田区', 'ちよだく', 'Chiyoda', 'ku', '23ku'),
-    a('13102', '中央区', 'ちゅうおうく', 'Chuo', 'ku', '23ku'),
-    a('13103', '港区', 'みなとく', 'Minato', 'ku', '23ku'),
-    a('13104', '新宿区', 'しんじゅくく', 'Shinjuku', 'ku', '23ku'),
-    a('13105', '文京区', 'ぶんきょうく', 'Bunkyo', 'ku', '23ku'),
-    a('13106', '台東区', 'たいとうく', 'Taito', 'ku', '23ku'),
-    a('13107', '墨田区', 'すみだく', 'Sumida', 'ku', '23ku'),
-    a('13108', '江東区', 'こうとうく', 'Koto', 'ku', '23ku'),
-    a('13109', '品川区', 'しながわく', 'Shinagawa', 'ku', '23ku'),
-    a('13110', '目黒区', 'めぐろく', 'Meguro', 'ku', '23ku'),
-    a('13111', '大田区', 'おおたく', 'Ota', 'ku', '23ku'),
-    a('13112', '世田谷区', 'せたがやく', 'Setagaya', 'ku', '23ku'),
-    a('13113', '渋谷区', 'しぶやく', 'Shibuya', 'ku', '23ku'),
-    a('13114', '中野区', 'なかのく', 'Nakano', 'ku', '23ku'),
-    a('13115', '杉並区', 'すぎなみく', 'Suginami', 'ku', '23ku'),
-    a('13116', '豊島区', 'としまく', 'Toshima', 'ku', '23ku'),
-    a('13117', '北区', 'きたく', 'Kita', 'ku', '23ku'),
-    a('13118', '荒川区', 'あらかわく', 'Arakawa', 'ku', '23ku'),
-    a('13119', '板橋区', 'いたばしく', 'Itabashi', 'ku', '23ku'),
-    a('13120', '練馬区', 'ねりまく', 'Nerima', 'ku', '23ku'),
-    a('13121', '足立区', 'あだちく', 'Adachi', 'ku', '23ku'),
-    a('13122', '葛飾区', 'かつしかく', 'Katsushika', 'ku', '23ku'),
-    a('13123', '江戸川区', 'えどがわく', 'Edogawa', 'ku', '23ku'),
-    a('13201', '八王子市', 'はちおうじし', 'Hachioji', 'shi', 'tama'),
-    a('13202', '立川市', 'たちかわし', 'Tachikawa', 'shi', 'tama'),
-    a('13203', '武蔵野市', 'むさしのし', 'Musashino', 'shi', 'tama'),
-    a('13204', '三鷹市', 'みたかし', 'Mitaka', 'shi', 'tama'),
-    a('13205', '青梅市', 'おうめし', 'Ome', 'shi', 'tama'),
-    a('13206', '府中市', 'ふちゅうし', 'Fuchu', 'shi', 'tama'),
-    a('13207', '昭島市', 'あきしまし', 'Akishima', 'shi', 'tama'),
-    a('13208', '調布市', 'ちょうふし', 'Chofu', 'shi', 'tama'),
-    a('13209', '町田市', 'まちだし', 'Machida', 'shi', 'tama'),
-    a('13210', '小金井市', 'こがねいし', 'Koganei', 'shi', 'tama'),
-    a('13211', '小平市', 'こだいらし', 'Kodaira', 'shi', 'tama'),
-    a('13212', '日野市', 'ひのし', 'Hino', 'shi', 'tama'),
-    a('13213', '東村山市', 'ひがしむらやまし', 'Higashimurayama', 'shi', 'tama'),
-    a('13214', '国分寺市', 'こくぶんじし', 'Kokubunji', 'shi', 'tama'),
-    a('13215', '国立市', 'くにたちし', 'Kunitachi', 'shi', 'tama'),
-    a('13218', '福生市', 'ふっさし', 'Fussa', 'shi', 'tama'),
-    a('13219', '狛江市', 'こまえし', 'Komae', 'shi', 'tama'),
-    a('13220', '東大和市', 'ひがしやまとし', 'Higashiyamato', 'shi', 'tama'),
-    a('13221', '清瀬市', 'きよせし', 'Kiyose', 'shi', 'tama'),
-    a('13222', '東久留米市', 'ひがしくるめし', 'Higashikurume', 'shi', 'tama'),
-    a('13223', '武蔵村山市', 'むさしむらやまし', 'Musashimurayama', 'shi', 'tama'),
-    a('13224', '多摩市', 'たまし', 'Tama', 'shi', 'tama'),
-    a('13225', '稲城市', 'いなぎし', 'Inagi', 'shi', 'tama'),
-    a('13227', '羽村市', 'はむらし', 'Hamura', 'shi', 'tama'),
-    a('13228', 'あきる野市', 'あきるのし', 'Akiruno', 'shi', 'tama'),
-    a('13229', '西東京市', 'にしとうきょうし', 'Nishitokyo', 'shi', 'tama'),
-    a('13303', '瑞穂町', 'みずほまち', 'Mizuho', 'machi', 'tama'),
-    a('13305', '日の出町', 'ひのでまち', 'Hinode', 'machi', 'tama'),
-    a('13307', '檜原村', 'ひのはらむら', 'Hinohara', 'mura', 'tama'),
-    a('13308', '奥多摩町', 'おくたままち', 'Okutama', 'machi', 'tama'),
-    a('13361', '大島町', 'おおしままち', 'Oshima', 'machi', 'islands'),
-    a('13362', '利島村', 'としまむら', 'Toshima Village', 'mura', 'islands'),
-    a('13363', '新島村', 'にいじまむら', 'Niijima', 'mura', 'islands'),
-    a('13364', '神津島村', 'こうづしまむら', 'Kozushima', 'mura', 'islands'),
-    a('13381', '三宅村', 'みやけむら', 'Miyake', 'mura', 'islands'),
-    a('13382', '御蔵島村', 'みくらじまむら', 'Mikurajima', 'mura', 'islands'),
-    a('13401', '八丈町', 'はちじょうまち', 'Hachijo', 'machi', 'islands'),
-    a('13402', '青ヶ島村', 'あおがしまむら', 'Aogashima', 'mura', 'islands'),
-    a('13421', '小笠原村', 'おがさわらむら', 'Ogasawara', 'mura', 'islands')
+    /* 茨城 */
+    a('08201', '水戸市', 'みとし', 'Mito', 'shi', '08', '08'),
+    a('08202', '日立市', 'ひたちし', 'Hitachi', 'shi', '08', '08'),
+    a('08203', '土浦市', 'つちうらし', 'Tsuchiura', 'shi', '08', '08'),
+    a('08204', '古河市', 'こがし', 'Koga', 'shi', '08', '08'),
+    a('08205', '石岡市', 'いしおかし', 'Ishioka', 'shi', '08', '08'),
+    a('08207', '結城市', 'ゆうきし', 'Yuki', 'shi', '08', '08'),
+    a('08208', '龍ケ崎市', 'りゅうがさきし', 'Ryugasaki', 'shi', '08', '08'),
+    a('08210', '下妻市', 'しもつまし', 'Shimotsuma', 'shi', '08', '08'),
+    a('08211', '常総市', 'じょうそうし', 'Joso', 'shi', '08', '08'),
+    a('08212', '常陸太田市', 'ひたちおおたし', 'Hitachiota', 'shi', '08', '08'),
+    a('08214', '高萩市', 'たかはぎし', 'Takahagi', 'shi', '08', '08'),
+    a('08215', '北茨城市', 'きたいばらきし', 'Kitaibaraki', 'shi', '08', '08'),
+    a('08216', '笠間市', 'かさまし', 'Kasama', 'shi', '08', '08'),
+    a('08217', '取手市', 'とりでし', 'Toride', 'shi', '08', '08'),
+    a('08219', '牛久市', 'うしくし', 'Ushiku', 'shi', '08', '08'),
+    a('08220', 'つくば市', 'つくばし', 'Tsukuba', 'shi', '08', '08'),
+    a('08221', 'ひたちなか市', 'ひたちなかし', 'Hitachinaka', 'shi', '08', '08'),
+    a('08222', '鹿嶋市', 'かしまし', 'Kashima', 'shi', '08', '08'),
+    a('08223', '潮来市', 'いたこし', 'Itako', 'shi', '08', '08'),
+    a('08224', '守谷市', 'もりやし', 'Moriya', 'shi', '08', '08'),
+    a('08225', '常陸大宮市', 'ひたちおおみやし', 'Hitachiomiya', 'shi', '08', '08'),
+    a('08226', '那珂市', 'なかし', 'Naka', 'shi', '08', '08'),
+    a('08227', '筑西市', 'ちくせいし', 'Chikusei', 'shi', '08', '08'),
+    a('08228', '坂東市', 'ばんどうし', 'Bando', 'shi', '08', '08'),
+    a('08229', '稲敷市', 'いなしきし', 'Inashiki', 'shi', '08', '08'),
+    a('08230', 'かすみがうら市', 'かすみがうらし', 'Kasumigaura', 'shi', '08', '08'),
+    a('08231', '桜川市', 'さくらがわし', 'Sakuragawa', 'shi', '08', '08'),
+    a('08232', '神栖市', 'かみすし', 'Kamisu', 'shi', '08', '08'),
+    a('08233', '行方市', 'なめがたし', 'Namegata', 'shi', '08', '08'),
+    a('08234', '鉾田市', 'ほこたし', 'Hokota', 'shi', '08', '08'),
+    a('08235', 'つくばみらい市', 'つくばみらいし', 'Tsukubamirai', 'shi', '08', '08'),
+    a('08236', '小美玉市', 'おみたまし', 'Omitama', 'shi', '08', '08'),
+    a('08302', '茨城町', 'いばらきまち', 'Ibaraki', 'machi', '08', '08'),
+    a('08309', '大洗町', 'おおあらいまち', 'Oarai', 'machi', '08', '08'),
+    a('08310', '城里町', 'しろさとまち', 'Shirosato', 'machi', '08', '08'),
+    a('08341', '東海村', 'とうかいむら', 'Tokai', 'mura', '08', '08'),
+    a('08364', '大子町', 'だいごまち', 'Daigo', 'machi', '08', '08'),
+    a('08442', '美浦村', 'みほむら', 'Miho', 'mura', '08', '08'),
+    a('08443', '阿見町', 'あみまち', 'Ami', 'machi', '08', '08'),
+    a('08447', '河内町', 'かわちまち', 'Kawachi', 'machi', '08', '08'),
+    a('08521', '八千代町', 'やちよまち', 'Yachiyo', 'machi', '08', '08'),
+    a('08542', '五霞町', 'ごかまち', 'Goka', 'machi', '08', '08'),
+    a('08546', '境町', 'さかいまち', 'Sakai', 'machi', '08', '08'),
+    a('08564', '利根町', 'とねまち', 'Tone', 'machi', '08', '08'),
+    /* 栃木 */
+    a('09201', '宇都宮市', 'うつのみやし', 'Utsunomiya', 'shi', '09', '09'),
+    a('09202', '足利市', 'あしかがし', 'Ashikaga', 'shi', '09', '09'),
+    a('09203', '栃木市', 'とちぎし', 'Tochigi', 'shi', '09', '09'),
+    a('09204', '佐野市', 'さのし', 'Sano', 'shi', '09', '09'),
+    a('09205', '鹿沼市', 'かぬまし', 'Kanuma', 'shi', '09', '09'),
+    a('09206', '日光市', 'にっこうし', 'Nikko', 'shi', '09', '09'),
+    a('09208', '小山市', 'おやまし', 'Oyama', 'shi', '09', '09'),
+    a('09209', '真岡市', 'もおかし', 'Moka', 'shi', '09', '09'),
+    a('09210', '大田原市', 'おおたわらし', 'Otawara', 'shi', '09', '09'),
+    a('09211', '矢板市', 'やいたし', 'Yaita', 'shi', '09', '09'),
+    a('09213', '那須塩原市', 'なすしおばらし', 'Nasushiobara', 'shi', '09', '09'),
+    a('09214', 'さくら市', 'さくらし', 'Sakura', 'shi', '09', '09'),
+    a('09215', '那須烏山市', 'なすからすやまし', 'Nasukarasuyama', 'shi', '09', '09'),
+    a('09216', '下野市', 'しもつけし', 'Shimotsuke', 'shi', '09', '09'),
+    a('09301', '上三川町', 'かみのかわまち', 'Kaminokawa', 'machi', '09', '09'),
+    a('09342', '益子町', 'ましこまち', 'Mashiko', 'machi', '09', '09'),
+    a('09343', '茂木町', 'もてぎまち', 'Motegi', 'machi', '09', '09'),
+    a('09344', '市貝町', 'いちかいまち', 'Ichikai', 'machi', '09', '09'),
+    a('09345', '芳賀町', 'はがまち', 'Haga', 'machi', '09', '09'),
+    a('09361', '壬生町', 'みぶまち', 'Mibu', 'machi', '09', '09'),
+    a('09364', '野木町', 'のぎまち', 'Nogi', 'machi', '09', '09'),
+    a('09384', '塩谷町', 'しおやまち', 'Shioya', 'machi', '09', '09'),
+    a('09386', '高根沢町', 'たかねざわまち', 'Takanezawa', 'machi', '09', '09'),
+    a('09407', '那須町', 'なすまち', 'Nasu', 'machi', '09', '09'),
+    a('09411', '那珂川町', 'なかがわまち', 'Nakagawa', 'machi', '09', '09'),
+    /* 群馬 */
+    a('10201', '前橋市', 'まえばしし', 'Maebashi', 'shi', '10', '10'),
+    a('10202', '高崎市', 'たかさきし', 'Takasaki', 'shi', '10', '10'),
+    a('10203', '桐生市', 'きりゅうし', 'Kiryu', 'shi', '10', '10'),
+    a('10204', '伊勢崎市', 'いせさきし', 'Isesaki', 'shi', '10', '10'),
+    a('10205', '太田市', 'おおたし', 'Ota', 'shi', '10', '10'),
+    a('10206', '沼田市', 'ぬまたし', 'Numata', 'shi', '10', '10'),
+    a('10207', '館林市', 'たてばやしし', 'Tatebayashi', 'shi', '10', '10'),
+    a('10208', '渋川市', 'しぶかわし', 'Shibukawa', 'shi', '10', '10'),
+    a('10209', '藤岡市', 'ふじおかし', 'Fujioka', 'shi', '10', '10'),
+    a('10210', '富岡市', 'とみおかし', 'Tomioka', 'shi', '10', '10'),
+    a('10211', '安中市', 'あんなかし', 'Annaka', 'shi', '10', '10'),
+    a('10212', 'みどり市', 'みどりし', 'Midori', 'shi', '10', '10'),
+    a('10344', '榛東村', 'しんとうむら', 'Shinto', 'mura', '10', '10'),
+    a('10345', '吉岡町', 'よしおかまち', 'Yoshioka', 'machi', '10', '10'),
+    a('10366', '上野村', 'うえのむら', 'Ueno', 'mura', '10', '10'),
+    a('10367', '神流町', 'かんなまち', 'Kanna', 'machi', '10', '10'),
+    a('10382', '下仁田町', 'しもにたまち', 'Shimonita', 'machi', '10', '10'),
+    a('10383', '南牧村', 'なんもくむら', 'Nanmoku', 'mura', '10', '10'),
+    a('10384', '甘楽町', 'かんらまち', 'Kanra', 'machi', '10', '10'),
+    a('10421', '中之条町', 'なかのじょうまち', 'Nakanojo', 'machi', '10', '10'),
+    a('10424', '長野原町', 'ながのはらまち', 'Naganohara', 'machi', '10', '10'),
+    a('10425', '嬬恋村', 'つまごいむら', 'Tsumagoi', 'mura', '10', '10'),
+    a('10426', '草津町', 'くさつまち', 'Kusatsu', 'machi', '10', '10'),
+    a('10428', '高山村', 'たかやまむら', 'Takayama', 'mura', '10', '10'),
+    a('10429', '東吾妻町', 'ひがしあがつままち', 'Higashiagatsuma', 'machi', '10', '10'),
+    a('10443', '片品村', 'かたしなむら', 'Katashina', 'mura', '10', '10'),
+    a('10444', '川場村', 'かわばむら', 'Kawaba', 'mura', '10', '10'),
+    a('10448', '昭和村', 'しょうわむら', 'Showa', 'mura', '10', '10'),
+    a('10449', 'みなかみ町', 'みなかみまち', 'Minakami', 'machi', '10', '10'),
+    a('10464', '玉村町', 'たまむらまち', 'Tamamura', 'machi', '10', '10'),
+    a('10521', '板倉町', 'いたくらまち', 'Itakura', 'machi', '10', '10'),
+    a('10522', '明和町', 'めいわまち', 'Meiwa', 'machi', '10', '10'),
+    a('10523', '千代田町', 'ちよだまち', 'Chiyoda', 'machi', '10', '10'),
+    a('10524', '大泉町', 'おおいずみまち', 'Oizumi', 'machi', '10', '10'),
+    a('10525', '邑楽町', 'おうらまち', 'Ora', 'machi', '10', '10'),
+    /* 埼玉 */
+    a('11100', 'さいたま市', 'さいたまし', 'Saitama', 'shi', '11', '11'),
+    a('11201', '川越市', 'かわごえし', 'Kawagoe', 'shi', '11', '11'),
+    a('11202', '熊谷市', 'くまがやし', 'Kumagaya', 'shi', '11', '11'),
+    a('11203', '川口市', 'かわぐちし', 'Kawaguchi', 'shi', '11', '11'),
+    a('11206', '行田市', 'ぎょうだし', 'Gyoda', 'shi', '11', '11'),
+    a('11207', '秩父市', 'ちちぶし', 'Chichibu', 'shi', '11', '11'),
+    a('11208', '所沢市', 'ところざわし', 'Tokorozawa', 'shi', '11', '11'),
+    a('11209', '飯能市', 'はんのうし', 'Hanno', 'shi', '11', '11'),
+    a('11210', '加須市', 'かぞし', 'Kazo', 'shi', '11', '11'),
+    a('11211', '本庄市', 'ほんじょうし', 'Honjo', 'shi', '11', '11'),
+    a('11212', '東松山市', 'ひがしまつやまし', 'Higashimatsuyama', 'shi', '11', '11'),
+    a('11214', '春日部市', 'かすかべし', 'Kasukabe', 'shi', '11', '11'),
+    a('11215', '狭山市', 'さやまし', 'Sayama', 'shi', '11', '11'),
+    a('11216', '羽生市', 'はにゅうし', 'Hanyu', 'shi', '11', '11'),
+    a('11217', '鴻巣市', 'こうのすし', 'Konosu', 'shi', '11', '11'),
+    a('11218', '深谷市', 'ふかやし', 'Fukaya', 'shi', '11', '11'),
+    a('11219', '上尾市', 'あげおし', 'Ageo', 'shi', '11', '11'),
+    a('11221', '草加市', 'そうかし', 'Soka', 'shi', '11', '11'),
+    a('11222', '越谷市', 'こしがやし', 'Koshigaya', 'shi', '11', '11'),
+    a('11223', '蕨市', 'わらびし', 'Warabi', 'shi', '11', '11'),
+    a('11224', '戸田市', 'とだし', 'Toda', 'shi', '11', '11'),
+    a('11225', '入間市', 'いるまし', 'Iruma', 'shi', '11', '11'),
+    a('11227', '朝霞市', 'あさかし', 'Asaka', 'shi', '11', '11'),
+    a('11228', '志木市', 'しきし', 'Shiki', 'shi', '11', '11'),
+    a('11229', '和光市', 'わこうし', 'Wako', 'shi', '11', '11'),
+    a('11230', '新座市', 'にいざし', 'Niiza', 'shi', '11', '11'),
+    a('11231', '桶川市', 'おけがわし', 'Okegawa', 'shi', '11', '11'),
+    a('11232', '久喜市', 'くきし', 'Kuki', 'shi', '11', '11'),
+    a('11233', '北本市', 'きたもとし', 'Kitamoto', 'shi', '11', '11'),
+    a('11234', '八潮市', 'やしおし', 'Yashio', 'shi', '11', '11'),
+    a('11235', '富士見市', 'ふじみし', 'Fujimi', 'shi', '11', '11'),
+    a('11237', '三郷市', 'みさとし', 'Misato', 'shi', '11', '11'),
+    a('11238', '蓮田市', 'はすだし', 'Hasuda', 'shi', '11', '11'),
+    a('11239', '坂戸市', 'さかどし', 'Sakado', 'shi', '11', '11'),
+    a('11240', '幸手市', 'さってし', 'Satte', 'shi', '11', '11'),
+    a('11241', '鶴ヶ島市', 'つるがしまし', 'Tsurugashima', 'shi', '11', '11'),
+    a('11242', '日高市', 'ひだかし', 'Hidaka', 'shi', '11', '11'),
+    a('11243', '吉川市', 'よしかわし', 'Yoshikawa', 'shi', '11', '11'),
+    a('11245', 'ふじみ野市', 'ふじみのし', 'Fujimino', 'shi', '11', '11'),
+    a('11246', '白岡市', 'しらおかし', 'Shiraoka', 'shi', '11', '11'),
+    a('11301', '伊奈町', 'いなまち', 'Ina', 'machi', '11', '11'),
+    a('11324', '三芳町', 'みよしまち', 'Miyoshi', 'machi', '11', '11'),
+    a('11326', '毛呂山町', 'もろやままち', 'Moroyama', 'machi', '11', '11'),
+    a('11327', '越生町', 'おごせまち', 'Ogose', 'machi', '11', '11'),
+    a('11341', '滑川町', 'なめがわまち', 'Namegawa', 'machi', '11', '11'),
+    a('11342', '嵐山町', 'らんざんまち', 'Ranzan', 'machi', '11', '11'),
+    a('11343', '小川町', 'おがわまち', 'Ogawa', 'machi', '11', '11'),
+    a('11346', '川島町', 'かわじままち', 'Kawajima', 'machi', '11', '11'),
+    a('11347', '吉見町', 'よしみまち', 'Yoshimi', 'machi', '11', '11'),
+    a('11348', '鳩山町', 'はとやままち', 'Hatoyama', 'machi', '11', '11'),
+    a('11349', 'ときがわ町', 'ときがわまち', 'Tokigawa', 'machi', '11', '11'),
+    a('11361', '横瀬町', 'よこぜまち', 'Yokoze', 'machi', '11', '11'),
+    a('11362', '皆野町', 'みなのまち', 'Minano', 'machi', '11', '11'),
+    a('11363', '長瀞町', 'ながとろまち', 'Nagatoro', 'machi', '11', '11'),
+    a('11365', '小鹿野町', 'おがのまち', 'Ogano', 'machi', '11', '11'),
+    a('11369', '東秩父村', 'ひがしちちぶむら', 'Higashichichibu', 'mura', '11', '11'),
+    a('11381', '美里町', 'みさとまち', 'Misato Town', 'machi', '11', '11'),
+    a('11383', '神川町', 'かみかわまち', 'Kamikawa', 'machi', '11', '11'),
+    a('11385', '上里町', 'かみさとまち', 'Kamisato', 'machi', '11', '11'),
+    a('11408', '寄居町', 'よりいまち', 'Yorii', 'machi', '11', '11'),
+    a('11442', '宮代町', 'みやしろまち', 'Miyashiro', 'machi', '11', '11'),
+    a('11464', '杉戸町', 'すぎとまち', 'Sugito', 'machi', '11', '11'),
+    a('11465', '松伏町', 'まつぶしまち', 'Matsubushi', 'machi', '11', '11'),
+    /* 千葉 */
+    a('12100', '千葉市', 'ちばし', 'Chiba', 'shi', '12', '12'),
+    a('12202', '銚子市', 'ちょうしし', 'Choshi', 'shi', '12', '12'),
+    a('12203', '市川市', 'いちかわし', 'Ichikawa', 'shi', '12', '12'),
+    a('12204', '船橋市', 'ふなばしし', 'Funabashi', 'shi', '12', '12'),
+    a('12205', '館山市', 'たてやまし', 'Tateyama', 'shi', '12', '12'),
+    a('12206', '木更津市', 'きさらづし', 'Kisarazu', 'shi', '12', '12'),
+    a('12207', '松戸市', 'まつどし', 'Matsudo', 'shi', '12', '12'),
+    a('12208', '野田市', 'のだし', 'Noda', 'shi', '12', '12'),
+    a('12210', '茂原市', 'もばらし', 'Mobara', 'shi', '12', '12'),
+    a('12211', '成田市', 'なりたし', 'Narita', 'shi', '12', '12'),
+    a('12212', '佐倉市', 'さくらし', 'Sakura', 'shi', '12', '12'),
+    a('12213', '東金市', 'とうがねし', 'Togane', 'shi', '12', '12'),
+    a('12215', '旭市', 'あさひし', 'Asahi', 'shi', '12', '12'),
+    a('12216', '習志野市', 'ならしのし', 'Narashino', 'shi', '12', '12'),
+    a('12217', '柏市', 'かしわし', 'Kashiwa', 'shi', '12', '12'),
+    a('12218', '勝浦市', 'かつうらし', 'Katsuura', 'shi', '12', '12'),
+    a('12219', '市原市', 'いちはらし', 'Ichihara', 'shi', '12', '12'),
+    a('12220', '流山市', 'ながれやまし', 'Nagareyama', 'shi', '12', '12'),
+    a('12221', '八千代市', 'やちよし', 'Yachiyo', 'shi', '12', '12'),
+    a('12222', '我孫子市', 'あびこし', 'Abiko', 'shi', '12', '12'),
+    a('12223', '鴨川市', 'かもがわし', 'Kamogawa', 'shi', '12', '12'),
+    a('12224', '鎌ケ谷市', 'かまがやし', 'Kamagaya', 'shi', '12', '12'),
+    a('12225', '君津市', 'きみつし', 'Kimitsu', 'shi', '12', '12'),
+    a('12226', '富津市', 'ふっつし', 'Futtsu', 'shi', '12', '12'),
+    a('12227', '浦安市', 'うらやすし', 'Urayasu', 'shi', '12', '12'),
+    a('12228', '四街道市', 'よつかいどうし', 'Yotsukaido', 'shi', '12', '12'),
+    a('12229', '袖ケ浦市', 'そでがうらし', 'Sodegaura', 'shi', '12', '12'),
+    a('12230', '八街市', 'やちまたし', 'Yachimata', 'shi', '12', '12'),
+    a('12231', '印西市', 'いんざいし', 'Inzai', 'shi', '12', '12'),
+    a('12232', '白井市', 'しろいし', 'Shiroi', 'shi', '12', '12'),
+    a('12233', '富里市', 'とみさとし', 'Tomisato', 'shi', '12', '12'),
+    a('12234', '南房総市', 'みなみぼうそうし', 'Minamiboso', 'shi', '12', '12'),
+    a('12235', '匝瑳市', 'そうさし', 'Sosa', 'shi', '12', '12'),
+    a('12236', '香取市', 'かとりし', 'Katori', 'shi', '12', '12'),
+    a('12237', '山武市', 'さんむし', 'Sammu', 'shi', '12', '12'),
+    a('12238', 'いすみ市', 'いすみし', 'Isumi', 'shi', '12', '12'),
+    a('12239', '大網白里市', 'おおあみしらさとし', 'Oamishirasato', 'shi', '12', '12'),
+    a('12322', '酒々井町', 'しすいまち', 'Shisui', 'machi', '12', '12'),
+    a('12329', '栄町', 'さかえまち', 'Sakae', 'machi', '12', '12'),
+    a('12342', '神崎町', 'こうざきまち', 'Kozaki', 'machi', '12', '12'),
+    a('12347', '多古町', 'たこまち', 'Tako', 'machi', '12', '12'),
+    a('12349', '東庄町', 'とうのしょうまち', 'Tonosho', 'machi', '12', '12'),
+    a('12403', '九十九里町', 'くじゅうくりまち', 'Kujukuri', 'machi', '12', '12'),
+    a('12409', '芝山町', 'しばやままち', 'Shibayama', 'machi', '12', '12'),
+    a('12410', '横芝光町', 'よこしばひかりまち', 'Yokoshibahikari', 'machi', '12', '12'),
+    a('12421', '一宮町', 'いちのみやまち', 'Ichinomiya', 'machi', '12', '12'),
+    a('12422', '睦沢町', 'むつざわまち', 'Mutsuzawa', 'machi', '12', '12'),
+    a('12423', '長生村', 'ちょうせいむら', 'Chosei', 'mura', '12', '12'),
+    a('12424', '白子町', 'しらこまち', 'Shirako', 'machi', '12', '12'),
+    a('12426', '長柄町', 'ながらまち', 'Nagara', 'machi', '12', '12'),
+    a('12427', '長南町', 'ちょうなんまち', 'Chonan', 'machi', '12', '12'),
+    a('12441', '大多喜町', 'おおたきまち', 'Otaki', 'machi', '12', '12'),
+    a('12443', '御宿町', 'おんじゅくまち', 'Onjuku', 'machi', '12', '12'),
+    a('12463', '鋸南町', 'きょなんまち', 'Kyonan', 'machi', '12', '12'),
+    /* 東京 */
+    a('13101', '千代田区', 'ちよだく', 'Chiyoda', 'ku', '23ku', '13'),
+    a('13102', '中央区', 'ちゅうおうく', 'Chuo', 'ku', '23ku', '13'),
+    a('13103', '港区', 'みなとく', 'Minato', 'ku', '23ku', '13'),
+    a('13104', '新宿区', 'しんじゅくく', 'Shinjuku', 'ku', '23ku', '13'),
+    a('13105', '文京区', 'ぶんきょうく', 'Bunkyo', 'ku', '23ku', '13'),
+    a('13106', '台東区', 'たいとうく', 'Taito', 'ku', '23ku', '13'),
+    a('13107', '墨田区', 'すみだく', 'Sumida', 'ku', '23ku', '13'),
+    a('13108', '江東区', 'こうとうく', 'Koto', 'ku', '23ku', '13'),
+    a('13109', '品川区', 'しながわく', 'Shinagawa', 'ku', '23ku', '13'),
+    a('13110', '目黒区', 'めぐろく', 'Meguro', 'ku', '23ku', '13'),
+    a('13111', '大田区', 'おおたく', 'Ota', 'ku', '23ku', '13'),
+    a('13112', '世田谷区', 'せたがやく', 'Setagaya', 'ku', '23ku', '13'),
+    a('13113', '渋谷区', 'しぶやく', 'Shibuya', 'ku', '23ku', '13'),
+    a('13114', '中野区', 'なかのく', 'Nakano', 'ku', '23ku', '13'),
+    a('13115', '杉並区', 'すぎなみく', 'Suginami', 'ku', '23ku', '13'),
+    a('13116', '豊島区', 'としまく', 'Toshima', 'ku', '23ku', '13'),
+    a('13117', '北区', 'きたく', 'Kita', 'ku', '23ku', '13'),
+    a('13118', '荒川区', 'あらかわく', 'Arakawa', 'ku', '23ku', '13'),
+    a('13119', '板橋区', 'いたばしく', 'Itabashi', 'ku', '23ku', '13'),
+    a('13120', '練馬区', 'ねりまく', 'Nerima', 'ku', '23ku', '13'),
+    a('13121', '足立区', 'あだちく', 'Adachi', 'ku', '23ku', '13'),
+    a('13122', '葛飾区', 'かつしかく', 'Katsushika', 'ku', '23ku', '13'),
+    a('13123', '江戸川区', 'えどがわく', 'Edogawa', 'ku', '23ku', '13'),
+    a('13201', '八王子市', 'はちおうじし', 'Hachioji', 'shi', 'tama', '13'),
+    a('13202', '立川市', 'たちかわし', 'Tachikawa', 'shi', 'tama', '13'),
+    a('13203', '武蔵野市', 'むさしのし', 'Musashino', 'shi', 'tama', '13'),
+    a('13204', '三鷹市', 'みたかし', 'Mitaka', 'shi', 'tama', '13'),
+    a('13205', '青梅市', 'おうめし', 'Ome', 'shi', 'tama', '13'),
+    a('13206', '府中市', 'ふちゅうし', 'Fuchu', 'shi', 'tama', '13'),
+    a('13207', '昭島市', 'あきしまし', 'Akishima', 'shi', 'tama', '13'),
+    a('13208', '調布市', 'ちょうふし', 'Chofu', 'shi', 'tama', '13'),
+    a('13209', '町田市', 'まちだし', 'Machida', 'shi', 'tama', '13'),
+    a('13210', '小金井市', 'こがねいし', 'Koganei', 'shi', 'tama', '13'),
+    a('13211', '小平市', 'こだいらし', 'Kodaira', 'shi', 'tama', '13'),
+    a('13212', '日野市', 'ひのし', 'Hino', 'shi', 'tama', '13'),
+    a('13213', '東村山市', 'ひがしむらやまし', 'Higashimurayama', 'shi', 'tama', '13'),
+    a('13214', '国分寺市', 'こくぶんじし', 'Kokubunji', 'shi', 'tama', '13'),
+    a('13215', '国立市', 'くにたちし', 'Kunitachi', 'shi', 'tama', '13'),
+    a('13218', '福生市', 'ふっさし', 'Fussa', 'shi', 'tama', '13'),
+    a('13219', '狛江市', 'こまえし', 'Komae', 'shi', 'tama', '13'),
+    a('13220', '東大和市', 'ひがしやまとし', 'Higashiyamato', 'shi', 'tama', '13'),
+    a('13221', '清瀬市', 'きよせし', 'Kiyose', 'shi', 'tama', '13'),
+    a('13222', '東久留米市', 'ひがしくるめし', 'Higashikurume', 'shi', 'tama', '13'),
+    a('13223', '武蔵村山市', 'むさしむらやまし', 'Musashimurayama', 'shi', 'tama', '13'),
+    a('13224', '多摩市', 'たまし', 'Tama', 'shi', 'tama', '13'),
+    a('13225', '稲城市', 'いなぎし', 'Inagi', 'shi', 'tama', '13'),
+    a('13227', '羽村市', 'はむらし', 'Hamura', 'shi', 'tama', '13'),
+    a('13228', 'あきる野市', 'あきるのし', 'Akiruno', 'shi', 'tama', '13'),
+    a('13229', '西東京市', 'にしとうきょうし', 'Nishitokyo', 'shi', 'tama', '13'),
+    a('13303', '瑞穂町', 'みずほまち', 'Mizuho', 'machi', 'tama', '13'),
+    a('13305', '日の出町', 'ひのでまち', 'Hinode', 'machi', 'tama', '13'),
+    a('13307', '檜原村', 'ひのはらむら', 'Hinohara', 'mura', 'tama', '13'),
+    a('13308', '奥多摩町', 'おくたままち', 'Okutama', 'machi', 'tama', '13'),
+    a('13361', '大島町', 'おおしままち', 'Oshima', 'machi', 'islands', '13'),
+    a('13362', '利島村', 'としまむら', 'Toshima Village', 'mura', 'islands', '13'),
+    a('13363', '新島村', 'にいじまむら', 'Niijima', 'mura', 'islands', '13'),
+    a('13364', '神津島村', 'こうづしまむら', 'Kozushima', 'mura', 'islands', '13'),
+    a('13381', '三宅村', 'みやけむら', 'Miyake', 'mura', 'islands', '13'),
+    a('13382', '御蔵島村', 'みくらじまむら', 'Mikurajima', 'mura', 'islands', '13'),
+    a('13401', '八丈町', 'はちじょうまち', 'Hachijo', 'machi', 'islands', '13'),
+    a('13402', '青ヶ島村', 'あおがしまむら', 'Aogashima', 'mura', 'islands', '13'),
+    a('13421', '小笠原村', 'おがさわらむら', 'Ogasawara', 'mura', 'islands', '13'),
+    /* 神奈川 */
+    a('14100', '横浜市', 'よこはまし', 'Yokohama', 'shi', '14', '14'),
+    a('14130', '川崎市', 'かわさきし', 'Kawasaki', 'shi', '14', '14'),
+    a('14150', '相模原市', 'さがみはらし', 'Sagamihara', 'shi', '14', '14'),
+    a('14201', '横須賀市', 'よこすかし', 'Yokosuka', 'shi', '14', '14'),
+    a('14203', '平塚市', 'ひらつかし', 'Hiratsuka', 'shi', '14', '14'),
+    a('14204', '鎌倉市', 'かまくらし', 'Kamakura', 'shi', '14', '14'),
+    a('14205', '藤沢市', 'ふじさわし', 'Fujisawa', 'shi', '14', '14'),
+    a('14206', '小田原市', 'おだわらし', 'Odawara', 'shi', '14', '14'),
+    a('14207', '茅ヶ崎市', 'ちがさきし', 'Chigasaki', 'shi', '14', '14'),
+    a('14208', '逗子市', 'ずしし', 'Zushi', 'shi', '14', '14'),
+    a('14210', '三浦市', 'みうらし', 'Miura', 'shi', '14', '14'),
+    a('14211', '秦野市', 'はだのし', 'Hadano', 'shi', '14', '14'),
+    a('14212', '厚木市', 'あつぎし', 'Atsugi', 'shi', '14', '14'),
+    a('14213', '大和市', 'やまとし', 'Yamato', 'shi', '14', '14'),
+    a('14214', '伊勢原市', 'いせはらし', 'Isehara', 'shi', '14', '14'),
+    a('14215', '海老名市', 'えびなし', 'Ebina', 'shi', '14', '14'),
+    a('14216', '座間市', 'ざまし', 'Zama', 'shi', '14', '14'),
+    a('14217', '南足柄市', 'みなみあしがらし', 'Minamiashigara', 'shi', '14', '14'),
+    a('14218', '綾瀬市', 'あやせし', 'Ayase', 'shi', '14', '14'),
+    a('14301', '葉山町', 'はやままち', 'Hayama', 'machi', '14', '14'),
+    a('14321', '寒川町', 'さむかわまち', 'Samukawa', 'machi', '14', '14'),
+    a('14341', '大磯町', 'おおいそまち', 'Oiso', 'machi', '14', '14'),
+    a('14342', '二宮町', 'にのみやまち', 'Ninomiya', 'machi', '14', '14'),
+    a('14361', '中井町', 'なかいまち', 'Nakai', 'machi', '14', '14'),
+    a('14362', '大井町', 'おおいまち', 'Oi', 'machi', '14', '14'),
+    a('14363', '松田町', 'まつだまち', 'Matsuda', 'machi', '14', '14'),
+    a('14364', '山北町', 'やまきたまち', 'Yamakita', 'machi', '14', '14'),
+    a('14366', '開成町', 'かいせいまち', 'Kaisei', 'machi', '14', '14'),
+    a('14382', '箱根町', 'はこねまち', 'Hakone', 'machi', '14', '14'),
+    a('14383', '真鶴町', 'まなづるまち', 'Manazuru', 'machi', '14', '14'),
+    a('14384', '湯河原町', 'ゆがわらまち', 'Yugawara', 'machi', '14', '14'),
+    a('14401', '愛川町', 'あいかわまち', 'Aikawa', 'machi', '14', '14'),
+    a('14402', '清川村', 'きよかわむら', 'Kiyokawa', 'mura', '14', '14')
   ];
 })();
 ;
@@ -6741,7 +7109,7 @@
 
   {
     id: 'yorisoi',
-    name: { ja: 'よりそいホットライン', en: 'Yorisoi Hotline' },
+    name: { ja: 'よ\u2060り\u2060そ\u2060いホットライン', en: 'Yorisoi Hotline' },
     hook: { ja: 'どこに相談したらいいかわからない', en: 'I do not know who to talk to' },
     summary: {
       ja: '24時間、無料で、どんな悩みでも話せる電話です。外国語や、DV・性暴力、性のことなど専門の相談も選べます。',
@@ -6756,11 +7124,11 @@
     docs: [],
     ask: ['話がまとまっていなくても大丈夫ですか？（大丈夫です）'],
     caution: { ja: 'つながりにくいときは、時間をおいてかけ直してください。050で始まるIP電話からは 050-3655-0279。' },
-    supporter: { ja: '福島県からは 0120-279-226。電話が苦手な本人には、あなたのいばしょ等のチャット窓口も案内。' },
+    supporter: { ja: '福島県からは 0120-279-226。電話が苦手な本人には、あなたのい\u2060ば\u2060し\u2060ょ等のチャット窓口も案内。' },
     effort: 'low',
     for: { stages: [], paths: [], care: [], careOnly: false, age: null, areas: [] },
     deadline: null,
-    contact: { phone: '0120-279-338', phoneLabel: 'よりそいホットライン（無料）', line: null, chat: null, web: 'https://www.since2011.net/yorisoi/', hours: { ja: '24時間', en: '24 hours' } },
+    contact: { phone: '0120-279-338', phoneLabel: 'よ\u2060り\u2060そ\u2060いホットライン（無料）', line: null, chat: null, web: 'https://www.since2011.net/yorisoi/', hours: { ja: '24時間', en: '24 hours' } },
     locations: [],
     source: src('一般社団法人 社会的包摂サポートセンター', 'https://www.since2011.net/yorisoi/'),
     sources2: [{ org: '厚生労働省「まもろうよ こころ」', url: MAMORO }],
@@ -6796,7 +7164,7 @@
 
   {
     id: 'anata-no-ibasho',
-    name: { ja: 'あなたのいばしょ（チャット相談）', en: 'Anata no Ibasho (chat support)' },
+    name: { ja: 'あなたのい\u2060ば\u2060し\u2060ょ（チャット相談）', en: 'Anata no Ibasho (chat support)' },
     hook: { ja: '電話はこわい。文字なら話せるかも', en: 'Calling is scary, but I could type' },
     summary: {
       ja: '24時間365日、誰でも無料・匿名で使えるチャット相談です。名前を言わなくて大丈夫です。',
@@ -6811,14 +7179,14 @@
     docs: [],
     ask: ['うまく言えないけど、聞いてほしいです'],
     caution: { ja: '混んでいると、つながるまで時間がかかることがあります。' },
-    supporter: { ja: 'NPO法人あなたのいばしょが運営。厚労省「まもろうよ こころ」にSNS・チャット相談として掲載。' },
+    supporter: { ja: 'NPO法人あなたのい\u2060ば\u2060し\u2060ょが運営。厚労省「まもろうよ こころ」にSNS・チャット相談として掲載。' },
     effort: 'low',
     for: { stages: [], paths: [], care: [], careOnly: false, age: null, areas: [] },
     deadline: null,
     contact: { phone: null, phoneLabel: null, line: null, chat: 'https://talkme.jp/', web: 'https://talkme.jp/', hours: { ja: '24時間365日', en: '24/7' } },
     locations: [],
-    source: src('厚生労働省「まもろうよ こころ」（あなたのいばしょを掲載）', MAMORO),
-    sources2: [{ org: 'NPO法人あなたのいばしょ', url: 'https://talkme.jp/' }],
+    source: src('厚生労働省「まもろうよ こころ」（あなたのい\u2060ば\u2060し\u2060ょを掲載）', MAMORO),
+    sources2: [{ org: 'NPO法人あなたのい\u2060ば\u2060し\u2060ょ', url: 'https://talkme.jp/' }],
     verifiedBy: BY
   },
 
@@ -7201,13 +7569,13 @@
 
   SM.data.programs.push(
 
-    /* ───────── ふらっとホーム（東京都 社会的養護自立支援拠点事業）───────── */
+    /* ───────── ふ\u2060ら\u2060っ\u2060とホーム（東京都 社会的養護自立支援拠点事業）───────── */
     {
       id: 'tokyo-flat-hinatabokko',
-      name: { ja: '日向ぼっこ（ふらっとホーム）', en: 'Hinatabokko (Flat Home drop-in)' },
+      name: { ja: '日向ぼっこ（ふ\u2060ら\u2060っ\u2060とホーム）', en: 'Hinatabokko (Flat Home drop-in)' },
       hook: { ja: 'ほっとできる場所と、話せる人がほしい', en: 'I want a place to relax and someone to talk to' },
       summary: {
-        ja: '施設や里親家庭で育った人などが集まれる居場所です。くらしや仕事のことも相談できます。東京都の「ふらっとホーム」の1つです。',
+        ja: '施設や里親家庭で育った人などが集まれる居場所です。くらしや仕事のことも相談できます。東京都の「ふ\u2060ら\u2060っ\u2060とホーム」の1つです。',
         en: 'A drop-in space for people with care experience, where you can also talk about daily life and work. One of Tokyo\'s "Flat Home" bases.'
       },
       cat: ['consult', 'work'],
@@ -7219,7 +7587,7 @@
       docs: [],
       ask: ['初めて行きたいです。面談はいつできますか？', 'どんなことを相談できますか？', '行くときに持っていくものはありますか？'],
       caution: { ja: '水曜・土曜はお休みです。初めての人は前もって面談が必要です。' },
-      supporter: { ja: '東京都 社会的養護自立支援拠点事業（ふらっとホーム事業）令和8年度補助事業者。個別相談は随時受付。' },
+      supporter: { ja: '東京都 社会的養護自立支援拠点事業（ふ\u2060ら\u2060っ\u2060とホーム事業）令和8年度補助事業者。個別相談は随時受付。' },
       effort: 'low',
       for: { stages: ['hs3', 'left0', 'left1', 'nohs'], paths: [], care: CARE, careOnly: false, age: null, areas: ['13'] },
       deadline: { ja: 'いつでも相談できます', en: 'Anytime', leaveMonths: null, months: null, always: true },
@@ -7235,13 +7603,13 @@
         hours: '月・木・金・日 12:00–18:00／火 14:00–20:00（水・土 休み）', note: '高田馬場駅から歩いて3分。初めての人は事前面談あり'
       }],
       source: { org: 'NPO法人 日向ぼっこ', url: 'https://hinatabokko2006.com/access/', checked: C },
-      sources2: [{ org: '東京都福祉局（ふらっとホーム事業）', url: FLAT }],
+      sources2: [{ org: '東京都福祉局（ふ\u2060ら\u2060っ\u2060とホーム事業）', url: FLAT }],
       verifiedBy: V
     },
 
     {
       id: 'tokyo-flat-b4s-akiba',
-      name: { ja: 'B4S PORT あきば（ふらっとホーム）', en: 'B4S PORT Akiba (Flat Home drop-in)' },
+      name: { ja: 'B4S PORT あ\u2060き\u2060ば（ふ\u2060ら\u2060っ\u2060とホーム）', en: 'B4S PORT Akiba (Flat Home drop-in)' },
       hook: { ja: '安心して過ごせる場所と、人に聞かれたくない相談先がほしい', en: 'I want a safe place to hang out and a private place to talk' },
       summary: {
         ja: 'ブリッジフォースマイルが東京都から受けて開いている居場所です。無料で使えて、予約すると1対1の相談（1回60分）もできます。',
@@ -7256,7 +7624,7 @@
       docs: [],
       ask: ['初めて行きたいです。いつ予約できますか？', '個別に相談したいです。どの日時なら空いていますか？', 'ごはんは出ますか？'],
       caution: { ja: '利用には予約が必要です。予約の電話は平日10時〜18時です。' },
-      supporter: { ja: '東京都 ふらっとホーム事業の補助事業者（認定NPO法人ブリッジフォースマイル）。メール andyou@b4s.jp。B4Sは令和8年11月に都内でもう1か所開設予定（都のページでは事業所名未定）。' },
+      supporter: { ja: '東京都 ふ\u2060ら\u2060っ\u2060とホーム事業の補助事業者（認定NPO法人ブリッジフォースマイル）。メール andyou@b4s.jp。B4Sは令和8年11月に都内でもう1か所開設予定（都のページでは事業所名未定）。' },
       effort: 'low',
       for: { stages: ['hs3', 'left0', 'left1', 'nohs'], paths: [], care: CARE, careOnly: false, age: null, areas: ['13'] },
       deadline: { ja: 'いつでも（予約制）', en: 'Anytime (booking needed)', leaveMonths: null, months: null, always: true },
@@ -7266,18 +7634,18 @@
         hours: { ja: '居場所: 火・土 15時〜20時／木 15時〜18時。電話予約: 平日10時〜18時', en: 'Open Tue/Sat 15–20, Thu 15–18. Phone booking weekdays 10–18' }
       },
       locations: [{
-        name: 'B4S PORT あきば', area: '13106', addr: '東京都台東区柳橋1-6-2 アーク柳橋401',
+        name: 'B4S PORT あ\u2060き\u2060ば', area: '13106', addr: '東京都台東区柳橋1-6-2 アーク柳橋401',
         lat: 35.696064, lng: 139.786850, phone: '03-6842-6766',
         hours: '火・土 15:00–20:00／木 15:00–18:00', note: '予約制（電話かLINE）'
       }],
       source: { org: '認定NPO法人ブリッジフォースマイル', url: 'https://www.b4s.jp/post-7599/', checked: C },
-      sources2: [{ org: '東京都福祉局（ふらっとホーム事業）', url: FLAT }],
+      sources2: [{ org: '東京都福祉局（ふ\u2060ら\u2060っ\u2060とホーム事業）', url: FLAT }],
       verifiedBy: V
     },
 
     {
       id: 'tokyo-flat-satellite-tachikawa',
-      name: { ja: 'サテライト立川（ふらっとホーム）', en: 'Satellite Tachikawa (Flat Home drop-in)' },
+      name: { ja: 'サテライト立川（ふ\u2060ら\u2060っ\u2060とホーム）', en: 'Satellite Tachikawa (Flat Home drop-in)' },
       hook: { ja: 'お金や仕事のこと、だれかに相談したい', en: 'I want to talk to someone about money or work' },
       summary: {
         ja: '施設や里親家庭でくらした人のための拠点です。お金・仕事・人間関係・健康・法律のことを相談でき、困ったときは一時的に泊まれることもあります。無料です。',
@@ -7292,7 +7660,7 @@
       docs: [],
       ask: ['相談の予約をしたいです。空いている日はありますか？', '就職や進学のことも相談できますか？', '住むところに困ったとき、一時的に泊まれますか？'],
       caution: { ja: '木曜・日曜はお休みです。Googleマップでは別の会社名（ハードフェースウエルドカンパニー）で出ることがあります。' },
-      supporter: { ja: '東京都 ふらっとホーム事業の補助事業者（一般社団法人リーチ奨学育英会）。予約は https://reserva.be/reach 。FAX 042-595-7761。' },
+      supporter: { ja: '東京都 ふ\u2060ら\u2060っ\u2060とホーム事業の補助事業者（一般社団法人リーチ奨学育英会）。予約は https://reserva.be/reach 。FAX 042-595-7761。' },
       effort: 'low',
       for: { stages: ['hs3', 'left0', 'left1', 'nohs'], paths: [], care: CARE, careOnly: true, age: null, areas: ['13'] },
       deadline: { ja: 'いつでも（予約制）', en: 'Anytime (booking needed)', leaveMonths: null, months: null, always: true },
@@ -7307,13 +7675,13 @@
         hours: '10:00–21:00（木・日 休み）', note: 'JR南武線 西国立駅から歩いて3分。予約制'
       }],
       source: { org: '一般社団法人リーチ奨学育英会', url: 'https://shiseiikuei.or.jp/satellite-tachikawa/', checked: C },
-      sources2: [{ org: '東京都福祉局（ふらっとホーム事業）', url: FLAT }],
+      sources2: [{ org: '東京都福祉局（ふ\u2060ら\u2060っ\u2060とホーム事業）', url: FLAT }],
       verifiedBy: V
     },
 
     {
       id: 'tokyo-flat-yuzuriha',
-      name: { ja: 'アフターケア相談所 ゆずりは（ふらっとホーム）', en: 'Yuzuriha Aftercare Center (Flat Home)' },
+      name: { ja: 'アフターケア相談所 ゆ\u2060ず\u2060り\u2060は（ふ\u2060ら\u2060っ\u2060とホーム）', en: 'Yuzuriha Aftercare Center (Flat Home)' },
       hook: { ja: '役所や病院に、いっしょに行ってくれる人がほしい', en: 'I want someone to come with me to the city office or hospital' },
       summary: {
         ja: '住まい・くらし・仕事・進学の困りごとを、1対1で一緒に考えてくれます。生活保護の申請や、病院・不動産屋への付きそいも。相談は無料で、年齢制限もありません。',
@@ -7323,28 +7691,28 @@
       kind: 'service', basis: 'npo', right: false,
       amount: { ja: '相談は無料', en: 'Free' }, repay: null,
       who: { ja: '施設などを出て、くらし・仕事・進学が不安な人。親や家族から離れたい人。年齢制限はありません。' },
-      how: { ja: '電話かホームページのお問い合わせフォームで連絡します。毎週水曜13時〜17時の「ゆずりはサロン」は予約なしで行けます。' },
+      how: { ja: '電話かホームページのお問い合わせフォームで連絡します。毎週水曜13時〜17時の「ゆ\u2060ず\u2060り\u2060はサロン」は予約なしで行けます。' },
       where: { ja: '電話・フォームで相談（住所はホームページにのっていません）' },
       docs: [],
       ask: ['生活保護の申請に、いっしょに行ってもらえますか？', '部屋を探したいです。不動産屋に付きそってもらえますか？', 'サロンには予約なしで行っていいですか？'],
       caution: { ja: '住所はホームページにのっていません。行き方は電話で聞いてください。フォームの返事には数日かかります。' },
-      supporter: { ja: '社会福祉法人 子供の家。東京都 ふらっとホーム事業の補助事業者（ゆずりは／ながれる）。都のページでは、子供の家が令和8年10月にもう1か所開設予定（名称未定）。' },
+      supporter: { ja: '社会福祉法人 子供の家。東京都 ふ\u2060ら\u2060っ\u2060とホーム事業の補助事業者（ゆ\u2060ず\u2060り\u2060は／ながれる）。都のページでは、子供の家が令和8年10月にもう1か所開設予定（名称未定）。' },
       effort: 'low',
       for: { stages: ['hs3', 'left0', 'left1', 'nohs'], paths: [], care: CARE, careOnly: false, age: null, areas: ['13'] },
       deadline: { ja: 'いつでも相談できます', en: 'Anytime', leaveMonths: null, months: null, always: true },
       contact: {
-        phone: '042-315-6738', phoneLabel: 'ゆずりは・ながれる', line: null, chat: 'https://www.acyuzuriha.com/contact/',
+        phone: '042-315-6738', phoneLabel: 'ゆ\u2060ず\u2060り\u2060は・ながれる', line: null, chat: 'https://www.acyuzuriha.com/contact/',
         web: YUZU, hours: null
       },
       locations: [],
-      source: { org: '社会福祉法人 子供の家 ゆずりは', url: YUZU, checked: C },
-      sources2: [{ org: '東京都福祉局（ふらっとホーム事業）', url: FLAT }],
+      source: { org: '社会福祉法人 子供の家 ゆ\u2060ず\u2060り\u2060は', url: YUZU, checked: C },
+      sources2: [{ org: '東京都福祉局（ふ\u2060ら\u2060っ\u2060とホーム事業）', url: FLAT }],
       verifiedBy: V
     },
 
     {
       id: 'yuzuriha-kousotsunintei',
-      name: { ja: 'ゆずりは 高卒認定 学習会', en: 'Yuzuriha study group for the high-school equivalency exam' },
+      name: { ja: 'ゆ\u2060ず\u2060り\u2060は 高卒認定 学習会', en: 'Yuzuriha study group for the high-school equivalency exam' },
       hook: { ja: '高校を出ていないけど、もう一度勉強したい', en: 'I didn\'t finish high school but want to study again' },
       summary: {
         ja: '高卒認定（高校卒業と同じ資格）をとるための無料の学習会です。交通費は全額出て、軽食もあります。講師が学びたいことに合わせて教えてくれます。',
@@ -7354,8 +7722,8 @@
       kind: 'service', basis: 'npo', right: false,
       amount: { ja: '無料・交通費は全額支給', en: 'Free; travel costs fully covered' }, repay: null,
       who: { ja: '高卒認定をとりたい人。ほかに学びたいことがある人も相談できます。' },
-      how: { ja: '参加したいときは、前もって ゆずりは に連絡します。毎週木曜18時〜20時です。' },
-      where: { ja: 'アフターケア相談所 ゆずりは（場所は電話で確認）' },
+      how: { ja: '参加したいときは、前もって ゆ\u2060ず\u2060り\u2060は に連絡します。毎週木曜18時〜20時です。' },
+      where: { ja: 'アフターケア相談所 ゆ\u2060ず\u2060り\u2060は（場所は電話で確認）' },
       docs: [],
       ask: ['高卒認定の学習会に参加したいです。次はいつですか？', '勉強がかなり苦手でも大丈夫ですか？', '交通費はどうやってもらえますか？'],
       caution: { ja: '参加したいときは、前もって連絡しよう。' },
@@ -7363,15 +7731,15 @@
       effort: 'low',
       for: { stages: ['nohs', 'left0', 'left1'], paths: ['study', 'unsure'], care: [], careOnly: false, age: null, areas: ['13'] },
       deadline: { ja: '毎週木曜 18時〜20時（いつでも始められます）', en: 'Every Thursday 18:00–20:00', leaveMonths: null, months: null, always: true },
-      contact: { phone: '042-315-6738', phoneLabel: 'ゆずりは', line: null, chat: 'https://www.acyuzuriha.com/contact/', web: YUZU, hours: { ja: '学習会: 毎週木曜 18時〜20時', en: 'Thu 18:00–20:00' } },
+      contact: { phone: '042-315-6738', phoneLabel: 'ゆ\u2060ず\u2060り\u2060は', line: null, chat: 'https://www.acyuzuriha.com/contact/', web: YUZU, hours: { ja: '学習会: 毎週木曜 18時〜20時', en: 'Thu 18:00–20:00' } },
       locations: [],
-      source: { org: '社会福祉法人 子供の家 ゆずりは', url: YUZU, checked: C },
+      source: { org: '社会福祉法人 子供の家 ゆ\u2060ず\u2060り\u2060は', url: YUZU, checked: C },
       verifiedBy: V
     },
 
     {
       id: 'yuzuriha-koubou',
-      name: { ja: 'ゆずりは工房（ジャムづくり）', en: 'Yuzuriha Workshop (jam making)' },
+      name: { ja: 'ゆ\u2060ず\u2060り\u2060は工房（ジャムづくり）', en: 'Yuzuriha Workshop (jam making)' },
       hook: { ja: '毎日働くのはまだしんどい。少しずつ働いてみたい', en: 'Working every day is too hard right now; I want to start small' },
       summary: {
         ja: 'スタッフといっしょにジャムをつくる仕事の場です。工賃（お給料）と交通費の全額を、その日にもらえます。',
@@ -7381,8 +7749,8 @@
       kind: 'service', basis: 'npo', right: false,
       amount: { ja: '工賃と交通費（全額）を当日支給', en: 'Same-day pay plus full travel costs' }, repay: null,
       who: { ja: '毎日働くことがむずかしい人。人とやりとりすることに緊張や不安がある人。' },
-      how: { ja: '参加したいときは、前もって ゆずりは に連絡します。毎週木曜13時〜16時です。' },
-      where: { ja: 'アフターケア相談所 ゆずりは（場所は電話で確認）' },
+      how: { ja: '参加したいときは、前もって ゆ\u2060ず\u2060り\u2060は に連絡します。毎週木曜13時〜16時です。' },
+      where: { ja: 'アフターケア相談所 ゆ\u2060ず\u2060り\u2060は（場所は電話で確認）' },
       docs: [],
       ask: ['工房に参加してみたいです。見学できますか？', '毎週来られなくても大丈夫ですか？', '工賃はいくらくらいですか？'],
       caution: null,
@@ -7390,16 +7758,16 @@
       effort: 'low',
       for: { stages: ['left0', 'left1', 'nohs'], paths: ['work', 'unsure'], care: [], careOnly: false, age: null, areas: ['13'] },
       deadline: { ja: '毎週木曜 13時〜16時', en: 'Every Thursday 13:00–16:00', leaveMonths: null, months: null, always: true },
-      contact: { phone: '042-315-6738', phoneLabel: 'ゆずりは', line: null, chat: 'https://www.acyuzuriha.com/contact/', web: YUZU, hours: { ja: '工房: 毎週木曜 13時〜16時', en: 'Thu 13:00–16:00' } },
+      contact: { phone: '042-315-6738', phoneLabel: 'ゆ\u2060ず\u2060り\u2060は', line: null, chat: 'https://www.acyuzuriha.com/contact/', web: YUZU, hours: { ja: '工房: 毎週木曜 13時〜16時', en: 'Thu 13:00–16:00' } },
       locations: [],
-      source: { org: '社会福祉法人 子供の家 ゆずりは', url: YUZU, checked: C },
+      source: { org: '社会福祉法人 子供の家 ゆ\u2060ず\u2060り\u2060は', url: YUZU, checked: C },
       verifiedBy: V
     },
 
     /* ───────── ブリッジフォースマイル（自主事業）───────── */
     {
       id: 'b4s-port-shimokita',
-      name: { ja: 'B4S PORT しもきた', en: 'B4S PORT Shimokita' },
+      name: { ja: 'B4S PORT し\u2060も\u2060き\u2060た', en: 'B4S PORT Shimokita' },
       hook: { ja: 'だれかと一緒にごはんを食べたい', en: 'I want to share a meal with someone' },
       summary: {
         ja: 'おしゃべりしたり、一緒にごはんを作って食べたり、ゆっくりしたりできる居場所です。金・日は夕食があります。個別相談（1回30分）もできます。',
@@ -7419,12 +7787,12 @@
       for: { stages: ['hs3', 'left0', 'left1', 'nohs'], paths: [], care: CARE, careOnly: false, age: null, areas: ['13'] },
       deadline: { ja: 'いつでも（予約制）', en: 'Anytime (booking needed)', leaveMonths: null, months: null, always: true },
       contact: {
-        phone: '080-5652-1963', phoneLabel: 'PORT しもきた（開いている時間だけ）', line: null, chat: null,
+        phone: '080-5652-1963', phoneLabel: 'PORT し\u2060も\u2060き\u2060た（開いている時間だけ）', line: null, chat: null,
         web: 'https://www.b4s.jp/post-6426/',
         hours: { ja: '水 14時〜18時／金・日 16時〜20時（夕食あり）', en: 'Wed 14–18, Fri/Sun 16–20 (dinner)' }
       },
       locations: [{
-        name: 'B4S PORT しもきた', area: '13112', addr: '東京都世田谷区北沢2-10-15 藤和下北沢ハイタウンA614',
+        name: 'B4S PORT し\u2060も\u2060き\u2060た', area: '13112', addr: '東京都世田谷区北沢2-10-15 藤和下北沢ハイタウンA614',
         lat: 35.661770, lng: 139.668610, phone: '080-5652-1963',
         hours: '水 14:00–18:00／金・日 16:00–20:00', note: '予約制。電話は開いている時間だけ'
       }],
@@ -7870,7 +8238,7 @@
 
     {
       id: 'tokyo-wakasapo',
-      name: { ja: 'わかさぽ（とうきょう若者ヘルスサポート）', en: 'Wakasapo (Tokyo Teen Health Support)' },
+      name: { ja: 'わ\u2060か\u2060さ\u2060ぽ（と\u2060う\u2060き\u2060ょ\u2060う若者ヘルスサポート）', en: 'Wakasapo (Tokyo Teen Health Support)' },
       hook: { ja: 'からだや心のことを、こっそり聞きたい', en: 'I want to ask about my body or feelings privately' },
       summary: {
         ja: '10代のからだや心の悩みに、看護師などが電話やメールで答えてくれます。無料のフリーダイヤルです。',
@@ -7890,7 +8258,7 @@
       for: { stages: ['jhs12', 'jhs3', 'hs12', 'hs3', 'left0', 'nohs'], paths: [], care: [], careOnly: false, age: { min: 12, max: 19 }, areas: ['13'] },
       deadline: null,
       contact: {
-        phone: '0120-372-463', phoneLabel: 'わかさぽ', line: null, chat: null, web: WOMEN,
+        phone: '0120-372-463', phoneLabel: 'わ\u2060か\u2060さ\u2060ぽ', line: null, chat: null, web: WOMEN,
         hours: { ja: '月〜金 15時〜20時／土・日 9時〜14時（元日は休み）', en: 'Mon–Fri 15–20, Sat/Sun 9–14' }
       },
       locations: [],
@@ -8735,12 +9103,12 @@
       hogoNote: false,
       locs: [loc('そえる（東大和市役所 本庁舎 2階 エレベーター横）', '13220', '東京都東大和市中央3-930', 35.745262, 139.426498, '042-563-2111', WD + ' 8:30–17:15', '内線1081')] }),
 
-    jiritsu({ code: '13221', slug: 'kiyose', city: '清瀬市', en: 'Kiyose City', wname: 'きよせ生活相談支援センター「いっぽ」', wnameEn: '"Ippo" life consultation center',
+    jiritsu({ code: '13221', slug: 'kiyose', city: '清瀬市', en: 'Kiyose City', wname: 'きよせ生活相談支援センター「い\u2060っ\u2060ぽ」', wnameEn: '"Ippo" life consultation center',
       phone: '042-495-5567', hoursJa: '平日 8時30分〜17時', hoursEn: 'Weekdays 8:30–17:00',
       url: 'https://www.city.kiyose.lg.jp/kenkouiryouhukusi/seikatusiensyakaihukusi/seikatuniokomarinotoki/1004287.html', org: '清瀬市',
       note: '混んでいることがあるので、行く前に電話で予約してください。',
       hogoNote: false,
-      locs: [loc('いっぽ（清瀬市元町1-11-21 1階北側）', '13221', '東京都清瀬市元町1-11-21', 35.773136, 139.51799, '042-495-5567', WD + ' 8:30–17:00', '要予約')] }),
+      locs: [loc('い\u2060っ\u2060ぽ（清瀬市元町1-11-21 1階北側）', '13221', '東京都清瀬市元町1-11-21', 35.773136, 139.51799, '042-495-5567', WD + ' 8:30–17:00', '要予約')] }),
 
     jiritsu({ code: '13222', slug: 'higashikurume', city: '東久留米市', en: 'Higashikurume City', wname: '自立相談支援（福祉総務課 相談支援係）', wnameEn: 'Self-reliance consultation',
       phone: '042-470-7749', hoursJa: '平日 9時〜16時（12時〜13時をのぞく）', hoursEn: 'Weekdays 9:00–16:00 (closed 12–13)',
@@ -8816,7 +9184,7 @@
   var L = [
     {
       id: 'nerima-habataku',
-      name: { ja: 'ねりま羽ばたく若者応援プロジェクト（練馬区）', en: 'Nerima "Habataku" Youth Support Project' },
+      name: { ja: 'ね\u2060り\u2060ま羽ばたく若者応援プロジェクト（練馬区）', en: 'Nerima "Habataku" Youth Support Project' },
       hook: { ja: '練馬区でひとり暮らし。家賃や光熱費がきびしい', en: 'Living alone in Nerima and rent and bills are tight' },
       summary: {
         ja: '施設や里親家庭で育った、練馬区に住む若者のための支援です。家賃や光熱水費の一部を最長5年補助してくれるほか、毎週の居場所、LINE相談、法律相談、食料の配布もあります。',
@@ -8842,7 +9210,7 @@
         hours: { ja: '平日 8時30分〜17時15分', en: 'Weekdays 8:30–17:15' }
       },
       locations: [
-        loc('居場所（春日町青少年館 3階・ねりま若者サポートステーション内）', '13120', '東京都練馬区春日町4-16-9', 35.752403, 139.639008, '03-5848-8341', '金 17:00–20:30（居場所）', '申しこみ不要。都営大江戸線 練馬春日町駅A2から歩いて3分')
+        loc('居場所（春日町青少年館 3階・ね\u2060り\u2060ま若者サポートステーション内）', '13120', '東京都練馬区春日町4-16-9', 35.752403, 139.639008, '03-5848-8341', '金 17:00–20:30（居場所）', '申しこみ不要。都営大江戸線 練馬春日町駅A2から歩いて3分')
       ],
       source: { org: '練馬区', url: 'https://www.city.nerima.tokyo.jp/kosodatekyoiku/kodomo/sodan/kodomokateicenter/habataku.html', checked: C },
       sources2: [{ org: '練馬区（チラシ）', url: 'https://www.city.nerima.tokyo.jp/kosodatekyoiku/kodomo/sodan/kodomokateicenter/habataku.files/tirashi-saisyuseiban.pdf' }],
@@ -8873,7 +9241,9 @@
       caution: { ja: '住んでいる場所ではなく「世田谷区の施設や児童相談所から巣立ったか」で決まります。受付は年に何回かです。令和8年度第3回の受付は 10月16日（金）まで（郵送は当日消印有効）。次の回は区に聞いてください。ほかの自治体の同じような支援を受けていると使えません。' },
       supporter: { ja: '世田谷区児童養護施設退所者等奨学・自立支援基金（寄附）が財源。令和7年度から虐待等の逆境体験があり親族の支援がない若者にも拡大。家賃は四半期ごと振込。毎年2〜3月に実績報告が必要（未提出は取消・返還の可能性）。住宅支援（借上げ区営住宅5戸）・居場所・せたエール（相談）も別にあり。' },
       effort: 'high',
-      for: { stages: ['hs3', 'left0', 'left1'], paths: [], care: CARE, careOnly: true, age: { min: 15, max: 39 }, areas: [] },
+      // v7: a 世田谷区 scheme decided by where you left care (not where you live): city code + eligibleBy 'origin'
+      for: { stages: ['hs3', 'left0', 'left1'], paths: [], care: CARE, careOnly: true, age: { min: 15, max: 39 }, areas: ['13112'] },
+      eligibleBy: 'origin',
       deadline: { ja: '年に数回まとめて受付。次の回は区のページか電話で確認', en: 'Several rounds a year; check the next round', leaveMonths: null, months: null, always: false },
       contact: {
         phone: '03-6304-7740', phoneLabel: '世田谷区 児童相談支援課', line: null, chat: null,
@@ -9056,7 +9426,7 @@
 
     {
       id: 'toshima-b4s-port-ikebukuro',
-      name: { ja: 'B4S PORT いけぶくろ（豊島区の居場所・相談）', en: 'B4S PORT Ikebukuro (Toshima drop-in & support)' },
+      name: { ja: 'B4S PORT い\u2060け\u2060ぶ\u2060く\u2060ろ（豊島区の居場所・相談）', en: 'B4S PORT Ikebukuro (Toshima drop-in & support)' },
       hook: { ja: '同じ経験をした人と、ごはんを食べて話したい', en: 'I want to eat and talk with people who\'ve been through the same' },
       summary: {
         ja: '豊島区が開く、施設や里親家庭で育った人などのための居場所です。月に1回、みんなで料理して夕ごはんを食べたり、スタッフに相談したりできます。自立の前後の相談（支援計画づくり）も受けられます。',
@@ -9080,7 +9450,7 @@
         web: 'https://www.city.toshima.lg.jp/525/2606181603.html', hours: { ja: '居場所: 原則 第2日曜 15時〜20時', en: 'Drop-in: 2nd Sunday 15:00–20:00' }
       },
       locations: [
-        loc('B4S PORT いけぶくろ（IKEROOT 1階）', '13116', '東京都豊島区東池袋4-42-16', 35.727962, 139.720795, null, '原則 第2日曜 15:00–20:00', 'LINEで予約')
+        loc('B4S PORT い\u2060け\u2060ぶ\u2060く\u2060ろ（IKEROOT 1階）', '13116', '東京都豊島区東池袋4-42-16', 35.727962, 139.720795, null, '原則 第2日曜 15:00–20:00', 'LINEで予約')
       ],
       source: { org: '豊島区', url: 'https://www.city.toshima.lg.jp/525/2606181603.html', checked: C },
       eligibleBy: 'origin',
@@ -9528,6 +9898,2539 @@
   ];
 
   SM.data.programs.push.apply(SM.data.programs, J.concat(L, KC, G));
+})();
+;
+/* ---- data/programs-kanto-s.js ---- */
+/* 巣立ちマップ v7 — data/programs-kanto-s.js (DATA-S)
+ * 神奈川県・埼玉県・千葉県（政令市 横浜市・川崎市・相模原市・さ\u2060い\u2060た\u2060ま市・千葉市 をふくむ）の支援。
+ * すべて 2026-10-26 に、県・市の公式ページ（または県・市から委託された運営団体のページ）を読んで確認しました。
+ * ページに書いていないこと（金額・電話番号・住所・締切）は入れていません。
+ * 座標は 国土地理院 住所検索API で住所から求め、逆ジオコーダで区市町村コードを確かめました。
+ *
+ * SPEC-v7 データ契約: basis 'pref' = 都以外の県の制度（pref: '14' など）。政令市・市の制度は basis 'local' ＋ pref。
+ * for.areas: ['14'] = 神奈川県内ならどこでも / ['14100'] = 横浜市に住む人だけ / 町村だけの窓口は町村コードの一覧。
+ * locations[].area = その窓口がある区市町村（政令市は市のコード 14100 など）。
+ * 追加フィールド（任意・programs-local.js と同じ）: eligibleBy 'residence' | 'origin'
+ *   'origin' … 住んでいる場所ではなく「どこの県・市の施設や里親家庭から巣立ったか」で決まる支援。
+ */
+(function () {
+  var SM = window.SM;
+  var C = '2026-10-26';
+  var V = 'Economix JP';
+  var CARE = ['facility', 'foster', 'jhome'];
+  var NOT_JR = ['hs12', 'hs3', 'left0', 'left1', 'nohs'];              // 中学生には出さない
+  var ALL_ST = ['jhs12', 'jhs3', 'hs12', 'hs3', 'left0', 'left1', 'nohs']; // 中学生にも出す
+  var KIDS = ['jhs12', 'jhs3', 'hs12', 'hs3', 'nohs'];                  // 18歳未満の子ども向けの窓口
+  var LEAVERS = ['hs3', 'left0', 'left1', 'nohs'];                      // 巣立つ前後の人
+
+  function loc(name, area, addr, lat, lng, phone, hours, note) {
+    return { name: name, area: area, addr: addr, lat: lat, lng: lng, phone: phone, hours: hours || '', note: note || '' };
+  }
+
+  /* ───────── 公式ページ ───────── */
+  var KN_JIRITSU = 'https://www.knsyk.jp/download_file/view/2e48687c-029c-443f-a2c2-c87630b04f37/591';
+  var KN_JISOU = 'https://www.pref.kanagawa.jp/docs/he8/faq/p34091.html';
+  var KN_TOWNS = 'https://www.pref.kanagawa.jp/docs/r6w/konkyu/tyouson.html';
+  var KN_KONKYU_LIST = 'https://www.pref.kanagawa.jp/docs/r6w/cnt/f533087/index.html';
+  var KN_GAKUHI = 'https://www.pref.kanagawa.jp/docs/v3e/jyosei/gakuhisien/index.html';
+  var KN_SHOGAKU = 'https://www.pref.kanagawa.jp/docs/en7/cnt/f324/index.html';
+  var KN_SAPO = 'https://www.pref.kanagawa.jp/docs/t7e/cnt/f4151/p471988.html';
+  var KN_KOWAKA = 'https://www.pref.kanagawa.jp/docs/t7e/kowaka/201909kowakalinesoudan.html';
+  var KN_KOWAKA_C = 'https://www.pref.kanagawa.jp/docs/ch3/cnt/soudan/02_soudan.html';
+  var KN_HOTLINE = 'https://www.pref.kanagawa.jp/docs/he8/rights-of-children/hotline-children.html';
+  var KN_CARD = 'https://www.pref.kanagawa.jp/docs/ch3/cnt/soudan/10_soudancard/card_index.html';
+  var ASUNARO = 'https://shonan-asunaro.com/';
+  var YK_KYOTEN = 'https://www.city.yokohama.lg.jp/kosodate-kyoiku/yogo/kyoten.html';
+  var YK_KONKYU = 'https://www.city.yokohama.lg.jp/kenko-iryo-fukushi/fukushi-kaigo/seikatsu/jiritsu/konnan/seikatsukonkyu.html';
+  var YK_MADO = 'https://www.city.yokohama.lg.jp/kenko-iryo-fukushi/fukushi-kaigo/seikatsu/madoguchi.html';
+  var KW_DAIJOB = 'https://www.city.kawasaki.jp/350/page/0000055699.html';
+  var KW_KYOTEN = 'https://www.city.kawasaki.jp/450/page/0000147122.html';
+  var SG_KONKYU = 'https://www.city.sagamihara.kanagawa.jp/kosodate/fukushi/1026642/1006553/index.html';
+
+  var ST_SHIRYO = 'https://www.pref.saitama.lg.jp/documents/259851/shiryo_r6-1.pdf';
+  var ST_YOKO = 'https://www.pref.saitama.lg.jp/documents/210419/saitamakenjidouyougoshisetutaishoshatounitaisurujiritushienkashitukejigyouhojokinkouhuyoukou.pdf';
+  var ST_YOSAN = 'https://www.pref.saitama.lg.jp/yosan-info/ST2026-10/pdf/036032.pdf';
+  var ST_YOUGO = 'https://www.pref.saitama.lg.jp/a0608/jidou-shisetsu/syakaitekiyougo.html';
+  var ST_CLOVER = 'https://www.pref.saitama.lg.jp/a0608/jidou-shisetsu/clover-house.html';
+  var CLOVER_OP = 'https://compass-navi.or.jp/activity/01.html';
+  var ST_JISOU = 'https://www.pref.saitama.lg.jp/a0608/jisou-annai.html';
+  var ST_KONKYU = 'https://www.pref.saitama.lg.jp/a0602/jiritsushien/madoguchi.html';
+  var SC_KONKYU = 'https://www.city.saitama.lg.jp/002/003/002/p088576.html';
+  var ST_FUBO = 'https://www.pref.saitama.lg.jp/a0204/fubofutan2.html';
+  var ST_FUBO_NENSHU = 'https://www.pref.saitama.lg.jp/documents/26351/r8_setainenshu_nihonkokuseki.pdf';
+  var ST_SHOGAKU = 'https://www.pref.saitama.lg.jp/f2204/j-s/gen-taiyo.html';
+  var ST_SHOGAKU_B = 'https://www.pref.saitama.lg.jp/f2204/j-s/gen-boshuu.html';
+  var ST_LINE = 'https://www.pref.saitama.lg.jp/a0608/gyakutai-taiou/snsgyakutaisoudan.html';
+  var ST_SMILE = 'https://www.pref.saitama.lg.jp/a0608/smile-net/index.html';
+
+  var CB_JIRITSU = 'https://www.chibakenshakyo.com/0105shikin_page003.php';
+  var CB_SHOGAKU = 'https://www.pref.chiba.lg.jp/jika/shougakukin/index.html';
+  var CB_SHOGAKU_PDF = 'https://www.pref.chiba.lg.jp/jika/shougakukin/documents/bosyuyoukou-r8.pdf';
+  var CB_CANS = 'https://kazenomura.jp/facility/%E3%81%A1%E3%81%B0%E3%82%A2%E3%83%95%E3%82%BF%E3%83%BC%E3%82%B1%E3%82%A2%E3%83%8D%E3%83%83%E3%83%88%E3%83%AF%E3%83%BC%E3%82%AF%E3%82%B9%E3%83%86%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3/';
+  var CB_JISOU = 'https://www.pref.chiba.lg.jp/jika/soudan/jidou/soudanjo.html';
+  var CB_KONKYU = 'https://www.pref.chiba.lg.jp/kenshidou/seikatukonkyuu.html';
+  var CC_KONKYU = 'https://www.city.chiba.jp/hokenfukushi/hogo/konnkyuushapr.html';
+  var CB_SHIKIN = 'https://www.pref.chiba.lg.jp/kyouiku/zaimu/enjo/shougakukin/290401.html';
+  var CB_LIGHT = 'https://www.pref.chiba.lg.jp/kkbunka/kodomowakamono/lighthouse.html';
+  var CB_KOSAPO = 'https://www.pref.chiba.lg.jp/kyouiku/shidou/soudan/ijime.html';
+  var SAPO_NET = 'https://saposute-net.mhlw.go.jp/station.html';
+
+  /* ───────── 児童相談所（場所） ───────── */
+  var KN_WD = '平日 8:30–17:15';
+  var KN_JISOU_LOCS = [
+    loc('神奈川県 中央児童相談所', '14205', '神奈川県藤沢市亀井野3119', 35.374489, 139.483658, '0466-84-1600', KN_WD, '担当: 藤沢市・茅ヶ崎市・寒川町'),
+    loc('神奈川県 平塚児童相談所', '14203', '神奈川県平塚市中原3-1-6', 35.349628, 139.335556, '0463-73-6888', KN_WD, '担当: 平塚市・秦野市・伊勢原市・大磯町・二宮町'),
+    loc('神奈川県 鎌倉三浦地域児童相談所', '14201', '神奈川県横須賀市日の出町1-4-7', 35.279724, 139.677063, '046-828-7050', KN_WD, '担当: 鎌倉市・逗子市・三浦市・葉山町（場所は横須賀市）'),
+    loc('神奈川県 小田原児童相談所', '14206', '神奈川県小田原市荻窪350-1', 35.262947, 139.153763, '0465-32-8000', KN_WD, '担当: 小田原市・南足柄市・中井町・大井町・松田町・開成町・山北町・箱根町・真鶴町・湯河原町'),
+    loc('神奈川県 厚木児童相談所', '14212', '神奈川県厚木市水引2-11-7', 35.449062, 139.357178, '046-240-6430', KN_WD, '担当: 厚木市・海老名市・座間市・愛川町・清川村'),
+    loc('神奈川県 綾瀬児童相談所', '14218', '神奈川県綾瀬市深谷中4-2-1', 35.437614, 139.430511, '0467-78-2110', KN_WD, '担当: 大和市・綾瀬市'),
+    loc('横浜市 中央児童相談所', '14100', '神奈川県横浜市南区浦舟町3-44-2', 35.434162, 139.626358, '045-260-6510', '平日 8:45–17:00', '担当: 西区・中区・南区'),
+    loc('横浜市 東部児童相談所', '14100', '神奈川県横浜市鶴見区生麦3-15-30', 35.492966, 139.669830, '045-633-4720', '', '担当: 鶴見区・神奈川区'),
+    loc('横浜市 西部児童相談所', '14100', '神奈川県横浜市保土ケ谷区川辺町5-10', 35.458832, 139.596054, '045-331-5471', '平日 8:45–17:00', '担当: 保土ケ谷区・旭区・泉区・瀬谷区'),
+    loc('横浜市 南部児童相談所', '14100', '神奈川県横浜市港南区丸山台1-9-10', 35.399590, 139.573257, '045-349-0122', '平日 8:45–17:00', '担当: 港南区・磯子区・金沢区・戸塚区・栄区'),
+    loc('横浜市 北部児童相談所', '14100', '神奈川県横浜市都筑区茅ケ崎中央32-1', 35.544849, 139.570541, '045-948-2441', '平日 8:45–17:00', '担当: 港北区・緑区・青葉区・都筑区'),
+    loc('川崎市 南部児童相談所（中央児童相談所）', '14130', '神奈川県川崎市幸区鹿島田1-21-9', 35.553307, 139.675125, '044-542-1234', '', '担当: 川崎区・幸区・中原区'),
+    loc('川崎市 中部児童相談所', '14130', '神奈川県川崎市高津区久本1-4-1', 35.597900, 139.610458, '044-877-8111', '', '担当: 高津区・宮前区'),
+    loc('川崎市 北部児童相談所', '14130', '神奈川県川崎市多摩区生田7-16-2', 35.616615, 139.542236, '044-931-4300', '', '担当: 多摩区・麻生区'),
+    loc('相模原市 児童相談所', '14150', '神奈川県相模原市中央区淵野辺2-7-2', 35.575455, 139.394653, '042-730-3500', '平日 8:30–17:00', '担当: 相模原市'),
+    loc('横須賀市 児童相談所', '14201', '神奈川県横須賀市小川町16', 35.282032, 139.673431, '046-820-2323', '平日 8:30–17:00', '担当: 横須賀市')
+  ];
+
+  var ST_WD = '平日 8:30–18:15';
+  var ST_JISOU_LOCS = [
+    loc('埼玉県 中央児童相談所', '11219', '埼玉県上尾市上尾村1242-1', 35.983387, 139.597961, '048-775-4152', ST_WD, '担当: 鴻巣市・上尾市・桶川市・久喜市・北本市・蓮田市・白岡市・伊奈町'),
+    loc('埼玉県 南児童相談所', '11203', '埼玉県川口市芝下1-1-56', 35.834953, 139.700180, '048-262-4152', ST_WD, '担当: 川口市・蕨市・戸田市'),
+    loc('埼玉県 朝霞児童相談所', '11227', '埼玉県朝霞市青葉台1-10-63', 35.790455, 139.592300, '048-465-4152', ST_WD, '担当: 朝霞市・志木市・和光市・新座市・富士見市・ふじみ野市・三芳町'),
+    loc('埼玉県 川越児童相談所', '11201', '埼玉県川越市宮元町33-1', 35.931908, 139.483292, '049-223-4152', ST_WD, '担当: 川越市・東松山市・坂戸市・鶴ヶ島市・毛呂山町・越生町・滑川町・嵐山町・小川町・川島町・吉見町・鳩山町・ときがわ町・東秩父村'),
+    loc('埼玉県 所沢児童相談所', '11208', '埼玉県所沢市並木1-9-2', 35.800167, 139.473694, '04-2992-4152', ST_WD, '担当: 所沢市・飯能市・狭山市・入間市・日高市'),
+    loc('埼玉県 熊谷児童相談所', '11202', '埼玉県熊谷市箱田5-13-1', 36.150463, 139.392441, '048-521-4152', ST_WD, '担当: 熊谷市・行田市・秩父市・加須市・本庄市・羽生市・深谷市・横瀬町・皆野町・長瀞町・小鹿野町・美里町・神川町・上里町・寄居町'),
+    loc('埼玉県 越谷児童相談所', '11222', '埼玉県越谷市恩間402-1', 35.924702, 139.769913, '048-975-4152', ST_WD, '担当: 春日部市・越谷市・幸手市・宮代町・杉戸町・松伏町'),
+    loc('埼玉県 草加児童相談所', '11221', '埼玉県草加市西町425-2', 35.829227, 139.795563, '048-920-4152', ST_WD, '担当: 草加市・八潮市・三郷市・吉川市'),
+    loc('さ\u2060い\u2060た\u2060ま市 北部児童相談所', '11100', '埼玉県さ\u2060い\u2060た\u2060ま市浦和区上木崎4-4-10 さ\u2060い\u2060た\u2060ま市子ども家庭総合センター「あいぱれっと」4階', 35.886208, 139.643616, '048-711-3917', '', '担当: 西区・北区・大宮区・見沼区・岩槻区'),
+    loc('さ\u2060い\u2060た\u2060ま市 南部児童相談所', '11100', '埼玉県さ\u2060い\u2060た\u2060ま市浦和区上木崎4-4-10 さ\u2060い\u2060た\u2060ま市子ども家庭総合センター「あいぱれっと」4階', 35.886208, 139.643616, '048-711-2489', '', '担当: 中央区・桜区・浦和区・南区・緑区（北部と同じ建物）')
+  ];
+
+  var CB_WD = '平日 9:00–17:00';
+  var CB_JISOU_LOCS = [
+    loc('千葉県 中央児童相談所', '12100', '千葉県千葉市稲毛区天台6-5-2', 35.641174, 140.116058, '043-253-4101', CB_WD, '担当: 習志野市・市原市・八千代市'),
+    loc('千葉県 市川児童相談所', '12203', '千葉県市川市東大和田2-8-6', 35.715389, 139.924316, '047-370-1077', CB_WD, '担当: 市川市・浦安市'),
+    loc('千葉県 松戸児童相談所', '12207', '千葉県松戸市高塚新田92-18', 35.759411, 139.942276, '047-710-0270', CB_WD, '担当: 松戸市・鎌ケ谷市（令和8年9月14日開所）'),
+    loc('千葉県 柏児童相談所', '12217', '千葉県柏市根戸445-12', 35.884338, 139.983963, '04-7131-7175', CB_WD, '担当: 野田市・柏市・流山市・我孫子市'),
+    loc('千葉県 柏児童相談所 柏末広支所', '12217', '千葉県柏市末広町11-18', 35.865093, 139.971832, '04-7147-5455', CB_WD, '担当: 柏市（一時保護の仕事はのぞく）'),
+    loc('千葉県 印旛児童相談所', '12231', '千葉県印西市牧の原6-2-3', 35.803318, 140.173294, '0476-94-7500', CB_WD, '担当: 成田市・佐倉市・四街道市・八街市・印西市・白井市・富里市・酒々井町・栄町（令和8年4月20日開所）'),
+    loc('千葉県 銚子児童相談所', '12202', '千葉県銚子市台町2183', 35.722996, 140.823303, '0479-23-0076', CB_WD, '担当: 銚子市・旭市・匝瑳市・香取市・香取郡'),
+    loc('千葉県 東上総児童相談所', '12210', '千葉県茂原市高師3007-6', 35.436390, 140.294022, '0475-27-1733', CB_WD, '担当: 茂原市・東金市・勝浦市・山武市・いすみ市・大網白里市・山武郡・長生郡・夷隅郡'),
+    loc('千葉県 君津児童相談所', '12225', '千葉県君津市中野4-18-9', 35.334080, 139.890182, '0439-55-3100', CB_WD, '担当: 館山市・木更津市・鴨川市・君津市・富津市・袖ケ浦市・南房総市・安房郡'),
+    loc('千葉市 東部児童相談所', '12100', '千葉県千葉市美浜区高浜3-2-3', 35.620163, 140.065643, '043-277-8820', '平日 9:00–16:30（12:00–13:00 をのぞく）', '担当: 中央区・若葉区・緑区'),
+    loc('千葉市 西部児童相談所', '12100', '千葉県千葉市美浜区高浜3-3-1 はまのわ3階', 35.621181, 140.066772, '043-277-8821', '平日 9:00–16:30（12:00–13:00 をのぞく）', '担当: 花見川区・稲毛区・美浜区'),
+    loc('船橋市 児童相談所', '12204', '千葉県船橋市若松2-3-61', 35.679062, 139.997162, '047-409-2234', '', '担当: 船橋市（令和8年7月1日開所）')
+  ];
+
+  /* ───────── くらし・しごとの相談窓口（自立相談支援機関）の場所 ───────── */
+  var YK_WD = '平日 8:45–17:00';
+  function yk(ward, addr, lat, lng, phone) {
+    return loc('横浜市 ' + ward + '役所 生活支援課（生活支援係）', '14100', '神奈川県横浜市' + ward + addr, lat, lng, phone, YK_WD, ward + 'に住む人の窓口');
+  }
+  var YK_LOCS = [
+    yk('鶴見区', '鶴見中央3-20-1', 35.508606, 139.681915, '045-510-1782'),
+    yk('神奈川区', '広台太田町3-8', 35.476830, 139.629440, '045-411-7103'),
+    yk('西区', '中央1-5-10', 35.453632, 139.616882, '045-320-8407'),
+    yk('中区', '日本大通35', 35.444958, 139.641998, '045-224-8241'),
+    yk('南区', '浦舟町2-33', 35.434521, 139.627686, '045-341-1203'),
+    yk('港南区', '港南4-2-10', 35.401218, 139.593277, '045-847-8404'),
+    yk('保土ケ谷区', '川辺町2-9', 35.460640, 139.595428, '045-334-6314'),
+    yk('旭区', '鶴ケ峰1-4-12', 35.474888, 139.544846, '045-954-6104'),
+    yk('磯子区', '磯子3-5-1', 35.402821, 139.618546, '045-750-2405'),
+    yk('金沢区', '泥亀2-9-1', 35.337433, 139.624435, '045-788-7814'),
+    yk('港北区', '大豆戸町26-1', 35.518993, 139.633163, '045-540-2329'),
+    yk('緑区', '寺山町118', 35.511959, 139.537979, '045-930-2318'),
+    yk('青葉区', '市ケ尾町31-4', 35.553493, 139.536621, '045-978-2446'),
+    yk('都筑区', '茅ケ崎中央32-1', 35.544849, 139.570541, '045-948-2311'),
+    yk('戸塚区', '戸塚町16-17', 35.400028, 139.532776, '045-866-8431'),
+    yk('栄区', '桂町303-19', 35.364349, 139.553375, '045-894-8400'),
+    yk('泉区', '和泉中央北5-1-1', 35.418259, 139.488937, '045-800-2305'),
+    yk('瀬谷区', '二ツ橋町190', 35.466015, 139.498642, '045-367-5705')
+  ];
+
+  var SC_WD = '平日 9:00–17:00（初めての相談は16:30までに）';
+  function sc(ward, addr, lat, lng, phone) {
+    return loc('さ\u2060い\u2060た\u2060ま市 ' + ward + ' 福祉まるごと相談窓口（' + ward + '役所 福祉課内）', '11100', '埼玉県さ\u2060い\u2060た\u2060ま市' + ward + addr, lat, lng, phone, SC_WD, '');
+  }
+  var SC_LOCS = [
+    sc('西区', '西大宮3-4-2', 35.925182, 139.579498, '048-620-2656'),
+    sc('北区', '宮原町1-852-1', 35.931389, 139.620361, '048-669-6056'),
+    sc('大宮区', '吉敷町1-124-1', 35.901691, 139.630554, '048-646-3065'),
+    sc('見沼区', '堀崎町12-36', 35.937374, 139.651810, '048-681-6058'),
+    sc('中央区', '下落合5-7-10', 35.883789, 139.626755, '048-840-6052'),
+    sc('桜区', '道場4-3-1', 35.856750, 139.610306, '048-856-6261'),
+    sc('浦和区', '常盤6-4-4', 35.860851, 139.645523, '048-829-6196'),
+    sc('南区', '別所7-20-1', 35.845428, 139.645584, '048-844-7161'),
+    sc('緑区', '大字中尾975-1', 35.871410, 139.683929, '048-712-1162'),
+    sc('岩槻区', '本町3-2-5', 35.950104, 139.693756, '048-790-0191')
+  ];
+
+  var CC_WD = '平日 9:00–17:00';
+  function cc(name, addr, lat, lng, phone) {
+    return loc('千葉市 生活自立・仕事相談センター' + name, '12100', '千葉県千葉市' + addr, lat, lng, phone, CC_WD, '千葉市に住んでいれば、どのセンターでも相談できます');
+  }
+  var CC_LOCS = [
+    cc('中央', '中央区中央4-5-1 きぼーる15階', 35.607548, 140.122330, '043-202-5563'),
+    cc('花見川', '花見川区瑞穂1-1 花見川保健福祉センター1階', 35.663074, 140.068405, '043-307-6765'),
+    cc('稲毛', '稲毛区穴川4-12-4 稲毛保健福祉センター3階', 35.636635, 140.105453, '043-207-7070'),
+    cc('若葉', '若葉区貝塚2-19-1 若葉保健福祉センター3階', 35.633301, 140.155243, '043-312-1723'),
+    cc('緑', '緑区鎌取町226-1 緑保健福祉センター2階', 35.566963, 140.175415, '043-293-1133'),
+    cc('美浜', '美浜区真砂5-15-2 美浜保健福祉センター2階', 35.641068, 140.062286, '043-270-5811')
+  ];
+
+  /* 窓口が県（県から委託された団体）になる町村 */
+  var KN_TOWN_CODES = ['14301', '14321', '14341', '14342', '14361', '14362', '14363', '14364', '14366', '14382', '14383', '14384', '14401', '14402'];
+  var ST_TOWN_CODES = ['11301', '11324', '11326', '11327', '11341', '11342', '11343', '11346', '11347', '11348', '11349', '11361', '11362', '11363', '11365', '11369', '11381', '11383', '11385', '11408', '11442', '11464', '11465'];
+  var CB_TOWN_CODES = ['12322', '12329', '12342', '12347', '12349', '12403', '12409', '12410', '12421', '12422', '12423', '12424', '12426', '12427', '12441', '12443', '12463'];
+  /* 神奈川県で、横浜市・川崎市・相模原市・横須賀市をのぞく市町村（県の児童相談所の担当区域） */
+  var KN_KEN_AREA = ['14203', '14204', '14205', '14206', '14207', '14208', '14210', '14211', '14212', '14213', '14214', '14215', '14216', '14217', '14218'].concat(KN_TOWN_CODES);
+
+  /* ───────── 自立相談支援（くらしとしごとの相談）の共通部分 ───────── */
+  var KONKYU_ASK = [
+    '施設（里親家庭）を出たばかりで、生活費と家賃が心配です。使える制度はありますか？',
+    '住居確保給付金（家賃の給付金）の対象になるか、調べてもらえますか？',
+    'お金のやりくりの相談（家計の相談）もできますか？'
+  ];
+  var KONKYU_SUP = '生活困窮者自立支援法にもとづく自立相談支援機関。住居確保給付金・家計改善支援・就労準備支援などの入口。社会的養護経験者で住まいや家計に不安がある場合、早めの同行がおすすめ。';
+  var KONKYU_FOOT = '相談しただけでお金がもらえるわけではありません。でも、使える制度をいっしょに探してくれる「最初の入口」です。';
+
+  SM.data.programs.push(
+
+    /* ═══════════════════════ 神奈川県 ═══════════════════════ */
+
+    {
+      id: 'kanagawa-jiritsu-shikin',
+      name: { ja: '自立支援資金貸付（神奈川県）', en: 'Independence Support Loan (Kanagawa)' },
+      hook: { ja: '家賃や生活費の支えがほしい', en: 'I need help with rent and living costs' },
+      summary: {
+        ja: '進学した人は生活費（月5万円）と家賃を、働く人は家賃を、利息なしで借りられます。決まった年数働けば、返さなくてよくなります。神奈川県では神奈川県社会福祉協議会が窓口です。',
+        en: 'Interest-free loans for living costs (¥50k/month for students) and rent, forgiven after working for a set number of years. In Kanagawa, run by the Kanagawa Council of Social Welfare.'
+      },
+      cat: ['money', 'housing'],
+      kind: 'loan_forgivable', basis: 'pref', pref: '14', right: false,
+      amount: {
+        ja: '生活費 月5万円（進学した人）・家賃（住む地域の生活保護の住宅扶助額まで）・資格をとる費用 25万円まで',
+        en: 'Living ¥50k/month (students); rent up to the local welfare housing allowance; licences up to ¥250k'
+      },
+      repay: 'conditional',
+      who: {
+        ja: '神奈川県内の児童養護施設・児童自立支援施設・児童心理治療施設・自立援助ホームを出た人（入所中の人も）、里親・ファミリーホームの委託が終わった人（委託中の人も）で、親などからお金の支えがない人。出てから5年以内の人。'
+      },
+      how: {
+        ja: '自分では申し込めません。施設を出た人は施設を通して、里親家庭を出た人は児童相談所を通して申し込みます。まず施設や児童相談所の担当の人に相談しよう。'
+      },
+      where: { ja: '施設・児童相談所の担当の人 → 神奈川県社会福祉協議会' },
+      docs: ['貸付申請書', '施設長または児童相談所長の意見書（施設・児童相談所が用意）', '住民票（マイナンバーなし・3か月以内）', '個人情報の取り扱いの同意書', '在学証明書または合格証明書（進学した人）', '家賃がわかる賃貸借契約書のコピー', '在職証明書や内定通知書（働く人）'],
+      ask: ['自立支援資金貸付を使いたいです。私は対象になりますか？', '返さなくてよくなる条件を教えてください', '連帯保証人がいないときはどうなりますか？'],
+      caution: {
+        ja: '返さなくてよくなるには、進学した人は卒業してから1年以内に就職して5年間、働く人は5年間（資格の費用は2年間）、働き続けることが必要です。そのあいだ出す書類も多く、出さないと返すことになります。働く人の家賃は、出てから2年までです。'
+      },
+      supporter: {
+        ja: '神奈川県社会福祉協議会「神奈川県児童養護施設退所者等自立支援資金貸付の手引き」（令和6年7月改訂版）による。無利子（延滞時は年3%）。連帯保証人は原則1名だが、立てられない場合も貸付可能。生活支援費・家賃支援費は毎月15日振込、資格取得支援費は一括。定期通院がある進学者は医療費の実費（月35,400円上限・2年まで）を生活支援費に追加可。大学院・職業能力開発促進法の学校（例: 県立産業技術短期大学校）は対象外。就職者の5年の起算は令和3年12月20日以降の貸付けでは貸付開始月。施設・児童相談所以外からの申請は受け付けない。'
+      },
+      effort: 'high',
+      for: { stages: LEAVERS, paths: [], care: CARE, careOnly: true, age: null, areas: ['14'] },
+      deadline: {
+        ja: '出る日が決まったら早めに。出てから5年以内まで申し込めます。',
+        en: 'Start early once your leaving date is set; available up to 5 years after leaving.',
+        leaveMonths: -3, months: null, always: false
+      },
+      contact: {
+        phone: '045-311-8753', phoneLabel: '神奈川県社会福祉協議会 福祉サービス推進課', line: null, chat: null, web: KN_JIRITSU,
+        hours: { ja: '8時30分〜17時15分', en: '8:30–17:15' }
+      },
+      locations: [],
+      source: { org: '神奈川県社会福祉協議会（自立支援資金貸付の手引き 令和6年7月改訂版）', url: KN_JIRITSU, checked: C },
+      eligibleBy: 'origin',
+      verifiedBy: V
+    },
+
+    {
+      id: 'kanagawa-asunaro',
+      name: { ja: 'あ\u2060す\u2060な\u2060ろサポートステーション（神奈川県）', en: 'Asunaro Support Station (Kanagawa)' },
+      hook: { ja: '出たあとも、たよれる場所と人がほしい', en: 'I want a place and people to rely on after leaving care' },
+      summary: {
+        ja: '施設や里親家庭で育った人のための、神奈川県の拠点です。くらし・仕事の相談、役所や病院への付きそい、手づくりのごはんがあり、住む場所に困ったときは短いあいだ住める部屋もあります。',
+        en: 'Kanagawa\'s base for people who grew up in care: help with daily life and work, someone to go with you to offices or hospitals, home-cooked meals, and a short-stay room if you lose your place to live.'
+      },
+      cat: ['consult', 'housing', 'work'],
+      kind: 'place', basis: 'npo', pref: '14', right: false,
+      amount: { ja: '相談・ごはんは無料', en: 'Free (talks and meals)' }, repay: null,
+      who: { ja: '施設や里親家庭などで育った人（社会的養護の経験がある人）。虐待をうけた経験があるのに、これまで支援につながらなかった人も。' },
+      how: { ja: 'まず電話かホームページのフォームで連絡します。来て話すだけでなく、家に来てもらう相談や、役所・病院・法律事務所への付きそいもあります。' },
+      where: { ja: '藤沢市辻堂（本部）・海老名市（県央ブランチ）' },
+      docs: [],
+      ask: ['初めてです。話を聞いてもらうだけでも行っていいですか？', '役所の手続きに、いっしょに行ってもらえますか？', '住むところがなくなりそうです。しばらく泊まれる部屋はありますか？'],
+      caution: { ja: '横浜市・相模原市・横須賀市には、それぞれの市の拠点があります（このアプリの別のページ）。県央ブランチは月・水・金だけ開いています。' },
+      supporter: { ja: '社会福祉法人白十字会林間学校が神奈川県から受託（平成26年〜）。社会的養護自立支援拠点事業。県域の各施設に窓口となる「あ\u2060す\u2060な\u2060ろサポーター」を配置。継続支援計画の作成、医療連携・法律相談、就労支援、一時居住支援（県央ブランチ）など10部門。メール shonan.asunaro@gmail.com（本部）。' },
+      effort: 'low',
+      for: { stages: LEAVERS, paths: [], care: CARE, careOnly: false, age: null, areas: ['14'] },
+      deadline: { ja: 'いつでも相談できます', en: 'Anytime', leaveMonths: null, months: null, always: true },
+      contact: {
+        phone: '0466-54-8917', phoneLabel: 'あ\u2060す\u2060な\u2060ろサポートステーション（本部）', line: null, chat: 'https://shonan-asunaro.com/contact', web: ASUNARO,
+        hours: { ja: '平日 10時〜17時／土曜 13時〜20時', en: 'Weekdays 10–17, Sat 13–20' }
+      },
+      locations: [
+        loc('あ\u2060す\u2060な\u2060ろサポートステーション（本部）', '14205', '神奈川県藤沢市辻堂1-4-19 SURF 502', 35.336052, 139.449112, '0466-54-8917', '平日 10:00–17:00／土 13:00–20:00', ''),
+        loc('あ\u2060す\u2060な\u2060ろ県央ブランチ', '14215', '神奈川県海老名市国分南3-16-19 第10三幸ビル302号室', 35.447796, 139.399933, '046-205-4633', '月・水・金 10:00–17:00（来所受付 15:00–17:00）', '県央地域の人向け。一時的に住める部屋あり')
+      ],
+      source: { org: '社会福祉法人白十字会林間学校 あ\u2060す\u2060な\u2060ろサポートステーション', url: ASUNARO, checked: C },
+      verifiedBy: V
+    },
+
+    {
+      id: 'sagamihara-asunaro',
+      name: { ja: 'あ\u2060す\u2060な\u2060ろサポートステーション さ\u2060が\u2060み\u2060は\u2060ら', en: 'Asunaro Support Station Sagamihara' },
+      hook: { ja: 'くらしや仕事のこと、相模原で相談したい', en: 'I want to talk about daily life or work in Sagamihara' },
+      summary: {
+        ja: '相模原市が開いた、施設や里親家庭で育った人のための拠点です。くらしの相談、仕事の相談、これからの計画づくりを手伝ってくれます。',
+        en: 'Sagamihara City\'s base for people who grew up in care: help with daily life, work and making a plan for what comes next.'
+      },
+      cat: ['consult', 'work'],
+      kind: 'place', basis: 'local', pref: '14', right: false,
+      amount: null, repay: null,
+      who: { ja: '施設や里親家庭などで育った人（相模原市の社会的養護自立支援拠点事業の対象の人）。' },
+      how: { ja: 'まず電話かメールで連絡します。' },
+      where: { ja: '相模原市緑区橋本（橋本第2エステート301）' },
+      docs: [],
+      ask: ['初めてです。どんなことを相談できますか？', '仕事さがしも手伝ってもらえますか？'],
+      caution: { ja: '土曜は月1回だけ開いています。日にちは電話で聞いてください。' },
+      supporter: { ja: '相模原市の社会的養護自立支援拠点事業（令和7年7月1日開所、運営: 社会福祉法人白十字会林間学校）。相模原市発表資料（令和7年6月24日）と運営法人ページで確認。メール sagamihara.asunaro@gmail.com。' },
+      effort: 'low',
+      for: { stages: LEAVERS, paths: [], care: CARE, careOnly: false, age: null, areas: ['14150'] },
+      deadline: { ja: 'いつでも相談できます', en: 'Anytime', leaveMonths: null, months: null, always: true },
+      contact: {
+        phone: '042-703-5566', phoneLabel: 'あ\u2060す\u2060な\u2060ろサポートステーション さ\u2060が\u2060み\u2060は\u2060ら', line: null, chat: null, web: ASUNARO,
+        hours: { ja: '平日 10時〜17時（土曜は月1回）', en: 'Weekdays 10–17 (one Saturday a month)' }
+      },
+      locations: [
+        loc('あ\u2060す\u2060な\u2060ろサポートステーション さ\u2060が\u2060み\u2060は\u2060ら', '14150', '神奈川県相模原市緑区橋本6-38-8 橋本第2エステート301', 35.598038, 139.339966, '042-703-5566', '平日 10:00–17:00', '土曜は月1回開所')
+      ],
+      source: { org: '社会福祉法人白十字会林間学校 あ\u2060す\u2060な\u2060ろサポートステーション', url: ASUNARO, checked: C },
+      sources2: [{ org: '相模原市（発表資料 令和7年6月24日）', url: 'https://www.city.sagamihara.kanagawa.jp/_res/projects/default_project/_page_/001/033/183/0624/01.pdf' }],
+      verifiedBy: V
+    },
+
+    {
+      id: 'yokosuka-asunaro',
+      name: { ja: 'あ\u2060す\u2060な\u2060ろサポートステーション よ\u2060こ\u2060す\u2060か', en: 'Asunaro Support Station Yokosuka' },
+      hook: { ja: '横須賀で、話せる場所がほしい', en: 'I want a place to talk in Yokosuka' },
+      summary: {
+        ja: '横須賀市から頼まれて開いている、施設や里親家庭で育った人のための拠点です。2026年1月に開きました。',
+        en: 'A base for people who grew up in care, run for Yokosuka City. Opened in January 2026.'
+      },
+      cat: ['consult'],
+      kind: 'place', basis: 'local', pref: '14', right: false,
+      amount: null, repay: null,
+      who: { ja: '施設や里親家庭などで育った人（横須賀市の社会的養護自立支援拠点事業の対象の人）。' },
+      how: { ja: 'まず電話かメールで連絡します。' },
+      where: { ja: '横須賀市汐入町（汐入駅の近く）' },
+      docs: [],
+      ask: ['初めてです。いつ行けますか？', 'どんなことを相談できますか？'],
+      caution: { ja: '月・水・金だけ開いています。' },
+      supporter: { ja: '横須賀市委託 社会的養護自立支援拠点事業（令和7年10月受託、令和8年1月開所。運営: 社会福祉法人白十字会林間学校）。メール yokosuka.asunaro0107@gmail.com。' },
+      effort: 'low',
+      for: { stages: LEAVERS, paths: [], care: CARE, careOnly: false, age: null, areas: ['14201'] },
+      deadline: { ja: 'いつでも相談できます', en: 'Anytime', leaveMonths: null, months: null, always: true },
+      contact: {
+        phone: '046-845-9492', phoneLabel: 'あ\u2060す\u2060な\u2060ろサポートステーション よ\u2060こ\u2060す\u2060か', line: null, chat: null, web: ASUNARO,
+        hours: { ja: '月・水・金 10時〜17時', en: 'Mon/Wed/Fri 10–17' }
+      },
+      locations: [
+        loc('あ\u2060す\u2060な\u2060ろサポートステーション よ\u2060こ\u2060す\u2060か', '14201', '神奈川県横須賀市汐入町1-6 ガーベラマンション汐入201', 35.283199, 139.658005, '046-845-9492', '月・水・金 10:00–17:00', '')
+      ],
+      source: { org: '社会福祉法人白十字会林間学校 あ\u2060す\u2060な\u2060ろサポートステーション', url: ASUNARO, checked: C },
+      verifiedBy: V
+    },
+
+    {
+      id: 'yokohama-b4s-port',
+      name: { ja: 'B4S PORT よ\u2060こ\u2060は\u2060ま（横浜市の居場所）', en: 'B4S PORT Yokohama (drop-in space)' },
+      hook: { ja: '気軽に寄れる場所と、人に聞かれたくない相談先がほしい', en: 'I want a place to drop by and somewhere to talk privately' },
+      summary: {
+        ja: '横浜市から頼まれてブリッジフォースマイルが開いている居場所です。横浜駅から歩いて5分。いっしょにごはんを作って食べたり、1対1で相談（1回30分）したりできます。',
+        en: 'A drop-in space run by Bridge for Smile for Yokohama City, 5 minutes from Yokohama Station. Cook and eat together, or book a private 30-minute talk.'
+      },
+      cat: ['consult'],
+      kind: 'place', basis: 'npo', pref: '14', right: false,
+      amount: { ja: '基本無料（夕ごはん 300円）', en: 'Free (dinner ¥300)' }, repay: null,
+      who: { ja: '施設や里親家庭でくらした経験がある人。児童相談所に保護されたことがある人。親からひどい扱いを受けている（受けた）人。' },
+      how: { ja: 'LINEで予約してから行きます（LINE ID: @692pshfg）。初めての日に利用登録をします。個別相談は電話・メール・LINEで予約します。' },
+      where: { ja: '横浜市西区高島（横浜駅 東口から歩いて5分）' },
+      docs: [],
+      ask: ['初めて行きたいです。いつ予約できますか？', '1対1で相談したいです。空いている日時はありますか？'],
+      caution: { ja: '開いているのは金・土・日・祝日の14時〜20時です。予約が必要です。' },
+      supporter: { ja: '横浜市 社会的養護自立支援拠点事業の委託事業者（特定非営利活動法人ブリッジフォースマイル）。2012年から運営。相談予約電話は開所日 045-548-8011、問い合わせ 03-6842-6766、メール y.port4@b4s.jp。市の担当: こども青少年局 こどもの権利擁護課 045-671-2394。' },
+      effort: 'low',
+      for: { stages: LEAVERS, paths: [], care: CARE, careOnly: false, age: null, areas: ['14'] },
+      deadline: { ja: 'いつでも（予約制）', en: 'Anytime (booking needed)', leaveMonths: null, months: null, always: true },
+      contact: {
+        phone: '045-548-8011', phoneLabel: 'B4S PORT よ\u2060こ\u2060は\u2060ま（相談予約・開所日）', line: null, chat: null, web: 'https://www.b4s.jp/ypf/',
+        hours: { ja: '金・土・日・祝 14時〜20時', en: 'Fri/Sat/Sun/holidays 14–20' }
+      },
+      locations: [
+        loc('B4S PORT よ\u2060こ\u2060は\u2060ま', '14100', '神奈川県横浜市西区高島2-5-5 ハイツ横浜203号', 35.461960, 139.622452, '045-548-8011', '金・土・日・祝 14:00–20:00', '予約制（LINE）。横浜駅東口から歩いて5分')
+      ],
+      source: { org: '認定NPO法人ブリッジフォースマイル', url: 'https://www.b4s.jp/ypf/', checked: C },
+      sources2: [{ org: '横浜市（社会的養護自立支援拠点事業）', url: YK_KYOTEN }],
+      verifiedBy: V
+    },
+
+    {
+      id: 'kawasaki-jiritsu-kyoten',
+      name: { ja: '川崎市 社会的養護自立支援拠点事業（相談支援）', en: 'Kawasaki Support for Care Leavers' },
+      hook: { ja: '川崎市の施設や里親家庭を出たあと、相談できる人がほしい', en: 'I left care in Kawasaki and want someone to talk to' },
+      summary: {
+        ja: '川崎市の児童相談所が担当した人に、出たあとのくらしや仕事の相談を続けてくれる市の事業です。出てから5年間使えます。',
+        en: 'A Kawasaki City service that keeps supporting people placed by the city\'s child guidance centers, with help on daily life and work for 5 years after leaving.'
+      },
+      cat: ['consult', 'work'],
+      kind: 'service', basis: 'local', pref: '14', right: false,
+      amount: null, repay: null,
+      who: { ja: '川崎市の児童相談所長が措置した人（里親・施設）。施設などにいる人（原則として中学校を卒業した人）と、出てから5年以内の人。住んでいる場所ではなく、どこの児童相談所が担当したかで決まります。' },
+      how: { ja: '市から頼まれている窓口（パソナ 就労支援センター）に電話します。' },
+      where: { ja: '川崎市幸区幸町（モリファーストビル7階）' },
+      docs: [],
+      ask: ['川崎市の施設を出ました。相談支援を使えますか？', '仕事のことも相談できますか？'],
+      caution: { ja: '令和9年4月から運営する会社が変わるかもしれません。つながらないときは市の担当（044-200-2929）に聞いてください。' },
+      supporter: { ja: '川崎市社会的養護自立支援拠点事業（委託先: 株式会社パソナ 就労支援センター、HP https://kawasaki-yougo.com/）。市担当: こども未来局 児童家庭支援・虐待対策室 044-200-2929。令和9年4月以降の受託事業者は公募予定。' },
+      effort: 'low',
+      for: { stages: LEAVERS, paths: [], care: CARE, careOnly: true, age: null, areas: ['14'] },
+      deadline: { ja: '出てから5年以内', en: 'Up to 5 years after leaving', leaveMonths: null, months: null, always: true },
+      contact: { phone: '044-271-1414', phoneLabel: 'パソナ 就労支援センター（川崎市の委託）', line: null, chat: null, web: KW_KYOTEN, hours: null },
+      locations: [
+        loc('川崎市 社会的養護自立支援拠点事業（パソナ 就労支援センター）', '14130', '神奈川県川崎市幸区幸町2-593 モリファーストビル7階', 35.537434, 139.698914, '044-271-1414', '', '川崎市の児童相談所が担当した人向け')
+      ],
+      source: { org: '川崎市（こども未来局）', url: KW_KYOTEN, checked: C },
+      eligibleBy: 'origin',
+      verifiedBy: V
+    },
+
+    {
+      id: 'kanagawa-jisou',
+      name: { ja: '児童相談所（神奈川県内）', en: 'Child Guidance Centers (Kanagawa)' },
+      hook: { ja: '施設や里親のこと、家のことを相談したい', jr: '家のことや、こわいことを相談したい', en: 'I want to talk about my care placement or my family' },
+      summary: {
+        ja: '子どもと家族のことを相談できる公的な窓口です。施設や里親家庭に入ること・出ることも、児童相談所が担当しています。',
+        jr: '子どもと家族のことを相談できるところです。お金はかかりません。夜や休みの日は「189」に電話できます。',
+        en: 'Public offices for children and families. They are also in charge of placements in and out of care.'
+      },
+      cat: ['consult', 'procedures'],
+      kind: 'service', basis: 'pref', pref: '14', right: false,
+      amount: null, repay: null,
+      who: { ja: 'おもに18歳未満の子どもと家族。住んでいる市町村で、担当の児童相談所が決まっています。横浜市・川崎市・相模原市・横須賀市は、市の児童相談所です。' },
+      how: { ja: '担当の児童相談所に電話します。県の児童相談所は平日8時30分〜17時15分。夜や休日は「189」（児童相談所 虐待対応ダイヤル）へ。' },
+      where: { ja: '住んでいる市町村を担当する児童相談所（地図で確認）' },
+      docs: [],
+      ask: ['施設を出る時期について相談したいです', '担当の児童福祉司さんと話したいです', '18歳をすぎても今のところにいられるか相談できますか？'],
+      caution: { ja: '鎌倉市・逗子市・三浦市・葉山町の担当（鎌倉三浦地域児童相談所）は横須賀市にあります。電話番号のかけまちがいに気をつけてね。' },
+      supporter: { ja: '神奈川県「児童相談所一覧」（2026年8月6日更新）による。県所管域は横浜・川崎・相模原・横須賀以外の市町村。子ども・家庭110番（県中央児童相談所）0466-84-7000 毎日9〜20時。横浜市の東部児童相談所（鶴見区・神奈川区）は県一覧で確認、受付時間は未確認。川崎市の各児相の受付時間は県一覧に記載なし。' },
+      effort: 'low',
+      for: { stages: KIDS, paths: [], care: [], careOnly: false, age: null, areas: ['14'] },
+      deadline: null,
+      contact: {
+        phone: '189', phoneLabel: '夜・休日は 189（虐待対応ダイヤル）', line: null, chat: null, web: KN_JISOU,
+        hours: { ja: '県の児童相談所: 平日 8時30分〜17時15分', en: 'Prefectural centers: weekdays 8:30–17:15' }
+      },
+      locations: KN_JISOU_LOCS,
+      source: { org: '神奈川県（子ども家庭課）', url: KN_JISOU, checked: C },
+      sources2: [{ org: '神奈川県（相談窓口一覧・児童虐待）', url: 'https://www.pref.kanagawa.jp/docs/nx3/cnt/suisinn/soudan-zidou.html' }, { org: '神奈川県（人権・子どもホットライン）', url: KN_HOTLINE }, { org: '神奈川県（県内児童・生徒のための相談窓口一覧）', url: KN_CARD }],
+      verifiedBy: V
+    },
+
+    {
+      id: 'kanagawa-towns-jiritsu-sodan',
+      name: { ja: 'ほっとステーション横浜・小田原（神奈川県 町村の くらしの相談）', en: 'Hot Station (Kanagawa towns: living & work support)' },
+      hook: { ja: 'お金・仕事・住まいのこと、まとめて相談したい', en: 'I want to talk about money, work and housing in one place' },
+      summary: {
+        ja: '神奈川県の町や村に住む人のための、お金・仕事・住まいの無料の相談窓口です。県が開いています。電話のあと、家に来てもらって相談を続けることもできます。',
+        en: 'A free Kanagawa Prefecture desk for people living in its towns and villages, about money, work and housing. After a phone call, counselors can also visit you at home.'
+      },
+      cat: ['consult', 'money', 'housing', 'work'],
+      kind: 'service', basis: 'pref', pref: '14', right: false,
+      townsOnly: true,
+      amount: { ja: '相談は無料', en: 'Free' }, repay: null,
+      who: { ja: '神奈川県の町村（葉山町・寒川町・大磯町・二宮町・愛川町・清川村・中井町・大井町・松田町・山北町・開成町・箱根町・真鶴町・湯河原町）に住んでいて、生活に困っている人。生活保護を受けている人はのぞきます。' },
+      how: { ja: 'まず電話します。電話代がかからないよう、折り返しかけてくれます。窓口に行く前に電話すると、待たずにすみます。家族や支援者からの相談もできます。' },
+      where: { ja: '葉山・寒川・大磯・二宮・愛川・清川 → ほっとステーション横浜／中井・大井・松田・山北・開成・箱根・真鶴・湯河原 → ほっとステーション小田原' },
+      docs: [],
+      ask: KONKYU_ASK,
+      caution: { ja: '市に住んでいる人は、市の窓口が担当です。ほっとステーション小田原の電話番号は令和8年4月1日から 0465-20-5085 に変わりました。' + KONKYU_FOOT },
+      supporter: { ja: KONKYU_SUP + ' ほっとステーション横浜は神奈川県社会福祉協議会（メール kon@knsyk.jp）、ほっとステーション小田原は労働者協同組合ワーカーズコープ・センター事業団（メール hs-odawara@roukyou.gr.jp）に委託。' },
+      effort: 'low',
+      for: { stages: NOT_JR, paths: [], care: [], careOnly: false, age: null, areas: KN_TOWN_CODES },
+      deadline: { ja: 'いつでも相談できます', en: 'Anytime', leaveMonths: null, months: null, always: true },
+      contact: {
+        phone: '045-311-8874', phoneLabel: 'ほっとステーション横浜', line: null, chat: null, web: KN_TOWNS,
+        hours: { ja: '平日 9時〜17時', en: 'Weekdays 9:00–17:00' }
+      },
+      locations: [
+        loc('ほっとステーション横浜（神奈川県社会福祉センター内）', '14100', '神奈川県横浜市神奈川区反町3-17-2', 35.474983, 139.626068, '045-311-8874', '平日 9:00–17:00', '担当: 葉山町・寒川町・大磯町・二宮町・愛川町・清川村'),
+        loc('ほっとステーション小田原', '14206', '神奈川県小田原市荻窪306', 35.264622, 139.151718, '0465-20-5085', '平日 9:00–17:00', '担当: 中井町・大井町・松田町・山北町・開成町・箱根町・真鶴町・湯河原町')
+      ],
+      source: { org: '神奈川県（県内の町村にお住まいの方へ）', url: KN_TOWNS, checked: C },
+      sources2: [{ org: '神奈川県社会福祉協議会（生活困窮者自立相談支援事業）', url: 'https://www.knsyk.jp/service/konkyu' }],
+      eligibleBy: 'residence',
+      verifiedBy: V
+    },
+
+    {
+      id: 'yokohama-jiritsu-sodan',
+      name: { ja: '横浜市 区役所の生活支援課（くらしの相談）', en: 'Yokohama: ward Life Support Sections' },
+      hook: { ja: 'お金・仕事・住まいのこと、まとめて相談したい', en: 'I want to talk about money, work and housing in one place' },
+      summary: {
+        ja: '横浜市に住む人のための、お金・仕事・住まいの無料の相談窓口です。住んでいる区の区役所にあります。仕事さがし、家計の見直し、家賃の給付金（住居確保給付金）などにつないでくれます。',
+        en: 'A free desk for Yokohama residents about money, work and housing, in your ward office. They help with job hunting, budgeting and programs such as the Housing Security Benefit.'
+      },
+      cat: ['consult', 'money', 'housing', 'work'],
+      kind: 'service', basis: 'local', pref: '14', right: false,
+      amount: { ja: '相談は無料', en: 'Free' }, repay: null,
+      who: { ja: '横浜市に住んでいて、生活に困っている人。生活保護を受けている人はのぞきます。住むところがない人は、いちばん近い区役所へ。' },
+      how: { ja: '住んでいる区の区役所 生活支援課に行きます。まず電話で相談してもOKです。家族からの相談もできます。' },
+      where: { ja: '住んでいる区の区役所 生活支援課（地図で確認）' },
+      docs: [],
+      ask: KONKYU_ASK,
+      caution: { ja: '仕事のあっせんはしていませんが、区役所の中のハローワークの窓口と一緒に仕事さがしを手伝ってくれます。' + KONKYU_FOOT },
+      supporter: { ja: KONKYU_SUP + ' 横浜市は18区の福祉保健センター生活支援課が窓口（電話番号は市「各区の相談窓口」2025年9月12日更新の生活支援係）。市の担当: 健康福祉局 生活支援課。' },
+      effort: 'low',
+      for: { stages: NOT_JR, paths: [], care: [], careOnly: false, age: null, areas: ['14100'] },
+      deadline: { ja: 'いつでも相談できます', en: 'Anytime', leaveMonths: null, months: null, always: true },
+      contact: {
+        phone: null, phoneLabel: null, line: null, chat: null, web: YK_MADO,
+        hours: { ja: '平日 8時45分〜17時', en: 'Weekdays 8:45–17:00' }
+      },
+      locations: YK_LOCS,
+      source: { org: '横浜市（生活困窮者自立支援制度）', url: YK_KONKYU, checked: C },
+      sources2: [{ org: '横浜市（各区の相談窓口）', url: YK_MADO }],
+      eligibleBy: 'residence',
+      verifiedBy: V
+    },
+
+    {
+      id: 'kawasaki-daijob',
+      name: { ja: '川崎市生活自立・仕事相談センター（だいJOBセンター）', en: 'Kawasaki Life & Work Support Center (Dai-JOB Center)' },
+      hook: { ja: 'お金・仕事・住まいのこと、まとめて相談したい', en: 'I want to talk about money, work and housing in one place' },
+      summary: {
+        ja: '川崎市に住む人のための、お金・仕事・住まいの無料の相談窓口です。仕事・心・住まい・家計・法律の専門の人がいて、手続きにいっしょに行ってくれることもあります。',
+        en: 'A free desk for Kawasaki residents about money, work and housing, with specialists in jobs, mental health, housing, budgeting and law. They may go with you to complete procedures.'
+      },
+      cat: ['consult', 'money', 'housing', 'work'],
+      kind: 'service', basis: 'local', pref: '14', right: false,
+      amount: { ja: '相談は無料', en: 'Free' }, repay: null,
+      who: { ja: '川崎市に住んでいて、仕事をなくしたなどで生活に困っている人。生活保護を受けている人はのぞきます。' },
+      how: { ja: '予約制です。電話かホームページから予約します。オンライン相談もできます。麻生区役所（月）・高津区役所（火）・多摩区役所（水）・宮前区役所（木）にも出張相談があります。' },
+      where: { ja: '川崎区駅前本町（川崎フロンティアビル5階・川崎駅から歩いて2分）' },
+      docs: [],
+      ask: KONKYU_ASK,
+      caution: { ja: '予約のある人が先です。住居確保給付金の申請は、窓口で会うか郵送です。' + KONKYU_FOOT },
+      supporter: { ja: KONKYU_SUP + ' 川崎市は「だいJOBセンター」1か所（中高年事業団やまて企業組合に委託）。出張相談は各区役所で9〜17時・予約制。市担当: 健康福祉局 生活保護・自立支援室 044-200-0309。' },
+      effort: 'low',
+      for: { stages: NOT_JR, paths: [], care: [], careOnly: false, age: null, areas: ['14130'] },
+      deadline: { ja: 'いつでも相談できます（予約制）', en: 'Anytime (booking needed)', leaveMonths: null, months: null, always: true },
+      contact: {
+        phone: '044-245-5120', phoneLabel: 'だいJOBセンター（予約）', line: null, chat: null, web: KW_DAIJOB,
+        hours: { ja: '平日 10時〜18時', en: 'Weekdays 10:00–18:00' }
+      },
+      locations: [
+        loc('川崎市生活自立・仕事相談センター（だいJOBセンター）', '14130', '神奈川県川崎市川崎区駅前本町11-2 川崎フロンティアビル5階', 35.531563, 139.699097, '044-245-5120', '平日 10:00–18:00', '予約制。JR川崎駅・京急川崎駅から歩いて2分')
+      ],
+      source: { org: '川崎市（健康福祉局）', url: KW_DAIJOB, checked: C },
+      eligibleBy: 'residence',
+      verifiedBy: V
+    },
+
+    {
+      id: 'sagamihara-jiritsu-sodan',
+      name: { ja: '相模原市 生活としごとの応援 自立支援相談窓口', en: 'Sagamihara Self-reliance Support Desks' },
+      hook: { ja: 'お金・仕事・住まいのこと、まとめて相談したい', en: 'I want to talk about money, work and housing in one place' },
+      summary: {
+        ja: '相模原市に住む人のための、お金・仕事・住まいの無料の相談窓口です。区ごとにあります。来られない人には、家に来て相談することもあります。',
+        en: 'Free desks for Sagamihara residents about money, work and housing, one in each ward. Staff can also visit you at home.'
+      },
+      cat: ['consult', 'money', 'housing', 'work'],
+      kind: 'service', basis: 'local', pref: '14', right: false,
+      amount: { ja: '相談は無料', en: 'Free' }, repay: null,
+      who: { ja: '相模原市に住んでいて、生活に困っている人。' },
+      how: { ja: '住んでいる区の窓口に電話します。予約した人が先に受け付けてもらえます。緑区は城山・津久井・相模湖・藤野の総合事務所でも出張相談があります（予約制）。' },
+      where: { ja: '緑区（シティ・プラザはしもと6階）・中央区（あじさい会館5階）・南区（南保健福祉センター1階）' },
+      docs: [],
+      ask: KONKYU_ASK,
+      caution: { ja: 'お昼（12時〜13時）は休みです。' + KONKYU_FOOT },
+      supporter: { ja: KONKYU_SUP + ' 相模原市は3区の自立支援相談窓口。アウトリーチ支援、フードバンク団体と連携した食材支援（相談利用者・月1回）あり。所在地は神奈川県の窓口一覧で補足。' },
+      effort: 'low',
+      for: { stages: NOT_JR, paths: [], care: [], careOnly: false, age: null, areas: ['14150'] },
+      deadline: { ja: 'いつでも相談できます', en: 'Anytime', leaveMonths: null, months: null, always: true },
+      contact: {
+        phone: null, phoneLabel: null, line: null, chat: null, web: SG_KONKYU,
+        hours: { ja: '平日 9時〜12時・13時〜17時', en: 'Weekdays 9–12, 13–17' }
+      },
+      locations: [
+        loc('相模原市 緑区自立支援相談窓口（市総合就職支援センター内）', '14150', '神奈川県相模原市緑区橋本6-2-1 シティ・プラザはしもと6階', 35.596298, 139.344482, '042-774-1131', '平日 9:00–12:00／13:00–17:00', '緑区に住む人の窓口'),
+        loc('相模原市 中央区自立支援相談窓口', '14150', '神奈川県相模原市中央区富士見6-1-20 あじさい会館5階', 35.569698, 139.373367, '042-769-8206', '平日 9:00–12:00／13:00–17:00', '中央区に住む人の窓口'),
+        loc('相模原市 南区自立支援相談窓口', '14150', '神奈川県相模原市南区相模大野6-22-1 南保健福祉センター1階', 35.528885, 139.433380, '042-701-7717', '平日 9:00–12:00／13:00–17:00', '南区に住む人の窓口')
+      ],
+      source: { org: '相模原市（生活困窮者自立支援制度）', url: SG_KONKYU, checked: C },
+      sources2: [{ org: '神奈川県（生活困窮者 相談窓口の一覧）', url: KN_KONKYU_LIST }],
+      eligibleBy: 'residence',
+      verifiedBy: V
+    },
+
+    {
+      id: 'kanagawa-shiritsu-gakuhi',
+      name: { ja: '私立高校の学費補助金（神奈川県）', en: 'Kanagawa Private High School Tuition Support' },
+      hook: { ja: '私立高校に行きたいけど、授業料が高い', jr: '私立高校の授業料が高くて心配', en: 'I want to go to a private high school but tuition is expensive' },
+      summary: {
+        ja: '国の就学支援金に神奈川県が上乗せして、県内の私立高校の授業料を年48万円まで助けてくれます。所得制限はありません。生活保護・住民税非課税の世帯は、入学金も助けてもらえます。',
+        jr: '神奈川県の私立高校の授業料は、国と県で年48万円まで出してもらえます。返さなくていいお金です。申しこみは高校から案内があります。',
+        en: 'Kanagawa adds to the national support so private high school tuition is covered up to ¥480,000 a year, with no income limit. Low-income households also get help with the entrance fee.'
+      },
+      cat: ['education', 'money'],
+      kind: 'grant', basis: 'pref', pref: '14', right: false,
+      amount: {
+        ja: '授業料 国と県あわせて年48万円まで（所得制限なし）・入学金 21万2,000円まで（生活保護・住民税非課税の世帯）',
+        en: 'Tuition up to ¥480,000/year with the national support (no income limit); entrance fee up to ¥212,000 for low-income households'
+      },
+      repay: 'none',
+      who: { ja: '神奈川県内の私立高校（中等教育学校の後期課程・専修学校高等課程もふくむ）に通う生徒で、生徒と保護者がどちらも神奈川県に住んでいる人。国の就学支援金などをもらえる人。' },
+      how: { ja: '通っている高校を通して申しこみます。6月ごろ学校から案内があるので、学校の締切までに書類を出します。' },
+      where: { ja: '通っている私立高校' },
+      docs: ['学校から配られる申請書類'],
+      ask: ['私の学校の授業料だと、国と県でいくらまで助けてもらえますか？', '申しこみの締切はいつですか？', '奨学給付金（教科書代など）もいっしょに申しこめますか？'],
+      caution: { ja: '県の補助は神奈川県内にある私立高校が対象です。補助のしかた（授業料から引く・あとで振りこむ）や時期は学校によってちがいます。' },
+      supporter: { ja: '神奈川県 私学振興課（助成グループ 045-210-3793、平日8:30〜12:00・13:00〜17:15）。令和8年度は授業料補助＝就学支援金等（国）＋学費補助金（県）≦48万円。授業料全額免除の場合は対象外。外国籍等で就学支援金新制度の対象外の生徒には別リーフレットあり。中3の進路相談で「私立でも授業料は国＋県で年48万円まで」と伝えると選択肢が広がる。' },
+      effort: 'mid',
+      for: { stages: ['jhs3', 'hs12', 'hs3'], paths: [], care: [], careOnly: false, age: { min: 14, max: 19 }, areas: ['14'] },
+      deadline: {
+        ja: '毎年6月ごろ、学校から案内があります',
+        en: 'Your school sends the forms around June each year',
+        leaveMonths: null, months: [6], always: false
+      },
+      contact: {
+        phone: '045-210-3793', phoneLabel: '神奈川県 私学振興課 助成グループ', line: null, chat: null, web: KN_GAKUHI,
+        hours: { ja: '平日 8時30分〜12時・13時〜17時15分', en: 'Weekdays 8:30–12:00, 13:00–17:15' }
+      },
+      locations: [],
+      source: { org: '神奈川県（私立学校学費支援制度のご紹介）', url: KN_GAKUHI, checked: C },
+      sources2: [{ org: '神奈川県（学費補助金について）', url: 'https://www.pref.kanagawa.jp/docs/v3e/jyosei/gakuhisien/gakuhihojyo.html' }],
+      verifiedBy: V
+    },
+
+    {
+      id: 'kanagawa-koko-shogakukin',
+      name: { ja: '神奈川県高等学校奨学金（貸付）', en: 'Kanagawa High School Scholarship Loan' },
+      hook: { ja: '高校の生活費や教材費が足りない', jr: '高校に行くお金が足りるか心配', en: 'I need money for high school costs' },
+      summary: {
+        ja: '高校生に毎月お金を貸してくれる神奈川県の奨学金です。利息はありません。高校を卒業して6か月たってから返します。中3のうちに予約もできます。',
+        jr: '高校生になったら毎月お金を借りられる、神奈川県の奨学金です。利息はありませんが、あとで返すお金です。中3の秋〜冬に予約できます。',
+        en: 'A Kanagawa interest-free monthly loan for high school students, repaid starting 6 months after graduation. Junior high third-years can apply in advance.'
+      },
+      cat: ['education', 'money'],
+      kind: 'loan', basis: 'pref', pref: '14', right: false,
+      amount: {
+        ja: '月1万〜3万円（国公立）／月1万〜5万円（私立）から選ぶ（新入生の場合）',
+        en: '¥10k–30k/month (public) or ¥10k–50k/month (private), your choice (first-year amounts)'
+      },
+      repay: 'yes',
+      who: { ja: '神奈川県に住んで県内の高校に通う生徒、または保護者が神奈川県に住んでいて高校・専修学校高等課程に通う生徒。' },
+      how: { ja: '中3の人は「予約採用」に、中学校を通して申しこみます。高校生は4月の「定期採用」に高校を通して申しこみます（年度の途中は「随時採用」）。' },
+      where: { ja: '中学校・高校の奨学金の担当の先生 → 神奈川県教育委員会 財務課' },
+      docs: ['願書（学校で配られます）', '貸付が決まったあと、連帯保証人の印鑑登録証明書'],
+      ask: ['予約採用の申しこみ方を教えてください', '連帯保証人を2人立てられないときは、どうすればいいですか？', '返すのはいつから、毎月いくらくらいですか？'],
+      caution: { ja: '返すお金です。連帯保証人が原則2人（保護者1人と、別にくらす大人1人）必要です。2人目が立てられないときは、県の高校奨学金グループに相談できます。' },
+      supporter: { ja: '神奈川県教育委員会 財務課 高校奨学金グループ 045-210-8251。令和9年度入学者向け予約採用は令和8年11月2日〜令和9年1月15日。予約採用者は希望により高校入学前の3月に一部前倒し（短期臨時奨学金）。2年生以上は上限が1万円下がるが申請（要件あり）で新入生と同額可。返還は卒業6か月後から貸付期間の4倍以内、無利息。大学進学等で返還猶予、一定条件で免除あり。社会的養護の子どもは保証人要件が壁になりやすいので、施設・児相と早めに相談を。' },
+      effort: 'mid',
+      for: { stages: ['jhs3', 'hs12', 'hs3'], paths: [], care: [], careOnly: false, age: { min: 14, max: 19 }, areas: ['14'] },
+      deadline: {
+        ja: '中3の予約採用は令和8年11月2日〜令和9年1月15日。高校生の定期採用は4月（随時採用は1月末まで）',
+        en: 'Advance applications Nov 2, 2026 – Jan 15, 2027; high school students apply in April (rolling until end of January)',
+        leaveMonths: null, months: [11, 12, 1, 4], always: false
+      },
+      contact: {
+        phone: '045-210-8251', phoneLabel: '神奈川県教育委員会 財務課 高校奨学金グループ', line: null, chat: null, web: KN_SHOGAKU,
+        hours: null
+      },
+      locations: [],
+      source: { org: '神奈川県教育委員会（神奈川県高等学校奨学金）', url: KN_SHOGAKU, checked: C },
+      sources2: [{ org: '神奈川県教育委員会（奨学金の概要PDF）', url: 'https://www.pref.kanagawa.jp/documents/25167/seidogaiyou2025.pdf' }],
+      verifiedBy: V
+    },
+
+    {
+      id: 'kanagawa-saposute',
+      name: { ja: '地域若者サポートステーション（神奈川県内7か所）', en: 'Youth Support Stations in Kanagawa (7 places)' },
+      hook: { ja: '働くことに自信がない。近くで相談したい', en: 'I am not confident about working. I want help nearby' },
+      summary: {
+        ja: '働きはじめる前の準備から手伝ってくれる無料の窓口「サポステ」の、神奈川県内の場所です。仕事の相談や職場体験ができます。',
+        en: 'Where to find "Saposute" in Kanagawa: free centers that help you get ready to work, with job counseling and work experience.'
+      },
+      cat: ['work', 'consult'],
+      kind: 'service', basis: 'national', pref: '14', right: false,
+      amount: { ja: '無料', en: 'Free' }, repay: null,
+      who: { ja: '15〜49歳で、今は働いていない・学校に行っていない人と、その家族。' },
+      how: { ja: '近くのサポステに電話して予約してから行きます。' },
+      where: { ja: '横浜・新横浜・大船（鎌倉市）・溝の口（川崎市）・橋本（相模原市）・小田原・本厚木' },
+      docs: [],
+      ask: ['まず見学や話を聞くだけでもいいですか？', '職場体験はできますか？'],
+      caution: { ja: '開いている曜日はサポステごとにちがいます。行く前に電話で確かめてください。' },
+      supporter: { ja: '厚生労働省と自治体の協働事業。県西部・県央は国と神奈川県が協働で運営（NPO法人子どもと生活文化協会）。所在地は厚生労働省「全国のサポステ」で確認。' },
+      effort: 'low',
+      for: { stages: ['left0', 'left1', 'nohs'], paths: ['work', 'unsure'], care: [], careOnly: false, age: { min: 15, max: 49 }, areas: ['14'] },
+      deadline: { ja: 'いつでも', en: 'Any time', leaveMonths: null, months: null, always: true },
+      contact: { phone: null, phoneLabel: null, line: null, chat: null, web: KN_SAPO, hours: null },
+      locations: [
+        loc('よ\u2060こ\u2060は\u2060ま若者サポートステーション', '14100', '神奈川県横浜市西区北幸1-11-15 横浜STビル3階', 35.467323, 139.618469, '045-290-7234', '月〜土 10:00–18:00（第3月曜・日・祝 休み）', '横浜駅西口から歩いて約7分'),
+        loc('よ\u2060こ\u2060は\u2060ま若者サポートステーション 新横浜サテライト', '14100', '神奈川県横浜市港北区新横浜3-18-6 新横浜TSビル5階', 35.510361, 139.616806, '045-290-7234', '火〜金 10:00–18:00', '新横浜駅7番出口から歩いて約2分'),
+        loc('湘南・横浜若者サポートステーション', '14204', '神奈川県鎌倉市小袋谷1-6-1 川島ビル2階', 35.349354, 139.531906, '0467-42-0203', '月〜金（第3月曜のぞく）・第3土曜 10:00–18:00', '大船駅東口から歩いて約5分'),
+        loc('かわさき若者サポートステーション', '14130', '神奈川県川崎市高津区溝口1-6-10 てくのかわさき3階', 35.598724, 139.614166, '044-850-2517', '月〜土 9:00–17:00', '武蔵溝ノ口駅・溝の口駅から歩いて約5分'),
+        loc('さ\u2060が\u2060み\u2060は\u2060ら若者サポートステーション', '14150', '神奈川県相模原市緑区橋本6-2-1 シティ・プラザはしもと6階（相模原市総合就職支援センター内）', 35.596298, 139.344482, '042-703-3861', '月〜金 8:30–17:00', '橋本駅北口から歩いて約1分'),
+        loc('神奈川県西部地域若者サポートステーション', '14206', '神奈川県小田原市城山1-6-32 Sビル2階', 35.256454, 139.152603, '0465-32-4115', '月〜金 10:00–17:00（土曜は月1回）', 'JR小田原駅西口から歩いて3分'),
+        loc('神奈川県央地域若者サポートステーション', '14212', '神奈川県厚木市中町2-12-15 アミューあつぎ7階', 35.442242, 139.366089, '046-297-3067', '月〜土 10:00–17:00', '本厚木駅から歩いて約5分')
+      ],
+      source: { org: '神奈川県（地域若者サポートステーション）', url: KN_SAPO, checked: C },
+      sources2: [{ org: '厚生労働省（全国のサポステ）', url: SAPO_NET }],
+      verifiedBy: V
+    },
+
+    {
+      id: 'kanagawa-kowaka-line',
+      name: { ja: 'か\u2060な\u2060が\u2060わ子ども・若者総合相談（LINE・電話）', en: 'Kanagawa Youth Consultation (LINE & phone)' },
+      hook: { ja: 'どこに相談すればいいかわからない', jr: 'だれに相談したらいいか、わからない', en: 'I don\'t know who to ask' },
+      summary: {
+        ja: '働くこと、将来のこと、家族や友だちのこと。どんな悩みでも聞いてくれる神奈川県の無料の窓口です。LINEは名前を言わずに相談できます。',
+        jr: '学校、家族、友だち、将来のこと。どんなことでもLINEか電話で相談できる、神奈川県の窓口です。名前は言わなくて大丈夫。',
+        en: 'Kanagawa\'s free help line for any worry: work, the future, family or friends. You can use LINE without giving your name.'
+      },
+      cat: ['consult'],
+      kind: 'hotline', basis: 'pref', pref: '14', right: false,
+      amount: { ja: '無料', en: 'Free' }, repay: null,
+      who: { ja: '神奈川県に住む・学校に通う・働く、子ども・若者（おおむね30代まで）と、その家族。' },
+      how: { ja: 'LINEで友だち追加して（ID: kana-kowaka）メッセージを送ります。電話は 045-242-8201。会って話したいときは、まず電話で予約します。' },
+      where: { ja: 'LINE・電話（会って話すときは 神奈川県立青少年センター2階）' },
+      docs: [],
+      ask: ['どこに相談したらいいかわからなくて、連絡しました', '働きたいけど、何から始めればいいですか？'],
+      caution: { ja: 'LINEは火・木・土の14時〜21時、電話は火〜日の9時〜12時・13時〜16時です（月曜・年末年始は休み）。' },
+      supporter: { ja: '神奈川県 子どもみらい部青少年課。LINE 火・木・土 14〜21時（祝休日・年末年始除く）、県ページでは対象おおむね39歳まで。電話相談は県立青少年センター（火〜日、土日祝も受付）。面接相談は電話予約制。同じ時間帯に「か\u2060な\u2060が\u2060わひきこもり相談LINE」もある。' },
+      effort: 'low',
+      for: { stages: ALL_ST, paths: [], care: [], careOnly: false, age: null, areas: ['14'] },
+      deadline: null,
+      contact: {
+        phone: '045-242-8201', phoneLabel: 'か\u2060な\u2060が\u2060わ子ども・若者総合相談センター', line: 'http://nav.cx/2V9NpP7', chat: null, web: KN_KOWAKA,
+        hours: { ja: 'LINE 火・木・土 14時〜21時／電話 火〜日 9時〜12時・13時〜16時', en: 'LINE Tue/Thu/Sat 14–21; phone Tue–Sun 9–12, 13–16' }
+      },
+      locations: [],
+      source: { org: '神奈川県（か\u2060な\u2060が\u2060わ子ども・若者総合相談LINE）', url: KN_KOWAKA, checked: C },
+      sources2: [{ org: '神奈川県（か\u2060な\u2060が\u2060わ子ども・若者総合相談センター）', url: KN_KOWAKA_C }],
+      verifiedBy: V
+    },
+
+    {
+      id: 'kanagawa-kodomo-hotline',
+      name: { ja: '人権・子どもホットライン（神奈川県 子ども専用電話）', en: 'Kanagawa Children\'s Rights Hotline' },
+      hook: { ja: '家や学校で、いやなことをされている', jr: '家や学校で、いやなことをされたり言われたりする', en: 'Someone at home or school is treating me badly' },
+      summary: {
+        ja: '18歳未満の子どもが電話できる、神奈川県の子ども専用の相談電話です。毎日、朝9時から夜8時まで。相談の内容や住んでいる場所によって、合う窓口も教えてくれます。',
+        jr: '子どもだけが電話できる、神奈川県の相談電話です。毎日、朝9時から夜8時まで話を聞いてくれます。',
+        en: 'A Kanagawa phone line just for children under 18, every day 9:00–20:00. They also tell you the right place to go next.'
+      },
+      cat: ['consult'],
+      kind: 'hotline', basis: 'pref', pref: '14', right: false,
+      amount: { ja: '無料（電話代はかかります）', en: 'Free (call charges apply)' }, repay: null,
+      who: { ja: '神奈川県に住む18歳未満の子ども。横浜市・川崎市・相模原市・横須賀市に住んでいる人は、市の児童相談所に相談します。' },
+      how: { ja: '0466-84-1616 に電話します。近所の子どもが心配なときは、大人も電話できます。' },
+      where: { ja: '電話' },
+      docs: [],
+      ask: ['家で、親にたたかれたり、ひどいことを言われたりします', 'だれに相談したらいいか、教えてください'],
+      caution: { ja: 'あきらかに虐待のときは、平日は近くの児童相談所、休日などは「子ども・家庭110番」0466-84-7000（毎日9時〜20時）へ。夜おそくや今すぐ危ないときは 189 か 110 に電話してください。' },
+      supporter: { ja: '神奈川県 福祉子どもみらい局（総合療育相談センター）。対象は県内在住の18歳未満（政令市・横須賀市在住者は各市の児童相談所を案内）。' },
+      effort: 'low',
+      for: { stages: KIDS, paths: [], care: [], careOnly: false, age: { min: null, max: 17 }, areas: KN_KEN_AREA },
+      deadline: null,
+      contact: {
+        phone: '0466-84-1616', phoneLabel: '人権・子どもホットライン', line: null, chat: null, web: KN_HOTLINE,
+        hours: { ja: '毎日 9時〜20時', en: 'Every day 9:00–20:00' }
+      },
+      locations: [],
+      source: { org: '神奈川県（子ども専用 人権・子どもホットライン）', url: KN_HOTLINE, checked: C },
+      sources2: [{ org: '神奈川県（テレホン相談 子ども家庭110番）', url: 'https://www.pref.kanagawa.jp/docs/w6j/jisou/kodomo110.html' }],
+      eligibleBy: 'residence',
+      verifiedBy: V
+    },
+
+    /* ═══════════════════════ 埼玉県 ═══════════════════════ */
+
+    {
+      id: 'saitama-jiritsu-shikin',
+      name: { ja: '自立支援資金貸付（埼玉県）', en: 'Independence Support Loan (Saitama)' },
+      hook: { ja: '家賃や生活費の支えがほしい', en: 'I need help with rent and living costs' },
+      summary: {
+        ja: '進学した人は生活費（月5万円まで）と家賃を、働く人は家賃を、借りられます。5年間（資格の費用は2年間）働けば、返さなくてよくなります。埼玉県では埼玉県社会福祉協議会が行っています。',
+        en: 'Loans for living costs (up to ¥50k/month for students) and rent, forgiven after 5 years of work (2 years for licence costs). In Saitama, run by the Saitama Council of Social Welfare.'
+      },
+      cat: ['money', 'housing'],
+      kind: 'loan_forgivable', basis: 'pref', pref: '11', right: false,
+      amount: {
+        ja: '生活費 月5万円まで（進学した人）・家賃（1か月の家賃相当）・資格をとる費用 25万円まで',
+        en: 'Living up to ¥50k/month (students); rent; licences up to ¥250k'
+      },
+      repay: 'conditional',
+      who: { ja: '埼玉県の児童養護施設などを出た人、里親の委託が終わった人で、親からお金の支えが得られない人。資格の費用は、施設や里親家庭にいる間も使えます。' },
+      how: { ja: '施設や里親の担当の人、または児童相談所に相談します。' },
+      where: { ja: '施設・里親の担当の人 → 埼玉県社会福祉協議会' },
+      docs: [],
+      ask: ['自立支援資金貸付を使いたいです。私は対象になりますか？', '返さなくてよくなる条件を教えてください', '申しこみは、だれを通してすればいいですか？'],
+      caution: { ja: '返さなくてよくなるには、進学した人は卒業後、働く人は出たあと、5年間（資格の費用は2年間）週20時間以上働くことが必要です。働く人の家賃は出てから2年までです。' },
+      supporter: { ja: '埼玉県の補助で埼玉県社会福祉協議会が実施（県交付要綱）。内容は県資料「埼玉県の児童養護施設等の退所児童に対する自立支援」（令和6年）による。埼玉県社協のホームページは2026-10-26時点で一時公開停止中のため、申込方法・最新の要件は県こども安全課 養護担当（048-830-3331）か県社協で確認を。' },
+      effort: 'high',
+      for: { stages: LEAVERS, paths: [], care: CARE, careOnly: true, age: null, areas: ['11'] },
+      deadline: {
+        ja: '進学・就職で出るときに。早めに担当の人に相談しよう。',
+        en: 'When you leave for school or work; talk to your caseworker early.',
+        leaveMonths: -3, months: null, always: false
+      },
+      contact: { phone: '048-830-3331', phoneLabel: '埼玉県 こども安全課 養護担当', line: null, chat: null, web: ST_SHIRYO, hours: null },
+      locations: [],
+      source: { org: '埼玉県（児童養護施設等の退所児童に対する自立支援 資料）', url: ST_SHIRYO, checked: C },
+      sources2: [{ org: '埼玉県（自立支援貸付事業費補助金交付要綱）', url: ST_YOKO }, { org: '埼玉県（社会的養護の現状・問い合わせ先）', url: ST_YOUGO }],
+      eligibleBy: 'origin',
+      verifiedBy: V
+    },
+
+    {
+      id: 'saitama-clover-house',
+      name: { ja: 'クローバーハウス（埼玉県のアフターケア事業所）', en: 'Clover House (Saitama aftercare space)' },
+      hook: { ja: 'ほっとできる場所と、話せる仲間がほしい', en: 'I want a place to relax and people to talk to' },
+      summary: {
+        ja: '埼玉県の施設や里親家庭を出た人のための、県の居場所・相談場所です。おしゃべりやゲームでくつろげて、100円で夕ごはんも食べられます。くらしや仕事の相談もできます。',
+        en: 'Saitama\'s drop-in and support space for people who left care in the prefecture. Relax, play games, have dinner for ¥100, and talk about daily life or work.'
+      },
+      cat: ['consult', 'work'],
+      kind: 'place', basis: 'npo', pref: '11', right: false,
+      amount: { ja: '夕ごはん 100円', en: 'Dinner ¥100' }, repay: null,
+      who: { ja: '埼玉県内の児童養護施設・里親・ファミリーホーム・児童自立支援施設・児童心理治療施設・自立援助ホームを出た人（進学・就職・仕事さがし中、どんな状況でもOK）。出る予定の人も。出てからおおむね10年までの人。' },
+      how: { ja: 'すでに出ている人は、行く前に必ず予約します（コンパスナビのホームページの予約フォームか電話）。まだ施設や里親家庭にいる人は、職員さん・里親さんといっしょに行きます。' },
+      where: { ja: 'JR浦和駅 東口から歩いて5分（住所は公開していません）' },
+      docs: [],
+      ask: ['初めて行きたいです。予約はどうすればいいですか？', '仕事のことも相談できますか？', 'セミナーやイベントはいつありますか？'],
+      caution: { ja: '開いているのは木・金・土の12時〜20時です。住所は公開していないので、予約のときに聞いてください。' },
+      supporter: { ja: '埼玉県「児童養護施設退所児童等アフターケア事業所」。運営は一般社団法人コンパスナビ（県委託、居住支援法人として県指定）。スタッフに社会的養護経験者（ユース）がいる。生活スキル等のセミナー月1〜2回。電話 048-815-4111（平日10〜18時）。県担当: こども安全課 048-830-3340。' },
+      effort: 'low',
+      for: { stages: LEAVERS, paths: [], care: CARE, careOnly: true, age: null, areas: ['11'] },
+      deadline: { ja: 'いつでも（予約制）', en: 'Anytime (booking needed)', leaveMonths: null, months: null, always: true },
+      contact: {
+        phone: '048-815-4111', phoneLabel: '一般社団法人コンパスナビ', line: null, chat: null, web: CLOVER_OP,
+        hours: { ja: '居場所: 木・金・土 12時〜20時／電話: 平日 10時〜18時', en: 'Open Thu/Fri/Sat 12–20; phone weekdays 10–18' }
+      },
+      locations: [],
+      // the phone number and phone hours come from the operator's page; the prefecture page has the rest
+      source: { org: '一般社団法人コンパスナビ（クローバーハウス）', url: CLOVER_OP, checked: C },
+      sources2: [{ org: '埼玉県（クローバーハウス）', url: ST_CLOVER }],
+      eligibleBy: 'origin',
+      verifiedBy: V
+    },
+
+    {
+      id: 'saitama-kibou-no-ie',
+      name: { ja: '希望の家（埼玉県 進学する人の住まい）', en: 'Kibo no Ie (Saitama housing for care-leaver students)' },
+      hook: { ja: '進学したいけど、住むところと家賃が心配', en: 'I want to study but worry about housing and rent' },
+      summary: {
+        ja: '施設や里親家庭を出て大学や専門学校に進む人に、埼玉県が低い家賃で部屋を貸してくれます。社会福祉士が卒業まで相談にのってくれます。',
+        en: 'Saitama rents rooms at a low price to care leavers going to university or vocational school, with a social worker supporting them until graduation.'
+      },
+      cat: ['housing', 'education'],
+      kind: 'housing', basis: 'pref', pref: '11', right: false,
+      amount: { ja: '低い家賃で1人1部屋（県内4か所・20人分）', en: 'Low-rent private room (4 sites, 20 places)' }, repay: null,
+      who: { ja: '埼玉県の児童養護施設などを出た人、里親の委託が終わった人で、大学・専門学校などに進学した人。' },
+      how: { ja: '施設や里親の担当の人、または埼玉県 こども安全課（養護担当）に聞いてみよう。申し込み方は県のページにはのっていません。' },
+      where: { ja: '埼玉県内4か所' },
+      docs: [],
+      ask: ['希望の家に入れるか、だれに相談すればいいですか？', '家賃はいくらですか？', 'いつまで住めますか？'],
+      caution: { ja: '在学中だけ住めます。部屋の数に限りがあります（20人分）。' },
+      supporter: { ja: '埼玉県「児童養護施設退所者を10年支える自立支援事業（ささえーる）」の希望の家事業（令和8年度予算見積調書で確認）。民間アパートを借り上げ、社会福祉士が月1回以上面談。運営は公募による委託（令和6年度資料では公益社団法人埼玉県社会福祉士会、家賃は約4千円）。さ\u2060い\u2060た\u2060ま市措置児童分は市が費用負担。' },
+      effort: 'mid',
+      for: { stages: ['hs3', 'left0', 'left1'], paths: ['study'], care: CARE, careOnly: true, age: null, areas: ['11'] },
+      deadline: { ja: '進学が決まったら早めに', en: 'As soon as your school place is decided', leaveMonths: -4, months: null, always: false },
+      contact: { phone: '048-830-3331', phoneLabel: '埼玉県 こども安全課 養護担当', line: null, chat: null, web: ST_YOSAN, hours: null },
+      locations: [],
+      source: { org: '埼玉県（令和8年度予算見積調書 こども安全課）', url: ST_YOSAN, checked: C },
+      sources2: [{ org: '埼玉県（児童養護施設等の退所児童に対する自立支援 資料）', url: ST_SHIRYO }],
+      eligibleBy: 'origin',
+      verifiedBy: V
+    },
+
+    {
+      id: 'saitama-jisou',
+      name: { ja: '児童相談所（埼玉県・さ\u2060い\u2060た\u2060ま市）', en: 'Child Guidance Centers (Saitama)' },
+      hook: { ja: '施設や里親のこと、家のことを相談したい', jr: '家のことや、こわいことを相談したい', en: 'I want to talk about my care placement or my family' },
+      summary: {
+        ja: '子どもと家族のことを相談できる公的な窓口です。子どもからの相談も受けています。相談は無料で、秘密は守られます。',
+        jr: '子どもからの相談も聞いてくれるところです。お金はかからず、ひみつは守られます。夜や休みの日は「189」へ。',
+        en: 'Public offices for children and families. Children can call too. It is free and confidential.'
+      },
+      cat: ['consult', 'procedures'],
+      kind: 'service', basis: 'pref', pref: '11', right: false,
+      amount: null, repay: null,
+      who: { ja: '0歳から18歳未満の子どもと家族。住んでいる市町村で担当の児童相談所が決まっています。さ\u2060い\u2060た\u2060ま市に住んでいる人は、さ\u2060い\u2060た\u2060ま市の児童相談所です。' },
+      how: { ja: '担当の児童相談所に電話します（県の児童相談所は電話番号の下4けたが 4152）。夜や休日は「189」へ。さ\u2060い\u2060た\u2060ま市の人は 048-711-6824（24時間）。' },
+      where: { ja: '住んでいる市町村を担当する児童相談所（地図で確認）' },
+      docs: [],
+      ask: ['施設を出る時期について相談したいです', '担当の児童福祉司さんと話したいです', '家にいるのがつらいです。どうしたらいいですか？'],
+      caution: { ja: '朝霞児童相談所が新しくでき（令和7年4月）、担当の区域が変わりました。地図で自分の担当を確かめてね。' },
+      supporter: { ja: '埼玉県「児童相談所のご案内」による。県児相の相談時間は平日8:30〜18:15。時間外の虐待通報は189（さ\u2060い\u2060た\u2060ま市は市児童虐待通告電話相談 048-711-6824、24時間）。埼玉県虐待通報ダイヤル #7171。子どもスマイルネット 048-822-7007 も案内。さ\u2060い\u2060た\u2060ま市児相の相談時間は市に要確認。' },
+      effort: 'low',
+      for: { stages: KIDS, paths: [], care: [], careOnly: false, age: null, areas: ['11'] },
+      deadline: null,
+      contact: {
+        phone: '189', phoneLabel: '夜・休日は 189（虐待対応ダイヤル）', line: null, chat: null, web: ST_JISOU,
+        hours: { ja: '県の児童相談所: 平日 8時30分〜18時15分', en: 'Prefectural centers: weekdays 8:30–18:15' }
+      },
+      locations: ST_JISOU_LOCS,
+      source: { org: '埼玉県（こども安全課）', url: ST_JISOU, checked: C },
+      verifiedBy: V
+    },
+
+    {
+      id: 'saitama-towns-jiritsu-sodan',
+      name: { ja: 'アスポート相談支援センター（埼玉県 町村の くらしの相談）', en: 'Asport (Saitama towns: living & work support)' },
+      hook: { ja: 'お金・仕事・住まいのこと、まとめて相談したい', en: 'I want to talk about money, work and housing in one place' },
+      summary: {
+        ja: '埼玉県の町や村に住む人のための、お金・仕事・住まいの無料の相談窓口です。県が開いています。町村役場の福祉課に行けば、家に来てもらうか役場で相談できます。',
+        en: 'Saitama Prefecture\'s free desks for people living in its towns and villages, about money, work and housing. Ask at your town office and a counselor will meet you there or at home.'
+      },
+      cat: ['consult', 'money', 'housing', 'work'],
+      kind: 'service', basis: 'pref', pref: '11', right: false,
+      townsOnly: true,
+      amount: { ja: '相談は無料', en: 'Free' }, repay: null,
+      who: { ja: '埼玉県の町村に住んでいて、生活に困っている人。' },
+      how: { ja: '住んでいる地域のアスポート相談支援センターに電話するか、町村役場の福祉課に行きます。福祉課から支援員に連絡が行き、家に来てもらうか役場で相談します。' },
+      where: { ja: '地域ごとのアスポート相談支援センター（地図で確認）または町村役場の福祉課' },
+      docs: [],
+      ask: KONKYU_ASK,
+      caution: { ja: '市に住んでいる人は、市の窓口が担当です。' + KONKYU_FOOT },
+      supporter: { ja: KONKYU_SUP + ' 埼玉県の町村部は「アスポート相談支援センター」が担当（町村部統括: さ\u2060い\u2060た\u2060ま市浦和区 彩の国すこやかプラザ2階 048-822-1249）。受付時間は県ページに記載なし。' },
+      effort: 'low',
+      for: { stages: NOT_JR, paths: [], care: [], careOnly: false, age: null, areas: ST_TOWN_CODES },
+      deadline: { ja: 'いつでも相談できます', en: 'Anytime', leaveMonths: null, months: null, always: true },
+      contact: { phone: '048-822-1249', phoneLabel: 'アスポート相談支援センター埼玉（町村部統括）', line: null, chat: null, web: ST_KONKYU, hours: null },
+      locations: [
+        loc('アスポート相談支援センター埼玉東部', '11214', '埼玉県春日部市中央1-12-1 メゾン福嶋5階', 35.980324, 139.749756, '048-720-8475', '', '担当: 伊奈町・松伏町・宮代町・杉戸町'),
+        loc('アスポート相談支援センター埼玉西部（小川町社会福祉協議会内）', '11343', '埼玉県比企郡小川町腰越618 パトリアおがわ', 36.046669, 139.241837, '0493-81-3148', '', '担当: 滑川町・嵐山町・小川町・東秩父村'),
+        loc('アスポート相談支援センター埼玉西部 毛呂山出張所（毛呂山町社会福祉協議会内）', '11326', '埼玉県入間郡毛呂山町川角303-3', 35.942257, 139.335571, '080-2274-1445', '', '担当: 毛呂山町・越生町・鳩山町・ときがわ町'),
+        loc('アスポート相談支援センター埼玉西部 三芳出張所（三芳町役場1階）', '11324', '埼玉県入間郡三芳町藤久保1100-1', 35.829254, 139.527008, '049-258-0122', '', '担当: 三芳町'),
+        loc('アスポート相談支援センター埼玉西部 川島出張所（川島町社会福祉協議会内）', '11346', '埼玉県比企郡川島町大字平沼1175', 35.981792, 139.481598, '070-4391-7084', '', '担当: 川島町・吉見町'),
+        loc('アスポート相談支援センター埼玉北部（保健福祉総合センター内）', '11408', '埼玉県大里郡寄居町大字保田原301', 36.118023, 139.214432, '048-577-6883', '', '担当: 上里町・神川町・美里町・寄居町'),
+        loc('アスポート相談支援センター埼玉秩父（皆野町社会福祉協議会内）', '11362', '埼玉県秩父郡皆野町大字大渕103-1', 36.072601, 139.083496, '0494-62-6565', '', '担当: 横瀬町・小鹿野町・長瀞町・皆野町')
+      ],
+      source: { org: '埼玉県（生活困窮者の総合相談窓口）', url: ST_KONKYU, checked: C },
+      eligibleBy: 'residence',
+      verifiedBy: V
+    },
+
+    {
+      id: 'saitama-city-jiritsu-sodan',
+      name: { ja: 'さ\u2060い\u2060た\u2060ま市 福祉まるごと相談窓口（くらしの相談）', en: 'Saitama City: Welfare One-stop Desks' },
+      hook: { ja: 'お金・仕事・住まいのこと、まとめて相談したい', en: 'I want to talk about money, work and housing in one place' },
+      summary: {
+        ja: 'さ\u2060い\u2060た\u2060ま市に住む人のための、お金・仕事・住まいの無料の相談窓口です。各区役所の福祉課にあります。家賃の給付金（住居確保給付金）や家計の相談、住まい探しの手伝いにもつないでくれます。',
+        en: 'Free desks for Saitama City residents about money, work and housing, in each ward office. They connect you to the Housing Security Benefit, budgeting help and support finding a place to live.'
+      },
+      cat: ['consult', 'money', 'housing', 'work'],
+      kind: 'service', basis: 'local', pref: '11', right: false,
+      amount: { ja: '相談は無料', en: 'Free' }, repay: null,
+      who: { ja: 'さ\u2060い\u2060た\u2060ま市に住んでいて、生活に困っている人。住むところがない人は、いちばん近い窓口へ。' },
+      how: { ja: '住んでいる区の福祉まるごと相談窓口に電話します。初めての相談は16時30分までに行きます。' },
+      where: { ja: '住んでいる区の区役所 福祉課（地図で確認）' },
+      docs: [],
+      ask: KONKYU_ASK,
+      caution: { ja: '相談に時間がかかることがあるので、早めの時間に行こう。' + KONKYU_FOOT },
+      supporter: { ja: KONKYU_SUP + ' さ\u2060い\u2060た\u2060ま市は10区の区役所福祉課に「福祉まるごと相談窓口」。シェルター事業・地域居住支援事業（入居支援）あり。市担当: 福祉局 生活福祉部 生活福祉課 自立支援係。' },
+      effort: 'low',
+      for: { stages: NOT_JR, paths: [], care: [], careOnly: false, age: null, areas: ['11100'] },
+      deadline: { ja: 'いつでも相談できます', en: 'Anytime', leaveMonths: null, months: null, always: true },
+      contact: {
+        phone: null, phoneLabel: null, line: null, chat: null, web: SC_KONKYU,
+        hours: { ja: '平日 9時〜17時（初めての相談は16時30分まで）', en: 'Weekdays 9:00–17:00 (first visit by 16:30)' }
+      },
+      locations: SC_LOCS,
+      source: { org: 'さ\u2060い\u2060た\u2060ま市（生活困窮者自立支援制度）', url: SC_KONKYU, checked: C },
+      sources2: [{ org: '埼玉県（生活困窮者の総合相談窓口）', url: ST_KONKYU }],
+      eligibleBy: 'residence',
+      verifiedBy: V
+    },
+
+    {
+      id: 'saitama-fubo-futan',
+      name: { ja: '父母負担軽減事業補助金（埼玉県 私立高校）', en: 'Saitama Private High School Fee Support' },
+      hook: { ja: '私立高校の施設費や入学金が払えるか不安', jr: '私立高校の入学金などが心配', en: 'I worry about private high school fees and the entrance fee' },
+      summary: {
+        ja: '埼玉県内の私立高校に通う家庭に、国の就学支援金（授業料）に上乗せして、埼玉県が施設費や入学金を助けてくれます。所得の条件があります。',
+        jr: '埼玉県の私立高校に通うと、県が施設費や入学金を出してくれることがあります。返さなくていいお金です。',
+        en: 'Saitama adds to the national tuition support by helping with facility fees and the entrance fee at private high schools in the prefecture. Income limits apply.'
+      },
+      cat: ['education', 'money'],
+      kind: 'grant', basis: 'pref', pref: '11', right: false,
+      amount: {
+        ja: '全日制の例: 年収めやす約500万円未満 → 施設費など20万円・入学金22万3,000円まで／約609万円未満 → 入学金10万円まで（国の授業料 年45万7,200円とは別）',
+        en: 'Full-time example: income under ~¥5M → facility fees ¥200k + entrance fee up to ¥223k; under ~¥6.09M → entrance fee up to ¥100k (on top of national tuition ¥457,200)'
+      },
+      repay: 'none',
+      who: { ja: '埼玉県が認可した私立高校などに通う生徒で、生徒と保護者がどちらも埼玉県に住んでいて、所得の条件にあう家庭。' },
+      how: { ja: '通っている学校を通して申しこみます。受付の時期は学校ごとにちがいます（例年5月〜6月ごろ）。' },
+      where: { ja: '通っている私立高校' },
+      docs: ['学校から配られる申請書類'],
+      ask: ['私の家は、県の補助の対象になりますか？', '申しこみの締切はいつですか？', '家計が急に変わったときも使えますか？'],
+      caution: { ja: '補助額は上限です。実際にはらう金額が少ないときは、その金額までです。年収はめやすで、保護者の課税標準額などで決まります。' },
+      supporter: { ja: '埼玉県 総務部学事課「学費軽減ヘルプデスク」048-830-2725（平日8:30〜17:15）。令和8年度 目安年収表（日本国籍・片働き・子1人モデル）: 基準①約500万円未満で国45万7,200＋施設費20万円（1年生は入学金22万3,000円も、計88万200円）、基準②約609万円未満で1年生のみ入学金10万円。家計急変世帯の特例、外国籍生徒の補助あり。生活保護世帯は実負担額を補助。' },
+      effort: 'mid',
+      for: { stages: ['jhs3', 'hs12', 'hs3'], paths: [], care: [], careOnly: false, age: { min: 14, max: 19 }, areas: ['11'] },
+      deadline: {
+        ja: '例年5月〜6月ごろ、学校を通して申しこみ（学校ごとにちがいます）',
+        en: 'Usually May–June through your school (varies by school)',
+        leaveMonths: null, months: [5, 6], always: false
+      },
+      contact: {
+        phone: '048-830-2725', phoneLabel: '埼玉県 学事課 学費軽減ヘルプデスク', line: null, chat: null, web: ST_FUBO,
+        hours: { ja: '平日 8時30分〜17時15分', en: 'Weekdays 8:30–17:15' }
+      },
+      locations: [],
+      source: { org: '埼玉県（私立学校の父母負担軽減について 令和8年度）', url: ST_FUBO, checked: C },
+      sources2: [{ org: '埼玉県（令和8年度 補助対象となる世帯の目安年収）', url: ST_FUBO_NENSHU }],
+      verifiedBy: V
+    },
+
+    {
+      id: 'saitama-koko-shogakukin',
+      name: { ja: '埼玉県高等学校等奨学金（貸付）', en: 'Saitama High School Scholarship Loan' },
+      hook: { ja: '高校の生活費や教材費が足りない', jr: '高校に行くお金が足りるか心配', en: 'I need money for high school costs' },
+      summary: {
+        ja: '高校生にお金を貸してくれる埼玉県の奨学金です。毎月の奨学金と、入学のときの一時金があります。銀行との約束どおりに返せば利息はかかりません。中3のうちにも申しこめます。',
+        jr: '高校生になったらお金を借りられる、埼玉県の奨学金です。入学のときのお金もあります。あとで返すお金です。',
+        en: 'A Saitama loan for high school students: a monthly amount plus a one-off entry payment. No interest if repaid as agreed. Junior high third-years can apply too.'
+      },
+      cat: ['education', 'money'],
+      kind: 'loan', basis: 'pref', pref: '11', right: false,
+      amount: {
+        ja: '月1万5千〜2万5千円（国公立）／月2万〜4万円（私立）・入学一時金 5万か10万円（国公立）／10万か25万円（私立）',
+        en: '¥15k–25k/month (public) or ¥20k–40k/month (private); entry payment ¥50k/100k (public) or ¥100k/250k (private)'
+      },
+      repay: 'yes',
+      who: { ja: '高校などに通う生徒（進学する予定の中3もふくむ）で、保護者が埼玉県に住んでいる人。学校長の推薦が必要です（成績の条件はありません）。所得の条件があります。' },
+      how: { ja: '中3の人は10月ごろ中学校から案内があります。高校生は4月上旬に高校から案内があります。書類は学校から受けとり、埼玉県に直接郵送します。認定されたら埼玉りそな銀行で契約します。' },
+      where: { ja: '学校で書類を受けとる → 埼玉県教育委員会（財務課）に郵送 → 埼玉りそな銀行' },
+      docs: ['学校から配られる申請書類一式', '世帯の住民税の所得割がわかるもの'],
+      ask: ['中3募集の締切はいつですか？', '親権者の同意がとれないときは、どうすればいいですか？', '返すのはいつから、毎月いくらくらいですか？'],
+      caution: { ja: '返すお金です。銀行での契約には、戸籍上のすべての親権者の同意と署名が必要で、親権者のうち1人は本人といっしょに銀行に行きます。施設や里親家庭にいる人は、担当の人と早めに相談しよう。' },
+      supporter: { ja: '埼玉県教育局 財務課 授業料・奨学金担当（コールセンター 048-830-8855）。令和8年度は当初募集4月30日・追加募集8月7日締切（終了）、家計急変世帯向け募集中。令和9年度入学の中3募集は10月以降に中学校経由で案内予定（令和8年度分は11月4日開始・1月30日締切だった）。中3募集は6か月分ずつ（前期2月下旬以降）、当初募集は12か月分を一括で貸与。世帯年収の目安約830万円以下（4人世帯モデル、家計急変募集ページ）。' },
+      effort: 'mid',
+      for: { stages: ['jhs3', 'hs12', 'hs3'], paths: [], care: [], careOnly: false, age: { min: 14, max: 19 }, areas: ['11'] },
+      deadline: {
+        ja: '中3は秋〜冬に中学校から案内（令和8年度分は1月30日締切だった）。高校生は4月末が締切',
+        en: 'Junior high: notice via school in autumn/winter; high school: deadline end of April',
+        leaveMonths: null, months: [11, 12, 1, 4], always: false
+      },
+      contact: {
+        phone: '048-830-8855', phoneLabel: '埼玉県教育局 財務課（コールセンター）', line: null, chat: null, web: ST_SHOGAKU,
+        hours: null
+      },
+      locations: [],
+      source: { org: '埼玉県教育委員会（奨学金の貸与）', url: ST_SHOGAKU, checked: C },
+      sources2: [{ org: '埼玉県教育委員会（奨学生の募集）', url: ST_SHOGAKU_B }],
+      verifiedBy: V
+    },
+
+    {
+      id: 'saitama-saposute',
+      name: { ja: '地域若者サポートステーション（埼玉県内5か所）', en: 'Youth Support Stations in Saitama (5 places)' },
+      hook: { ja: '働くことに自信がない。近くで相談したい', en: 'I am not confident about working. I want help nearby' },
+      summary: {
+        ja: '働きはじめる前の準備から手伝ってくれる無料の窓口「サポステ」の、埼玉県内の場所です。',
+        en: 'Where to find "Saposute" in Saitama: free centers that help you get ready to work.'
+      },
+      cat: ['work', 'consult'],
+      kind: 'service', basis: 'national', pref: '11', right: false,
+      amount: { ja: '無料', en: 'Free' }, repay: null,
+      who: { ja: '15〜49歳で、今は働いていない・学校に行っていない人と、その家族。' },
+      how: { ja: '近くのサポステに電話して予約してから行きます。' },
+      where: { ja: '川口・川越・深谷・さ\u2060い\u2060た\u2060ま（大宮）・春日部' },
+      docs: [],
+      ask: ['まず見学や話を聞くだけでもいいですか？', '職場体験はできますか？'],
+      caution: { ja: '開いている時間はサポステごとにちがいます。行く前に電話で確かめてください。' },
+      supporter: { ja: '厚生労働省の委託事業。所在地・電話は厚生労働省「全国のサポステ」で確認（受付時間は各サポステのサイトで要確認）。' },
+      effort: 'low',
+      for: { stages: ['left0', 'left1', 'nohs'], paths: ['work', 'unsure'], care: [], careOnly: false, age: { min: 15, max: 49 }, areas: ['11'] },
+      deadline: { ja: 'いつでも', en: 'Any time', leaveMonths: null, months: null, always: true },
+      contact: { phone: null, phoneLabel: null, line: null, chat: null, web: SAPO_NET, hours: null },
+      locations: [
+        loc('かわぐち若者サポートステーション', '11203', '埼玉県川口市川口3-2-2 川口若者ゆめワーク3階', 35.802452, 139.715195, '048-255-8680', '', ''),
+        loc('かわごえ若者サポートステーション（常設サテライト）', '11201', '埼玉県川越市脇田本町6-6 石川ビル4階', 35.906048, 139.482010, '049-293-2562', '', ''),
+        loc('深谷若者サポートステーション', '11218', '埼玉県深谷市西島4-2-61 ウエストビル2階', 36.193001, 139.278900, '048-577-4727', '', ''),
+        loc('地域若者サポートステーションさ\u2060い\u2060た\u2060ま', '11100', '埼玉県さ\u2060い\u2060た\u2060ま市大宮区桜木町1-7-5 ソニックシティビル地下1階', 35.905506, 139.619995, '048-650-3366', '', 'イベント広場横'),
+        loc('埼玉とうぶ若者サポートステーション', '11214', '埼玉県春日部市粕壁東1-19-14 ホワイトストーンハイツ1階', 35.980156, 139.757233, '048-741-6583', '', '')
+      ],
+      source: { org: '厚生労働省（全国のサポステ）', url: SAPO_NET, checked: C },
+      verifiedBy: V
+    },
+
+    {
+      id: 'saitama-oyako-line',
+      name: { ja: '親と子どもの悩みごと相談＠埼玉（LINE）', en: 'Saitama Parent & Child LINE Consultation' },
+      hook: { ja: '家族のことを、文字で相談したい', jr: '家で、たたかれたりこわいことをされる。LINEで話したい', en: 'I want to message someone about my family' },
+      summary: {
+        ja: '親子の関係や、家族からの虐待のことを、LINEで相談できる埼玉県の窓口です。平日は夜10時まで、土日祝も相談できます。',
+        jr: '家族のこと、こわいことを、LINEで相談できます。平日は夜10時まで。さ\u2060い\u2060た\u2060ま市の人も使えます。',
+        en: 'Saitama\'s LINE service for worries about parents and children, including abuse at home. Weekdays until 22:00, weekends and holidays too.'
+      },
+      cat: ['consult'],
+      kind: 'hotline', basis: 'pref', pref: '11', right: false,
+      amount: { ja: '無料', en: 'Free' }, repay: null,
+      who: { ja: '埼玉県に住む子どもと、その保護者など。さ\u2060い\u2060た\u2060ま市の人も使えます。' },
+      how: { ja: 'LINEで「親と子どもの悩みごと相談＠埼玉」を検索するか、友だち追加ボタンから追加して、メッセージを送ります。' },
+      where: { ja: 'LINE' },
+      docs: [],
+      ask: ['家で親にたたかれます。どうしたらいいですか？', '家にいるのがつらいです'],
+      caution: { ja: '命や安全があぶないと判断されたときは、守るために児童相談所や警察に連絡が行くことがあります。今すぐ危ないときは 110 や 189 に電話してね。' },
+      supporter: { ja: '埼玉県 福祉部こども安全課 児童虐待対策担当（048-830-3335）。受付 月〜金 9〜22時、土日祝 9〜17時（12月29日〜1月3日除く）。電話は子どもスマイルネット 048-822-7007、県虐待通報ダイヤル #7171 または 048-762-7533（24時間）。' },
+      effort: 'low',
+      for: { stages: KIDS, paths: [], care: [], careOnly: false, age: null, areas: ['11'] },
+      deadline: null,
+      contact: {
+        phone: null, phoneLabel: null, line: 'https://line.me/R/ti/p/@620vnbix', chat: null, web: ST_LINE,
+        hours: { ja: '月〜金 9時〜22時／土日祝 9時〜17時', en: 'Mon–Fri 9–22; weekends/holidays 9–17' }
+      },
+      locations: [],
+      source: { org: '埼玉県（親と子どもの悩みごと相談＠埼玉）', url: ST_LINE, checked: C },
+      verifiedBy: V
+    },
+
+    {
+      id: 'saitama-smile-net',
+      name: { ja: '子どもスマイルネット（埼玉県の子どもの相談電話）', en: 'Kodomo Smile Net (Saitama children\'s phone line)' },
+      hook: { ja: 'いじめや家のことを、だれかに聞いてほしい', jr: 'いじめや友だち、家のことを話したい', en: 'I want someone to listen about bullying or home' },
+      summary: {
+        ja: '18歳未満の子ども（高校生も）の悩みを聞いてくれる、埼玉県の電話相談です。土日もふくめ毎日、朝10時30分から夕方6時まで。',
+        jr: 'いじめ、先生や友だちのこと、親のこと、将来のこと。どんな話でも聞いてくれる埼玉県の電話です。毎日 10時30分〜18時。',
+        en: 'Saitama\'s phone line for children under 18 (high school students too), every day including weekends, 10:30–18:00.'
+      },
+      cat: ['consult'],
+      kind: 'hotline', basis: 'pref', pref: '11', right: false,
+      amount: { ja: '無料（電話代はかかります）', en: 'Free (call charges apply)' }, repay: null,
+      who: { ja: '埼玉県の子ども（原則18歳未満、高校生も）。保護者からの子育ての相談も受けています。' },
+      how: { ja: '048-822-7007 に電話します。午前中のほうがつながりやすいです。' },
+      where: { ja: '電話' },
+      docs: [],
+      ask: ['クラスで仲間はずれにされています', '家族の世話で、勉強する時間がありません'],
+      caution: { ja: '祝日と年末年始は休みです。いじめや体罰など、話を聞くだけで解決しないときは、「子どもの権利擁護委員会」が力になってくれます。' },
+      supporter: { ja: '埼玉県 子どもの権利擁護委員会の電話相談窓口。10月・11月は土日を含む毎日10:30〜18:00（10/12・11/3・11/23は休み）。権利侵害の調査・調整につながる。' },
+      effort: 'low',
+      for: { stages: KIDS, paths: [], care: [], careOnly: false, age: { min: null, max: 17 }, areas: ['11'] },
+      deadline: null,
+      contact: {
+        phone: '048-822-7007', phoneLabel: '子どもスマイルネット', line: null, chat: null, web: ST_SMILE,
+        hours: { ja: '毎日 10時30分〜18時（祝日・年末年始は休み）', en: 'Every day 10:30–18:00 (closed holidays)' }
+      },
+      locations: [],
+      source: { org: '埼玉県（子どもスマイルネット）', url: ST_SMILE, checked: C },
+      verifiedBy: V
+    },
+
+    /* ═══════════════════════ 千葉県 ═══════════════════════ */
+
+    {
+      id: 'chiba-jiritsu-shikin',
+      name: { ja: '自立支援資金貸付（千葉県）', en: 'Independence Support Loan (Chiba)' },
+      hook: { ja: '家賃や生活費の支えがほしい', en: 'I need help with rent and living costs' },
+      summary: {
+        ja: '進学した人は生活費（月5万円）と家賃を、働く人は家賃を、利息なしで借りられます。決まった年数働けば、全額返さなくてよくなります。千葉県では千葉県社会福祉協議会が窓口です。',
+        en: 'Interest-free loans for living costs (¥50k/month for students) and rent, fully forgiven after working for a set number of years. In Chiba, run by the Chiba Council of Social Welfare.'
+      },
+      cat: ['money', 'housing'],
+      kind: 'loan_forgivable', basis: 'pref', pref: '12', right: false,
+      amount: {
+        ja: '生活費 月5万円（進学した人）・家賃（千葉県内は月3万7,200〜4万6,000円まで）・資格をとる費用 25万円まで',
+        en: 'Living ¥50k/month (students); rent up to ¥37,200–46,000/month in Chiba; licences up to ¥250k'
+      },
+      repay: 'conditional',
+      who: {
+        ja: '児童養護施設・児童自立支援施設・児童心理治療施設・自立援助ホームを出た人、里親・ファミリーホームの委託が終わった人で、親などからお金の支えがない人。出てから5年以内の人。資格の費用は、施設や里親家庭にいる間も使えます。'
+      },
+      how: { ja: '施設を出た人（いる人）は、その施設に申し込みます。里親家庭の人は、担当の児童相談所に申し込みます。' },
+      where: { ja: '施設・児童相談所 → 千葉県社会福祉協議会' },
+      docs: ['貸付申込書', '施設長などの意見書（施設・児童相談所が用意）', '家賃支援費・資格取得支援費の所要額計算書'],
+      ask: ['自立支援資金貸付を使いたいです。私は対象になりますか？', '返さなくてよくなる条件を教えてください', '連帯保証人がいないときはどうなりますか？'],
+      caution: {
+        ja: '申しこんだ日より前の分は借りられません（さかのぼりなし）。返さなくてよくなるには、進学した人は卒業後1年以内に就職して5年間、働く人は借りはじめてから5年間、資格の費用は就職してから2年間、働き続けることが必要です。'
+      },
+      supporter: {
+        ja: '千葉県社会福祉協議会 福祉資金部（043-244-2945）。無利子（返還となった場合の延滞は年3.0%）。連帯保証人は原則必要だが、やむを得ず立てられない場合はなしでも可。申請は資金種類ごとに1回まで。退所時に不要だった人も、5年以内なら後から申請可。進学者の生活支援費に医療費実費を2年まで追加可。家賃支援費は住宅扶助額が上限（県内37,200〜46,000円）。就職者の家賃は2年まで。'
+      },
+      effort: 'high',
+      for: { stages: LEAVERS, paths: [], care: CARE, careOnly: true, age: null, areas: ['12'] },
+      deadline: {
+        ja: '出る日が決まったら早めに。出てから5年以内まで申し込めます。',
+        en: 'Start early once your leaving date is set; available up to 5 years after leaving.',
+        leaveMonths: -3, months: null, always: false
+      },
+      contact: { phone: '043-244-2945', phoneLabel: '千葉県社会福祉協議会 福祉資金部', line: null, chat: null, web: CB_JIRITSU, hours: null },
+      locations: [],
+      source: { org: '千葉県社会福祉協議会', url: CB_JIRITSU, checked: C },
+      eligibleBy: 'origin',
+      verifiedBy: V
+    },
+
+    {
+      id: 'chiba-care-shogakukin',
+      name: { ja: '児童養護施設等退所者に対する奨学金（千葉県・給付）', en: 'Chiba Scholarship for Care Leavers (grant)' },
+      hook: { ja: '大学や専門学校に行きたいけど、学費が心配', en: 'I want to go to university but worry about the cost' },
+      summary: {
+        ja: '千葉県の施設や里親家庭から大学・専門学校に進む人に、年30万円をくれる奨学金です。返さなくていいお金です。ほかの奨学金といっしょに使えて、卒業後の進路にも決まりはありません。',
+        en: 'A Chiba grant of ¥300,000 a year for young people in care in Chiba who go on to university or vocational school. No repayment, can be combined with other scholarships, and no conditions on your career after graduating.'
+      },
+      cat: ['education', 'money'],
+      kind: 'grant', basis: 'pref', pref: '12', right: false,
+      amount: { ja: '年30万円（月2万5,000円分。6か月分ずつ年2回）', en: '¥300,000/year (¥25,000/month, paid twice a year)' },
+      repay: 'none',
+      who: {
+        ja: '千葉県（千葉市・船橋市もふくむ）が措置・委託している、児童養護施設・児童自立支援施設・児童心理治療施設・自立援助ホーム・里親・ファミリーホームの人で、出るときに令和9年4月から大学・短大・高専・専門学校・職業能力開発施設などに進学したい人。お金の事情で進学がむずかしい人。'
+      },
+      how: { ja: '申請書（様式1）と推薦書（様式2）を、受付期間内に千葉県 児童家庭課へ郵送します。施設や里親の担当の人に相談しながら準備しよう。' },
+      where: { ja: '千葉県 健康福祉部 児童家庭課 虐待防止対策室（郵送）' },
+      docs: ['奨学金申請書（様式1）', '奨学金推薦書（様式2）', '選ばれたあと: 千葉県社会福祉協議会への申請書と誓約書', '入学後: 学業状況報告書'],
+      ask: ['この奨学金に申しこみたいです。推薦書はだれが書きますか？', 'JASSOの奨学金といっしょに使えますか？', '結果はいつわかりますか？'],
+      caution: { ja: '進学できなかったときは、もらえません。選ばれた理由は教えてもらえません。' },
+      supporter: { ja: '千葉県 児童家庭課 虐待防止対策室 奨学金担当（043-223-2357）。令和8年度募集要項（令和8年7月）: 予約型、受付 令和8年11月2日〜12月18日（消印有効）、2月下旬に書面で通知。選定は申請書・推薦書・児童相談所長の意見をもとに児童家庭課長が決定。給付事務は千葉県社会福祉協議会。寄付金が原資（令和8年度入学者は応募18人・給付18人）。' },
+      effort: 'mid',
+      for: { stages: ['hs3'], paths: ['study'], care: CARE, careOnly: true, age: null, areas: ['12'] },
+      deadline: {
+        ja: '令和8年11月2日〜12月18日（消印有効）',
+        en: 'Nov 2 – Dec 18, 2026 (postmarked)',
+        leaveMonths: null, months: [11, 12], always: false
+      },
+      contact: { phone: '043-223-2357', phoneLabel: '千葉県 児童家庭課 虐待防止対策室（奨学金担当）', line: null, chat: null, web: CB_SHOGAKU, hours: null },
+      locations: [],
+      source: { org: '千葉県（児童養護施設等退所者に対する奨学金制度）', url: CB_SHOGAKU, checked: C },
+      sources2: [{ org: '千葉県（令和8年度 募集要項）', url: CB_SHOGAKU_PDF }],
+      eligibleBy: 'origin',
+      verifiedBy: V
+    },
+
+    {
+      id: 'chiba-cans',
+      name: { ja: 'ちばアフターケアネットワークステーション（CANS）', en: 'Chiba Aftercare Network Station (CANS)' },
+      hook: { ja: '出たあとのくらしや仕事のこと、相談したい', en: 'I want to talk about life and work after leaving care' },
+      summary: {
+        ja: '千葉県と千葉市から頼まれて開いている、施設や里親家庭を出た人のための相談窓口です。スタッフ手づくりのごはんを食べながら話を聞いてくれます。無料です。',
+        en: 'A free support center for care leavers, run for Chiba Prefecture and Chiba City. Staff listen while you share a home-cooked meal.'
+      },
+      cat: ['consult', 'work'],
+      kind: 'place', basis: 'npo', pref: '12', right: false,
+      amount: { ja: '無料', en: 'Free' }, repay: null,
+      who: { ja: '千葉県や千葉市が措置した、児童養護施設などを出た（出る予定の）人と、里親の委託が終わった（終わる予定の）人。今どこに住んでいるかは問いません。' },
+      how: { ja: '電話で連絡します（時間外は留守番電話）。ホームページのフォームからも相談できます。' },
+      where: { ja: '千葉市中央区長洲（本千葉駅から歩いて約3分）・松戸支所' },
+      docs: [],
+      ask: ['初めてです。どんなことを相談できますか？', '仕事のことも相談できますか？', '松戸の支所にも行けますか？'],
+      caution: { ja: '開いているのは月〜金のおおむね9時〜18時です。' },
+      supporter: { ja: '千葉県・千葉市委託の社会的養護自立支援拠点事業。運営: 社会福祉法人生活クラブ（生活クラブ風の村、居住支援法人）。FAX 043-441-7391。県外の施設・里親・児相と連携できれば県外在住者も対象。' },
+      effort: 'low',
+      for: { stages: LEAVERS, paths: [], care: CARE, careOnly: true, age: null, areas: ['12'] },
+      deadline: { ja: 'いつでも相談できます', en: 'Anytime', leaveMonths: null, months: null, always: true },
+      contact: {
+        phone: '043-441-7390', phoneLabel: 'ちばアフターケアネットワークステーション', line: null, chat: 'https://kazenomura.jp/contactus/', web: CB_CANS,
+        hours: { ja: '月〜金 おおむね9時〜18時', en: 'Mon–Fri about 9–18' }
+      },
+      locations: [
+        loc('ちばアフターケアネットワークステーション（CANS）', '12100', '千葉県千葉市中央区長洲1-3-1 パークコート100 302号室', 35.603428, 140.120529, '043-441-7390', '月〜金 9:00–18:00ごろ', 'JR本千葉駅から歩いて約3分'),
+        loc('ちばアフターケアネットワークステーション 松戸支所', '12207', '千葉県松戸市松戸1495-56 ベルトピア松戸第6 601号室', 35.778313, 139.899155, '043-441-7390', '', 'JR・京成 松戸駅から歩いて約9分')
+      ],
+      source: { org: '社会福祉法人生活クラブ（生活クラブ風の村）', url: CB_CANS, checked: C },
+      eligibleBy: 'origin',
+      verifiedBy: V
+    },
+
+    {
+      id: 'chiba-jisou',
+      name: { ja: '児童相談所（千葉県・千葉市・船橋市）', en: 'Child Guidance Centers (Chiba)' },
+      hook: { ja: '施設や里親のこと、家のことを相談したい', jr: '家のことや、こわいことを相談したい', en: 'I want to talk about my care placement or my family' },
+      summary: {
+        ja: '18歳未満の子どもについて、子どもや家族からの相談を受ける公的な窓口です。施設や里親家庭に入ること・出ることも、児童相談所が担当しています。',
+        jr: '子どもと家族のことを相談できるところです。千葉県の「子ども家庭110番」は毎日、夜8時まで相談できます。',
+        en: 'Public offices for children under 18 and their families. They are also in charge of placements in and out of care.'
+      },
+      cat: ['consult', 'procedures'],
+      kind: 'service', basis: 'pref', pref: '12', right: false,
+      amount: null, repay: null,
+      who: { ja: '18歳未満の子どもと家族。住んでいる市町村で担当の児童相談所が決まっています。千葉市・船橋市は市の児童相談所です。' },
+      how: { ja: '担当の児童相談所に電話します（来所は予約制、平日9時〜17時）。電話相談は「子ども家庭110番」043-252-1152（毎日8時30分〜20時、千葉市・船橋市をのぞく）。' },
+      where: { ja: '住んでいる市町村を担当する児童相談所（地図で確認）' },
+      docs: [],
+      ask: ['施設を出る時期について相談したいです', '担当の児童福祉司さんと話したいです', '18歳をすぎても今のところにいられるか相談できますか？'],
+      caution: { ja: '令和8年に松戸・印旛・船橋市の児童相談所ができて、担当の区域が変わりました。地図で自分の担当を確かめてね。' },
+      supporter: { ja: '千葉県「児童相談所について」（令和8年10月16日更新）による。子ども家庭110番 043-252-1152: 一般相談 毎日8:30〜20:00（千葉市・船橋市を除く）、虐待の相談・通告 24時間（千葉市を除く）。千葉市児相の電話受付は平日9:00〜16:30（12〜13時除く）。船橋市児相（令和8年7月1日開所）の受付時間は未確認。' },
+      effort: 'low',
+      for: { stages: KIDS, paths: [], care: [], careOnly: false, age: null, areas: ['12'] },
+      deadline: null,
+      contact: {
+        phone: '043-252-1152', phoneLabel: '子ども家庭110番（千葉県）', line: null, chat: null, web: CB_JISOU,
+        hours: { ja: '子ども家庭110番: 毎日 8時30分〜20時（虐待は24時間）', en: 'Kodomo Katei 110: daily 8:30–20:00 (abuse reports 24h)' }
+      },
+      locations: CB_JISOU_LOCS,
+      source: { org: '千葉県（児童家庭課）', url: CB_JISOU, checked: C },
+      verifiedBy: V
+    },
+
+    {
+      id: 'chiba-towns-jiritsu-sodan',
+      name: { ja: '千葉県 町村の くらしの相談窓口（自立相談支援）', en: 'Chiba towns: living & work support desks' },
+      hook: { ja: 'お金・仕事・住まいのこと、まとめて相談したい', en: 'I want to talk about money, work and housing in one place' },
+      summary: {
+        ja: '千葉県の町や村に住む人のための、お金・仕事・住まいの無料の相談窓口です。郡ごとに窓口があります。窓口に行けない人には、出向いて相談することもできます。',
+        en: 'Free desks for people living in Chiba\'s towns and villages, about money, work and housing, one for each district. Staff can come to you if you cannot visit.'
+      },
+      cat: ['consult', 'money', 'housing', 'work'],
+      kind: 'service', basis: 'pref', pref: '12', right: false,
+      townsOnly: true,
+      amount: { ja: '相談は無料', en: 'Free' }, repay: null,
+      who: { ja: '千葉県の町村に住んでいて、生活に困っている人。生活保護を受けている人はのぞきます。' },
+      how: { ja: '住んでいる郡の窓口に電話します。印旛郡（酒々井町・栄町）043-308-6332／香取郡 0478-50-1919／山武郡 0475-77-7532／長生郡 0475-36-3013／夷隅郡 0470-64-6380／安房郡（鋸南町）0470-28-5667。' },
+      where: { ja: 'さかえ・しすいワーク・ライフサポートセンター／香取CCC／さんぶ生活相談センターリンクサポート／長生ひなた／夷隅ひなた／ひだまり' },
+      docs: [],
+      ask: KONKYU_ASK,
+      caution: { ja: '市に住んでいる人は、市の窓口が担当です。' + KONKYU_FOOT },
+      supporter: { ja: KONKYU_SUP + ' 千葉県「生活困窮者自立支援制度について」（令和8年4月10日更新）の自治体別相談窓口一覧による。町村部の窓口の住所・受付時間は県ページに記載なし。' },
+      effort: 'low',
+      for: { stages: NOT_JR, paths: [], care: [], careOnly: false, age: null, areas: CB_TOWN_CODES },
+      deadline: { ja: 'いつでも相談できます', en: 'Anytime', leaveMonths: null, months: null, always: true },
+      contact: { phone: null, phoneLabel: null, line: null, chat: null, web: CB_KONKYU, hours: null },
+      locations: [],
+      source: { org: '千葉県（生活困窮者自立支援制度について）', url: CB_KONKYU, checked: C },
+      eligibleBy: 'residence',
+      verifiedBy: V
+    },
+
+    {
+      id: 'chiba-city-jiritsu-sodan',
+      name: { ja: '千葉市 生活自立・仕事相談センター（くらしの相談）', en: 'Chiba City Life & Work Support Centers' },
+      hook: { ja: 'お金・仕事・住まいのこと、まとめて相談したい', en: 'I want to talk about money, work and housing in one place' },
+      summary: {
+        ja: '千葉市に住む人のための、お金・仕事・住まいの無料の相談窓口です。6つの区にあり、どのセンターでも相談できます。あなただけの支援プランをいっしょに作ってくれます。',
+        en: 'Free centers for Chiba City residents about money, work and housing, one in each of the 6 wards; you can use any of them. They make a support plan with you.'
+      },
+      cat: ['consult', 'money', 'housing', 'work'],
+      kind: 'service', basis: 'local', pref: '12', right: false,
+      amount: { ja: '相談は無料', en: 'Free' }, repay: null,
+      who: { ja: '千葉市に住んでいて、生活や仕事に困っている人。住んでいる区とちがうセンターでも相談できます。' },
+      how: { ja: '近くのセンターに電話するか、行って相談します。' },
+      where: { ja: '中央・花見川・稲毛・若葉・緑・美浜の各センター（地図で確認）' },
+      docs: [],
+      ask: KONKYU_ASK,
+      caution: { ja: KONKYU_FOOT },
+      supporter: { ja: KONKYU_SUP + ' 千葉市は6区に生活自立・仕事相談センター（運営は千葉市社会福祉協議会・ワーカーズコープ・NPO法人リンク など）。就労準備・家計改善・就労訓練・一時生活支援あり。' },
+      effort: 'low',
+      for: { stages: NOT_JR, paths: [], care: [], careOnly: false, age: null, areas: ['12100'] },
+      deadline: { ja: 'いつでも相談できます', en: 'Anytime', leaveMonths: null, months: null, always: true },
+      contact: {
+        phone: null, phoneLabel: null, line: null, chat: null, web: CC_KONKYU,
+        hours: { ja: '平日 9時〜17時', en: 'Weekdays 9:00–17:00' }
+      },
+      locations: CC_LOCS,
+      source: { org: '千葉市（生活自立・仕事相談センター）', url: CC_KONKYU, checked: C },
+      sources2: [{ org: '千葉県（生活困窮者自立支援制度について）', url: CB_KONKYU }],
+      eligibleBy: 'residence',
+      verifiedBy: V
+    },
+
+    {
+      id: 'chiba-shogaku-shikin',
+      name: { ja: '千葉県奨学資金（高校生の貸付）', en: 'Chiba High School Scholarship Loan' },
+      hook: { ja: '高校の生活費や教材費が足りない', jr: '高校に行くお金が足りるか心配', en: 'I need money for high school costs' },
+      summary: {
+        ja: '高校生に毎月お金を貸してくれる千葉県の奨学金です。利息はありません。中3の秋に予約すると、高校1年の4月分から借りられます。',
+        jr: '高校生になったら毎月お金を借りられる、千葉県の奨学金です。利息はありませんが、あとで返すお金です。中3の10〜11月ごろに予約できます。',
+        en: 'A Chiba interest-free monthly loan for high school students. Apply in autumn of junior high year 3 to receive it from April of year 1.'
+      },
+      cat: ['education', 'money'],
+      kind: 'loan', basis: 'pref', pref: '12', right: false,
+      amount: {
+        ja: '月1万円か2万円（私立は3万円も）。家から通わない人は月1万5千円・2万5千円（私立は3万5千円も）',
+        en: '¥10k or ¥20k/month (¥30k private); living away from home ¥15k/¥25k (¥35k private)'
+      },
+      repay: 'yes',
+      who: { ja: '高校などに通う人（予約は中学生）で、保護者が千葉県に住んでいる人。お金の事情で勉強を続けるのがむずかしい人。' },
+      how: { ja: '中3の人は10〜11月ごろ、中学校を通して予約します。高校生は4月上旬〜5月上旬（一次）、10月（二次）に高校を通して申しこみます。家計が急に変わったときはいつでも。' },
+      where: { ja: '中学校・高校の担当の先生や事務室 → 千葉県教育委員会 財務課' },
+      docs: ['前の年の所得証明書など、収入がわかる書類', '学校から配られる申請書類'],
+      ask: ['予約募集の締切はいつですか？', '連帯保証人と保証人を立てられないときは、どうすればいいですか？', '返すのはいつから、毎月いくらくらいですか？'],
+      caution: { ja: '返すお金です。連帯保証人（親権者）と保証人（別にくらす大人）が必要です。母子・父子・寡婦福祉資金（修学資金）を借りている人は使えません。' },
+      supporter: { ja: '千葉県教育委員会 企画管理部財務課 育英班（0120-23-1008）。貸付終了の翌月から6か月据置後、10〜12年以内で返還（例: 月2万円×3年→10年以内、年7.2万円程度）。収入基準の目安: 給与所得4人世帯で総収入768万円など。高専は対象外（JASSOへ）。社会的養護の子どもは保証人要件を施設・児相と早めに確認。' },
+      effort: 'mid',
+      for: { stages: ['jhs3', 'hs12', 'hs3'], paths: [], care: [], careOnly: false, age: { min: 14, max: 19 }, areas: ['12'] },
+      deadline: {
+        ja: '中3の予約は10〜11月ごろ。高校生は4月上旬〜5月上旬と10月（締切は学校ごとにちがいます）',
+        en: 'Junior high advance: around Oct–Nov; high school: April–early May and October (school deadlines vary)',
+        leaveMonths: null, months: [10, 11, 4, 5], always: false
+      },
+      contact: { phone: '0120-23-1008', phoneLabel: '千葉県教育委員会 財務課 育英班', line: null, chat: null, web: CB_SHIKIN, hours: null },
+      locations: [],
+      source: { org: '千葉県教育委員会（千葉県奨学資金の貸付け）', url: CB_SHIKIN, checked: C },
+      verifiedBy: V
+    },
+
+    {
+      id: 'chiba-saposute',
+      name: { ja: '地域若者サポートステーション（千葉県内8か所）', en: 'Youth Support Stations in Chiba (8 places)' },
+      hook: { ja: '働くことに自信がない。近くで相談したい', en: 'I am not confident about working. I want help nearby' },
+      summary: {
+        ja: '働きはじめる前の準備から手伝ってくれる無料の窓口「サポステ」の、千葉県内の場所です。',
+        en: 'Where to find "Saposute" in Chiba: free centers that help you get ready to work.'
+      },
+      cat: ['work', 'consult'],
+      kind: 'service', basis: 'national', pref: '12', right: false,
+      amount: { ja: '無料', en: 'Free' }, repay: null,
+      who: { ja: '15〜49歳で、今は働いていない・学校に行っていない人と、その家族。' },
+      how: { ja: '近くのサポステに電話して予約してから行きます。' },
+      where: { ja: '千葉市（幕張）・市川・柏・成田・木更津・船橋・茂原・松戸' },
+      docs: [],
+      ask: ['まず見学や話を聞くだけでもいいですか？', '職場体験はできますか？'],
+      caution: { ja: '開いている時間はサポステごとにちがいます。行く前に電話で確かめてください。' },
+      supporter: { ja: '厚生労働省の委託事業。所在地・電話は厚生労働省「全国のサポステ」で確認（受付時間は各サポステのサイトで要確認）。ちば南東部は事務所（茂原503）と相談場所が別。' },
+      effort: 'low',
+      for: { stages: ['left0', 'left1', 'nohs'], paths: ['work', 'unsure'], care: [], careOnly: false, age: { min: 15, max: 49 }, areas: ['12'] },
+      deadline: { ja: 'いつでも', en: 'Any time', leaveMonths: null, months: null, always: true },
+      contact: { phone: null, phoneLabel: null, line: null, chat: null, web: SAPO_NET, hours: null },
+      locations: [
+        loc('ちば地域若者サポートステーション（ちば仕事プラザ内）', '12100', '千葉県千葉市美浜区幕張西4-1-10', 35.659996, 140.041367, '043-351-5531', '', ''),
+        loc('いちかわ・うらやす若者サポートステーション', '12203', '千葉県市川市相之川4-14-12 水野ビル3階', 35.672508, 139.900269, '047-711-3820', '', ''),
+        loc('かしわ地域若者サポートステーション', '12217', '千葉県柏市柏下66-1 柏市保健勤労会館2階', 35.866917, 139.986542, '04-7100-1940', '', ''),
+        loc('ちば北総地域若者サポートステーション（成田市勤労会館内）', '12211', '千葉県成田市不動ヶ岡1113-1', 35.772415, 140.309860, '0476-24-7880', '', ''),
+        loc('ちば南部地域若者サポートステーション', '12206', '千葉県木更津市富士見1-1-1 たちより館2階', 35.380558, 139.925842, '0438-23-3711', '', ''),
+        loc('ふなばし地域若者サポートステーション', '12204', '千葉県船橋市湊町2-1-2 Y.M.A.Officeビル5階', 35.695396, 139.984558, '047-437-6003', '', ''),
+        loc('ちば南東部地域若者サポートステーション（相談・グループワーク）', '12210', '千葉県茂原市高師291-5 グランヴェール高師206号', 35.431686, 140.297745, '0475-23-5515', '', '事務所は茂原市茂原503'),
+        loc('まつど若者サポートステーション', '12207', '千葉県松戸市本町7-10 ちばぎん松戸ビル8階', 35.784664, 139.898209, '047-703-8301', '', '')
+      ],
+      source: { org: '厚生労働省（全国のサポステ）', url: SAPO_NET, checked: C },
+      verifiedBy: V
+    },
+
+    {
+      id: 'chiba-lighthouse',
+      name: { ja: 'ライトハウスちば（千葉県子ども・若者総合相談センター）', en: 'Lighthouse Chiba (Chiba Youth Consultation Center)' },
+      hook: { ja: 'どこに相談すればいいかわからない', jr: '学校に行けない。だれに相談したらいいかわからない', en: 'I don\'t know who to ask' },
+      summary: {
+        ja: 'ひきこもり、ニート、不登校など、どこに相談したらいいかわからないときの千葉県の無料の窓口です。電話で話を聞いて、合う支援先を教えてくれます。家族からの相談もできます。',
+        jr: '学校に行けない、家から出られない。そんなとき電話で話を聞いてくれる千葉県の窓口です。家族や先生からの相談もできます。',
+        en: 'Chiba\'s free first stop when you don\'t know where to go, for issues like withdrawal, not working or not attending school. They listen by phone and point you to the right support.'
+      },
+      cat: ['consult'],
+      kind: 'hotline', basis: 'pref', pref: '12', right: false,
+      amount: { ja: '無料', en: 'Free' }, repay: null,
+      who: { ja: '千葉県に住む、おおむね39歳までの子ども・若者と、その家族や関係する人。' },
+      how: { ja: '043-420-8066 に電話します。会って話したいときは、電話・メール・ホームページ・ファックスで予約してから行きます。' },
+      where: { ja: '電話（面接は 千葉県都町合同庁舎4階・予約制）' },
+      docs: [],
+      ask: ['どこに相談したらいいかわからなくて、電話しました', '家から出るのがつらいです。何から始めればいいですか？'],
+      caution: { ja: '月曜と年末年始は休みです（月曜が祝日のときは次の火曜が休み）。' },
+      supporter: { ja: '千葉県が子ども・若者育成支援推進法にもとづき設置（平成24年〜）。面接相談は週4日程度。義務教育終了後〜30歳前後向けの支援プログラム（木・金・日、要予約、6か月めど）、保護者の「親の会」（年6回）あり。メール lighthouse@abeam.ocn.ne.jp、FAX 043-420-8023。' },
+      effort: 'low',
+      for: { stages: ALL_ST, paths: [], care: [], careOnly: false, age: null, areas: ['12'] },
+      deadline: null,
+      contact: {
+        phone: '043-420-8066', phoneLabel: 'ライトハウスちば', line: null, chat: null, web: CB_LIGHT,
+        hours: { ja: '火〜日 10時〜17時', en: 'Tue–Sun 10:00–17:00' }
+      },
+      locations: [
+        loc('千葉県子ども・若者総合相談センター ライトハウスちば（千葉県都町合同庁舎4階）', '12100', '千葉県千葉市中央区都町2-1-12', 35.611534, 140.135941, '043-420-8066', '火〜日 10:00–17:00', '面接は予約制。JR千葉駅から京成バス「千葉テレビ入口」下車すぐ')
+      ],
+      source: { org: '千葉県（ライトハウスちば）', url: CB_LIGHT, checked: C },
+      verifiedBy: V
+    },
+
+    {
+      id: 'chiba-kosapo-24h',
+      name: { ja: '子どもと親のサポートセンター（千葉県 24時間電話相談）', en: 'Chiba Child & Parent Support Center (24h phone)' },
+      hook: { ja: '夜でも、今すぐだれかと話したい', jr: 'いじめや学校のことで、今すぐ話したい', en: 'I need to talk to someone right now, even at night' },
+      summary: {
+        ja: '学校や家のこと、いじめなどの悩みを、24時間いつでも無料で電話できる千葉県教育委員会の窓口です。メールでも相談できます。',
+        jr: 'いじめ、学校、家のこと。24時間いつでも、無料で電話できる千葉県の窓口です。',
+        en: 'Chiba Board of Education\'s free 24-hour phone line for worries about school, home or bullying. Email is available too.'
+      },
+      cat: ['consult'],
+      kind: 'hotline', basis: 'pref', pref: '12', right: false,
+      amount: { ja: '無料（フリーダイヤル）', en: 'Free (toll-free)' }, repay: null,
+      who: { ja: '千葉県の小・中・高校生などの児童生徒と、その保護者。' },
+      how: { ja: '0120-415-446 に電話します（千葉県内からかけてください）。メール saposoudan@chiba-c.ed.jp でも相談できます。' },
+      where: { ja: '電話・メール' },
+      docs: [],
+      ask: ['学校に行きたくありません', 'いじめのことを、だれにも言えません'],
+      caution: { ja: '「24時間子供SOSダイヤル」0120-0-78310 も、千葉県内からはここにつながります。' },
+      supporter: { ja: '千葉県教育委員会 子どもと親のサポートセンター。電話・メール24時間。来所相談は予約制（平日9〜17時、新規は保護者から電話申込）。ワンストップ・オンライン相談（Zoom・匿名チャット可）、小4〜高校生向けSNS相談もある。' },
+      effort: 'low',
+      for: { stages: ['jhs12', 'jhs3', 'hs12', 'hs3'], paths: [], care: [], careOnly: false, age: { min: null, max: 18 }, areas: ['12'] },
+      deadline: null,
+      contact: {
+        phone: '0120-415-446', phoneLabel: '子どもと親のサポートセンター', line: null, chat: null, web: CB_KOSAPO,
+        hours: { ja: '24時間', en: '24 hours' }
+      },
+      locations: [],
+      source: { org: '千葉県教育委員会（子どもと親のサポートセンター相談窓口）', url: CB_KOSAPO, checked: C },
+      verifiedBy: V
+    }
+  );
+})();
+;
+/* ---- data/programs-kanto-n.js ---- */
+/* 巣立ちマップ v7 — data/programs-kanto-n.js (DATA-N)
+ * 北関東（茨城県 08・栃木県 09・群馬県 10）の支援と、水戸市・宇都宮市・前橋市・高崎市の生活の相談窓口。
+ * すべて 2026-10-26 に、source.url の公式ページ（または県から受託した運営団体のページ）を読んで確認しました。
+ * ページに書いていないこと（金額・時間・住所など）は入れていません（推測で埋めていません）。
+ * 座標は 国土地理院 住所検索API で住所から求め、逆ジオコーダーで市町村コードを確かめました。
+ * basis: 'pref' = 県の制度（pref: '08' など）／'local' = 市の制度（for.areas: ['08201'] など）。
+ */
+(function () {
+  var SM = window.SM = window.SM || {};
+  SM.data = SM.data || {};
+  SM.data.programs = SM.data.programs || [];
+
+  var C = '2026-10-26';
+  var V = 'Economix JP';
+  var CARE = ['facility', 'foster', 'jhome'];
+  var NOT_JR = ['hs12', 'hs3', 'left0', 'left1', 'nohs'];                  // 中学生には出さない
+  var KIDS = ['jhs12', 'jhs3', 'hs12', 'hs3'];                             // 中学生・高校生
+  var ALL_ST = ['jhs12', 'jhs3', 'hs12', 'hs3', 'left0', 'left1', 'nohs']; // 中学生にも出す
+
+  function src(org, url) { return { org: org, url: url, checked: C }; }
+  function loc(name, area, addr, lat, lng, phone, hours, note) {
+    return { name: name, area: area, addr: addr, lat: lat, lng: lng, phone: phone, hours: hours || '', note: note || '' };
+  }
+
+  /* ---- 公式ページ ---- */
+  var IB_SHIKIN = 'https://www.ibaraki-welfare.or.jp/work-training/%e4%bf%ae%e5%ad%a6%e8%b3%87%e9%87%91%e7%ad%89%e8%b2%b8%e4%bb%98%e4%ba%8b%e6%a5%ad/%e5%85%90%e7%ab%a5%e9%a4%8a%e8%ad%b7%e6%96%bd%e8%a8%ad%e9%80%80%e6%89%80%e8%80%85%e7%ad%89%e8%87%aa%e7%ab%8b%e6%94%af%e6%8f%b4%e8%b3%87%e9%87%91%e8%b2%b8/';
+  var IB_SHIKIN_FLYER = 'https://www.ibaraki-welfare.or.jp/home/wp-content/uploads/2026/03/9ed37837bf025b79b101b04f6db5e0c4.pdf';
+  var IB_JISOU = 'https://www.pref.ibaraki.jp/hokenfukushi/fukusise/sodan/fukuso/madoguchi.html';
+  var IB_JISOU2 = 'https://www.pref.ibaraki.jp/bugai/josei/seishonen/sodan2/pc/ppage632111101.html';
+  var IB_GYAKU = 'https://www.pref.ibaraki.jp/bugai/josei/seishonen/sodan2/pc/ppage631100000.html';
+  var IB_SOUDAN = 'https://www.pref.ibaraki.jp/hokenfukushi/yakumu/mayaku/overdose.html';
+  var IB_KODOMO = 'https://kyoiku.pref.ibaraki.jp/gakko/kodomo-hotline/';
+  var IB_KOKORO = 'https://www.pref.ibaraki.jp/hokenfukushi/shofuku/seishin/snssoudan.html';
+  var IB_HIKI = 'https://www.pref.ibaraki.jp/bugai/josei/seishonen/sodan2/pc/ppage642001000.html';
+  var IB_KONKYU = 'https://www.pref.ibaraki.jp/hokenfukushi/fukushi/hogo/konkyuusya/konkyusya-seido.html';
+  var IB_KONKYU_PDF = 'https://www.pref.ibaraki.jp/hokenfukushi/fukushi/hogo/konkyuusya/documents/jiritsusoudanshienkikan.pdf';
+  var MITO = 'https://www.city.mito.lg.jp/page/3455.html';
+  var TG_JISOU = 'https://www.pref.tochigi.lg.jp/e68/welfare/kodomo/kosodatesoudan/jisouichi.html';
+  var TG_SOUDAN = 'https://www.pref.tochigi.lg.jp/c01/advice/kurashi/seishounen/d001_soudan.html';
+  var TG_TEL = 'https://www.pref.tochigi.lg.jp/e68/welfare/kodomo/kosodatesoudan/telesou.html';
+  var TG_SNS = 'https://www.pref.tochigi.lg.jp/m09/zidou-seitoshido/2026sns.html';
+  var TG_KOKORO = 'https://www.pref.tochigi.lg.jp/e05/02ssnskokoronosoudan.html';
+  var TG_YC = 'https://www.pref.tochigi.lg.jp/e06/yc_sns.html';
+  var TG_JOSEI = 'https://www.pref.tochigi.lg.jp/c07/joseishien/linesoudan.html';
+  var TG_POLARIS = 'https://www.pref.tochigi.lg.jp/e12/31polarisu.html';
+  var TG_KONKYU = 'https://www.pref.tochigi.lg.jp/e12/seikatusienn.html';
+  var TG_KYUFU = 'https://www.pref.tochigi.lg.jp/m01/education/gakkoukyouiku/koutou/kyuufukin_k.html';
+  var UTSU = 'https://www.city.utsunomiya.lg.jp/_res/projects/default_project/_page_/001/030/017/annaitirasir7.pdf';
+  var GM_SHIKIN = 'https://www.pref.gunma.jp/03/bm0100021.html';
+  var GM_JISOU = 'https://www.pref.gunma.jp/page/1816.html';
+  var GM_HOT = 'https://www.pref.gunma.jp/03/p08210002.html';
+  var GM_LINE = 'https://www.pref.gunma.jp/page/3658.html';
+  var GM_KONKYU = 'https://www.pref.gunma.jp/02/d0100089.html';
+  var GM_ASUNOWA = 'https://www.pref.gunma.jp/site/houdou/774994.html';
+  var GM_KYUFU = 'https://www.pref.gunma.jp/03/a3500024.html';
+  var IPPO = 'https://youngassist.com/support.php';
+  var MAEBASHI = 'https://www.city.maebashi.gunma.jp/soshiki/fukushibu/shakaifukushi/gyomu/3/1/1/5469.html';
+  var MAEBASHI_SHAKYO = 'https://www.mae-shakyo.or.jp/sien/maebashi/maebashi.html';
+  var TAKASAKI = 'https://www.city.takasaki.gunma.jp/page/4812.html';
+  var TAKASAKI2 = 'https://www.city.takasaki.gunma.jp/page/4156.html';
+  var SAPO = 'https://saposute-net.mhlw.go.jp/station.html';
+  var SAPO_ABOUT = 'https://saposute-net.mhlw.go.jp/about.html';
+  function sapoUrl(slug) { return 'https://saposute-net.mhlw.go.jp/station_detail/' + slug + '.html'; }
+
+  var WD_JISOU = '平日 8:30–17:15';
+
+  /* ---- 児童相談所（各県のページより） ---- */
+  var IB_JISOU_LOCS = [
+    loc('茨城県 中央児童相談所', '08201', '茨城県水戸市水府町864-16', 36.380070, 140.483414, '029-221-4150', WD_JISOU,
+      '担当: 水戸市・笠間市・ひたちなか市・常陸大宮市・那珂市・小美玉市・茨城町・城里町・大洗町・東海村・大子町'),
+    loc('茨城県 日立児童相談所', '08202', '茨城県日立市弁天町3-4-7', 36.587189, 140.650620, '0294-22-0294', WD_JISOU,
+      '担当: 日立市・常陸太田市・高萩市・北茨城市'),
+    loc('茨城県 鉾田児童相談所（県鉾田合同庁舎内）', '08234', '茨城県鉾田市鉾田1367-3', 36.159538, 140.516907, '0291-33-4119', WD_JISOU,
+      '担当: 鹿嶋市・潮来市・神栖市・行方市・鉾田市'),
+    loc('茨城県 土浦児童相談所', '08203', '茨城県土浦市下高津3-14-5', 36.073853, 140.188202, '029-821-4595', WD_JISOU,
+      '担当: 土浦市・石岡市・龍ケ崎市・取手市・牛久市・つくば市・守谷市・稲敷市・かすみがうら市・つくばみらい市・美浦村・阿見町・河内町・利根町'),
+    loc('茨城県 筑西児童相談所（筑西合同庁舎分庁舎）', '08227', '茨城県筑西市二木成615', 36.290054, 139.975220, '0296-24-1614', WD_JISOU,
+      '担当: 古河市・結城市・下妻市・常総市・筑西市・坂東市・桜川市・八千代町・五霞町・境町')
+  ];
+  var TG_JISOU_LOCS = [
+    loc('栃木県 中央児童相談所', '09201', '栃木県宇都宮市野沢町4-1', 36.605080, 139.857635, '028-665-7830', WD_JISOU,
+      '担当: 宇都宮市・鹿沼市・日光市・真岡市・上三川町・益子町・茂木町・市貝町・芳賀町。面接・訪問は予約制'),
+    loc('栃木県 県南児童相談所', '09203', '栃木県栃木市沼和田町17-22', 36.369133, 139.733215, '0282-24-6121', WD_JISOU,
+      '担当: 足利市・栃木市・佐野市・小山市・下野市・壬生町・野木町。栃木駅から歩いて7分'),
+    loc('栃木県 県北児童相談所', '09213', '栃木県那須塩原市南町7-20', 36.880432, 139.985657, '0287-36-1058', WD_JISOU,
+      '担当: 大田原市・矢板市・那須塩原市・さくら市・那須烏山市・塩谷町・高根沢町・那須町・那珂川町。JR西那須野駅から歩いて10分')
+  ];
+  var GM_JISOU_LOCS = [
+    loc('群馬県 中央児童相談所', '10201', '群馬県前橋市野中町360-1', 36.377579, 139.110077, '027-261-1000', '', '担当: 前橋市・伊勢崎市・佐波郡（玉村町）'),
+    loc('群馬県 北部児童相談所', '10208', '群馬県渋川市金井394', 36.511509, 138.977951, '0279-20-1010', '',
+      '担当: 沼田市・渋川市・北群馬郡・吾妻郡・利根郡。地図の位置は「渋川市金井」地区の中心（番地までは出ません）'),
+    loc('群馬県 西部児童相談所（富岡合同庁舎内）', '10210', '群馬県富岡市田島343-1', 36.248341, 138.861115, '0274-67-5575', '',
+      '担当: 藤岡市・富岡市・安中市・多野郡・甘楽郡。令和8年4月1日に高崎市から移転しました'),
+    loc('群馬県 東部児童相談所', '10205', '群馬県太田市新田木崎町369-5', 36.274830, 139.307846, '0276-57-6111', '', '担当: 桐生市・太田市・館林市・みどり市・邑楽郡'),
+    loc('高崎市 児童相談所', '10202', '群馬県高崎市問屋町4-4-1', 36.347328, 139.015701, '027-345-5190', '', '担当: 高崎市（高崎市が運営）')
+  ];
+
+  /* ---- 生活の相談（自立相談支援）: 共通の文 ---- */
+  var KONKYU_ASK = [
+    '施設（里親家庭）を出たばかりで、生活費と家賃が心配です。使える制度はありますか？',
+    '住居確保給付金（家賃の給付金）の対象になるか、調べてもらえますか？',
+    'お金のやりくりの相談もできますか？'
+  ];
+  var KONKYU_SUP = '生活困窮者自立支援法にもとづく自立相談支援機関。住居確保給付金・家計改善支援・就労準備支援などの入口。社会的養護経験者で住まいや家計に不安がある場合、早めの同行がおすすめ。';
+  var KONKYU_CAUTION = '相談しただけでお金がもらえるわけではありません。でも、使える制度をいっしょに探してくれる「最初の入口」です。生活保護を受けている人は、担当のケースワーカーに相談します。';
+
+  SM.data.programs.push(
+
+    /* ═════════════════ 茨城県（08） ═════════════════ */
+
+    {
+      id: 'ibaraki-jiritsu-shikin',
+      name: { ja: '自立支援資金貸付（茨城県）', en: 'Independence Support Loan (Ibaraki)' },
+      hook: { ja: '家賃や生活費、資格のお金が足りない', en: 'I need help with rent, living costs or a licence' },
+      summary: {
+        ja: '茨城県内の施設や里親家庭を出た人が、生活費・家賃・資格のお金を利息なしで借りられます。決まった年数働き続けると、返さなくてよくなります。窓口は茨城県社会福祉協議会です。',
+        en: 'Interest-free loans for living costs, rent and licences for people who left care in Ibaraki. Forgiven if you keep working for a set number of years. Run by the Ibaraki Council of Social Welfare.'
+      },
+      cat: ['money', 'housing', 'education'],
+      kind: 'loan_forgivable', basis: 'pref', pref: '08', right: false,
+      amount: {
+        ja: '生活費 月5万円まで（進学した人）・家賃 月35,400円まで（水戸・日立・土浦・古河・取手市。ほかの市町村は34,000円）・資格の費用 25万円まで',
+        en: 'Living ¥50k/month (students); rent up to ¥35,400/month (¥34,000 outside the five largest cities); licences up to ¥250k'
+      },
+      repay: 'conditional',
+      who: { ja: '茨城県内の児童養護施設などを出た人、または里親家庭などの委託が終わった人で、親などからお金の支えがない人。生活費は大学・専門学校などに通う人、家賃は進学した人と働いている人が対象。資格の費用は、施設や里親家庭にいる間でも使えます。出てから5年以内まで申し込めます。' },
+      how: { ja: 'まず施設や里親の担当の人と相談します。申込書などの書類をそろえて施設長に出すと、施設長が推薦書をつけて、決められた期間に県社協へ送ります。' },
+      where: { ja: '施設・里親の担当の人 → 茨城県社会福祉協議会' },
+      docs: ['自立支援資金貸付申請書（第1号様式）', '施設長の推薦書（施設が用意）', '申請チェックリストにある書類（県社協のページからダウンロード）'],
+      ask: ['自立支援資金貸付を使いたいです。私は対象になりますか？', '今の申込み期間はいつまでですか？', '連帯保証人がいないときは、どうすればいいですか？'],
+      caution: { ja: '申込みは年3回の期間に分かれています（資格の費用はいつでも）。期間の外でも、必要になったら相談できます。返さなくてよくなるには、進学した人は卒業後1年以内に就職して5年、働く人は5年、資格の人は2年、働き続けることが必要です。それぞれの費用の申請は1回までです。' },
+      supporter: { ja: '茨城県社協 福祉人材・研修部 029-350-8366。家賃支援費の上限は住宅扶助相当（水戸・日立・土浦・古河・取手 35,400円、その他 34,000円）。進学者は定期通院の医療費実費を貸付期間のうち2年間加算可。就職者の家賃は貸付開始月から2年まで。連帯保証人1名が原則だが、立てられない場合は施設長（里親委託は児童相談所長）の意見書等で申請可。令和8年度の受付: 第1期 4/1〜5/8、第2期 8/3〜9/11、第3期 12/1〜令和9年1/29（必着）。' },
+      effort: 'high',
+      for: { stages: ['hs3', 'left0', 'left1'], paths: [], care: CARE, careOnly: true, age: null, areas: ['08'] },
+      deadline: {
+        ja: '令和8年度は 4月1日〜5月8日・8月3日〜9月11日・12月1日〜令和9年1月29日（必着）。資格の費用は1月29日まで随時。',
+        en: '2026 rounds: Apr 1–May 8, Aug 3–Sep 11, Dec 1–Jan 29 (licence costs: anytime until Jan 29)',
+        leaveMonths: -3, months: [4, 5, 8, 9, 12, 1], always: false
+      },
+      contact: { phone: '029-350-8366', phoneLabel: '茨城県社会福祉協議会 福祉人材・研修部', line: null, chat: null, web: IB_SHIKIN, hours: null },
+      locations: [],
+      source: src('茨城県社会福祉協議会', IB_SHIKIN),
+      sources2: [{ org: '茨城県社会福祉協議会（制度のチラシPDF）', url: IB_SHIKIN_FLYER }],
+      verifiedBy: V
+    },
+
+    {
+      id: 'ibaraki-jisou',
+      name: { ja: '児童相談所（茨城県）', en: 'Child Guidance Centers (Ibaraki)' },
+      hook: { ja: '施設や里親のこと、家のことを相談したい', en: 'I want to talk about my care placement or my family' },
+      summary: {
+        ja: '子どもと家族のことを、何でも相談できる県の窓口です。相談は無料で、秘密は守られます。施設や里親家庭に入ること・出ることも、児童相談所が担当しています。',
+        en: 'Free, confidential public offices for children and families. They also handle placements in and out of care.'
+      },
+      cat: ['consult', 'procedures'],
+      kind: 'service', basis: 'pref', pref: '08', right: false,
+      amount: { ja: '相談は無料', en: 'Free' }, repay: null,
+      who: { ja: '18歳未満の子どもと、その家族など。住んでいる市町村で、担当の児童相談所が決まっています。' },
+      how: { ja: '担当の児童相談所に電話します（平日 8時30分〜17時15分）。会って話したいときは、予約するとスムーズです。夜や休日は「189」へ。' },
+      where: { ja: '住んでいる市町村を担当する児童相談所（地図で確認）' },
+      docs: [],
+      ask: ['施設を出る時期について相談したいです', '担当の児童福祉司さんと話したいです', '家に帰りたくありません。どうしたらいいですか？'],
+      caution: { ja: '担当は住んでいる市町村で決まります。電話する前に、下の一覧で担当の児童相談所を確かめてね。' },
+      supporter: { ja: '県の相談窓口一覧（青少年家庭課）では土浦児童相談所は 029-821-4595（福祉相談センターのページでは 0298-21-4595 表記、同じ番号）。面談は予約優先。' },
+      effort: 'low',
+      for: { stages: ['jhs12', 'jhs3', 'hs12', 'hs3', 'nohs'], paths: [], care: [], careOnly: false, age: null, areas: ['08'] },
+      deadline: null,
+      contact: {
+        phone: '189', phoneLabel: '夜・休日は 189（虐待対応ダイヤル）', line: null, chat: null, web: IB_JISOU,
+        hours: { ja: '各児童相談所: 平日 8時30分〜17時15分', en: 'Weekdays 8:30–17:15' }
+      },
+      locations: IB_JISOU_LOCS,
+      source: src('茨城県（児童相談所相談窓口）', IB_JISOU),
+      sources2: [{ org: '茨城県 青少年と保護者のための相談窓口一覧（児童相談所）', url: IB_JISOU2 }],
+      verifiedBy: V
+    },
+
+    {
+      id: 'ibaraki-gyakutai-hotline',
+      name: { ja: 'い\u2060ば\u2060ら\u2060き虐待ホットライン', en: 'Ibaraki Child Abuse Hotline' },
+      hook: { ja: '家で、たたかれたり、ひどいことを言われたりする', en: 'Someone at home hits me or says terrible things' },
+      summary: {
+        ja: '子どもの虐待のことを、24時間・毎日相談できる茨城県の電話です。子ども本人からの相談も受けています。名前を言わなくても大丈夫です。',
+        en: 'Ibaraki\'s 24-hour hotline about child abuse, every day. Children themselves can call, and you can stay anonymous.'
+      },
+      cat: ['consult'],
+      kind: 'hotline', basis: 'pref', pref: '08', right: false,
+      amount: { ja: '無料', en: 'Free' }, repay: null,
+      who: { ja: '18歳未満の子どもの虐待のことなら、だれでも。子ども本人も相談できます。' },
+      how: { ja: '電話するだけです。名前を言わなくても大丈夫。専門の相談員が話を聞き、児童相談所が関係機関と連携して動きます。' },
+      where: { ja: '電話（24時間・休みなし）' },
+      docs: [],
+      ask: ['親にたたかれて、家に帰りたくありません', '家にいるのがこわいです。今日どこに行けばいいですか？'],
+      caution: { ja: '今すぐ危ないときは 110番 へ。相談した人の秘密は守られます。' },
+      supporter: { ja: '茨城県福祉部 青少年家庭課の所管。通報者の秘密は守られる。' },
+      effort: 'low',
+      for: { stages: ALL_ST, paths: [], care: [], careOnly: false, age: { min: 0, max: 17 }, areas: ['08'] },
+      deadline: null,
+      contact: {
+        phone: '0293-22-0293', phoneLabel: 'い\u2060ば\u2060ら\u2060き虐待ホットライン', line: null, chat: null, web: IB_GYAKU,
+        hours: { ja: '24時間・毎日', en: '24 hours, every day' }
+      },
+      locations: [],
+      source: src('茨城県（青少年と保護者のための相談窓口一覧）', IB_GYAKU),
+      verifiedBy: V
+    },
+
+    {
+      id: 'ibaraki-kodomo-hotline',
+      name: { ja: '子どもホットライン・い\u2060ば\u2060ら\u2060き子どもSNS相談', en: 'Ibaraki Kids Hotline & LINE chat' },
+      hook: { ja: '学校や家のこと、だれかに聞いてほしい', en: 'I want someone to listen about school or home' },
+      summary: {
+        ja: '茨城県の、子ども専用の相談です。電話は24時間。LINEやWebチャットは毎日17時〜22時。いじめ、友だち、家族、自分のことなど、何でも話せます。',
+        en: 'Ibaraki\'s help lines just for kids: phone 24 hours, LINE or web chat every day 17:00–22:00. Talk about bullying, friends, family or yourself.'
+      },
+      cat: ['consult'],
+      kind: 'hotline', basis: 'pref', pref: '08', right: false,
+      amount: { ja: '無料（通話料はかかります）', en: 'Free (call charges apply)' }, repay: null,
+      who: { ja: '電話・メール: 18歳までの子ども。SNS相談: 小学生・中学生・高校生。' },
+      how: { ja: '電話は 029-221-8181（24時間）。メール kodomo@edu.pref.ibaraki.jp も24時間受付。LINEかWebチャットは、下のリンクから始めます（毎日17時〜22時）。名前や学校名は言わなくて大丈夫です。' },
+      where: { ja: '電話・メール・LINE・Webチャット' },
+      docs: [],
+      ask: ['学校に行くのがつらいです', '家の人とうまくいかなくて、家にいたくありません'],
+      caution: { ja: '電話は途中で切っても大丈夫です。メールの返事には何日かかかることがあります。' },
+      supporter: { ja: '子どもホットライン: 茨城県教育庁 学校教育部 生徒支援・いじめ対策推進室。相談員とは会えない（電話・FAX・メールのみ）。FAX 029-302-2166。' },
+      effort: 'low',
+      for: { stages: KIDS, paths: [], care: [], careOnly: false, age: { min: 6, max: 18 }, areas: ['08'] },
+      deadline: null,
+      contact: {
+        phone: '029-221-8181', phoneLabel: '子どもホットライン（24時間）', line: null, chat: 'https://pref-ibaraki.coco-chaport.jp/', web: IB_KODOMO,
+        hours: { ja: '電話 24時間／SNS 毎日 17時〜22時', en: 'Phone 24h / chat daily 17:00–22:00' }
+      },
+      locations: [],
+      source: src('茨城県（オーバードーズ・薬物などの相談窓口）', IB_SOUDAN),
+      sources2: [{ org: '茨城県教育委員会（子どもホットライン）', url: IB_KODOMO }],
+      verifiedBy: V
+    },
+
+    {
+      id: 'ibaraki-kokoro-sns',
+      name: { ja: 'こころのSNS相談＠い\u2060ば\u2060ら\u2060き', en: 'Ibaraki Mental Health LINE Chat' },
+      hook: { ja: 'つらい気持ちを、文字で聞いてほしい', en: 'I want to share how I feel by text' },
+      summary: {
+        ja: 'つらい気持ちや、身近な人に言いにくい悩みを、LINEで相談できる茨城県の窓口です。公認心理師などの資格をもつ相談員が答えます。無料・名前なしでOK。',
+        en: 'Ibaraki\'s free, anonymous LINE chat for any worry or hard feelings, answered by qualified counselors.'
+      },
+      cat: ['consult'],
+      kind: 'hotline', basis: 'pref', pref: '08', right: false,
+      amount: { ja: '無料', en: 'Free' }, repay: null,
+      who: { ja: '茨城県に住んでいる人、県内に通勤・通学している人（学生も大人も）。' },
+      how: { ja: 'LINEで「こころのSNS相談＠い\u2060ば\u2060ら\u2060き」を友だち登録して、「相談を開始する」をタップします。' },
+      where: { ja: 'LINE' },
+      docs: [],
+      ask: ['気持ちが落ちこんで、どうしたらいいかわかりません', 'だれにも言えないことがあります'],
+      caution: { ja: '受付時間の外に送ったときは、時間になってからもう一度送ります。混んでいると待つことがあります。命が危ないときは、関係機関と連携することがあります。' },
+      supporter: null,
+      effort: 'low',
+      for: { stages: [], paths: [], care: [], careOnly: false, age: null, areas: ['08'] },
+      deadline: null,
+      contact: {
+        phone: null, phoneLabel: null, line: 'https://lin.ee/x8sEuvO', chat: null, web: IB_KOKORO,
+        hours: { ja: '月〜土 17時〜22時／日 16時〜22時', en: 'Mon–Sat 17:00–22:00, Sun 16:00–22:00' }
+      },
+      locations: [],
+      source: src('茨城県（こころのSNS相談＠い\u2060ば\u2060ら\u2060き）', IB_KOKORO),
+      verifiedBy: V
+    },
+
+    {
+      id: 'ibaraki-hikikomori',
+      name: { ja: '茨城県ひきこもり相談支援センター', en: 'Ibaraki Hikikomori Support Center' },
+      hook: { ja: '外に出られない。家族ともあまり話せない', en: 'I can\'t go out, and I barely talk to my family' },
+      summary: {
+        ja: 'ひきこもりの本人や家族の相談にのってくれる、茨城県の窓口です。電話・メール・面談（予約）で相談でき、合う支援先も紹介してくれます。',
+        en: 'Ibaraki\'s center for people who are withdrawn from society and their families. Talk by phone, email or in person (booking needed).'
+      },
+      cat: ['consult', 'work'],
+      kind: 'service', basis: 'pref', pref: '08', right: false,
+      amount: { ja: '相談は無料', en: 'Free' }, repay: null,
+      who: { ja: '茨城県に住む人。本人でも家族でも。期間は問いません。' },
+      how: { ja: 'まず電話かメール（info@ibahiki.org）で連絡します。会って話すときは予約します。近くの保健所でも相談できます。' },
+      where: { ja: '筑西市西方（電話・メールでも相談できます）' },
+      docs: [],
+      ask: ['しばらく家から出られていません。何から始めればいいですか？', '電話だけで相談してもいいですか？'],
+      caution: { ja: '日曜・月曜・祝日はお休みです。会って話すのは予約制です。' },
+      supporter: { ja: '一般社団法人アイネットが県の委託で運営。県内の各保健所（中央・ひたちなか・日立・潮来・竜ケ崎・土浦・つくば・筑西・古河）でも平日8:30–17:00に相談可。医師相談は保健所で予約制。' },
+      effort: 'low',
+      for: { stages: [], paths: [], care: [], careOnly: false, age: null, areas: ['08'] },
+      deadline: null,
+      contact: {
+        phone: '0296-48-6631', phoneLabel: 'ひきこもり相談支援センター', line: null, chat: null, web: IB_HIKI,
+        hours: { ja: '火〜土 9時〜18時（祝日・年末年始は休み）', en: 'Tue–Sat 9:00–18:00' }
+      },
+      locations: [loc('茨城県ひきこもり相談支援センター', '08227', '茨城県筑西市西方1790-29', 36.281288, 139.959686, '0296-48-6631', '火〜土 9:00–18:00', '面談は予約制')],
+      source: src('茨城県（青少年と保護者のための相談窓口一覧）', IB_HIKI),
+      verifiedBy: V
+    },
+
+    {
+      id: 'ibaraki-jiritsu-sodan',
+      name: { ja: 'くらしとしごとの相談窓口（茨城県）', en: 'Life & work support desks (Ibaraki)' },
+      hook: { ja: 'お金・仕事・住まいのこと、まとめて相談したい', en: 'I want to talk about money, work and housing in one place' },
+      summary: {
+        ja: 'お金・仕事・住まいに困ったときの無料の相談窓口です。市に住む人はその市の窓口、町や村に住む人は県の窓口（県民センターなど）が担当です。家賃の給付金（住居確保給付金）などにつないでくれます。',
+        en: 'Free help with money, work and housing. If you live in a city, go to your city\'s desk; town and village residents go to the prefecture\'s offices. They connect you to support such as the Housing Security Benefit.'
+      },
+      cat: ['consult', 'money', 'housing', 'work'],
+      kind: 'service', basis: 'pref', pref: '08', right: false,
+      amount: { ja: '相談は無料', en: 'Free' }, repay: null,
+      who: { ja: 'お金などのことで生活に困っている人、仕事のない状態が長く続いている人など（生活保護を受けている人はのぞく）。' },
+      how: { ja: '住んでいる市（町村の人は下の県の窓口）に電話して「生活の相談をしたい」と伝えます。相談員がいっしょに困りごとを整理して、計画を立ててくれます。' },
+      where: { ja: '市に住む人: 市の窓口（県の一覧PDF）／町村に住む人: 県北・県央・県南・県西の窓口' },
+      docs: [],
+      ask: KONKYU_ASK,
+      caution: { ja: KONKYU_CAUTION },
+      supporter: { ja: KONKYU_SUP + ' 県の一覧（令和6年4月現在）: 大子町→県北県民センター 0294-80-3320／茨城町・大洗町・城里町・東海村→福祉相談センター 029-226-1512／美浦村・阿見町・河内町・利根町→県南県民センター 029-822-7241／八千代町・五霞町・境町→県西県民センター境分室 0280-87-0224。制度の問い合わせ: 県福祉人材・指導課 保護担当 029-301-3164。' },
+      effort: 'low',
+      for: { stages: NOT_JR, paths: [], care: [], careOnly: false, age: null, areas: ['08'] },
+      deadline: { ja: 'いつでも相談できます', en: 'Anytime', leaveMonths: null, months: null, always: true },
+      contact: { phone: null, phoneLabel: null, line: null, chat: null, web: IB_KONKYU_PDF, hours: null },
+      locations: [
+        loc('県北県民センター 生活自立相談窓口（常陸太田合同庁舎1階）', '08212', '茨城県常陸太田市山下町4119', 36.527164, 140.531418, '0294-80-3320', '', '担当: 大子町'),
+        loc('福祉相談センター 生活自立相談窓口（三の丸庁舎2階）', '08201', '茨城県水戸市三の丸1-5-38', 36.376850, 140.474380, '029-226-1512', '', '担当: 茨城町・大洗町・城里町・東海村'),
+        loc('県南県民センター 生活自立相談窓口（土浦合同庁舎1階）', '08203', '茨城県土浦市真鍋5-17-26', 36.102085, 140.195358, '029-822-7241', '', '担当: 美浦村・阿見町・河内町・利根町'),
+        loc('県西県民センター 境分室 生活自立相談窓口（境合同庁舎1階）', '08546', '茨城県猿島郡境町長井戸320', 36.123444, 139.803314, '0280-87-0224', '', '担当: 八千代町・五霞町・境町')
+      ],
+      source: src('茨城県（生活困窮者自立支援制度）', IB_KONKYU),
+      sources2: [{ org: '茨城県（茨城県内の自立相談支援窓口のご案内 PDF・令和6年4月現在）', url: IB_KONKYU_PDF }],
+      eligibleBy: 'residence',
+      verifiedBy: V
+    },
+
+    {
+      id: 'mito-jiritsu-sodan',
+      name: { ja: '水戸市 自立相談支援室', en: 'Mito City Self-Reliance Support Office' },
+      hook: { ja: '家賃が払えない。住むところがなくなりそう', en: 'I can\'t pay rent and might lose my home' },
+      summary: {
+        ja: '水戸市に住む人のための、仕事・生活・住まいの無料の相談窓口です。家賃の給付金（住居確保給付金）の受付もここ。住まいがない人には、3か月まで無料で住む場所と食事を用意する「シェルター」もあります。',
+        en: 'Free help for Mito residents with work, money and housing, including the Housing Security Benefit. If you have nowhere to live, a shelter offers free housing and meals for up to 3 months.'
+      },
+      cat: ['housing', 'consult', 'money', 'work'],
+      kind: 'service', basis: 'local', pref: '08', right: false,
+      amount: { ja: '相談・利用は無料', en: 'Free' }, repay: null,
+      who: { ja: '水戸市に住んでいて、仕事をやめたなどの理由で生活に困っている人、住まいのことで困っている人。' },
+      how: { ja: 'まず電話（029-291-3941）か、市役所2階の窓口213へ。家賃の給付金・家計の相談・シェルターを使いたいときも、受付はここです。' },
+      where: { ja: '水戸市役所 2階 窓口213' },
+      docs: [],
+      ask: ['住むところがなくなりそうです。シェルターは使えますか？', '住居確保給付金（家賃の給付金）の対象になりますか？', '仕事を始める準備から手伝ってもらえますか？'],
+      caution: { ja: '給付金には条件があり、家賃の上限もあります。シェルターは3か月までで、そのあいだに次の住まいを一緒に探します。' },
+      supporter: { ja: KONKYU_SUP + ' 運営: 水戸市社会福祉協議会。メール jiritusien@mito-syakyo.or.jp。住居確保給付金は原則3か月・最長9か月。居住支援事業（シェルター）は3か月間、衣食住を無償提供。' },
+      effort: 'low',
+      for: { stages: NOT_JR, paths: [], care: [], careOnly: false, age: null, areas: ['08201'] },
+      deadline: { ja: 'いつでも相談できます', en: 'Anytime', leaveMonths: null, months: null, always: true },
+      contact: {
+        phone: '029-291-3941', phoneLabel: '水戸市自立相談支援室', line: null, chat: null, web: MITO,
+        hours: { ja: '平日 8時30分〜17時（土日祝・年末年始は休み）', en: 'Weekdays 8:30–17:00' }
+      },
+      locations: [loc('水戸市 自立相談支援室（水戸市役所 2階 窓口213）', '08201', '茨城県水戸市中央1-4-1', 36.366558, 140.472672, '029-291-3941', '平日 8:30–17:00', '')],
+      source: src('水戸市（自立相談支援事業）', MITO),
+      eligibleBy: 'residence',
+      verifiedBy: V
+    },
+
+    {
+      id: 'ibaraki-saposute',
+      name: { ja: '若者サポートステーション（茨城県）', en: 'Youth Support Stations (Ibaraki)' },
+      hook: { ja: '働くことに自信がない。何から始めればいい？', en: 'I\'m not confident about working. Where do I start?' },
+      summary: {
+        ja: '働きはじめる前の準備から、仕事が決まったあとまで支えてくれる、国の委託の無料窓口です。茨城県には水戸・筑西・つくばの3か所があります。',
+        en: 'Free, government-funded centers that help you get ready for work and keep a job. Ibaraki has three: Mito, Chikusei and Tsukuba.'
+      },
+      cat: ['work', 'consult'],
+      kind: 'service', basis: 'national', pref: '08', right: false,
+      amount: { ja: '無料', en: 'Free' }, repay: null,
+      who: { ja: '15〜49歳で、今は働いていない・学校に行っていない人と、その家族。' },
+      how: { ja: '近くのサポステに電話して、相談の予約をします。' },
+      where: { ja: '水戸市・筑西市・つくば市のサポステ' },
+      docs: [],
+      ask: ['まず話を聞くだけでもいいですか？', '職場体験はできますか？'],
+      caution: { ja: '仕事の紹介は少なめです。ハローワークと一緒に使うのがおすすめです。' },
+      supporter: { ja: '厚生労働省委託。職場定着までの支援がある。' },
+      effort: 'low',
+      for: { stages: ['left0', 'left1', 'nohs'], paths: ['work', 'unsure'], care: [], careOnly: false, age: { min: 15, max: 49 }, areas: ['08'] },
+      deadline: { ja: 'いつでも', en: 'Anytime', leaveMonths: null, months: null, always: true },
+      contact: { phone: '0120-717-557', phoneLabel: 'い\u2060ば\u2060ら\u2060き若者サポートステーション（水戸）', line: null, chat: null, web: SAPO, hours: null },
+      locations: [
+        loc('い\u2060ば\u2060ら\u2060き若者サポートステーション（MIOSビル1階）', '08201', '茨城県水戸市赤塚1-1', 36.382076, 140.415100, '0120-717-557', '', ''),
+        loc('い\u2060ば\u2060ら\u2060き県西若者サポートステーション', '08227', '茨城県筑西市西方1790-29', 36.281288, 139.959686, '0296-54-6012', '', ''),
+        loc('い\u2060ば\u2060ら\u2060き県南若者サポートステーション（荒井マンションⅡ 2C）', '08220', '茨城県つくば市東新井28-4', 36.074554, 140.112335, '029-893-3380', '', '')
+      ],
+      source: src('厚生労働省（全国のサポステ）', SAPO),
+      sources2: [
+        { org: '厚生労働省（い\u2060ば\u2060ら\u2060き若者サポートステーション）', url: sapoUrl('sec0201-ibaraki') },
+        { org: '厚生労働省（サポステとは）', url: SAPO_ABOUT }
+      ],
+      verifiedBy: V
+    },
+
+    /* ═════════════════ 栃木県（09） ═════════════════ */
+
+    {
+      id: 'tochigi-jisou',
+      name: { ja: '児童相談所（栃木県）', en: 'Child Guidance Centers (Tochigi)' },
+      hook: { ja: '施設や里親のこと、家のことを相談したい', en: 'I want to talk about my care placement or my family' },
+      summary: {
+        ja: '子どもに関するどんなことでも相談できる県の窓口です。県内に3か所あり、住んでいる市町で担当が決まっています。施設や里親家庭に入ること・出ることも担当しています。',
+        en: 'Public offices for any matter about children, including placements in and out of care. Tochigi has three, each covering certain towns.'
+      },
+      cat: ['consult', 'procedures'],
+      kind: 'service', basis: 'pref', pref: '09', right: false,
+      amount: { ja: '相談は無料', en: 'Free' }, repay: null,
+      who: { ja: '18歳未満の子どもと、その家族など。' },
+      how: { ja: '担当の児童相談所に電話します（平日 8時30分〜17時15分）。会って話すときや家に来てもらうときは予約します。夜や休日は「189」へ。' },
+      where: { ja: '住んでいる市町を担当する児童相談所（地図で確認）' },
+      docs: [],
+      ask: ['施設を出る時期について相談したいです', '担当の児童福祉司さんと話したいです', '家にいるのがつらいです。相談できますか？'],
+      caution: { ja: '担当は住んでいる市町で決まります。電話する前に、下の一覧で担当を確かめてね。' },
+      supporter: { ja: '栃木県は中央・県南・県北の3児童相談所。テレホン児童相談（028-665-7788、毎日9–20時）も別にある。' },
+      effort: 'low',
+      for: { stages: ['jhs12', 'jhs3', 'hs12', 'hs3', 'nohs'], paths: [], care: [], careOnly: false, age: null, areas: ['09'] },
+      deadline: null,
+      contact: {
+        phone: '189', phoneLabel: '夜・休日は 189（虐待対応ダイヤル）', line: null, chat: null, web: TG_JISOU,
+        hours: { ja: '各児童相談所: 平日 8時30分〜17時15分', en: 'Weekdays 8:30–17:15' }
+      },
+      locations: TG_JISOU_LOCS,
+      source: src('栃木県（県内児童相談所一覧）', TG_JISOU),
+      sources2: [{ org: '栃木県（心や体の健康などについての相談窓口）', url: TG_SOUDAN }],
+      verifiedBy: V
+    },
+
+    {
+      id: 'tochigi-tel-jidou',
+      name: { ja: 'テレホン児童相談（栃木県）', en: 'Tochigi Child Telephone Line' },
+      hook: { ja: '名前を言わずに、子どものことを相談したい', en: 'I want to talk about a child\'s worries without giving my name' },
+      summary: {
+        ja: '子どもについての心配や悩みを、専門の電話相談員に相談できます。毎日9時〜20時。名前を言わなくても大丈夫で、秘密は守られます。',
+        en: 'Talk to a trained phone counselor about worries concerning children, every day 9:00–20:00. Anonymous and confidential.'
+      },
+      cat: ['consult'],
+      kind: 'hotline', basis: 'pref', pref: '09', right: false,
+      amount: { ja: '無料', en: 'Free' }, repay: null,
+      who: { ja: '子どもについて心配や悩みがある人。' },
+      how: { ja: '028-665-7788 に電話します。名前は言わなくて大丈夫です。' },
+      where: { ja: '電話' },
+      docs: [],
+      ask: ['家のことで悩んでいます。話を聞いてもらえますか？', 'どこに相談したらいいか教えてください'],
+      caution: { ja: '今すぐ危ないときは 110番 へ。' },
+      supporter: { ja: '栃木県中央児童相談所のページで案内。保護者専用の「家庭教育ホットライン」028-665-7867 もある。' },
+      effort: 'low',
+      for: { stages: ALL_ST, paths: [], care: [], careOnly: false, age: null, areas: ['09'] },
+      deadline: null,
+      contact: {
+        phone: '028-665-7788', phoneLabel: 'テレホン児童相談', line: null, chat: null, web: TG_TEL,
+        hours: { ja: '毎日 9時〜20時', en: 'Every day 9:00–20:00' }
+      },
+      locations: [],
+      source: src('栃木県（テレホン児童相談）', TG_TEL),
+      verifiedBy: V
+    },
+
+    {
+      id: 'tochigi-sns-soudan',
+      name: { ja: 'SNS相談＠と\u2060ち\u2060ぎ（中学生・高校生）', en: 'Tochigi LINE chat for students' },
+      hook: { ja: 'いじめや学校のこと、LINEで相談したい', en: 'I want to talk about bullying or school on LINE' },
+      summary: {
+        ja: '栃木県教育委員会の、中学生・高校生のためのLINE相談です。悩みの相談や、いじめの通報ができます。毎週水曜・日曜の19時〜21時（長い休みの前後は毎日）。',
+        en: 'Tochigi Board of Education\'s LINE chat for junior high and high school students, for worries and reporting bullying. Wed & Sun 19:00–21:00 (daily around school breaks).'
+      },
+      cat: ['consult'],
+      kind: 'hotline', basis: 'pref', pref: '09', right: false,
+      amount: { ja: '無料', en: 'Free' }, repay: null,
+      who: { ja: '栃木県内の中学校・高校・特別支援学校（中・高等部）などに通う生徒。' },
+      how: { ja: '学校で配られたQRコードつきのカードを読みこんで、LINEで登録します。カードがないときは、学校の先生に聞いてね。' },
+      where: { ja: 'LINE' },
+      docs: [],
+      ask: ['いじめられています。どうしたらいいですか？', '友だちのことで悩んでいます'],
+      caution: { ja: '受付は決まった時間だけです（令和8年度: 4月25日〜令和9年3月31日の水曜・日曜 19時〜21時。8月23日〜9月9日、1月3日〜1月13日は毎日）。急ぐときは電話の相談へ。' },
+      supporter: { ja: '栃木県教育委員会 児童生徒指導推進室。集中期間 第1期 4/25〜5/13、第2期 8/23〜9/9、第3期 1/3〜1/13 は毎日19–21時。' },
+      effort: 'low',
+      for: { stages: KIDS, paths: [], care: [], careOnly: false, age: { min: 12, max: 18 }, areas: ['09'] },
+      deadline: null,
+      contact: {
+        phone: null, phoneLabel: null, line: null, chat: null, web: TG_SNS,
+        hours: { ja: '水・日 19時〜21時（集中期間は毎日）', en: 'Wed & Sun 19:00–21:00 (daily in peak periods)' }
+      },
+      locations: [],
+      source: src('栃木県教育委員会（SNSを活用した相談事業）', TG_SNS),
+      verifiedBy: V
+    },
+
+    {
+      id: 'tochigi-kokoro-line',
+      name: { ja: 'こころの相談＠と\u2060ち\u2060ぎ（LINE）', en: 'Tochigi Mental Health LINE Chat' },
+      hook: { ja: '不安やストレスを、文字で聞いてほしい', en: 'I want to share my worries and stress by text' },
+      summary: {
+        ja: '心の不安や悩み、ストレスを、LINEで相談できる栃木県の窓口です。日・火・木曜の18時〜22時。名前なし・無料で使えます。',
+        en: 'Tochigi\'s free, anonymous LINE chat for worries and stress. Sun, Tue and Thu 18:00–22:00.'
+      },
+      cat: ['consult'],
+      kind: 'hotline', basis: 'pref', pref: '09', right: false,
+      amount: { ja: '無料', en: 'Free' }, repay: null,
+      who: { ja: '栃木県に住んでいる人。' },
+      how: { ja: '県のページの2次元コードからLINEで友だち登録して、「LINEでこころの相談を希望する方はこちら」を選びます。答えたくない質問は「答えたくない」で大丈夫です。' },
+      where: { ja: 'LINE' },
+      docs: [],
+      ask: ['眠れなくて、気持ちが落ちこんでいます', 'だれにも言えない悩みがあります'],
+      caution: { ja: '混んでいると、すぐに相談できないことがあります。命が危ないときは、警察などと連携することがあります。' },
+      supporter: { ja: '栃木県障害福祉課。電話相談は「こころのダイヤル」（県のページから）。' },
+      effort: 'low',
+      for: { stages: [], paths: [], care: [], careOnly: false, age: null, areas: ['09'] },
+      deadline: null,
+      contact: {
+        phone: null, phoneLabel: null, line: null, chat: TG_KOKORO, web: TG_KOKORO,
+        hours: { ja: '日・火・木 18時〜22時', en: 'Sun, Tue, Thu 18:00–22:00' }
+      },
+      locations: [],
+      source: src('栃木県（SNS相談「こころの相談＠と\u2060ち\u2060ぎ」）', TG_KOKORO),
+      verifiedBy: V
+    },
+
+    {
+      id: 'tochigi-young-carer-line',
+      name: { ja: 'と\u2060ち\u2060ぎヤングケアラーチャンネル（LINE）', en: 'Tochigi Young Carer LINE Channel' },
+      hook: { ja: '家族のお世話で、自分の時間がない', en: 'Caring for my family leaves me no time for myself' },
+      summary: {
+        ja: '家族のお世話をしている子ども・若者のための、栃木県のLINE相談です。相談員には元ヤングケアラーが多くいます。メッセージはいつでも送れて、平日11時〜20時に返事がきます。',
+        en: 'Tochigi\'s LINE chat for young people who care for family members. Many counselors were young carers themselves. Send any time; replies on weekdays 11:00–20:00.'
+      },
+      cat: ['consult'],
+      kind: 'hotline', basis: 'pref', pref: '09', right: false,
+      amount: { ja: '無料（通信料はかかります）', en: 'Free (data charges apply)' }, repay: null,
+      who: { ja: '家族のお世話（ケア）をしている子ども・若者。日常の悩みも相談できます。' },
+      how: { ja: 'LINEで「と\u2060ち\u2060ぎヤングケアラーチャンネル」を友だち登録して、メッセージを送ります。名前なしで使えます。' },
+      where: { ja: 'LINE' },
+      docs: [],
+      ask: ['家族の世話で、勉強する時間がありません', 'だれかに話を聞いてほしいです'],
+      caution: { ja: '返事は月〜金曜（祝日・年末年始をのぞく）の11時〜20時です。' },
+      supporter: { ja: '栃木県こども政策課。相談員は心理士・看護師・社会福祉士など。' },
+      effort: 'low',
+      for: { stages: ALL_ST, paths: [], care: [], careOnly: false, age: null, areas: ['09'] },
+      deadline: null,
+      contact: {
+        phone: null, phoneLabel: null, line: 'https://lin.ee/f43UMfr', chat: null, web: TG_YC,
+        hours: { ja: '送信は24時間／返事は平日 11時〜20時', en: 'Send 24h / replies weekdays 11:00–20:00' }
+      },
+      locations: [],
+      source: src('栃木県（と\u2060ち\u2060ぎヤングケアラーチャンネル）', TG_YC),
+      verifiedBy: V
+    },
+
+    {
+      id: 'tochigi-josei-line',
+      name: { ja: '困難を抱える女性LINE相談＠と\u2060ち\u2060ぎ', en: 'Tochigi LINE chat for women in difficulty' },
+      hook: { ja: 'DVや性被害のこと、電話では話しにくい', en: 'It\'s hard to talk about abuse or sexual violence on the phone' },
+      summary: {
+        ja: 'DV・性被害・生活の困りごとなどを、LINEのチャットで相談できる栃木県の窓口です。火曜と土曜の15時〜22時。秘密は守られ、名前なしでも相談できます。',
+        en: 'Tochigi\'s LINE chat for women facing abuse, sexual violence or money trouble. Tue & Sat 15:00–22:00. Confidential, anonymous OK.'
+      },
+      cat: ['consult'],
+      kind: 'hotline', basis: 'pref', pref: '09', right: false,
+      amount: { ja: '無料（通信料はかかります）', en: 'Free (data charges apply)' }, repay: null,
+      who: { ja: '栃木県に住んでいて、暮らしの中で困った問題をかかえている女性（そうなりそうな人も）。' },
+      how: { ja: 'LINEで友だち登録して、チャットで相談します。' },
+      where: { ja: 'LINE' },
+      docs: [],
+      ask: ['これってDVかな？と思うことがあります', '仕事ができなくなって、生活に困っています'],
+      caution: { ja: '混んでいるとすぐに相談できないことがあります。10分以上返事がないと終わることがあります。危険があるときは警察などと連携することがあります。' },
+      supporter: { ja: '栃木県 人権・男女共同参画課。電話の相談先は県の「DV・性暴力被害に関する相談窓口」のページ。' },
+      effort: 'low',
+      for: { stages: [], paths: [], care: [], careOnly: false, age: null, areas: ['09'] },
+      deadline: null,
+      contact: {
+        phone: null, phoneLabel: null, line: 'https://lin.ee/inKys5f', chat: null, web: TG_JOSEI,
+        hours: { ja: '火・土 15時〜22時', en: 'Tue & Sat 15:00–22:00' }
+      },
+      locations: [],
+      source: src('栃木県（困難を抱える女性LINE相談＠と\u2060ち\u2060ぎ）', TG_JOSEI),
+      verifiedBy: V
+    },
+
+    {
+      id: 'tochigi-polaris',
+      name: { ja: 'ポラリス☆と\u2060ち\u2060ぎ（子ども若者・ひきこもり総合相談センター）', en: 'Polaris Tochigi (youth & hikikomori center)' },
+      hook: { ja: '学校にも仕事にも行けていない。どうしよう', en: 'I\'m not going to school or work. What now?' },
+      summary: {
+        ja: 'ひきこもり・ニート・不登校など、いろいろな悩みをかかえる子ども・若者と家族の、栃木県の相談窓口です。電話・メール・面談（予約）で、無料で相談できます。',
+        en: 'Tochigi\'s free center for young people (and families) dealing with withdrawal, not working or not going to school. Phone, email or in person (booking).'
+      },
+      cat: ['consult', 'work'],
+      kind: 'service', basis: 'pref', pref: '09', right: false,
+      amount: { ja: '相談は無料', en: 'Free' }, repay: null,
+      who: { ja: '悩みや困りごとをかかえる子ども・若者と、その家族。ひきこもりのことは年齢に関係なくだれでも。' },
+      how: { ja: '電話（028-643-3422）かメール（soudan@polaris-t.net）で連絡します。会って話すときは予約します（1回1時間・無料）。' },
+      where: { ja: '宇都宮市下戸祭' },
+      docs: [],
+      ask: ['学校に行けていません。何から始めればいいですか？', '家族といっしょに相談してもいいですか？'],
+      caution: { ja: '日曜・月曜はお休みです。会って話すのは予約制です。' },
+      supporter: { ja: '県が一般社団法人栃木県若年者支援機構に委託（子ども・若者総合相談センター兼ひきこもり地域支援センター）。中高年ひきこもり専用電話 028-643-3438。市町の窓口一覧は県のページ。' },
+      effort: 'low',
+      for: { stages: [], paths: [], care: [], careOnly: false, age: null, areas: ['09'] },
+      deadline: null,
+      contact: {
+        phone: '028-643-3422', phoneLabel: 'ポラリス☆と\u2060ち\u2060ぎ', line: null, chat: null, web: TG_POLARIS,
+        hours: { ja: '火〜土 10時〜19時', en: 'Tue–Sat 10:00–19:00' }
+      },
+      locations: [loc('ポラリス☆と\u2060ち\u2060ぎ', '09201', '栃木県宇都宮市下戸祭2-3-3', 36.571697, 139.878052, '028-643-3422', '火〜土 10:00–19:00', '面談は予約制')],
+      source: src('栃木県（ひきこもり支援）', TG_POLARIS),
+      verifiedBy: V
+    },
+
+    {
+      id: 'tochigi-jiritsu-sodan',
+      name: { ja: 'くらしとしごとの相談窓口（栃木県）', en: 'Life & work support desks (Tochigi)' },
+      hook: { ja: 'お金・仕事・住まいのこと、まとめて相談したい', en: 'I want to talk about money, work and housing in one place' },
+      summary: {
+        ja: '生活に困ったときの無料の相談窓口です。市に住む人はその市、町に住む人は町の窓口（または県の健康福祉センター）が担当です。相談員がいっしょに支援プランを作ってくれます。',
+        en: 'Free help when life gets hard. Each city and town in Tochigi has a desk; a counselor makes a support plan with you.'
+      },
+      cat: ['consult', 'money', 'housing', 'work'],
+      kind: 'service', basis: 'pref', pref: '09', right: false,
+      amount: { ja: '相談は無料', en: 'Free' }, repay: null,
+      who: { ja: '生活に困っている人。お金のことだけでなく、人とのつながりがない、どこに相談したらいいかわからない人も。' },
+      how: { ja: '住んでいる市や町の窓口に電話します（一覧は県のページ）。相談員がいないこともあるので、行く前に電話しよう。' },
+      where: { ja: '住んでいる市・町の窓口（県のページの一覧）' },
+      docs: [],
+      ask: KONKYU_ASK,
+      caution: { ja: KONKYU_CAUTION },
+      supporter: { ja: KONKYU_SUP + ' 町在住者は県の健康福祉センターが実施主体: 県東（益子・茂木・市貝・芳賀）0285-82-3322／県南（上三川・壬生・野木）0285-21-2948／県北（塩谷・高根沢・那須・那珂川）0287-23-2171。市在住者は各市（宇都宮市は宇都宮市社協 028-612-6668 など、県のページに全市町の番号）。' },
+      effort: 'low',
+      for: { stages: NOT_JR, paths: [], care: [], careOnly: false, age: null, areas: ['09'] },
+      deadline: { ja: 'いつでも相談できます', en: 'Anytime', leaveMonths: null, months: null, always: true },
+      contact: { phone: null, phoneLabel: null, line: null, chat: null, web: TG_KONKYU, hours: null },
+      locations: [],
+      source: src('栃木県（生活困窮者自立支援制度）', TG_KONKYU),
+      eligibleBy: 'residence',
+      verifiedBy: V
+    },
+
+    {
+      id: 'utsunomiya-jiritsu-sodan',
+      name: { ja: '宇都宮市 自立相談支援機関（宇都宮市社会福祉協議会）', en: 'Utsunomiya Self-Reliance Support Desk' },
+      hook: { ja: '仕事をなくして、家賃が払えない', en: 'I lost my job and can\'t pay rent' },
+      summary: {
+        ja: '宇都宮市に住む人のための、仕事・お金・住まいの無料の相談窓口です。仕事さがしの手伝いや、家賃の給付金（住居確保給付金）の受付をしています。',
+        en: 'Free help for Utsunomiya residents with work, money and housing, including job-search support and the Housing Security Benefit.'
+      },
+      cat: ['consult', 'money', 'housing', 'work'],
+      kind: 'service', basis: 'local', pref: '09', right: false,
+      amount: { ja: '相談は無料', en: 'Free' }, repay: null,
+      who: { ja: '宇都宮市に住んでいて、仕事をやめた・収入がへったなどで生活に困っている人。' },
+      how: { ja: 'まず電話（028-612-6668）で相談します。窓口は総合福祉センター5階（東武宇都宮駅から歩いて5分）。' },
+      where: { ja: '宇都宮市総合福祉センター 5階' },
+      docs: [],
+      ask: KONKYU_ASK,
+      caution: { ja: '給付金には条件があり、対象にならないこともあります。' + KONKYU_CAUTION },
+      supporter: { ja: KONKYU_SUP + ' 宇都宮市から宇都宮市社会福祉協議会に委託。メール jiritsu@utsunomiya-syakyo.or.jp。住居確保給付金は原則3か月（延長2回まで）。生活福祉資金（総合支援資金）は市社協 028-636-1251（事前に電話）。生活保護は市役所 生活福祉第1課・第2課 028-632-2105・2465。' },
+      effort: 'low',
+      for: { stages: NOT_JR, paths: [], care: [], careOnly: false, age: null, areas: ['09201'] },
+      deadline: { ja: 'いつでも相談できます', en: 'Anytime', leaveMonths: null, months: null, always: true },
+      contact: {
+        phone: '028-612-6668', phoneLabel: '自立相談支援機関（宇都宮市社協）', line: null, chat: null, web: UTSU,
+        hours: { ja: '平日 8時30分〜17時15分（土日祝・年末年始は休み）', en: 'Weekdays 8:30–17:15' }
+      },
+      locations: [loc('宇都宮市 自立相談支援機関（宇都宮市総合福祉センター 5階）', '09201', '栃木県宇都宮市中央1-1-15', 36.559074, 139.882141, '028-612-6668', '平日 8:30–17:15', '東武宇都宮駅から歩いて5分')],
+      source: src('宇都宮市（生活にお困りの方への相談窓口のご案内）', UTSU),
+      eligibleBy: 'residence',
+      verifiedBy: V
+    },
+
+    {
+      id: 'tochigi-kyufukin',
+      name: { ja: '奨学のための給付金（栃木県・公立高校）', en: 'Tochigi Scholarship Benefit (public high schools)' },
+      hook: { ja: '教科書や制服、学用品のお金が足りない', en: 'I can\'t afford textbooks, uniforms or school supplies' },
+      summary: {
+        ja: '公立高校などに通う生徒がいる、収入の少ない家庭に、授業料以外の教育費として返さなくていいお金を出してくれます。毎年、申請が必要です。',
+        en: 'A non-repayable benefit for lower-income families of public high school students, for costs other than tuition. Apply every year.'
+      },
+      cat: ['education', 'money'],
+      kind: 'grant', basis: 'pref', pref: '09', right: false,
+      amount: {
+        ja: '全日制・定時制で 年35,930円〜143,700円（住民税が非課税の家庭は143,700円、生活保護の家庭は32,300円）',
+        en: 'Full/part-time: ¥35,930–¥143,700 a year (¥143,700 for tax-exempt households; ¥32,300 on welfare)'
+      },
+      repay: 'none',
+      who: { ja: '7月1日の時点で、保護者が栃木県に住んでいて、公立の高校・高専（3年まで）などに通う生徒がいる家庭のうち、生活保護・住民税が非課税・所得割が少ない家庭。' },
+      how: { ja: '保護者が申請書と書類を、通っている学校に出します（県外の一部の学校の人は県に郵送）。マイナンバーでも申請できます。' },
+      where: { ja: '通っている学校' },
+      docs: ['申請書（その1 または その2）', '課税（非課税）証明書（保護者全員分）または マイナンバーの写し', '口座届出書と通帳の写し', '在学証明書（栃木県立高校の人はいらない）'],
+      ask: ['給付金の申請は、学校にいつまでに出せばいいですか？', '私の家は対象になりますか？', 'マイナンバーで申請できますか？'],
+      caution: { ja: '施設などにいて、措置費から見学旅行費や特別育成費が出ている人は対象になりません。税の申告をしていない保護者は、先に市町村で申告が必要です。' },
+      supporter: { ja: '県内の国公立校・茨城/群馬/埼玉の公立校は在籍校が指定する日まで。それ以外の国公立校は県教育政策課に令和8年9月18日まで。家計急変世帯向けの申請もある。問い合わせ: 教育政策課 028-623-3354。私立高校は文書学事課のページ。' },
+      effort: 'mid',
+      for: { stages: ['jhs3', 'hs12', 'hs3'], paths: [], care: [], careOnly: false, age: { min: 14, max: 19 }, areas: ['09'] },
+      deadline: { ja: '学校が指定する日まで（県に直接出す人は令和8年9月18日まで）', en: 'By your school\'s deadline (direct applications: Sep 18, 2026)', leaveMonths: null, months: [7, 8, 9], always: false },
+      contact: { phone: '028-623-3354', phoneLabel: '栃木県教育委員会 教育政策課', line: null, chat: null, web: TG_KYUFU, hours: null },
+      locations: [],
+      source: src('栃木県教育委員会（栃木県奨学のための給付金（公立）制度）', TG_KYUFU),
+      verifiedBy: V
+    },
+
+    {
+      id: 'tochigi-saposute',
+      name: { ja: '若者サポートステーション（栃木県）', en: 'Youth Support Stations (Tochigi)' },
+      hook: { ja: '働くことに自信がない。何から始めればいい？', en: 'I\'m not confident about working. Where do I start?' },
+      summary: {
+        ja: '働きはじめる前の準備から、仕事が決まったあとまで支えてくれる、国の委託の無料窓口です。栃木県には宇都宮・小山・大田原の3か所があります。',
+        en: 'Free, government-funded centers that help you get ready for work and keep a job. Tochigi has three: Utsunomiya, Oyama and Otawara.'
+      },
+      cat: ['work', 'consult'],
+      kind: 'service', basis: 'national', pref: '09', right: false,
+      amount: { ja: '無料', en: 'Free' }, repay: null,
+      who: { ja: '15〜49歳で、今は働いていない・学校に行っていない人と、その家族。' },
+      how: { ja: '近くのサポステに電話して、相談の予約をします。' },
+      where: { ja: '宇都宮市・小山市・大田原市のサポステ' },
+      docs: [],
+      ask: ['まず話を聞くだけでもいいですか？', '職場体験はできますか？'],
+      caution: { ja: '仕事の紹介は少なめです。ハローワークと一緒に使うのがおすすめです。' },
+      supporter: { ja: '厚生労働省委託。職場定着までの支援がある。' },
+      effort: 'low',
+      for: { stages: ['left0', 'left1', 'nohs'], paths: ['work', 'unsure'], care: [], careOnly: false, age: { min: 15, max: 49 }, areas: ['09'] },
+      deadline: { ja: 'いつでも', en: 'Anytime', leaveMonths: null, months: null, always: true },
+      contact: { phone: '028-612-2341', phoneLabel: 'と\u2060ち\u2060ぎ若者サポートステーション（宇都宮）', line: null, chat: null, web: SAPO, hours: null },
+      locations: [
+        loc('と\u2060ち\u2060ぎ若者サポートステーション（サエラビル3階）', '09201', '栃木県宇都宮市駅前通り1-5-13', 36.559727, 139.896530, '028-612-2341', '', ''),
+        loc('と\u2060ち\u2060ぎ県南若者サポートステーション（小山市総合福祉センター3階）', '09208', '栃木県小山市中央町2-2-21', 36.313663, 139.802139, '0285-25-7002', '', ''),
+        loc('と\u2060ち\u2060ぎ県北若者サポートステーション', '09210', '栃木県大田原市若草1-832', 36.858398, 140.033081, '080-8747-8663', '', '')
+      ],
+      source: src('厚生労働省（全国のサポステ）', SAPO),
+      sources2: [
+        { org: '厚生労働省（と\u2060ち\u2060ぎ若者サポートステーション）', url: sapoUrl('sec0204-tochigi') },
+        { org: '厚生労働省（サポステとは）', url: SAPO_ABOUT }
+      ],
+      verifiedBy: V
+    },
+
+    /* ═════════════════ 群馬県（10） ═════════════════ */
+
+    {
+      id: 'gunma-jiritsu-shikin',
+      name: { ja: '自立支援資金貸付（群馬県）', en: 'Independence Support Loan (Gunma)' },
+      hook: { ja: '家賃や生活費、資格のお金が足りない', en: 'I need help with rent, living costs or a licence' },
+      summary: {
+        ja: '群馬県内の施設や里親家庭を出た人が、生活費・家賃・資格のお金を利息なしで借りられる県の制度です。決まった年数働き続けると、返さなくてよくなります。',
+        en: 'Gunma\'s interest-free loans for living costs, rent and licences for people who left care. Forgiven if you keep working for a set number of years.'
+      },
+      cat: ['money', 'housing', 'education'],
+      kind: 'loan_forgivable', basis: 'pref', pref: '10', right: false,
+      amount: {
+        ja: '生活費 月5万円（進学した人）・家賃（住んでいる地域の生活保護の家賃の上限まで）・資格の費用 25万円まで',
+        en: 'Living ¥50k/month (students); rent (up to the local welfare housing cap); licences up to ¥250k'
+      },
+      repay: 'conditional',
+      who: { ja: '群馬県内の児童養護施設などを出た人、または里親家庭などの委託が終わった人で、親などからお金の支えがない人。生活費は大学・専門学校などに通う人、家賃は進学した人と働いている人が対象。資格の費用は、施設や里親家庭にいる間でも使えます。' },
+      how: { ja: '施設か児童相談所を通して、群馬県社会福祉協議会に書類を出します。書類の審査と、本人・連帯保証人との面接のあとで決まります。家賃・生活費は毎月振り込まれます。' },
+      where: { ja: '施設・児童相談所 → 群馬県社会福祉協議会 福祉資金課' },
+      docs: ['貸付申請書', '施設長または児童相談所長の意見書', '法定代理人の同意書（未成年のとき）', '世帯全員の住民票', '連帯保証人の住民票と、資力がわかる書類', '在学証明書（進学）／在職証明書（就職）', '賃貸契約書の写しなど（家賃）', '資格の費用がわかるもの（資格）'],
+      ask: ['自立支援資金貸付を使いたいです。私は対象になりますか？', '連帯保証人がいないときは、どうすればいいですか？', '返さなくてよくなる条件を教えてください'],
+      caution: { ja: '連帯保証人は原則必要で、未成年のときは親権者などの同意が原則必要です。むずかしいときは担当の人に相談しよう。学校をやめたり仕事をやめたりすると、契約が終わって返すことになります。在学中も働いてからも、定期的に今の様子を報告します。' },
+      supporter: { ja: '群馬県児童福祉課の事業、窓口は群馬県社協 福祉資金課 027-255-6031（前橋市新前橋町13-12）。返還免除: 進学者は卒業後1年以内に就職し5年継続、就職者は5年継続、資格取得は2年継続（いずれも週20時間以上）。就職者の家賃は退所後2年まで。延滞利子 年3%。' },
+      effort: 'high',
+      for: { stages: ['hs3', 'left0', 'left1'], paths: [], care: CARE, careOnly: true, age: null, areas: ['10'] },
+      deadline: { ja: '締切はページにのっていません。出る日が決まったら早めに担当の人に相談を', en: 'No deadline listed; ask early once your leaving date is set', leaveMonths: -3, months: null, always: false },
+      contact: { phone: '027-255-6031', phoneLabel: '群馬県社会福祉協議会 福祉資金課', line: null, chat: null, web: GM_SHIKIN, hours: null },
+      locations: [],
+      source: src('群馬県（児童福祉課）', GM_SHIKIN),
+      verifiedBy: V
+    },
+
+    {
+      id: 'gunma-ippo',
+      name: { ja: 'ヤング・アシスト い\u2060っ\u2060ぽ（群馬県）', en: 'Young Assist Ippo (Gunma care-leaver base)' },
+      hook: { ja: 'ひとり暮らしや仕事のこと、頼れる大人がほしい', en: 'I want an adult I can rely on for living alone and work' },
+      summary: {
+        ja: '群馬県の「社会的養護自立支援拠点」です。くらしと仕事の相談、ひとり暮らしの準備、仕事さがし、高卒認定などの勉強まで、無料で手伝ってくれます。気軽に立ち寄れる居場所でもあります。',
+        en: 'Gunma\'s base for care-experienced young people: free help with daily life, work, living alone, job matching and study (e.g. the high-school equivalency exam), plus a drop-in space.'
+      },
+      cat: ['consult', 'work', 'housing'],
+      kind: 'place', basis: 'npo', pref: '10', right: false,
+      amount: { ja: '無料', en: 'Free' }, repay: null,
+      who: { ja: '児童養護施設・里親家庭などで暮らしたことのある人、今暮らしていて近く自立する人、虐待を受けたのに公的な支援につながらなかった人。年齢の制限はありません。' },
+      how: { ja: 'まず電話・LINE・メールで連絡します。1対1の相談は1人1時間で、予約制です。電話だけでなく、出かけて行く相談もしています。' },
+      where: { ja: '前橋市南町（グランコート南町 301号室）' },
+      docs: [],
+      ask: ['初めて相談したいです。いつ行けますか？', 'ひとり暮らしの準備を手伝ってもらえますか？', '仕事さがしや、職場見学もできますか？'],
+      caution: { ja: '木曜・日曜・祝日はお休みです。LINE・メールはいつでも送れますが、返事には時間がかかることがあります。' },
+      supporter: { ja: '一般社団法人ヤング・アシスト（群馬県 社会的養護自立支援拠点事業の委託事業所。2018年県受託、2024年度から拠点事業）。FAX 027-289-3772。食料・日用品の寄付の受け取り、弁護士相談・学習支援、協力企業とのマッチングと職場定着支援あり。' },
+      effort: 'low',
+      for: { stages: ['hs3', 'left0', 'left1', 'nohs'], paths: [], care: CARE, careOnly: false, age: null, areas: ['10'] },
+      deadline: { ja: 'いつでも相談できます', en: 'Anytime', leaveMonths: null, months: null, always: true },
+      contact: {
+        phone: '027-289-3771', phoneLabel: 'ヤング・アシスト い\u2060っ\u2060ぽ', line: 'https://line.me/ti/p/fi79uPV2AU', chat: null,
+        web: 'https://youngassist.com/howto.php',
+        hours: { ja: '月・火・水・金・土 10時〜16時（木・日・祝日は休み）', en: 'Mon/Tue/Wed/Fri/Sat 10:00–16:00' }
+      },
+      locations: [loc('ヤング・アシスト い\u2060っ\u2060ぽ（グランコート南町 301号室）', '10201', '群馬県前橋市南町3-3-5', 36.382492, 139.068970, '027-289-3771',
+        '月・火・水・金・土 10:00–16:00（木・日・祝 休み）', '個別相談は予約制（1人1時間）')],
+      source: src('一般社団法人ヤング・アシスト（い\u2060っ\u2060ぽ）', IPPO),
+      sources2: [
+        { org: 'ヤング・アシスト い\u2060っ\u2060ぽ（相談の流れ）', url: 'https://youngassist.com/howto.php' },
+        { org: 'ヤング・アシスト い\u2060っ\u2060ぽ（法人概要）', url: 'https://youngassist.com/profile.php' }
+      ],
+      verifiedBy: V
+    },
+
+    {
+      id: 'gunma-jisou',
+      name: { ja: '児童相談所（群馬県・高崎市）', en: 'Child Guidance Centers (Gunma)' },
+      hook: { ja: '施設や里親のこと、家のことを相談したい', en: 'I want to talk about my care placement or my family' },
+      summary: {
+        ja: '子どもと家族のことを相談できる公的な窓口です。群馬県には県の4か所と、高崎市の児童相談所があります。施設や里親家庭に入ること・出ることも担当しています。',
+        en: 'Public offices for children and families, including placements in and out of care. Gunma has four prefectural centers plus Takasaki City\'s own.'
+      },
+      cat: ['consult', 'procedures'],
+      kind: 'service', basis: 'pref', pref: '10', right: false,
+      amount: { ja: '相談は無料', en: 'Free' }, repay: null,
+      who: { ja: '18歳未満の子どもと、その家族など。住んでいる市町村で、担当の児童相談所が決まっています。' },
+      how: { ja: '担当の児童相談所に電話します。夜や休日でも、こどもホットライン24（0120-783-884）か「189」に電話できます。' },
+      where: { ja: '住んでいる市町村を担当する児童相談所（地図で確認）' },
+      docs: [],
+      ask: ['施設を出る時期について相談したいです', '担当の児童福祉司さんと話したいです', '家にいるのがつらいです。相談できますか？'],
+      caution: { ja: '高崎市に住む人は、高崎市の児童相談所が担当です。西部児童相談所は令和8年4月1日に富岡市へ移りました。' },
+      supporter: { ja: '中央児童相談所は北部支所を含む。メール: 中央・北部 chuuji@pref.gunma.lg.jp、西部 nishijisou@、東部 toujisou@（pref.gunma.lg.jp）、高崎市 kodomo-somu@city.takasaki.gunma.jp。' },
+      effort: 'low',
+      for: { stages: ['jhs12', 'jhs3', 'hs12', 'hs3', 'nohs'], paths: [], care: [], careOnly: false, age: null, areas: ['10'] },
+      deadline: null,
+      contact: { phone: '189', phoneLabel: '夜・休日は 189（虐待対応ダイヤル）', line: null, chat: null, web: GM_JISOU, hours: null },
+      locations: GM_JISOU_LOCS,
+      source: src('群馬県（児童相談所一覧）', GM_JISOU),
+      verifiedBy: V
+    },
+
+    {
+      id: 'gunma-kodomo-hotline24',
+      name: { ja: 'こどもホットライン24（群馬県）', en: 'Gunma Kids Hotline 24' },
+      hook: { ja: '夜でも休みの日でも、だれかに話したい', en: 'I need to talk to someone, even at night or on holidays' },
+      summary: {
+        ja: '群馬県に住む18歳未満の子どもと保護者のための、24時間の電話相談です。虐待のことも、子育ての不安も相談できます。平日の昼はLINE相談もあります。',
+        en: 'Gunma\'s 24-hour phone line for children under 18 and their parents, including abuse. LINE chat on weekday daytimes too.'
+      },
+      cat: ['consult'],
+      kind: 'hotline', basis: 'pref', pref: '10', right: false,
+      amount: { ja: '無料（フリーダイヤル）', en: 'Free (toll-free)' }, repay: null,
+      who: { ja: '群馬県に住んでいる18歳未満の子どもと、その保護者。' },
+      how: { ja: '0120-783-884（携帯電話からは 027-263-1100）に電話します。LINEは「ぐんまこども・子育て相談」（@050bnjkf）を友だち登録します。' },
+      where: { ja: '電話・メール・LINE' },
+      docs: [],
+      ask: ['家の人とうまくいかなくて、家にいるのがつらいです', 'だれにも言えないことがあります'],
+      caution: { ja: '相談中でつながらないときは、時間をおいてかけ直してね。LINEは平日9時〜17時だけ（12時〜13時はお休み）。急ぐときは電話へ。' },
+      supporter: { ja: 'LINE「ぐんまこども・子育て相談」は群馬県中央児童相談所が運用。メール相談 kodomo-soudan@pref.gunma.lg.jp（返事に数日）。県ページの更新は2019年・2020年。' },
+      effort: 'low',
+      for: { stages: ALL_ST, paths: [], care: [], careOnly: false, age: { min: 0, max: 17 }, areas: ['10'] },
+      deadline: null,
+      contact: {
+        phone: '0120-783-884', phoneLabel: 'こどもホットライン24（携帯は 027-263-1100）', line: null, chat: GM_LINE, web: GM_HOT,
+        hours: { ja: '電話 24時間／LINE 平日 9時〜17時（12時〜13時をのぞく）', en: 'Phone 24h / LINE weekdays 9:00–17:00' }
+      },
+      locations: [],
+      source: src('群馬県（こどもホットライン24）', GM_HOT),
+      sources2: [{ org: '群馬県（ぐんまこども・子育て相談 LINEアカウント）', url: GM_LINE }],
+      verifiedBy: V
+    },
+
+    {
+      id: 'gunma-asunowa',
+      name: { ja: 'あ\u2060す\u2060の\u2060わ（群馬県子ども・若者総合相談センター）', en: 'Asunowa (Gunma Youth Consultation Center)' },
+      hook: { ja: 'どこに相談すればいいかわからない', en: 'I don\'t know who to ask' },
+      summary: {
+        ja: '2026年10月にできた、群馬県の子ども・若者のための総合相談窓口です。15〜39歳くらいの人の、どんな悩みも聞いて、合う支援先につないでくれます。電話・LINE・メール・面談で相談できます。',
+        en: 'Gunma\'s new (October 2026) one-stop center for young people aged about 15–39. Any worry; they connect you to the right support. Phone, LINE, email or in person.'
+      },
+      cat: ['consult'],
+      kind: 'service', basis: 'pref', pref: '10', right: false,
+      amount: { ja: '相談は無料', en: 'Free' }, repay: null,
+      who: { ja: 'おおむね15歳〜39歳の子ども・若者。家族や学校の先生からの相談も受けています。' },
+      how: { ja: '電話（027-212-1200）、LINE（@751dywsg を友だち追加）、メール（asunowa@g-shakyo.or.jp）で連絡します。会って話すのは予約制（オンラインもOK）。' },
+      where: { ja: '前橋市新前橋町 群馬県社会福祉総合センター 4階' },
+      docs: [],
+      ask: ['何から相談すればいいかわかりません。話を聞いてもらえますか？', '私に合う相談先を教えてください'],
+      caution: { ja: '開いているのは火曜〜土曜です（祝日・年末年始は休み）。' },
+      supporter: { ja: '子ども・若者育成支援推進法にもとづく総合相談センター。貧困・虐待・ひきこもり・ヤングケアラー等を受け止め、支援先へつなぐ。県 私学・青少年課 青少年育成係の所管。ウェブサイトは作成中（2026年9月時点）。' },
+      effort: 'low',
+      for: { stages: [], paths: [], care: [], careOnly: false, age: { min: 15, max: 39 }, areas: ['10'] },
+      deadline: null,
+      contact: {
+        phone: '027-212-1200', phoneLabel: 'あ\u2060す\u2060の\u2060わ', line: null, chat: null, web: GM_ASUNOWA,
+        hours: { ja: '火〜土（祝日・年末年始は休み）', en: 'Tue–Sat (closed holidays)' }
+      },
+      locations: [loc('あ\u2060す\u2060の\u2060わ（群馬県社会福祉総合センター 4階）', '10201', '群馬県前橋市新前橋町13-12', 36.380390, 139.049911, '027-212-1200', '火〜土', '面談は予約制')],
+      source: src('群馬県（子ども・若者総合相談センター「あ\u2060す\u2060の\u2060わ」開設）', GM_ASUNOWA),
+      verifiedBy: V
+    },
+
+    {
+      id: 'gunma-jiritsu-sodan',
+      name: { ja: 'くらしとしごとの相談窓口（群馬県）', en: 'Life & work support desks (Gunma)' },
+      hook: { ja: 'お金・仕事・住まいのこと、まとめて相談したい', en: 'I want to talk about money, work and housing in one place' },
+      summary: {
+        ja: '働けない、住む所がないなど、生活に困ったときの無料の相談窓口です。市に住む人はその市の窓口、町村に住む人は町村の社会福祉協議会か県社会福祉協議会に相談できます。',
+        en: 'Free help when you can\'t work or have nowhere to live. City residents go to their city\'s desk; town and village residents to the local or prefectural Council of Social Welfare.'
+      },
+      cat: ['consult', 'money', 'housing', 'work'],
+      kind: 'service', basis: 'pref', pref: '10', right: false,
+      amount: { ja: '相談は無料', en: 'Free' }, repay: null,
+      who: { ja: '働きたくても働けない、住む所がないなど、生活に困っている人。家族など、まわりの人からの相談もできます。' },
+      how: { ja: '住んでいる市の窓口に電話するか、直接行きます（番号は県のページ）。町村の人は、町村の社会福祉協議会か、県社会福祉協議会 地域福祉課（027-212-0011）へ。' },
+      where: { ja: '住んでいる市の窓口／町村の社会福祉協議会' },
+      docs: [],
+      ask: KONKYU_ASK,
+      caution: { ja: KONKYU_CAUTION },
+      supporter: { ja: KONKYU_SUP + ' 県ページ（2026年4月1日更新）の市の窓口: 前橋 027-898-6890／高崎 027-321-1302／桐生 0277-46-1111（内271）／伊勢崎 0270-27-6273／太田 0276-48-8177／沼田 0278-23-2111／館林 0276-47-5129（内640）／渋川 0279-22-2115／藤岡 0274-25-8456／富岡 0274-70-2232／安中 027-382-1111（内1191）／みどり 0277-76-0975。' },
+      effort: 'low',
+      for: { stages: NOT_JR, paths: [], care: [], careOnly: false, age: null, areas: ['10'] },
+      deadline: { ja: 'いつでも相談できます', en: 'Anytime', leaveMonths: null, months: null, always: true },
+      contact: { phone: '027-212-0011', phoneLabel: '群馬県社会福祉協議会 地域福祉課（町村に住む人）', line: null, chat: null, web: GM_KONKYU, hours: null },
+      locations: [],
+      source: src('群馬県（生活に困窮している方を支援する相談窓口）', GM_KONKYU),
+      eligibleBy: 'residence',
+      verifiedBy: V
+    },
+
+    {
+      id: 'maebashi-jiritsu-sodan',
+      name: { ja: 'ま\u2060え\u2060ば\u2060し生活自立相談センター', en: 'Maebashi Life Support Center' },
+      hook: { ja: '仕事や住まいのことで、生活が苦しい', en: 'Work or housing problems are making life hard' },
+      summary: {
+        ja: '前橋市に住む人のための、仕事・住まい・家計の無料の相談窓口です。前橋市役所1階にあります。家賃の給付金（住居確保給付金）の相談もここで、先に電話で予約します。',
+        en: 'Free help for Maebashi residents with work, housing and budgeting, on the 1st floor of City Hall. Call ahead to book for the Housing Security Benefit.'
+      },
+      cat: ['consult', 'money', 'housing', 'work'],
+      kind: 'service', basis: 'local', pref: '10', right: false,
+      amount: { ja: '相談は無料', en: 'Free' }, repay: null,
+      who: { ja: '前橋市に住んでいて、仕事やお金のことなどで生活に困っている人。家族など、まわりの人からの相談もできます。' },
+      how: { ja: '電話（027-898-6890）か、市役所1階の社会福祉課の中の窓口へ。住居確保給付金の相談・申請は、先に電話で予約します。' },
+      where: { ja: '前橋市役所 1階 社会福祉課内' },
+      docs: [],
+      ask: KONKYU_ASK,
+      caution: { ja: KONKYU_CAUTION },
+      supporter: { ja: KONKYU_SUP + ' 前橋市が前橋市社会福祉協議会に委託。電話 027-898-6890・6891・6892、メール soudan@mae-shakyo.or.jp。中学生向け学習支援も社会福祉課内で実施。' },
+      effort: 'low',
+      for: { stages: NOT_JR, paths: [], care: [], careOnly: false, age: null, areas: ['10201'] },
+      deadline: { ja: 'いつでも相談できます', en: 'Anytime', leaveMonths: null, months: null, always: true },
+      contact: {
+        phone: '027-898-6890', phoneLabel: 'ま\u2060え\u2060ば\u2060し生活自立相談センター', line: null, chat: null, web: MAEBASHI,
+        hours: { ja: '月〜金 9時〜17時（祝日・年末年始は休み）', en: 'Mon–Fri 9:00–17:00' }
+      },
+      locations: [loc('ま\u2060え\u2060ば\u2060し生活自立相談センター（前橋市役所 1階 社会福祉課内）', '10201', '群馬県前橋市大手町2-12-1', 36.389862, 139.063110, '027-898-6890', '月〜金 9:00–17:00', '')],
+      source: src('前橋市（生活困窮者自立支援制度について）', MAEBASHI),
+      sources2: [{ org: '前橋市社会福祉協議会（ま\u2060え\u2060ば\u2060し生活自立相談センターについて）', url: MAEBASHI_SHAKYO }],
+      eligibleBy: 'residence',
+      verifiedBy: V
+    },
+
+    {
+      id: 'takasaki-jiritsu-sodan',
+      name: { ja: '高崎市 生活支援窓口（社会福祉課 生活支援担当）', en: 'Takasaki Life Support Desk' },
+      hook: { ja: '仕事が続かない。家賃が払えない', en: 'I can\'t keep a job and can\'t pay rent' },
+      summary: {
+        ja: '高崎市に住む人のための、仕事・お金・住まいの無料の相談窓口です。相談員があなただけの支援プランを作り、仕事さがしや家賃の給付金（住居確保給付金）につないでくれます。',
+        en: 'Free help for Takasaki residents with work, money and housing. A counselor makes a personal plan and connects you to job support and the Housing Security Benefit.'
+      },
+      cat: ['consult', 'money', 'housing', 'work'],
+      kind: 'service', basis: 'local', pref: '10', right: false,
+      amount: { ja: '相談は無料', en: 'Free' }, repay: null,
+      who: { ja: '高崎市に住んでいて、十分な収入がなく生活に困っている人（生活保護を受けていない人）。家族など、まわりの人からの相談もできます。' },
+      how: { ja: '電話（027-321-1302）で予約してから、市役所1階2番窓口へ。家に来てもらう相談もあります。秘密は守られます。' },
+      where: { ja: '高崎市役所 1階 2番窓口' },
+      docs: [],
+      ask: KONKYU_ASK,
+      caution: { ja: '面接は原則予約制です。' + KONKYU_CAUTION },
+      supporter: { ja: KONKYU_SUP + ' 高崎市は市の直営（社会福祉課 生活支援担当）。ハローワークのナビゲーターと連携した就労支援、就労訓練（認定事業所）、家計改善支援あり。' },
+      effort: 'low',
+      for: { stages: NOT_JR, paths: [], care: [], careOnly: false, age: null, areas: ['10202'] },
+      deadline: { ja: 'いつでも相談できます', en: 'Anytime', leaveMonths: null, months: null, always: true },
+      contact: {
+        phone: '027-321-1302', phoneLabel: '高崎市 社会福祉課 生活支援担当', line: null, chat: null, web: TAKASAKI,
+        hours: { ja: '月〜金 8時30分〜17時15分（祝日・年末年始は休み）', en: 'Mon–Fri 8:30–17:15' }
+      },
+      locations: [loc('高崎市役所 1階 2番窓口（社会福祉課 生活支援担当）', '10202', '群馬県高崎市高松町35-1', 36.321316, 139.003265, '027-321-1302', '月〜金 8:30–17:15', '原則予約制')],
+      source: src('高崎市（生活困窮者自立支援）', TAKASAKI),
+      sources2: [{ org: '高崎市（自立相談支援事業）', url: TAKASAKI2 }],
+      eligibleBy: 'residence',
+      verifiedBy: V
+    },
+
+    {
+      id: 'gunma-shiritsu-kyufukin',
+      name: { ja: '奨学のための給付金（群馬県・私立高校）', en: 'Gunma Scholarship Benefit (private high schools)' },
+      hook: { ja: '私立高校の、授業料以外のお金が心配', en: 'I\'m worried about private high school costs beyond tuition' },
+      summary: {
+        ja: '私立高校などに通う生徒がいる、収入の少ない家庭に、群馬県が返さなくていいお金を出してくれます。住民税が非課税の家庭なら、年15万2,000円（通信制以外）です。',
+        en: 'Gunma gives a non-repayable benefit to lower-income families of private high school students: ¥152,000 a year for tax-exempt households (non-correspondence).'
+      },
+      cat: ['education', 'money'],
+      kind: 'grant', basis: 'pref', pref: '10', right: false,
+      amount: {
+        ja: '年38,000円〜152,000円（住民税が非課税の家庭は152,000円、生活保護の家庭は52,600円。通信制以外）',
+        en: '¥38,000–¥152,000 a year (¥152,000 tax-exempt; ¥52,600 on welfare; non-correspondence)'
+      },
+      repay: 'none',
+      who: { ja: '7月1日の時点で、保護者が群馬県に住んでいて、私立高校などに通い就学支援金をもらえる生徒がいる家庭のうち、生活保護・住民税が非課税・年収490万円未満くらいの家庭。家計が急に苦しくなった家庭も。' },
+      how: { ja: '県内の私立高校の人は、学校に書類を出します（締切は学校に確認）。県外の私立高校の人は、県の私学・青少年課に郵送します。' },
+      where: { ja: '通っている学校（県外の学校の人は群馬県 私学・青少年課）' },
+      docs: ['申請書など（県のページの提出書類一覧）', '住民税の所得割がわかるもの（マイナポータル・課税証明書など）'],
+      ask: ['給付金の申請は、学校にいつまでに出せばいいですか？', '私の家は対象になりますか？', '家計が急に苦しくなったときも申請できますか？'],
+      caution: { ja: '施設などにいて、措置費から見学旅行費や特別育成費が出ている人は対象になりません。特別支援学校の高等部の人も対象外です。1人につき年1回、通算3回（通信制などは4回）までです。' },
+      supporter: { ja: '群馬県 生活こども部 私学・青少年課 私学振興係 027-226-2141。県外校の申請期限は令和8年11月30日必着（延長後）。公立高校は県教育委員会 管理課の別制度。' },
+      effort: 'mid',
+      for: { stages: ['jhs3', 'hs12', 'hs3'], paths: [], care: [], careOnly: false, age: { min: 14, max: 19 }, areas: ['10'] },
+      deadline: { ja: '県内の学校: 学校に確認／県外の学校: 令和8年11月30日必着', en: 'In-prefecture schools: ask your school; out-of-prefecture: Nov 30, 2026', leaveMonths: null, months: [7, 8, 9, 10, 11], always: false },
+      contact: { phone: '027-226-2141', phoneLabel: '群馬県 私学・青少年課 私学振興係', line: null, chat: null, web: GM_KYUFU, hours: null },
+      locations: [],
+      source: src('群馬県（群馬県私立高等学校等奨学のための給付金制度）', GM_KYUFU),
+      verifiedBy: V
+    },
+
+    {
+      id: 'gunma-saposute',
+      name: { ja: '若者サポートステーション（群馬県）', en: 'Youth Support Station (Gunma)' },
+      hook: { ja: '働くことに自信がない。何から始めればいい？', en: 'I\'m not confident about working. Where do I start?' },
+      summary: {
+        ja: '働きはじめる前の準備から、仕事が決まったあとまで支えてくれる、国の委託の無料窓口です。群馬県には前橋と、太田のサテライトがあります。',
+        en: 'Free, government-funded center that helps you get ready for work and keep a job. Gunma has one in Maebashi and a satellite in Ota.'
+      },
+      cat: ['work', 'consult'],
+      kind: 'service', basis: 'national', pref: '10', right: false,
+      amount: { ja: '無料', en: 'Free' }, repay: null,
+      who: { ja: '15〜49歳で、今は働いていない・学校に行っていない人と、その家族。' },
+      how: { ja: '近くのサポステに電話して、相談の予約をします。' },
+      where: { ja: '前橋市・太田市のサポステ' },
+      docs: [],
+      ask: ['まず話を聞くだけでもいいですか？', '職場体験はできますか？'],
+      caution: { ja: '仕事の紹介は少なめです。ハローワークと一緒に使うのがおすすめです。' },
+      supporter: { ja: '厚生労働省委託。職場定着までの支援がある。' },
+      effort: 'low',
+      for: { stages: ['left0', 'left1', 'nohs'], paths: ['work', 'unsure'], care: [], careOnly: false, age: { min: 15, max: 49 }, areas: ['10'] },
+      deadline: { ja: 'いつでも', en: 'Anytime', leaveMonths: null, months: null, always: true },
+      contact: { phone: '027-212-3630', phoneLabel: 'ぐんま若者サポートステーション（前橋）', line: null, chat: null, web: SAPO, hours: null },
+      locations: [
+        loc('ぐんま若者サポートステーション（群馬県公社総合ビル8階）', '10201', '群馬県前橋市大渡町1-10-7', 36.396912, 139.048065, '027-212-3630', '', ''),
+        loc('ぐんま若者サポートステーション 東毛常設サテライト（太田市役所南庁舎2階）', '10205', '群馬県太田市浜町2-7', 36.290039, 139.375412, '0276-57-8222', '', '')
+      ],
+      source: src('厚生労働省（全国のサポステ）', SAPO),
+      sources2: [
+        { org: '厚生労働省（ぐんま若者サポートステーション）', url: sapoUrl('sec0207-gunma') },
+        { org: '厚生労働省（サポステとは）', url: SAPO_ABOUT }
+      ],
+      verifiedBy: V
+    }
+  );
 })();
 ;
 /* ---- data/learn.js ---- */
@@ -10790,13 +13693,23 @@
 })();
 ;
 /* ---- js/match.js ---- */
-/* 巣立ちマップ v5 — match.js (FIND)
+/* 巣立ちマップ v7 — match.js (FIND)
+   v7 (SPEC-v7 data contract): Kanto. answers.area is a 5-digit 区市町村 code (政令市 = the city code), a 2-digit
+   prefecture code (that prefecture, city not decided), 'other' (outside Kanto) or null. Records: basis 'national' ·
+   'tokyo' (東京都, implicitly areas ['13']) · 'pref' (another prefecture's own program, field pref) · 'local' · 'npo';
+   for.areas [] = anywhere in Japan, ['14'] = anywhere in 神奈川県, ['14100'] = 横浜市 residents only.
+     area in prefecture X  → [] , [X] and records naming the person's city; other prefectures' pref/local records out;
+                              with only X known, city-only records of X stay but rank lower (local: true)
+     'other'               → national + NPO records with no area limit only
+     null                  → national, NPO and every prefecture's pref-level records; city-only records rank lower
+   Old saved Tokyo answers ('13', 13xxx) keep working (they are just prefecture 13 / a Tokyo city).
    v5: answer labels follow the shorter question options (SPEC-v5 Part B 質問: options ≤ 10 chars); scoring unchanged.
    SM.match(answers)        -> [{ p, score, why:[{ja,jr?,en}], group, local, careNote }] sorted by fit
    SM.matchSummary(answers) -> [{ key, q, label, set }] for the answers bar (all 6 questions, in order)
    Helpers also used by the find view (additive, not in SPEC):
    SM.matchUtil = { norm, bands, labels, nowOpen, isFree, nearby, deadlineRank, EFFORT, inTokyo, isWard,
-                    audienceOf, urgentIds, isJunior, effPath, jrOk }
+                    audienceOf, urgentIds, isJunior, effPath, jrOk,
+                    isCity, prefOf, prefs, pref, prefName, areaName, recPref, areasOf, scopeOf, usableIn }
    why lines are {ja, jr?, en} plus an optional kind: 'for' (who the service is for → shown as 「対象」)
    or 'note' (a tip → shown as 「ポイント」); plain lines are reasons (「理由」).
    v3 / SPEC-v3 §3 — 中学生 (stage jhs12/jhs3 or age a12):
@@ -10887,9 +13800,114 @@
     return s;
   }
 
-  /* ---------------- area helpers ---------------- */
-  function isWard(code) { return typeof code === 'string' && /^13\d{3}$/.test(code); }
+  /* ---------------- area helpers (SPEC-v7 data contract) ---------------- */
+  function isWard(code) { return typeof code === 'string' && /^13\d{3}$/.test(code); }   // a Tokyo 区市町村 (kept for old callers)
   function inTokyo(code) { return code === '13' || isWard(code); }
+  function isCity(code) { return typeof code === 'string' && /^\d{5}$/.test(code); }
+  function isPrefCode(code) { return typeof code === 'string' && /^\d{2}$/.test(code); }
+  // the prefecture of an area code: '14100' → '14', '14' → '14', anything else → null
+  function prefOf(code) {
+    code = code == null ? '' : String(code);
+    if (isCity(code)) return code.slice(0, 2);
+    return isPrefCode(code) ? code : null;
+  }
+  // SM.data.prefs (data/areas.js) when it is there; the seven names otherwise (code order 08 … 14)
+  var PREF_FALLBACK = [
+    { code: '08', name: '茨城県', kana: 'いばらきけん', en: 'Ibaraki' },
+    { code: '09', name: '栃木県', kana: 'とちぎけん', en: 'Tochigi' },
+    { code: '10', name: '群馬県', kana: 'ぐんまけん', en: 'Gunma' },
+    { code: '11', name: '埼玉県', kana: 'さいたまけん', en: 'Saitama' },
+    { code: '12', name: '千葉県', kana: 'ちばけん', en: 'Chiba' },
+    { code: '13', name: '東京都', kana: 'とうきょうと', en: 'Tokyo' },
+    { code: '14', name: '神奈川県', kana: 'かながわけん', en: 'Kanagawa' }
+  ];
+  function prefs() { var p = SM.data && SM.data.prefs; return p && p.length ? p : PREF_FALLBACK; }
+  function pref(code) {
+    var list = prefs();
+    for (var i = 0; i < list.length; i++) if (list[i] && String(list[i].code) === String(code)) return list[i];
+    for (var j = 0; j < PREF_FALLBACK.length; j++) if (PREF_FALLBACK[j].code === String(code)) return PREF_FALLBACK[j];
+    return null;
+  }
+  function prefName(code, en) { var p = pref(code); return p ? (en ? (p.en || p.name) : p.name) : ''; }
+  // a 区市町村 or a prefecture by code, in the current language ('' when unknown)
+  function areaName(code, en) {
+    if (en == null) en = lang() === 'en';
+    if (isPrefCode(code)) return prefName(code, en);
+    var a = areaOf(code);
+    return a ? (en ? (a.en || a.name) : a.name) : '';
+  }
+  // a record's area list: basis 'tokyo' with none means all of Tokyo
+  function areasOf(p) {
+    var ar = ((p && p.for && p.for.areas) || []).map(String);
+    if (!ar.length && p && p.basis === 'tokyo') return ['13'];
+    return ar;
+  }
+  function regional(p) { return !!p && (p.basis === 'tokyo' || p.basis === 'pref' || p.basis === 'local'); }
+  // the prefecture a 都・県・区市町村 record belongs to (null for national / NPO records with no area)
+  function recPref(p) {
+    if (!p) return null;
+    if (p.pref) return String(p.pref);
+    if (p.basis === 'tokyo') return '13';
+    var ar = areasOf(p);
+    for (var i = 0; i < ar.length; i++) { var x = prefOf(ar[i]); if (x) return x; }
+    // every local record from before v7 is a Tokyo one (new ones carry pref)
+    return p.basis === 'local' ? '13' : null;
+  }
+  /* who runs it, as one key for the scope filter: 'national' · 'npo' · 'pref:13' (東京都 = basis 'tokyo') ·
+     'pref:14' (神奈川県 …) · 'local' */
+  function scopeOf(p) {
+    if (!p) return 'national';
+    if (p.basis === 'tokyo' || p.basis === 'pref') return 'pref:' + (recPref(p) || '13');
+    if (p.basis === 'local') return 'local';
+    return p.basis === 'npo' ? 'npo' : 'national';
+  }
+  /* can someone living in `area` use this record at all? (the area rule of evaluate(), on its own).
+     Returns false (no), 'city' (made for their city), 'pref' (open to their prefecture), 'any' (no area limit) or
+     'later' (city-only, city not known yet) */
+  function usableIn(p, area) {
+    var areas = areasOf(p);
+    var cityOnly = areas.length > 0 && areas.every(isCity);
+    if (area === 'other') return !areas.length && !regional(p) ? 'any' : false;
+    var myPref = prefOf(area), myCity = isCity(area) ? area : null;
+    if (!myPref) return !areas.length ? 'any' : cityOnly ? 'later' : 'pref';
+    if (regional(p)) { var rp = recPref(p); if (rp && rp !== myPref) return false; }
+    // a prefecture's desk for 町村 residents only (townsOnly): not for people who live in one of its 市
+    if (p.townsOnly && myCity) { var ma = areaOf(myCity); if (ma && ma.type && !/^(machi|mura|town|village)$/.test(ma.type) && areas.indexOf(myCity) === -1) return false; }
+    if (!areas.length) return 'any';
+    if (myCity && areas.indexOf(myCity) !== -1) return 'city';
+    if (areas.indexOf(myPref) !== -1) return 'pref';
+    if (!myCity && cityOnly && areas.some(function (c) { return prefOf(c) === myPref; })) return 'later';
+    // a city's scheme decided by where you LEFT care (eligibleBy 'origin'), not where you live: in the same
+    // prefecture it stays in the list, lower down (never in あなたに合いそう)
+    if (myCity && cityOnly && p.eligibleBy === 'origin' && areas.some(function (c) { return prefOf(c) === myPref; })) return 'later';
+    return false;
+  }
+  /* v7: national schemes each 都県 runs as its own program (自立支援資金貸付, サポステ). Ids follow
+     '<pref slug>-<national id>' (tokyo-jiritsu-shikin, kanagawa-saposute …). One support, one row:
+     prefecture known and it has its own version → only that version; area unknown → only the national row, with
+     a note that the office depends on the prefecture; 'other' → only the national row. */
+  var VERSIONED = { 'jiritsu-shikin': 1, 'saposute': 1 };
+  var PREF_SLUG = { '08': 'ibaraki', '09': 'tochigi', '10': 'gunma', '11': 'saitama', '12': 'chiba', '13': 'tokyo', '14': 'kanagawa' };
+  function prefVersion(baseId, pc) {
+    if (!VERSIONED[baseId] || !PREF_SLUG[pc] || !SM.program) return null;
+    var p = null;
+    try { p = SM.program(PREF_SLUG[pc] + '-' + baseId) || null; } catch (e) { p = null; }
+    return p;
+  }
+  // the national id a prefecture version stands for ('kanagawa-saposute' → 'saposute'), else null
+  function versionBase(p) {
+    if (!p || !p.id || VERSIONED[p.id]) return null;
+    var m = /^([a-z]+)-(.+)$/.exec(p.id);
+    if (!m || !VERSIONED[m[2]]) return null;
+    for (var pc in PREF_SLUG) if (PREF_SLUG[pc] === m[1]) return m[2];
+    return null;
+  }
+  // the id the person should see for a (possibly versioned) record: their prefecture's version when there is one
+  function ownVersion(id, area) {
+    var pc = prefOf(area);
+    var v = pc ? prefVersion(id, pc) : null;
+    return v ? v.id : id;
+  }
 
   /* ---------------- deadline helpers ---------------- */
   function nowOpen(p, now) {
@@ -10923,11 +13941,13 @@
     if (p.repay === 'none') return true;
     return !p.repay && p.kind === 'grant';
   }
+  // an office in the person's city (or prefecture, when only that is known)
   function nearby(p, area) {
     var locs = p.locations || [];
-    if (!locs.length) return false;
-    if (isWard(area)) return locs.some(function (l) { return l && String(l.area) === area; });
-    return locs.some(function (l) { return l && (inTokyo(String(l.area || '')) || /東京都/.test(l.addr || '')); });
+    if (!locs.length || area === 'other') return false;
+    if (isCity(area)) return locs.some(function (l) { return l && String(l.area) === area; });
+    var pc = prefOf(area) || '13', nm = prefName(pc, false);
+    return locs.some(function (l) { return l && (prefOf(String(l.area || '')) === pc || (!!nm && String(l.addr || '').indexOf(nm) === 0)); });
   }
 
   /* ---------------- why lines ---------------- */
@@ -10956,9 +13976,8 @@
   function cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
 
   function wardName(code, en) {
-    var a = areaOf(code);
-    if (!a) return en ? 'your area' : 'お住まいの地域';
-    return en ? (a.en || a.name) : a.name;
+    var nm = areaName(code, !!en);
+    return nm || (en ? 'your area' : 'お住まいの地域');
   }
 
   /* ---------------- audience-specific records ---------------- */
@@ -11019,9 +14038,12 @@
   /* ---------------- core scoring ---------------- */
   var TOKYO_VERSION = { 'jiritsu-shikin': 'tokyo-jiritsu-shikin' };
   SM.tokyoVersion = TOKYO_VERSION;
-  function evaluate(p, a) {
+  var TWIN_NOTE = { kind: 'note', ja: '住む都県で窓口がちがいます', jr: '住む都県で窓口がちがうよ', en: 'The office depends on your prefecture' };
+  /* o.everywhere: every record in Kanto, whatever the area (さがす with 「住む所で使える」 turned off) */
+  function evaluate(p, a, o) {
+    o = o || {};
     var f = p.for || {};
-    var stages = f.stages || [], paths = f.paths || [], cares = f.care || [], areas = f.areas || [];
+    var stages = f.stages || [], paths = f.paths || [], cares = f.care || [], areas = areasOf(p);
     var score = 10, why = [], local = false, careNote = false, otherLocal = false;
     var stageHit = false, pathHit = false;
     var junior = isJunior(a);
@@ -11031,32 +14053,49 @@
     // --- 中学生 (SPEC-v3 §3): nothing made only for older people
     if (junior && !jrOk(p)) return null;
 
-    // --- area rules
-    var wardOnly = areas.length > 0 && areas.every(isWard);
-    var tokyoAny = areas.indexOf('13') !== -1;
-    var area = a.area || null;
-    // national record that has its own Tokyo-run version: show only the Tokyo one to people in Tokyo
-    if (TOKYO_VERSION[p.id] && area !== 'other' && SM.program && SM.program(TOKYO_VERSION[p.id])) return null;
-    if (areas.length) {
-      if (area === 'other') return null;                        // Tokyo-only, user lives outside Tokyo
-      if (isWard(area)) {
-        if (areas.indexOf(area) !== -1) {
-          score += 5;
-          why.push({ prio: 0.5, w: {
-            ja: wardName(area, false) + (a.stage === 'hs12' || a.stage === 'hs3' ? 'に住む予定なので' : 'に住んでいるので'),
-            jr: wardName(area, false) + 'に住んでいるので',
-            en: 'For people living in ' + wardName(area, true) } });
-        } else if (!tokyoAny) return null;                       // another ward's program
-        else score += 1;
-      } else if (wardOnly) {                                     // area unknown ('13' or null): keep, rank lower
-        local = true; score -= 8;
-        why.push({ prio: 3, w: {
-          ja: areas.map(function (c) { return wardName(c, false); }).join('・') + 'に住む人向け',
-          en: 'For people living in ' + areas.map(function (c) { return wardName(c, true); }).join(', ') } });
-      } else if (tokyoAny && area === '13') score += 1;
-      // a ward/city's own scheme that is open Tokyo-wide (often: people leaving a facility located there)
-      if (p.basis === 'local' && !wardOnly && !(isWard(area) && areas.indexOf(area) !== -1)) { score -= 6; otherLocal = true; }
+    // --- area rules (SPEC-v7 data contract; see the header)
+    var area = o.everywhere ? null : (a.area || null);
+    if (area && area !== 'other' && !prefOf(area)) area = null;   // an unknown value counts as unanswered
+    var myPref = prefOf(area), myCity = isCity(area) ? area : null;
+    var cityOnly = areas.length > 0 && areas.map(String).every(isCity);
+    var twinNote = false;
+    if (!o.everywhere) {
+      // one support, one row (see VERSIONED): the national row gives way to the person's prefecture's own version
+      if (VERSIONED[p.id] && myPref && prefVersion(p.id, myPref)) return null;
+      if (!area) {
+        // area unknown: a prefecture's version waits for the answer; the national row says the office depends on it
+        if (versionBase(p)) return null;
+        if (VERSIONED[p.id]) twinNote = true;
+        // …and so do 区市町村 programs and desks for one city or for 町村 only
+        if (p.basis === 'local' || p.townsOnly || cityOnly) return null;
+      }
     }
+    var use = usableIn(p, area);
+    if (!use) return null;
+    // area unknown: one prefecture's own program may not be the person's — it stays, a step lower
+    if (!area && !o.everywhere && (regional(p) || areas.length)) score -= 3;
+    if (use === 'city') {
+      score += 5;
+      why.push({ prio: 0.5, w: {
+        ja: wardName(myCity, false) + (a.stage === 'hs12' || a.stage === 'hs3' ? 'に住む予定なので' : 'に住んでいるので'),
+        jr: wardName(myCity, false) + 'に住んでいるので',
+        en: 'For people living in ' + wardName(myCity, true) } });
+    } else if (use === 'pref') {
+      if (myPref) score += 1;
+    } else if (use === 'later') {                               // city-only, the person's city is not known: keep, rank lower
+      local = true; score -= 8;
+      var named = areas.map(String).filter(isCity);
+      var many = named.length > 3;
+      var nmJa = many ? '' : named.map(function (c) { return wardName(c, false); }).join('・');
+      var nmEn = many ? '' : named.map(function (c) { return wardName(c, true); }).join(', ');
+      why.push({ prio: 3, w: p.eligibleBy === 'origin' && !many ? {
+        ja: nmJa + 'の施設などから巣立った人向け', en: 'For people who left care in ' + nmEn } : p.townsOnly || many ? {
+        ja: (prefName(recPref(p), false) || '') + 'の町や村に住む人向け', en: 'For people living in towns and villages of ' + (prefName(recPref(p), true) || 'the prefecture') } : {
+        ja: nmJa + 'に住む人向け', en: 'For people living in ' + nmEn } });
+    }
+    if (twinNote) why.push({ prio: 2.5, w: TWIN_NOTE });
+    // a city's own scheme that is open prefecture-wide (often: people leaving a facility located there)
+    if (p.basis === 'local' && areas.length && !cityOnly && use !== 'city') { score -= 6; otherLocal = true; }
 
     // --- stage gate (a record that names stages must name this one)
     if (a.stage && stages.length && stages.indexOf(a.stage) === -1) return null;
@@ -11193,14 +14232,14 @@
     };
   }
 
-  SM.match = function (answers) {
+  SM.match = function (answers, opts) {
     var a = answers || (SM.state && SM.state.answers) || {};
     var now = new Date();
     var out = [];
     (SM.data.programs || []).forEach(function (p) {
       if (!p || !p.id) return;
       var r = null;
-      try { r = evaluate(p, a); } catch (e) { r = null; }
+      try { r = evaluate(p, a, opts); } catch (e) { r = null; }
       if (r) out.push(r);
     });
     // stable sort
@@ -11220,10 +14259,10 @@
     var ep = effPath(a);
     rows.push({ key: 'path', q: 2, label: pick(LABELS.path, ep), set: !!ep });
     var al = null;
-    if (a.area === '13') al = en ? 'Tokyo (not decided)' : '東京都（未定）';
-    else if (a.area === 'other') al = en ? 'Outside Tokyo' : '東京都の外';
-    else if (a.area) al = wardName(a.area, en);
-    rows.push({ key: 'area', q: 3, label: al, set: !!a.area });
+    if (a.area === 'other') al = en ? 'Outside Kanto' : '関東の外';
+    else if (isPrefCode(a.area)) al = prefName(a.area, en) ? prefName(a.area, en) + (en ? ' (city not set)' : '（市はまだ）') : null;
+    else if (isCity(a.area)) al = wardName(a.area, en);
+    rows.push({ key: 'area', q: 3, label: al, set: !!al });
     var cs = (a.concerns || []).map(function (k) { var c = catLabel(k); return en ? c.en : c.ja; });
     if (a.urgent) cs.unshift(en ? 'Nowhere to stay now' : '今いる場所がない');
     rows.push({ key: 'concerns', q: 4, label: cs.length ? cs.join(en ? ', ' : '・') : null, set: cs.length > 0 });
@@ -11233,40 +14272,80 @@
     return rows;
   };
 
+  /* ---------------- the browse list and its honest counts (one rule for home, さがす and きく) ----------------
+     The person's area as matching knows it: a 5-digit city, a 2-digit prefecture, 'other' or null. */
+  function cleanArea(a) {
+    var v = a && a.area;
+    if (v === 'other') return v;
+    return v && prefOf(v) ? String(v) : null;
+  }
+  /* every support the さがす list holds before its own filters: usable where the person lives (o.here !== false;
+     with it off, every record in Kanto), 中学生 only what is open to them (o.jr !== false). Area unknown: national,
+     団体 and 都県 programs (one row per support); 区市町村 ones come with the area answer. */
+  function browseBase(answers, o) {
+    o = o || {};
+    var a = answers || (SM.state && SM.state.answers) || {};
+    var area = cleanArea(a), here = o.here !== false;
+    var rows = SM.match({ concerns: [], area: here ? area : null }, here || !area ? null : { everywhere: true });
+    if (isJunior(a) && o.jr !== false) rows = rows.filter(function (r) { return jrOk(r.p); });
+    return rows;
+  }
+  // the number of supports in each 困りごと (a record counts in every topic it has), plus _all
+  function catCounts(answers, o) {
+    var counts = { _all: 0 };
+    browseBase(answers, o).forEach(function (r) {
+      counts._all++;
+      (r.p.cat || []).forEach(function (k) { counts[k] = (counts[k] || 0) + 1; });
+    });
+    return counts;
+  }
+
   SM.matchUtil = {
+    cleanArea: cleanArea, browseBase: browseBase, catCounts: catCounts,
+    versioned: VERSIONED, prefSlug: PREF_SLUG, prefVersion: prefVersion, versionBase: versionBase, ownVersion: ownVersion,
     norm: norm, bands: BANDS, labels: LABELS, nowOpen: nowOpen, isFree: isFree, nearby: nearby,
     deadlineRank: deadlineRank, EFFORT: EFFORT, inTokyo: inTokyo, isWard: isWard,
-    audienceOf: audienceOf, urgentIds: urgentIds, isJunior: isJunior, effPath: effPath, jrOk: jrOk
+    audienceOf: audienceOf, urgentIds: urgentIds, isJunior: isJunior, effPath: effPath, jrOk: jrOk,
+    isCity: isCity, isPrefCode: isPrefCode, prefOf: prefOf, prefs: prefs, pref: pref, prefName: prefName, areaName: areaName,
+    recPref: recPref, areasOf: areasOf, scopeOf: scopeOf, usableIn: usableIn
   };
 })();
 ;
 /* ---- js/views/home.js ---- */
-/* 巣立ちマップ v5 — js/views/home.js (HOME)
-   Home (#/): the first impression. SPEC-v5 Part A (motion people notice) + Part B (fewer words, better placed).
+/* 巣立ちマップ v7 — js/views/home.js (HOME)
+   Home (#/), redesigned for SPEC-v7 workstream 1: clear AND beautiful. A transit poster set like a textbook:
+   the green line of the logo is the structure of the page, the kanji marks are its stations.
 
-   First screen (new visitor), read at a glance:
-     the `home-hero` picture (the figures walk in) · one sub-line (who it is for) · one headline (「使える支援」が、
-     3分でわかる。) · one row of facts set as signage (222件 | ログインなし | 6問・3分) · ONE green CTA (質問に答える) ·
-     the crisis link (今夜いる場所がない…, always on the first screen) · then 困りごと: six rows = kanji mark, name,
-     count. No tagline, no step list, no sub-labels in buttons, no grey explanation lines (≤ 120 characters above
-     the fold at 390×844).
-   Returning visitor: the number of supports that fit is the headline, the answers as a tag row with 変える, one CTA.
-   Below: 今すぐ話したい (big numbers, call buttons, facts as tags), まなぶ (covers), べんりツール (titles only),
-   a one-line band for supporters, the colophon (label / value rows). 中学生: `home-jr-hero`, まなぶ first.
+   Page, top to bottom (phone; desktop composes the same parts on a 12-column grid):
+     .h-mast    a dateline (関東版 · 支援 N件・ログインなし) on the page's first heavy rule
+     .h-hero    new visitor: kicker + one display headline (marker on 使える支援) + the picture + ONE green CTA +
+                the crisis link (今夜いる場所がない). Desktop 7/5: headline left, picture right on the CTA's baseline.
+                returning: あなたに合いそうな支援 N件 (num-hero) + the answers (／, 変える) + 結果を見る; やること
+                (countdown + saved) beside it (desktop) / under it (phone).
+     .h-ask     きく: a fill-in line (ことばで きく ＿＿＿ 例：家賃がはらえない) → #/ask/<words>. Nothing is sent: the
+                form never submits; it routes in the app.
+     .h-route   困りごと as a 路線図: the six kanji marks are stations on one green line (vertical on the phone,
+                horizontal across the page on desktop), name + count at each stop. Counts follow the person's
+                answers (area in 関東: national + their prefecture + their city).
+     .h-talk    今すぐ話したい as a timetable: name ……… number (the number dials), hours as text, LINE / チャット
+                as a quiet link; 相談先をもっと見る; the red 緊急 line.
+     .h-learn   まなぶ: progress as a line of stations (done = filled), the lesson to read next (続きから when it
+                was left half-read) with its cover, then the next three as rows.
+     .h-tools   three tools · .h-staff band · .h-colo 奥付.
+   中学生 (body.is-junior): the jr picture and copy, counts only for what fits them, まなぶ before 困りごと.
 
-   Motion (SPEC-v5 Part A; transform / opacity only, interruptible, never hides content if JS fails):
-   - The hero is a CSS choreography (css/home.css .h-play): home.js adds .h-play when the view is released by the
-     opening (SM.motion.whenReleased) or when it mounts. Each part carries its delay (--d); lines rise from behind
-     their own baseline, the marker sweeps, the facts step in, the CTA slides up on a spring and its arrow nudges
-     once, the crisis link slides in. Without .h-play (no JS, reduced motion, back) everything simply stands.
-     A tap or key during the cascade lands it at once (.h-land).
-   - 困りごと rows and the section heads are SM.motion reveals with per-row delays: rows rise in order, their kanji
-     marks stamp in (css on .m-in), their counts roll (data-count). Sections further down cascade as they scroll in.
-   - Tables: 'launch' (the opening hands off: delays count from the release), 'short' (returning beat / first tab
-     visit this session), 'none' (reduced motion, back, a tab revisited, in-place re-renders: nothing replays).
-   - Render the first screen first: the hero and section 01 render in render(); the rest is built one section per
-     idle callback once the transition (or the opening) is over, or all at once on scroll / key / print.
-   Fully bilingual via SM.strings; 中学生 copy via the `jr` variant (SM.t picks it while body.is-junior). */
+   Motion (SPEC-v5 Part A scale; transform / opacity only; never hides content if JS fails):
+   - The opening (launch.js) lands its line in the app bar; home picks it up: the masthead rule draws from the
+     left, the headline lines rise from behind their baselines, the marker sweeps, the picture's figures walk in,
+     the CTA springs up, the crisis link slides in (CSS choreography, .h-play, delays from the ENTER table).
+   - Then the train runs: the route's green line draws through the six stations (down on the phone, across on
+     desktop) and each kanji mark stamps in as the line reaches it, its count rolling (SM.motion reveals with
+     per-stop delays). The same on scroll for the timetable (leader dots run out to each number) and the まなぶ
+     line (stations fill up to where the reader is).
+   - Tables: 'launch' (the opening hands off), 'short' (returning beat / first tab visit), 'none' (reduced
+     motion, back, revisits, in-place renders). A tap / key during the hero lands it at once (.h-land).
+   - Render the first screen first: hero + section 01 in render(); the rest one section per idle callback.
+   Fully bilingual via SM.strings; 中学生 copy via the `jr` variant. */
 (function () {
   'use strict';
   var SM = window.SM = window.SM || {};
@@ -11284,14 +14363,14 @@
   }
   function arrow(dir) {
     if (SM.ui && SM.ui.arrow) return SM.ui.arrow(dir);
-    return '<span class="arrow" aria-hidden="true">' + ({ d: '↓', l: '←' }[dir] || '→') + '</span>';
+    return '<span class="arrow" aria-hidden="true"></span>';
   }
   function illus(name, o) {
     try { return SM.illus && SM.illus.has && SM.illus.has(name) ? SM.illus(name, o) : ''; } catch (e) { return ''; }
   }
   function reduced() { try { return !!(SM.motion && SM.motion.reduced && SM.motion.reduced()); } catch (e) { return false; } }
-  /* a number that is about to roll (first time, or changed since the last visit) is blank while its line or block
-     starts to rise, so the reader never sees the final value flash before the board rolls up to it (css: .x-rolls) */
+  /* a number about to roll is blank while its host starts to rise (css: .x-rolls), so the final value never
+     flashes before the board rolls up to it */
   function rollCls(key, n) {
     if (mode === 'none') return '';
     try { return SM.motion && SM.motion.seen && SM.motion.seen(key) !== n ? ' x-rolls' : ''; } catch (e) { return ''; }
@@ -11300,20 +14379,22 @@
   SM.strings && SM.strings({
     'home.title': { ja: 'ホーム', en: 'Home' },
 
-    /* hero — first visit: one sub-line, one headline, one row of facts, one CTA */
-    'home.kicker': { ja: '施設や里親家庭を出る人へ', jr: '施設や里親家庭でくらす中学生へ', en: 'Leaving care in Tokyo?' },
+    /* masthead: the edition and the facts, set as a dateline */
+    'home.ed': { ja: '関東版', en: 'Kanto edition' },
+    'home.mast': { ja: 'このサイトについて', en: 'About this site' },
+    'home.mastCount': { ja: '支援 {n}件', en: '{n} programs' },
+    'home.f.login': { ja: 'ログインなし', en: 'No login' },
+    'home.f.count': { ja: '関東の支援', en: 'programs in Kanto' },
+    'home.unit': { ja: '件', en: '' },
+
+    /* hero — first visit */
+    'home.kicker': { ja: '施設や里親家庭を出る人へ', jr: '施設や里親家庭でくらす中学生へ', en: 'For young people leaving care' },
     'home.h1pre': { ja: '「', en: '' },
     'home.h1mark': { ja: '使える支援', en: 'Support you can use,' },
     'home.h1post': { ja: '」が、', en: '' },
     'home.h1c': { ja: '3分でわかる。', en: 'found in 3 minutes.' },
-    'home.facts': { ja: 'このサイトについて', en: 'About this site' },
-    'home.f.count': { ja: '東京の支援', en: 'programs' },
-    'home.f.login': { ja: 'ログインなし', en: 'No login' },
-    'home.f.time': { ja: '6問・3分', en: '6 questions' },
-    'home.cta': { ja: '質問に答える', en: 'Answer questions' },
-    // the one way in for the most urgent case, always on the first screen (FIXER-robust)
+    'home.cta': { ja: '質問に答える', en: 'Answer 6 questions' },
     'home.crisis': { ja: '今夜いる場所がない・家にいられない', jr: '家にいられない・帰れないとき', en: 'Nowhere to stay tonight?' },
-    'home.unit': { ja: '件', en: '' },
 
     /* hero — returning visitor */
     'home.backA': { ja: 'あなたに合いそうな支援', en: 'Programs that may fit you' },
@@ -11323,6 +14404,12 @@
     'home.changeAnswers': { ja: '変える', en: 'Change' },
     'home.changeLabel': { ja: '答えを変える', en: 'Change your answers' },
     'home.yourAnswers': { ja: 'あなたの答え', en: 'Your answers' },
+
+    /* きく */
+    'home.askK': { ja: 'ことばで きく', en: 'Ask in your own words' },
+    'home.askPh': { ja: '例：家賃がはらえない', jr: '例：高校 お金', en: 'e.g. can’t pay rent' },
+    'home.askGo': { ja: 'きく', en: 'Ask' },
+    'home.askLabel': { ja: '困っていることを、ことばで入力', en: 'Type what is worrying you' },
 
     /* やること preview */
     'home.planTitle': { ja: 'やること', en: 'My to-do list' },
@@ -11337,24 +14424,11 @@
     'home.daysToday': { ja: '今日が巣立ちの日。おめでとう。', en: 'Today is your leaving day.' },
     'home.daysSince': { ja: '巣立って {n}日', en: '{n} days since you left' },
 
-    /* まなぶ */
-    'home.learnTitle': { ja: 'まなぶ', en: 'Learn' },
-    'home.learnAll': { ja: 'すべて見る', en: 'All lessons' },
-    'home.learnAllCard': { ja: 'すべてのレッスン', en: 'All lessons' },
-    'home.learnDoneLabel': { ja: 'おわった', en: 'done' },
-    'home.learnNext': { ja: 'つぎ', en: 'Next' },
-    'home.learnFirst': { ja: 'ここから', en: 'Start here' },
-    'home.learnMin': { ja: '{n}分', en: '{n} min' },
-    'home.learnAllDone': { ja: '全部おわった', en: 'All done' },
-    'home.learnDone': { ja: 'おわった', en: 'done' },
-    'home.learnDoneMark': { ja: '済', en: '✓' },
-    'home.learnFor': { ja: '中学生向け', en: 'Junior high' },
-    'home.shelf': { ja: 'レッスンの一覧（横にスクロールできます）', en: 'Lessons (scroll sideways)' },
-
-    /* 困りごと */
+    /* 困りごと (the route) */
     'home.catsTitle': { ja: '困りごとから見る', en: 'Browse by need' },
     'home.catsAll': { ja: 'すべて見る', en: 'See all' },
-    'home.count': { ja: '{n}件', en: '{n}' },
+    'home.catsFor': { ja: '{area}の人に合う数', en: 'Counts for {area}' },
+    'home.catCount': { ja: '{name} {n}件', en: '{name}: {n}' },
 
     /* 今すぐ話したい */
     'home.talkTitle': { ja: '今すぐ話したい', en: 'Want to talk now?' },
@@ -11366,13 +14440,36 @@
     'home.chatShort': { ja: 'チャット', en: 'Chat' },
     'home.lineShort': { ja: 'LINE', en: 'LINE' },
     'home.free': { ja: '無料', en: 'Free' },
-    // facts as tags (split on ・), not sentences
     'home.t.yorisoi': { ja: '24時間・なんでも', en: '24 hours·Anything' },
     'home.t.ibasho': { ja: '24時間・チャット', en: '24 hours·Chat' },
     'home.t.wakanavi': { ja: '東京都・若者向け', en: 'Tokyo·Youth' },
     'home.t.b4s': { ja: '施設・里親家庭の出身者', en: 'Grew up in care' },
     'home.t.kodomoSos': { ja: '24時間・いじめ・家', en: '24 hours·Bullying·Home' },
     'home.t.childline': { ja: '18歳まで', en: 'Up to 18' },
+    'home.t.prefYouth': { ja: '{pref}・若者向け', en: '{pref}·Youth' },
+    'home.t.prefKids': { ja: '{pref}・子ども向け', en: '{pref}·Children' },
+    'home.chatTalk': { ja: 'チャットで話す', en: 'Chat now' },
+    'home.lineTalk': { ja: 'LINEで話す', en: 'Talk on LINE' },
+
+    /* まなぶ */
+    'home.learnTitle': { ja: 'まなぶ', en: 'Learn' },
+    'home.learnAll': { ja: 'すべて見る', en: 'All lessons' },
+    'home.learnDoneOf': { ja: '{total}本のうち {done}本おわった', en: '{done} of {total} done' },
+    'home.learnProgK': { ja: 'おわった', en: 'done' },
+    'home.learnNext': { ja: 'つぎ', en: 'Next' },
+    'home.learnFirst': { ja: 'ここから', en: 'Start here' },
+    'home.learnResumeK': { ja: 'とちゅう', en: 'In progress' },
+    'home.learnResume': { ja: '続きから', en: 'Continue' },
+    'home.learnStart': { ja: 'はじめる', en: 'Start' },
+    'home.learnAgain': { ja: 'もう一度', en: 'Read again' },
+    'home.learnAt': { ja: '{n}/{total}', en: '{n}/{total}' },
+    'home.learnMin': { ja: '{n}分', en: '{n} min' },
+    'home.learnAllDone': { ja: '全部おわった', en: 'All done' },
+    'home.learnDone': { ja: 'おわった', en: 'done' },
+    'home.learnFor': { ja: '中学生向け', en: 'Junior high' },
+    'home.learnUp': { ja: 'このあと', en: 'Up next' },
+    'home.learnIntro': { ja: '{n}のレッスン・1つ{min}分', jr: '{n}のレッスン・1つ{min}分', en: '{n} lessons · {min} min each' },
+    'home.learnIntroN': { ja: '{n}のレッスン', en: '{n} lessons' },
 
     /* ツール */
     'home.toolsTitle': { ja: 'べんりツール', en: 'Tools' },
@@ -11389,9 +14486,9 @@
     'home.offline': { ja: 'いまオフラインです。', en: 'You are offline.' },
     'home.offlineBody': { ja: '一覧・地図・やることは使えます。', en: 'The list, the map and your to-do list still work.' },
 
-    /* 奥付 (colophon): label / value */
+    /* 奥付 */
     'home.colo.title': { ja: '巣立ちマップ', en: 'Sudachi Map' },
-    'home.colo.ed': { ja: '東京版', en: 'Tokyo edition' },
+    'home.colo.ed': { ja: '関東版', en: 'Kanto edition' },
     'home.colo.by': { ja: 'つくった人', en: 'Made by' },
     'home.colo.byVal': { ja: 'Economix JP（東京の高校生の団体）', en: 'Economix JP (Tokyo high-school students)' },
     'home.colo.checked': { ja: '最終確認', en: 'Last checked' },
@@ -11413,7 +14510,6 @@
     return undefined;
   }
   function answers() { return (SM.state && SM.state.answers) || {}; }
-  function isWard(c) { return /^13\d{3}$/.test(String(c || '')); }
   function shortName(p) { return L(p.name).replace(/（[^）]*）\s*$/, ''); }
   function pad2(n) { n = +n || 0; return n < 10 ? '0' + n : String(n); }
   function telHref(n) { return 'tel:' + String(n).replace(/[^\d+#*]/g, '').replace(/#/g, '%23'); }
@@ -11433,13 +14529,10 @@
     var h = section(title, o);
     var d = first && T ? T.head : 0;
     h = h.replace('<div class="section-head', '<div data-reveal="up"' + (d ? ' data-reveal-delay="' + d + '"' : '') + ' class="section-head h-head');
-    if (d) h = h.replace('data-reveal="rule"', 'data-reveal="rule" data-reveal-delay="' + (d + 40) + '"');
+    if (d) h = h.replace('data-reveal="rule" data-reveal-delay="80"', 'data-reveal="rule" data-reveal-delay="' + (d + 40) + '"');
     return h;
   }
-  function tags(str) {
-    return String(str || '').split(/[・·]/).filter(Boolean).map(function (x) { return '<span class="tag tag-neutral">' + esc(x) + '</span>'; }).join('');
-  }
-  function updated() { return SM.updated || '2026-10-17'; }
+  function updated() { return SM.updated || '2026-10-26'; }
   function fmtDate(d) { try { return SM.fmtDate ? SM.fmtDate(d) : d; } catch (e) { return d; } }
   function todayISO() {
     var d = new Date();
@@ -11455,38 +14548,48 @@
   }
   function listed() { return SM.ui && SM.ui.listedCount ? SM.ui.listedCount() : programs().length; }
 
-  /* same rule as さがす' category list, so the numbers on the signs match what the list shows */
+  /* ------------------------------------------------------------ area rule (SPEC-v7 data contract)
+     answers.area: a 5-digit Kanto code, a 2-digit prefecture code, 'other' (outside Kanto) or null.
+     A record: for.areas [] = anywhere; ['14'] = all of 神奈川; ['14100'] = 横浜市 only. basis 'tokyo' = ['13'].
+     In prefecture X → [] + [X] + records naming their city. 'other' → only records open to anyone.
+     null → national + every prefecture's own (pref-level) records; city-only records wait for an answer. */
+  function codeOf(x) { return String(x == null ? '' : x); }
+  function U() { return SM.matchUtil || {}; }
+  function prefOfCode(c) { try { return (U().prefOf && U().prefOf(c)) || ''; } catch (e) { return ''; } }
+  // can someone living in `area` use this record? (match.js's area rule — the same one さがす uses)
+  function usable(p, area) {
+    try { if (U().usableIn) return !!U().usableIn(p, U().cleanArea ? U().cleanArea({ area: area }) : area); } catch (e) { /* ignore */ }
+    return true;
+  }
+  /* the numbers on the six stations: exactly the rows さがす lists for this person when a station is tapped
+     (SM.matchUtil.catCounts is the one rule for both; 中学生: only what is open to them) */
+  var countsMemo = null;
   function catCounts() {
-    var a = answers(), counts = {};
-    var wardKnown = isWard(a.area);
-    var fits = null;
-    if (junior() && SM.match) {
-      fits = {};
-      try { SM.match(a).forEach(function (r) { fits[r.p.id] = 1; }); } catch (e) { fits = null; }
-    }
-    programs().forEach(function (p) {
-      if (!p || !p.id) return;
-      var ar = (p.for && p.for.areas) || [];
-      var wardOnly = ar.length > 0 && ar.every(isWard);
-      if (wardKnown) { if (wardOnly && ar.indexOf(a.area) === -1) return; }
-      else if (p.basis === 'local' || wardOnly) return;
-      if (SM.tokyoVersion && SM.tokyoVersion[p.id] && a.area !== 'other') return;
-      if (fits && !fits[p.id]) return;
-      (p.cat || []).forEach(function (c) { counts[c] = (counts[c] || 0) + 1; });
-    });
-    return counts;
+    var a = answers();
+    var key = JSON.stringify(a) + '|' + programs().length;
+    if (countsMemo && countsMemo.key === key) return countsMemo.c;
+    var c = {};
+    try { if (U().catCounts) c = U().catCounts(a); } catch (e) { c = {}; }
+    countsMemo = { key: key, c: c };
+    return c;
+  }
+  function areaName(code) {
+    try { var a = SM.area ? SM.area(code) : null; if (a) return en() ? (a.en || a.name) : a.name; } catch (e) { /* ignore */ }
+    try {
+      var ps = (SM.data && SM.data.prefs) || [];
+      for (var i = 0; i < ps.length; i++) if (codeOf(ps[i].code) === codeOf(code)) return en() ? (ps[i].en || ps[i].name) : ps[i].name;
+    } catch (e) { /* ignore */ }
+    return '';
   }
 
   /* ------------------------------------------------------------ entrance choreography
      ms after the entrance starts: the opening's release (first visit) or the mount (returning beat, a tab opened
-     for the first time this session). The hero parts are CSS (--d, css .h-play); head / rows are SM.motion reveals.
-     SPEC-v5 scale: travel 24–48px, 280–560ms, staggers 40–60ms. */
+     for the first time this session). Hero parts are CSS (--d, css .h-play); the rest are SM.motion reveals. */
   var ENTER = {
-    launch: { kicker: 0, l1: 50, l2: 110, mark: 340, facts: 190, factStep: 45, cta: 260, nudge: 760, crisis: 330, answers: 190, side: 320, head: 340, rows: 380, rowStep: 40 },
-    short: { kicker: 0, l1: 30, l2: 80, mark: 280, facts: 130, factStep: 40, cta: 190, nudge: 660, crisis: 250, answers: 130, side: 250, head: 270, rows: 310, rowStep: 35 }
+    launch: { mast: 0, kicker: 40, l1: 90, l2: 150, mark: 380, art: 120, cta: 300, nudge: 820, crisis: 380, answers: 220, side: 340, ask: 420, head: 460, route: 520, stop: 90 },
+    short: { mast: 0, kicker: 20, l1: 60, l2: 110, mark: 300, art: 80, cta: 220, nudge: 700, crisis: 290, answers: 150, side: 260, ask: 320, head: 340, route: 400, stop: 75 }
   };
   var mode = 'none', T = null;
-  // home is already on screen (an in-place SM.render()): the static #view is also .v-home, so look for the hero
   function homeShown() {
     var view = document.getElementById('view');
     return !!(view && view.classList.contains('v-home') && view.querySelector(':scope > .h-hero'));
@@ -11499,19 +14602,31 @@
     if (de.classList.contains('lx-full') && !(window.__lx && window.__lx.done)) return 'launch';
     return 'short';
   }
-  // one hero part of the CSS choreography: its kind (line | rise | cta | slide) and its delay
+  // one hero part of the CSS choreography: its kind (line | rise | cta | slide | draw | art) and its delay
   function ha(kind, key, extra) {
     if (!T) return '';
     var d = typeof key === 'number' ? key : T[key];
     return ' data-h="' + kind + '" style="--d:' + (d + (extra || 0)) + 'ms"';
   }
-  // a line of the headline: the outer span holds the clip, the inner one rises from behind the baseline
   function hline(cls, key, html) {
     return '<span class="' + cls + ' h-ln-o"' + (T ? ' data-h="line"' : '') + '><span class="h-ln-i"' + (T ? ' style="--d:' + T[key] + 'ms"' : '') + '>' + html + '</span></span>';
   }
-  // the 蛍光ペン stroke: its own element under the phrase; it sweeps from the left once its line is up
   function markInk() {
     return '<span class="h-mark-ink"' + (T ? ' style="--mark-at:' + T.mark + 'ms"' : '') + ' aria-hidden="true"></span>';
+  }
+
+  /* ------------------------------------------------------------ masthead: 関東版 ─────── 支援 N件・ログインなし */
+  function mast() {
+    // 中学生: the supports open to them where they live (the same rows さがす lists), not the whole catalogue
+    var n = junior() ? (catCounts()._all || listed()) : listed();
+    var num = '<b class="num h-mast-n' + rollCls('home.total', n) + '" data-count="' + n + '" data-count-seen="home.total" data-count-dur="900"' +
+      (T ? ' data-reveal-delay="' + (T.mast + 120) + '"' : '') + '>' + n + '</b>';
+    var count = t('home.mastCount', { n: '\u0000' }).split('\u0000');
+    return '<div class="h-mast"' + ha('draw', 'mast') + '>' +
+      '<p class="h-mast-ed">' + esc(t('home.ed')) + '</p>' +
+      '<p class="h-mast-facts" aria-label="' + esc(t('home.mast')) + '"><span>' + esc(count[0] || '') + num + esc(count[1] || '') + '</span>' +
+        '<span class="h-mast-sep" aria-hidden="true"></span><span>' + esc(t('home.f.login')) + '</span></p>' +
+    '</div>';
   }
 
   /* ------------------------------------------------------------ hero */
@@ -11519,30 +14634,13 @@
     if (SM.ui && SM.ui.button) return SM.ui.button(label, { href: href, variant: 'primary', size: 'lg', block: true, cls: 'h-cta', attrs: 'data-press' });
     return '<a class="btn btn-primary btn-lg btn-block h-cta" href="' + esc(href) + '" data-press><span>' + esc(label) + '</span>' + arrow() + '</a>';
   }
-  // 中学生: straight to the SOS sheet (189 and 子供SOS first there); otherwise the 住まい page, which opens on
-  // tonight's numbers
+  // 中学生: straight to the SOS sheet (189 and 子供SOS first there); otherwise the 住まい page (tonight's numbers)
   function crisisLink() {
-    var jr = false;
-    try { jr = document.body.classList.contains('is-junior') || (SM.isJunior && SM.isJunior()); } catch (e) { jr = false; }
     var inner = '<span>' + esc(t('home.crisis')) + '</span>' + arrow();
-    return jr ? '<button type="button" class="btn btn-text h-crisis" data-act="sos" aria-haspopup="dialog" data-press' + ha('slide', 'crisis') + '>' + inner + '</button>' :
+    return junior() ? '<button type="button" class="btn btn-text h-crisis" data-act="sos" aria-haspopup="dialog" data-press' + ha('slide', 'crisis') + '>' + inner + '</button>' :
       '<a class="btn btn-text h-crisis" href="#/find/cat/housing" data-press' + ha('slide', 'crisis') + '>' + inner + '</a>';
   }
-  // facts as signage, not sentences: 東京の支援 222件 | ログインなし | 6問・3分
-  function facts(n) {
-    var num = '<b class="num h-fact-n' + rollCls('home.total', n) + '" data-count="' + n + '" data-count-seen="home.total" data-count-dur="900"' +
-      (T ? ' data-reveal-delay="' + T.facts + '"' : '') + '>' + n + '</b>';
-    var unit = t('home.unit');
-    var first = en() ? num + '<span class="h-fact-k">' + esc(t('home.f.count')) + '</span>' :
-      '<span class="h-fact-k">' + esc(t('home.f.count')) + '</span>' + num + (unit ? '<span class="h-fact-u">' + esc(unit) + '</span>' : '');
-    var cells = [first, '<span class="h-fact-k">' + esc(t('home.f.login')) + '</span>', '<span class="h-fact-k">' + esc(t('home.f.time')) + '</span>'];
-    return '<ul class="h-facts" role="list" aria-label="' + esc(t('home.facts')) + '">' + cells.map(function (c, i) {
-      return '<li class="h-fact"' + ha('rise', T ? T.facts + i * T.factStep : 0) + '>' + c + '</li>';
-    }).join('') + '</ul>';
-  }
-
   function heroNew(jr) {
-    var n = listed();
     var art = illus(jr ? 'home-jr-hero' : 'home-hero', { size: 'fill', cls: 'h-art-il' });
     var pre = t('home.h1pre');
     var title =
@@ -11553,19 +14651,18 @@
         hline('h-main', 'l2', esc(t('home.h1c'))) +
       '</h1>';
     return '<section class="h-hero is-new wide-layout' + (art ? ' has-art' : '') + '" aria-labelledby="h-title">' +
-      (art ? '<div class="h-art">' + art + '</div>' : '') +
-      '<div class="h-copy">' + title + facts(n) +
-        '<div class="h-actions"><div class="h-cta-w"' + ha('cta', 'cta') + '>' + cta(t('home.cta'), '#/find/q/1') + '</div>' + crisisLink() + '</div>' +
-      '</div>' +
+      '<div class="h-copy">' + title + '</div>' +
+      (art ? '<div class="h-art"' + ha('art', 'art') + '>' + art + '</div>' : '') +
+      '<div class="h-actions"><div class="h-cta-w"' + ha('cta', 'cta') + '>' + cta(t('home.cta'), '#/find/q/1') + '</div>' + crisisLink() + '</div>' +
     '</section>';
   }
 
   function fitCount() {
-    // same count as the results page and さがす (ward/city-only rows wait in their own group there)
+    // the same count as the results page and さがす (city-only rows wait in their own group there)
     try { if (SM.match) return SM.match(answers()).filter(function (r) { return !r.local; }).length; } catch (e) { /* ignore */ }
     return null;
   }
-  function heroBack(side) {
+  function heroBack(side, jr) {
     var n = fitCount();
     var summary = '';
     try {
@@ -11573,8 +14670,7 @@
         summary = SM.matchSummary(answers()).filter(function (r) {
           return r.set && r.label && (r.key === 'stage' || r.key === 'path' || r.key === 'area');
         }).map(function (r, i) {
-          // F25: plain text separated by ／ (a tag looked tappable; only 変える is)
-          return '<span class="h-ans">' + (i ? '<span class="h-ans-sep" aria-hidden="true">' + (en() ? '\u00b7' : '／') + '</span>' : '') + esc(r.label) + '</span>';
+          return '<span class="h-ans">' + (i ? '<span class="h-ans-sep" aria-hidden="true">' + (en() ? '·' : '／') + '</span>' : '') + esc(r.label) + '</span>';
         }).join('');
       }
     } catch (e) { summary = ''; }
@@ -11588,20 +14684,45 @@
       '<h1 class="h-title is-back is-none" id="h-title" tabindex="-1">' + hline('h-kicker', 'kicker', esc(t('home.backNone'))) + '</h1>';
     var ans = summary ? '<p class="h-answers"' + ha('rise', 'answers') + '><span class="sr-only">' + esc(t('home.yourAnswers')) + ': </span>' + summary +
       '<a class="h-change" href="#/find/q/1" aria-label="' + esc(t('home.changeLabel')) + '" data-press>' + esc(t('home.changeAnswers')) + '</a></p>' : '';
-    return '<section class="h-hero is-back wide-layout' + (side ? ' has-side' : '') + '" aria-labelledby="h-title">' +
-      '<div class="h-copy">' + title + ans +
-        '<div class="h-actions"><div class="h-cta-w"' + ha('cta', 'cta') + '>' + cta(t('home.seeResults'), '#/find/results') + '</div>' + crisisLink() + '</div>' +
-      '</div>' +
-      (side ? '<div class="h-side"' + ha('rise', 'side') + '>' + side + '</div>' : '') +
+    // the right-hand column on desktop: やること when there is something in it, else the picture
+    // with やること on the right, the picture stays too, smaller, above it (wide screens only)
+    var art = illus(jr ? 'home-jr-hero' : 'home-hero', { size: 'fill', cls: 'h-art-il' });
+    return '<section class="h-hero is-back wide-layout' + (side ? ' has-side' : art ? ' has-art' : '') + '" aria-labelledby="h-title">' +
+      '<div class="h-copy">' + title + ans + '</div>' +
+      (side ? '<div class="h-side"' + ha('rise', 'side') + '>' + (art ? '<div class="h-art is-back-art is-mini" aria-hidden="true">' + art + '</div>' : '') + side + '</div>' : art ? '<div class="h-art is-back-art"' + ha('art', 'art') + '>' + art + '</div>' : '') +
+      '<div class="h-actions"><div class="h-cta-w"' + ha('cta', 'cta') + '>' + cta(t('home.seeResults'), '#/find/results') + '</div>' + crisisLink() + '</div>' +
     '</section>';
   }
+
+  /* ------------------------------------------------------------ きく: a fill-in line that routes to #/ask/<words> */
+  function ask() {
+    var d = T ? ' data-reveal="up" data-reveal-delay="' + T.ask + '"' : ' data-reveal="up"';
+    return '<form class="h-ask" role="search" action="#/ask" data-h-ask' + d + '>' +
+      '<label class="h-ask-k" for="h-ask-in"><span class="h-ask-ic">' + ic('search') + '</span><span>' + esc(t('home.askK')) + '</span></label>' +
+      '<span class="h-ask-line"><input class="h-ask-in" id="h-ask-in" name="q" type="search" enterkeyhint="search" autocomplete="off" spellcheck="false" maxlength="80"' +
+        ' placeholder="' + esc(t('home.askPh')) + '" aria-label="' + esc(t('home.askLabel')) + '">' +
+        '<button class="h-ask-go" type="submit" data-press><span>' + esc(t('home.askGo')) + '</span>' + arrow() + '</button></span>' +
+    '</form>';
+  }
+  function goAsk(form) {
+    var inp = form && form.querySelector('input');
+    var q = inp ? String(inp.value || '').replace(/\s+/g, ' ').trim() : '';
+    var h = q ? '#/ask/' + encodeURIComponent(q) : '#/ask';
+    try { if (SM.go) { SM.go(h); return; } } catch (e) { /* ignore */ }
+    location.hash = h;
+  }
+  document.addEventListener('submit', function (e) {
+    var f = e.target;
+    if (!f || !f.hasAttribute || !f.hasAttribute('data-h-ask')) return;
+    e.preventDefault();
+    goAsk(f);
+  }, true);
 
   /* ------------------------------------------------------------ やること (only when there is something) */
   function planPreview() {
     var saved = (SM.state && SM.state.saved) || [];
     var leave = SM.state && SM.state.leaveDate;
     var items = saved.map(prog).filter(Boolean);
-    // 中学生 track (やること's 高校受験 switch): count down to 高校入学 instead of 巣立ちの日
     var anc = null;
     try { if (SM.plan && typeof SM.plan.anchor === 'function') anc = SM.plan.anchor(); } catch (e) { anc = null; }
     var jrTrack = !!(anc && anc.track === 'junior' && anc.date);
@@ -11623,7 +14744,7 @@
     }
     var rows = items.slice(0, 3).map(function (p) {
       var cat = (p.cat && p.cat[0]) || 'procedures';
-      return '<a class="list-item h-plan-item" href="#/p/' + encodeURIComponent(p.id) + '" data-id="' + esc(p.id) + '" data-press="ink">' + catMark(cat, 'sm', true) +
+      return '<a class="list-item h-plan-item" href="#/p/' + encodeURIComponent(p.id) + '" data-id="' + esc(p.id) + '" data-press="ink">' + catMark(cat, 'xs', true) +
         '<span class="list-body"><span class="list-title">' + esc(shortName(p)) + '</span></span>' +
         '<span class="list-meta">' + arrow() + '</span></a>';
     }).join('');
@@ -11635,7 +14756,7 @@
     '</section>';
   }
 
-  /* ------------------------------------------------------------ offline: a slim ruled row (VISUAL-SPEC §9) */
+  /* ------------------------------------------------------------ offline: a slim ruled row */
   function offline() {
     var off = false;
     try { off = navigator.onLine === false; } catch (e) { off = false; }
@@ -11644,7 +14765,116 @@
       '<p><b>' + esc(t('home.offline')) + '</b>' + esc(t('home.offlineBody')) + '</p></aside>';
   }
 
-  /* ------------------------------------------------------------ まなぶ: a shelf of covers */
+  /* ------------------------------------------------------------ 困りごと: the 路線図 — six stations on one line */
+  function route(first) {
+    var order = SM.CAT_ORDER || ['housing', 'money', 'education', 'work', 'procedures', 'consult'];
+    var counts = catCounts();
+    var unit = t('home.unit');
+    var lead = first && T;
+    var base = lead ? T.route : 0, step = lead ? T.stop : 80;
+    var a = answers().area;
+    var where = a && a !== 'other' ? areaName(a) : '';
+    var jr = junior();
+    var stops = order.map(function (k, i) {
+      var n = counts[k] || 0;
+      var at = lead ? ' data-reveal-delay="' + (base + 120 + i * step) + '"' : '';
+      // 中学生: a lone 「1件」 reads as "nothing here" — a station with fewer than 2 shows no number
+      var quiet = jr && n < 2;
+      var label = quiet ? catLabel(k) : t('home.catCount', { name: catLabel(k), n: n });
+      return '<li class="h-stop" style="--i:' + i + '"><a class="h-stop-a cat-' + esc(k) + '" href="#/find/cat/' + esc(k) + '" data-press="ink" aria-label="' + esc(label) + '">' +
+        '<span class="h-stop-mark">' + catMark(k, 'sm', true) + '</span>' +
+        '<span class="h-stop-name">' + esc(catLabel(k)) + '</span>' +
+        (quiet ? '<span class="h-stop-n is-quiet" aria-hidden="true"></span>' :
+        '<span class="h-stop-n" aria-hidden="true"><b class="num" data-count="' + n + '" data-count-dur="620"' + at + '>' + n + '</b>' + (unit ? '<small>' + esc(unit) + '</small>' : '') + '</span>') +
+        '<span class="h-stop-go" aria-hidden="true">' + arrow() + '</span>' +
+      '</a></li>';
+    }).join('');
+    var d = lead ? ' data-reveal-delay="' + base + '"' : '';
+    return '<section class="h-sec h-route-sec" id="h-cats" aria-labelledby="h-cats-h" tabindex="-1">' +
+      head(t('home.catsTitle'), { id: 'h-cats-h', sub: where ? t('home.catsFor', { area: where }) : '', action: { label: t('home.catsAll'), href: '#/find' } }, first) +
+      '<ol class="h-route" role="list" data-reveal="fade"' + d + '>' + stops + '</ol>' +
+    '</section>';
+  }
+
+  /* ------------------------------------------------------------ 今すぐ話したい: a timetable */
+  /* national lines for everyone, plus ONE line of the person's own prefecture (existing records only; shown when
+     the answer is in that prefecture — Tokyo's also when no area is answered, as before) */
+  var TALK = [
+    { id: 'yorisoi', sub: 'home.t.yorisoi' },
+    { id: 'anata-no-ibasho', sub: 'home.t.ibasho' },
+    { id: 'tokyo-wakanavi', sub: 'home.t.wakanavi', lineLabel: 'home.lineShort', pref: '13', unanswered: true },
+    { id: 'kanagawa-kowaka-line', sub: 'home.t.prefYouth', pref: '14' },
+    { id: 'chiba-lighthouse', sub: 'home.t.prefYouth', pref: '12' },
+    { id: 'tochigi-polaris', sub: 'home.t.prefYouth', pref: '09' },
+    { id: 'gunma-asunowa', sub: 'home.t.prefYouth', pref: '10' },
+    { id: 'b4s-line-soudan', sub: 'home.t.b4s' }
+  ];
+  var TALK_JR = [
+    { id: 'kodomo-sos', sub: 'home.t.kodomoSos' },
+    { id: 'childline', sub: 'home.t.childline' },
+    { id: 'kanagawa-kodomo-hotline', sub: 'home.t.prefKids', pref: '14' },
+    { id: 'saitama-smile-net', sub: 'home.t.prefKids', pref: '11' },
+    { id: 'chiba-kosapo-24h', sub: 'home.t.prefKids', pref: '12' },
+    { id: 'ibaraki-kodomo-hotline', sub: 'home.t.prefKids', pref: '08' },
+    { id: 'tochigi-tel-jidou', sub: 'home.t.prefKids', pref: '09' },
+    { id: 'gunma-kodomo-hotline24', sub: 'home.t.prefKids', pref: '10' },
+    { id: 'anata-no-ibasho', sub: 'home.t.ibasho' },
+    { id: 'yorisoi', sub: 'home.t.yorisoi' }
+  ];
+  function talkFor(x, area) {
+    var p = prog(x.id);
+    if (!p || !usable(p, area)) return false;
+    if (!x.pref) return true;
+    var pc = prefOfCode(area);
+    return pc ? pc === x.pref : !!(x.unanswered && area !== 'other');
+  }
+  /* name ……… number. The number is the biggest thing and dials; its label carries name, number and hours.
+     A chat-only line puts its チャット link where the number would be. LINE / chat beside a number is a quiet link. */
+  function talkRow(x, i) {
+    var p = prog(x.id);
+    if (!p || !p.contact) return '';
+    var c = p.contact, name = shortName(p);
+    var ext = ic('external', 'h-tt-ext') + '<span class="sr-only">' + esc(t('core.newtab')) + '</span>';
+    var hours = c.hours ? L(c.hours) : '';
+    var free = c.phone && isFreeDial(c.phone);
+    var pn = x.pref ? (U().prefName ? U().prefName(x.pref, en()) : '') : '';
+    var tags = [free ? t('home.free') : ''].concat(String(t(x.sub, { pref: pn }) || '').split(/[・·]/)).filter(Boolean);
+    var seen = {};
+    tags = tags.filter(function (s) { if (seen[s]) return false; seen[s] = 1; return true; });
+    var main = '', alt = '';
+    if (c.phone) {
+      main = '<a class="h-tt-num" href="' + esc(telHref(c.phone)) + '" aria-label="' + esc(t('home.callShort') + ' ' + name + ' ' + c.phone + (hours ? '. ' + hours : '')) + '">' +
+        '<span class="h-tt-ic">' + ic('phone') + '</span><span class="num" data-noruby>' + esc(c.phone) + '</span></a>';
+      var link = c.line || c.chat;
+      if (link) alt = '<a class="h-tt-alt" href="' + esc(link) + '" target="_blank" rel="noopener"><span>' + esc(t(c.line ? (x.lineLabel || 'home.lineShort') : 'home.chatShort')) + '</span>' + ext + '</a>';
+    } else if (c.chat || c.line) {
+      // a chat-only line: the same box as the phone's, and words — never a big word where a number would be
+      main = '<a class="h-tt-num is-chat" href="' + esc(c.chat || c.line) + '" target="_blank" rel="noopener">' +
+        '<span class="h-tt-ic">' + ic('chat') + '</span><span class="h-tt-chat">' + esc(t(c.chat ? 'home.chatTalk' : 'home.lineTalk')) + '</span>' + ext + '</a>';
+    } else return '';
+    return '<li class="h-tt" data-id="' + esc(p.id) + '" style="--i:' + i + '">' +
+      '<div class="h-tt-who"><h3 class="h-tt-name"><a href="#/p/' + encodeURIComponent(p.id) + '">' + esc(name) + '</a></h3>' +
+        '<p class="h-tt-tags">' + tags.map(function (s, k) { return '<span' + (k === 0 && free ? ' class="is-free"' : '') + '>' + esc(s) + '</span>'; }).join('') + '</p></div>' +
+      '<span class="h-tt-dots" aria-hidden="true"></span>' +
+      '<div class="h-tt-act">' + main + alt + '</div>' +
+    '</li>';
+  }
+  function talk(jr) {
+    var area = answers().area;
+    /* a line that serves one prefecture (東京都わかもの…) is left out for people elsewhere */
+    var rows = (jr ? TALK_JR : TALK).filter(function (x) { return talkFor(x, area); }).slice(0, 5).map(talkRow).join('');
+    return '<section class="h-sec h-talk" id="h-talk" aria-labelledby="h-talk-h">' +
+      head(t('home.talkTitle'), { id: 'h-talk-h', sub: t('home.talkBody') }) +
+      (rows ? '<ul class="h-tts" role="list" data-reveal="fade">' + rows + '</ul>' : '') +
+      '<div class="h-talk-foot" data-reveal>' +
+        '<a class="btn btn-text h-more" href="#/find/cat/consult"><span>' + esc(t('home.talkMore')) + '</span>' + arrow() + '</a>' +
+        '<button type="button" class="h-sos" data-act="sos" aria-haspopup="dialog"><span class="h-sos-k">' + esc(t('home.talkSos')) + '</span>' +
+          '<span class="h-sos-v">' + ic('phone') + '<b>' + esc(t('home.talkSosBtn')) + '</b>' + arrow() + '</span></button>' +
+      '</div>' +
+    '</section>';
+  }
+
+  /* ------------------------------------------------------------ まなぶ: a line of stations + the lesson to read next */
   function lessonsFor(jr) {
     var list = ((SM.data && SM.data.lessons) || []).filter(function (l) { return l && l.id; });
     var rank = jr ? { jr: 0, all: 1, hs: 2 } : { all: 0, hs: 0, jr: 1 };
@@ -11663,6 +14893,14 @@
     try { if (SM.isLearned) return SM.isLearned(id); } catch (e) { /* ignore */ }
     return ((SM.state && SM.state.learned) || []).indexOf(id) !== -1;
   }
+  // where a half-read lesson stopped (learn.js keeps it in SM.store 'learnPos': {id: step index})
+  function posOf(id) {
+    try {
+      var p = SM.store && SM.store.get ? SM.store.get('learnPos', {}) : null;
+      var v = p && typeof p === 'object' ? p[id] : 0;
+      return typeof v === 'number' && v > 0 ? v : 0;
+    } catch (e) { return 0; }
+  }
   function lessonHref(l) { return '#/learn/' + encodeURIComponent(l.id); }
 
   function learn(jr, first) {
@@ -11672,129 +14910,60 @@
     var every = jr ? list.slice() : list.concat(((SM.data && SM.data.lessons) || []).filter(function (l) { return l && l.id && list.indexOf(l) === -1; }));
     var total = every.length;
     var done = every.filter(function (l) { return isLearned(l.id); }).length;
-    var next = null;
-    for (var i = 0; i < list.length; i++) if (!isLearned(list[i].id)) { next = list[i]; break; }
-    var feature = next || list[0];
-    var todo = list.filter(function (l) { return l !== feature && !isLearned(l.id); });
-    var did = list.filter(function (l) { return l !== feature && isLearned(l.id); });
-    var shown = [feature].concat(todo, did).slice(0, 8);
-    var flag = next ? (done ? t('home.learnNext') : t('home.learnFirst')) : t('home.learnAllDone');
-
-    var cards = shown.map(function (l, idx) {
-      var d = isLearned(l.id);
-      var cat = l.cat || 'money';
-      // 中学生: numbered in the order their lessons are listed (01, 02 …), not by catalogue number
-      var no = jr ? pad2(list.indexOf(l) + 1) : (l.order != null ? pad2(l.order) : '');
-      var cover = illus('learn-cover-' + l.id, { size: 'cover', animate: false, cls: 'h-cover-il' });
-      return '<li class="h-shelf-item' + (idx === 0 ? ' is-feature' : '') + (d ? ' is-done' : '') + '" data-id="' + esc(l.id) + '">' +
-        '<a class="h-cover" href="' + lessonHref(l) + '" data-press="ink">' +
-          (idx === 0 ? '<span class="h-cover-flag">' + esc(flag) + '</span>' : '') +
-          '<span class="h-cover-art' + (cover ? '' : ' is-blank') + '">' + cover +
-            (d ? '<span class="h-cover-done" title="' + esc(t('home.learnDone')) + '"><span aria-hidden="true">' + esc(t('home.learnDoneMark')) + '</span><span class="sr-only">' + esc(t('home.learnDone')) + '</span></span>' : '') +
-          '</span>' +
-          '<span class="h-cover-meta">' + catMark(cat, 'xs', true) + '<span class="num">' + esc(no) + '</span>' +
-            (l.minutes ? '<span>' + esc(t('home.learnMin', { n: l.minutes })) + '</span>' : '') +
-            (l.level === 'jr' && !jr ? '<span>' + esc(t('home.learnFor')) + '</span>' : '') + '</span>' +
-          '<span class="h-cover-title">' + esc(L(l.title)) + '</span>' +
-        '</a></li>';
+    // the lesson to read now: one left half-read, else the first not done, else the first
+    var feature = null, resume = false, i;
+    for (i = 0; i < list.length; i++) if (!isLearned(list[i].id) && posOf(list[i].id) > 0) { feature = list[i]; resume = true; break; }
+    if (!feature) for (i = 0; i < list.length; i++) if (!isLearned(list[i].id)) { feature = list[i]; break; }
+    var allDone = !feature;
+    if (!feature) feature = list[0];
+    var steps = (feature.steps && feature.steps.length) || 0;
+    var at = resume ? Math.min(posOf(feature.id) + 1, steps || 1) : 0;
+    var flag = allDone ? t('home.learnAllDone') : resume ? t('home.learnResumeK') : done ? t('home.learnNext') : t('home.learnFirst');
+    var cat = feature.cat || 'money';
+    var no = jr ? pad2(list.indexOf(feature) + 1) : (feature.order != null ? pad2(feature.order) : '');
+    var cover = illus('learn-cover-' + feature.id, { size: 'cover', animate: false, cls: 'h-cover-il' });
+    var goLabel = allDone ? t('home.learnAgain') : resume ? t('home.learnResume') : t('home.learnStart');
+    var meta = '<span class="h-lf-meta">' + catMark(cat, 'xs', true) + (no ? '<span class="num">' + esc(no) + '</span>' : '') +
+      (feature.minutes ? '<span>' + esc(t('home.learnMin', { n: feature.minutes })) + '</span>' : '') +
+      (resume && steps ? '<span class="h-lf-at num">' + esc(t('home.learnAt', { n: at, total: steps })) + '</span>' : '') + '</span>';
+    var featureHtml = '<a class="h-lf" href="' + lessonHref(feature) + '" data-id="' + esc(feature.id) + '" data-press="ink">' +
+      '<span class="h-lf-art' + (cover ? '' : ' is-blank') + '">' + cover + '<span class="h-lf-flag">' + esc(flag) + '</span>' +
+        (resume && steps ? '<span class="h-lf-bar" aria-hidden="true" style="--p:' + (at / steps).toFixed(3) + '"></span>' : '') + '</span>' +
+      '<span class="h-lf-body">' + meta + '<span class="h-lf-title">' + esc(L(feature.title)) + '</span>' +
+        '<span class="h-lf-go btn btn-secondary" aria-hidden="true"><span>' + esc(goLabel) + '</span>' + arrow() + '</span></span>' +
+    '</a>';
+    // the next three after the feature (not done first)
+    var rest = list.filter(function (l) { return l !== feature && !isLearned(l.id); }).slice(0, 3);
+    var rows = rest.map(function (l) {
+      var n = jr ? pad2(list.indexOf(l) + 1) : (l.order != null ? pad2(l.order) : '');
+      return '<li><a class="h-lr" href="' + lessonHref(l) + '" data-press="ink">' + catMark(l.cat || 'money', 'xs', true) +
+        '<span class="h-lr-t">' + esc(L(l.title)) + '</span>' +
+        '<span class="h-lr-m num">' + (l.minutes ? esc(t('home.learnMin', { n: l.minutes })) : esc(n)) + '</span>' + arrow() + '</a></li>';
     }).join('');
-    var end = '<li class="h-shelf-end"><a class="h-shelf-all" href="#/learn" data-press="ink"><span>' + esc(t('home.learnAllCard')) + '</span>' + arrow() + '</a></li>';
-    var segs = '';
-    for (var j = 0; j < total; j++) segs += '<i class="h-seg' + (j < done ? ' is-done' : '') + '" style="--i:' + j + '"></i>';
-    var progress = '<div class="h-learn-prog"><p class="h-learn-prog-n"><b class="num">' + done + '</b><span class="h-learn-prog-of num">/ ' + total + '</span>' +
-      '<span class="h-learn-prog-k">' + esc(t('home.learnDoneLabel')) + '</span></p>' +
-      '<span class="h-segs" aria-hidden="true" style="--n:' + total + '">' + segs + '</span></div>';
-
-    var hold = first && T ? ' data-reveal-delay="' + T.rows + '"' : '';
+    // progress: a line of stations, one per lesson; done ones filled, the current one ringed
+    var stops = '';
+    var cur = allDone ? -1 : done;
+    for (var j = 0; j < total; j++) stops += '<i class="h-ls' + (j < done ? ' is-done' : j === cur ? ' is-now' : '') + '" style="--i:' + j + '"></i>';
+    // nothing read yet: what is here (12のレッスン・1つ2〜3分), not a discouraging 「0/12」
+    var mins = every.map(function (l) { return +l.minutes || 0; }).filter(Boolean);
+    var mn = mins.length ? Math.min.apply(null, mins) : 0, mx = mins.length ? Math.max.apply(null, mins) : 0;
+    var range = mn ? (mn === mx ? String(mn) : mn + (en() ? '–' : '〜') + mx) : '';
+    var count = done ? '<p class="h-lp-n"><b class="num">' + done + '</b><span class="h-lp-of num">/' + total + '</span><span class="h-lp-k">' + esc(t('home.learnProgK')) + '</span>' +
+        '<span class="sr-only">' + esc(t('home.learnDoneOf', { done: done, total: total })) + '</span></p>' :
+      '<p class="h-lp-n is-intro"><span class="h-lp-intro">' + esc(t(range ? 'home.learnIntro' : 'home.learnIntroN', { n: total, min: range })) + '</span></p>';
+    var prog = '<div class="h-lp" data-reveal="fade"' + (first && T ? ' data-reveal-delay="' + T.route + '"' : '') + '>' + count +
+      '<span class="h-lp-line" aria-hidden="true" style="--n:' + total + ';--done:' + done + '">' + stops + '</span></div>';
+    var hold = first && T ? ' data-reveal-delay="' + (T.route + 120) + '"' : '';
     return '<section class="h-sec h-learn' + (jr ? ' is-jr' : '') + '" id="h-learn" aria-labelledby="h-learn-h">' +
       head(t('home.learnTitle'), { id: 'h-learn-h', action: { label: t('home.learnAll'), href: '#/learn' } }, first) +
-      '<div class="h-learn-body" data-reveal' + hold + '>' + progress +
-        '<ul class="h-shelf" role="list" aria-label="' + esc(t('home.shelf')) + '" data-reveal-stagger="60">' + cards + end + '</ul>' +
+      prog +
+      '<div class="h-learn-body" data-reveal="up"' + hold + '>' + featureHtml +
+        (rows ? '<div class="h-lr-w"><p class="h-lr-k">' + esc(t('home.learnUp')) + '</p><ul class="h-lrs" role="list">' + rows + '</ul></div>' : '') +
       '</div>' +
     '</section>';
   }
 
-  /* ------------------------------------------------------------ 困りごと: six kanji station rows (mark · name · count) */
-  function cats(first) {
-    var order = SM.CAT_ORDER || ['housing', 'money', 'education', 'work', 'procedures', 'consult'];
-    var counts = catCounts();
-    var unit = t('home.unit');
-    var lead = first && T;
-    var rows = order.map(function (k, i) {
-      var n = counts[k] || 0;
-      // each row rises in its turn; its kanji mark stamps in and its count rolls as it arrives (css: .h-cat-li.m-in)
-      var at = lead ? ' data-reveal-delay="' + (T.rows + i * T.rowStep) + '"' : '';
-      return '<li class="h-cat-li" data-id="' + esc(k) + '" data-reveal="up"' + at + '><a class="h-cat cat-' + esc(k) + '" href="#/find/cat/' + esc(k) + '" data-press="ink">' +
-        '<span class="h-cat-mark">' + catMark(k, 'sm', true) + '</span>' +
-        '<span class="h-cat-name">' + esc(catLabel(k)) + '</span>' +
-        (n ? '<span class="h-cat-n"><b class="num" data-count="' + n + '" data-count-dur="620">' + n + '</b>' + (unit ? '<small>' + esc(unit) + '</small>' : '') + '</span>' : '') +
-        '<span class="h-cat-go">' + arrow() + '</span>' +
-      '</a></li>';
-    }).join('');
-    return '<section class="h-sec h-cats-sec" id="h-cats" aria-labelledby="h-cats-h" tabindex="-1">' +
-      head(t('home.catsTitle'), { id: 'h-cats-h', action: { label: t('home.catsAll'), href: '#/find' } }, first) +
-      '<ul class="h-cats" role="list"' + (lead ? '' : ' data-reveal-stagger="50"') + '>' + rows + '</ul>' +
-    '</section>';
-  }
-
-  /* ------------------------------------------------------------ 今すぐ話したい */
-  // Curated lines; numbers and links always come from the verified data records.
-  var TALK = [
-    { id: 'yorisoi', sub: 'home.t.yorisoi' },
-    { id: 'anata-no-ibasho', sub: 'home.t.ibasho' },
-    { id: 'tokyo-wakanavi', sub: 'home.t.wakanavi', lineLabel: 'home.lineShort' },
-    { id: 'b4s-line-soudan', sub: 'home.t.b4s' }
-  ];
-  var TALK_JR = [
-    { id: 'kodomo-sos', sub: 'home.t.kodomoSos' },
-    { id: 'childline', sub: 'home.t.childline' },
-    { id: 'anata-no-ibasho', sub: 'home.t.ibasho' },
-    { id: 'yorisoi', sub: 'home.t.yorisoi' }
-  ];
-  /* one structure for every line: name · tags · the number · a row of equal ink-outline buttons. The number is the
-     biggest thing and also dials (pointer only: the 電話する button is the one link screen readers and the keyboard
-     get, with the name, number and hours in its label). */
-  function talkRow(x) {
-    var p = prog(x.id);
-    if (!p || !p.contact) return '';
-    var c = p.contact, name = shortName(p);
-    var num = '', acts = [];
-    var extBits = ic('external') + '<span class="sr-only">' + esc(t('core.newtab')) + '</span>';
-    if (c.phone) {
-      var when = [isFreeDial(c.phone) ? t('home.free') : '', c.hours ? L(c.hours) : ''].filter(Boolean).join('・');
-      num = '<a class="h-tel" href="' + esc(telHref(c.phone)) + '" tabindex="-1" aria-hidden="true">' +
-        '<span class="h-tel-n num" data-noruby>' + esc(c.phone) + '</span></a>';
-      acts.push('<a class="btn btn-secondary btn-sm h-act" href="' + esc(telHref(c.phone)) + '" aria-label="' + esc(t('home.callShort') + ' ' + name + ' ' + c.phone + (when ? '. ' + when : '')) + '">' +
-        ic('phone') + '<span>' + esc(t('home.callShort')) + '</span></a>');
-    }
-    var chatBtn = function (href, key) {
-      return '<a class="btn btn-secondary btn-sm h-act" href="' + esc(href) + '" target="_blank" rel="noopener"><span>' + esc(t(key)) + '</span>' + extBits + '</a>';
-    };
-    if (c.phone && c.line) acts.push(chatBtn(c.line, x.lineLabel || 'home.lineShort'));
-    else if (c.phone && c.chat) acts.push(chatBtn(c.chat, x.lineLabel || 'home.chatShort'));
-    else if (!c.phone && (c.chat || c.line)) acts.push(chatBtn(c.chat || c.line, c.chat ? 'home.chatShort' : 'home.lineShort'));
-    if (!acts.length) return '';
-    var free = c.phone && isFreeDial(c.phone) ? '<span class="tag tag-free h-free">' + esc(t('home.free')) + '</span>' : '';
-    return '<li class="h-ln" data-id="' + esc(p.id) + '">' +
-      '<h3 class="h-ln-name"><a href="#/p/' + encodeURIComponent(p.id) + '">' + esc(name) + '</a></h3>' +
-      '<p class="h-ln-sub">' + free + tags(t(x.sub)) + '</p>' +
-      num + '<div class="h-acts">' + acts.join('') + '</div>' +
-    '</li>';
-  }
-  function talk(jr) {
-    var rows = (jr ? TALK_JR : TALK).map(talkRow).join('');
-    return '<section class="h-sec h-talk" id="h-talk" aria-labelledby="h-talk-h">' +
-      head(t('home.talkTitle'), { id: 'h-talk-h', sub: t('home.talkBody') }) +
-      (rows ? '<ul class="h-lines" role="list" data-reveal-stagger="60">' + rows + '</ul>' : '') +
-      '<div class="h-talk-foot" data-reveal>' +
-        '<a class="btn btn-text h-more" href="#/find/cat/consult"><span>' + esc(t('home.talkMore')) + '</span>' + arrow() + '</a>' +
-        '<button type="button" class="h-sos" data-act="sos"><span class="h-sos-k">' + esc(t('home.talkSos')) + '</span>' +
-          '<span class="h-sos-v">' + ic('phone') + '<b>' + esc(t('home.talkSosBtn')) + '</b>' + arrow() + '</span></button>' +
-      '</div>' +
-    '</section>';
-  }
-
-  /* ------------------------------------------------------------ ツール: rows with spot thumbs, titles only */
+  /* ------------------------------------------------------------ ツール */
   function tools() {
     var list = [
       { href: '#/tools/script', k: 'script' },
@@ -11822,7 +14991,7 @@
     '</section>';
   }
 
-  /* ------------------------------------------------------------ 奥付 (an honest colophon, label / value) */
+  /* ------------------------------------------------------------ 奥付 */
   function colophon() {
     var rows = [
       [t('home.colo.by'), esc(t('home.colo.byVal'))],
@@ -11833,8 +15002,6 @@
     ];
     var kv = SM.ui && SM.ui.kv ? SM.ui.kv(rows) :
       '<dl class="kv">' + rows.map(function (r) { return '<div class="kv-row"><dt>' + esc(r[0]) + '</dt><dd>' + r[1] + '</dd></div>'; }).join('') + '</dl>';
-    // the full lockup: [巣]立ちマップ standing on the green line that steps up. The line draws once when the colophon
-    // arrives — the opening's line, at the end of the page.
     var mark = '';
     if (SM.brand && SM.brand.lockup) {
       mark = SM.brand.lockup({ line: !en(), cls: 'h-colo-logo' });
@@ -11843,10 +15010,10 @@
     return '<footer class="h-colo" aria-labelledby="h-colo-h">' +
       '<h2 class="sr-only" id="h-colo-h">' + esc(t('home.colo.title')) + '</h2>' +
       '<div class="h-colo-head"><span class="h-colo-mark">' + mark + '</span>' +
-        '<span class="h-colo-ed">' + esc(t('home.colo.ed')) + ' <span class="num">v' + esc(SM.version || '4.0.0') + '</span></span></div>' +
-      kv +
-      '<p class="h-colo-note">' + esc(t('home.colo.note')) + '</p>' +
-      '<a class="btn btn-text h-more" href="#/about"><span>' + esc(t('home.colo.about')) + '</span>' + arrow() + '</a>' +
+        '<span class="h-colo-ed">' + esc(t('home.colo.ed')) + ' <span class="num">v' + esc(SM.version || '7.0.0') + '</span></span></div>' +
+      '<div class="h-colo-body">' + kv +
+        '<p class="h-colo-note">' + esc(t('home.colo.note')) + '</p>' +
+        '<a class="btn btn-text h-more" href="#/about"><span>' + esc(t('home.colo.about')) + '</span>' + arrow() + '</a></div>' +
     '</footer>';
   }
 
@@ -11865,8 +15032,7 @@
     });
   }
 
-  /* ------------------------------------------------------------ the ふりがな offer sits under the hero (VISUAL-SPEC §7.2)
-     boot.js inserts it as the view's first child; on home it moves to just after the hero. */
+  /* the ふりがな offer sits under the hero (VISUAL-SPEC §7.2): boot inserts it first; on home it moves after the hero */
   function wrapBanner() {
     var orig = SM.paintJrBanner;
     if (typeof orig !== 'function' || orig._home) return;
@@ -11885,7 +15051,6 @@
     SM.paintJrBanner = w;
   }
 
-  /* online / offline: repaint home in place (the offline row comes and goes) */
   var netWired = false;
   function wireNet() {
     if (netWired) return;
@@ -11896,12 +15061,9 @@
   }
 
   /* ------------------------------------------------------------ first screen first
-     The hero and section 01 render in render(). The rest is built section by section in idle time, into a slot
-     after section 01, so the first frame (and, on the first visit, the opening's hand-off) never waits for it:
-     - after the page transition (SM.motion.afterTransition), or on the first visit once the opening has handed
-       off and the entrance has played (whenReleased + 1s), one section per idle callback;
-     - at once, all of it, as soon as the reader scrolls, presses a key, jumps to a section or prints. */
-  var pending = null;   // { parts: [fn → html], instant }
+     The hero, きく and section 01 render in render(); the rest is built section by section in idle time into a
+     slot after section 01 — at once when the reader scrolls, presses a key, jumps or prints. */
+  var pending = null;
   function mountNode(n, instant) {
     try { if (SM.applyRuby) SM.applyRuby(n); } catch (e) { /* ignore */ }
     try { if (SM.motion && SM.motion.mount) SM.motion.mount(n, { instant: instant }); } catch (e) { /* ignore */ }
@@ -11911,7 +15073,7 @@
     if (!p) return;
     var slot = document.getElementById('h-later');
     if (!slot || !slot.parentNode) { pending = null; unhook(); return; }
-    T = null;   // later sections reveal on scroll, with no first-screen delays
+    T = null;
     do {
       var part = p.parts.shift();
       if (!part) break;
@@ -11953,22 +15115,24 @@
     var de = document.documentElement;
     var opening = de.classList.contains('lx-full') && !(window.__lx && window.__lx.done);
     var go = function () { idle(fillLater); };
-    if (opening && SM.motion && SM.motion.whenReleased) SM.motion.whenReleased(function () { setTimeout(go, 1000); });
+    if (opening && SM.motion && SM.motion.whenReleased) SM.motion.whenReleased(function () { setTimeout(go, 1100); });
     else if (SM.motion && SM.motion.afterTransition) SM.motion.afterTransition(go);
     else go();
   }
 
   /* ------------------------------------------------------------ the hero's CSS choreography
-     play: .h-play on the hero starts every part on its --d (scaled by --h-k after a skip). It ends by itself:
-     .h-done (≈1.6s) drops the clips and the animations, so nothing stays composited. A tap or key in between lands
-     it (.h-land): the reader asked for the page, not the show. */
+     .h-play starts every part on its --d (× --h-k after a skip). .h-done (≈1.7s) drops the clips and the
+     animations. A tap or key in between lands it (.h-land). */
   var heroTimer = 0, heroEl = null;
   function landHero() {
     var h = heroEl;
     if (!h || !h.classList.contains('h-play') || h.classList.contains('h-done')) return;
     h.classList.add('h-land');
+    var m = h.parentNode && h.parentNode.querySelector(':scope > .h-mast');
+    if (m) m.classList.add('h-land');
+    try { if (SM.illus && SM.illus.finish) SM.illus.finish(h); } catch (e) { /* ignore */ }
     clearTimeout(heroTimer);
-    heroTimer = setTimeout(function () { h.classList.add('h-done'); }, 40);
+    heroTimer = setTimeout(function () { h.classList.add('h-done'); if (m) m.classList.add('h-done'); }, 40);
     offInput();
   }
   function onInput(e) {
@@ -11980,7 +15144,6 @@
     document.removeEventListener('keydown', onInput, true);
   }
   function nudge(h, at) {
-    // the CTA's arrow nudges once, after the button has landed: "this way"
     setTimeout(function () {
       if (!h.isConnected || h.classList.contains('h-land') || reduced()) return;
       var a = h.querySelector('.h-cta .arrow');
@@ -11993,28 +15156,29 @@
   }
   function playHero(main, table) {
     var h = main && main.querySelector(':scope > .h-hero');
+    var m = main && main.querySelector(':scope > .h-mast');
     if (!h || !table) return;
     heroEl = h;
     var go = function () {
       if (!h.isConnected) return;
       var k = parseFloat(h.style.getPropertyValue('--h-k')) || 1;
       h.classList.add('h-play');
+      if (m) m.classList.add('h-play');
       document.addEventListener('pointerdown', onInput, true);
       document.addEventListener('keydown', onInput, true);
       nudge(h, Math.round(table.nudge * k));
       clearTimeout(heroTimer);
-      heroTimer = setTimeout(function () { h.classList.add('h-done'); offInput(); }, Math.round((table.nudge + 600) * k));
+      heroTimer = setTimeout(function () { h.classList.add('h-done'); if (m) m.classList.add('h-done'); offInput(); }, Math.round((table.nudge + 600) * k));
     };
     if (mode === 'launch' && SM.motion && SM.motion.whenReleased) SM.motion.whenReleased(go);
     else go();
   }
 
-  /* the opening was skipped (launch.js 'sm:lxskip', before it releases the view): the person asked for the app, not
-     the show. The held first screen switches to the returning-visit pace (the launch delays × 0.55, so the same
-     order lands in about half the time) and the numbers stand at their value instead of rolling from blank. */
+  /* the opening was skipped (launch.js 'sm:lxskip'): the held first screen switches to the returning pace (× 0.55)
+     and numbers stand at their value instead of rolling from blank */
   function toShort(view) {
-    var hero = view.querySelector(':scope > .h-hero');
-    if (hero) hero.style.setProperty('--h-k', '0.55');
+    var parts = view.querySelectorAll(':scope > .h-hero, :scope > .h-mast');
+    for (var j = 0; j < parts.length; j++) parts[j].style.setProperty('--h-k', '0.55');
     var list = view.querySelectorAll('[data-reveal-delay]');
     for (var i = 0; i < list.length; i++) {
       var d0 = parseInt(list[i].getAttribute('data-reveal-delay'), 10) || 0;
@@ -12041,18 +15205,16 @@
       mode = pickMode();
       T = ENTER[mode] || null;
 
-      var plan = answered ? planPreview() : '';
-      var out = answered ? heroBack(plan) : heroNew(jr) + planPreview();
+      var plan = planPreview();
+      var out = mast() + (answered ? heroBack(plan, jr) : heroNew(jr) + plan);
       out += offline();
-      // section 01 renders now; 中学生 see まなぶ first, everyone else the six signs
-      out += jr && hasLearn ? learn(true, true) : cats(true);
-      // the rest, one part per section
+      out += ask();
+      // section 01 renders now; 中学生 see まなぶ first, everyone else the route
+      out += jr && hasLearn ? learn(true, true) : route(true);
       var parts = [];
-      if (jr && hasLearn) parts.push(function () { return cats(false); }, function () { return talk(true); });
-      else {
-        parts.push(function () { return talk(jr); });
-        if (hasLearn) parts.push(function () { return learn(false, false); });
-      }
+      if (jr && hasLearn) parts.push(function () { return route(false); }, function () { return talk(true); });
+      // desktop: the timetable and まなぶ side by side (7 / 5); one column on the phone
+      else parts.push(function () { return '<div class="h-duo' + (hasLearn ? '' : ' is-one') + '">' + talk(jr) + (hasLearn ? learn(false, false) : '') + '</div>'; });
       parts.push(tools, function () { return staff() + colophon(); });
 
       var r = SM.route || {};
@@ -12061,7 +15223,6 @@
         pending = { parts: parts, instant: !!r.instant };
         out += '<div id="h-later" class="h-later" aria-hidden="true"></div>';
       } else {
-        // in place, or back to a spot further down: everything now, so the scroll position can be restored
         pending = null;
         var keep = T; T = null;
         out += parts.map(function (f) { return f(); }).join('');
@@ -12073,16 +15234,15 @@
       wrapBanner();
       wireNet();
       startFill();
+      if (main) main.classList.toggle('is-answered', !!(SM.state && SM.state.answered));
       if (T && main) {
-        // tapped before home rendered: the same switch as 'sm:lxskip'
         if (mode === 'launch' && window.__lx && window.__lx.skipped) toShort(main);
         playHero(main, T);
-        // the entrance delays shape the first screen only: once it has played, anything still waiting reveals at once
         var expire = function () {
           setTimeout(function () {
             var list = main.querySelectorAll('[data-reveal-delay]');
             for (var i = 0; i < list.length; i++) list[i].removeAttribute('data-reveal-delay');
-          }, 1300);
+          }, 1500);
         };
         if (SM.motion && SM.motion.whenReleased) SM.motion.whenReleased(expire); else expire();
       }
@@ -12101,10 +15261,32 @@
   var SM = window.SM;
   var esc = SM.esc, t = SM.t, ic = SM._ic;
 
+  /* v7 (SYSTEM): the programs come from five data files (国・東京都・都内の区市町村・関東南部・関東北部). A file that
+     failed to load just adds nothing; a record without an id or a Japanese name, or a second record with an id
+     already listed, is set aside here (in place: views hold the same array), so no view meets a broken row. */
+  (function () {
+    var ps = SM.data && SM.data.programs;
+    if (!Array.isArray(ps)) return;
+    var seen = {}, out = [], bad = [];
+    ps.forEach(function (p) {
+      var ok = p && typeof p.id === 'string' && p.id && !seen[p.id] && p.name && (typeof p.name === 'string' || p.name.ja);
+      if (!ok) { bad.push(p && p.id); return; }
+      seen[p.id] = 1;
+      if (!p.for || typeof p.for !== 'object') p.for = {};
+      if (!Array.isArray(p.cat) || !p.cat.length) p.cat = ['procedures'];
+      out.push(p);
+    });
+    if (bad.length) {
+      ps.length = 0;
+      Array.prototype.push.apply(ps, out);
+      if (SM.dev) { try { console.warn('[SM] set aside ' + bad.length + ' program record(s): ' + bad.join(', ')); } catch (e) { } }
+    }
+  })();
+
   /* ------------------------------------------------------------------ strings */
   SM.strings({
     'shell.brand': { ja: '巣立ちマップ', en: 'Sudachi Map' },
-    'shell.docTitle': { ja: '巣立ちマップ｜施設や里親家庭を出る人の支援ガイド（東京）', en: 'Sudachi Map | Support for young people leaving care in Tokyo' },
+    'shell.docTitle': { ja: '巣立ちマップ｜施設や里親家庭を出る人の支援ガイド（関東）', en: 'Sudachi Map | Support for young people leaving care in Kanto' },
     'shell.skip': { ja: '本文へ', en: 'Skip to content' },
     'shell.exit': { ja: 'すぐ閉じる', en: 'Quick exit' },
     'shell.exitHint': { ja: 'すぐに天気の検索に切りかえます（Esc 2回でも）', en: 'Switch to a weather search at once (or Esc twice)' },
@@ -12513,13 +15695,13 @@
       { k: '119', num: '119', urgent: true }
     ] },
     { g: 'sos.gHome', home: true, items: [
-      { k: 'chal', num: '0120-874-225', hours: 'sos.chalh' },
+      { k: 'chal', num: '0120-874-225', hours: 'sos.chalh', tokyo: true },
       { k: '189', num: '189' }
     ] },
     { g: 'sos.g2', items: [
       { k: 'yori', num: '0120-279-338', hours: 'sos.yorih' },
       { k: 'inochi', num: '0120-061-338', hours: 'sos.free' },
-      { k: 'waka', num: '03-3267-0808', hours: 'sos.wakah' }
+      { k: 'waka', num: '03-3267-0808', hours: 'sos.wakah', tokyo: true }
     ] },
     { g: 'sos.g3', items: [
       { k: '188', num: '188' }
@@ -12550,6 +15732,15 @@
     try { jr = document.body.classList.contains('is-junior') || SM.isJunior(); } catch (e) { jr = false; }
     return jr ? SOS_JR : SOS;
   }
+  /* v7 (Kanto): the two Tokyo-only lines (tokyo: true) are for people who may live in Tokyo: a Tokyo answer, or
+     none yet. Someone in another prefecture (or outside Kanto) sees the national lines only. */
+  function sosItems(grp) {
+    var a = SM.state && SM.state.answers ? SM.state.answers.area : null;
+    var U = SM.matchUtil, pf = null;
+    try { pf = U && U.prefOf ? U.prefOf(a) : null; } catch (e) { pf = null; }
+    var tokyo = !a || pf === '13';
+    return grp.items.filter(function (it) { return !it.tokyo || tokyo; });
+  }
 
   function sosRow(it) {
     var name = t('sos.' + it.k);
@@ -12576,8 +15767,10 @@
     var html =
       '<p class="sos-lead">' + esc(t(jr ? 'sos.jr.lead' : 'sos.lead')) + '</p>' +
       list.map(function (grp) {
-        return '<section class="sos-group' + (grp.items[0].urgent ? ' sos-group-urgent' : '') + '"><h3 class="sos-gtitle">' + esc(t(grp.g)) + '</h3>' +
-          '<ul class="sos-list">' + grp.items.map(sosRow).join('') + '</ul>' +
+        var items = sosItems(grp);
+        if (!items.length) return '';
+        return '<section class="sos-group' + (items[0].urgent ? ' sos-group-urgent' : '') + '"><h3 class="sos-gtitle">' + esc(t(grp.g)) + '</h3>' +
+          '<ul class="sos-list">' + items.map(sosRow).join('') + '</ul>' +
           (grp.home ? '<a class="sos-chat-link sos-home-link" href="#/p/seikatsu-hogo"><span>' + esc(t('sos.seikatsuBtn')) + '<small class="sos-desc">' + esc(t('sos.seikatsud')) + '</small></span>' + ic('chevron-right') + '</a>' : '') +
           '</section>';
       }).join('') +
@@ -13246,7 +16439,7 @@
     run(cap, [{ opacity: 1 }, { opacity: 0 }], { duration: 90, easing: 'cubic-bezier(0, 0, 0.2, 1)', fill: 'forwards' });
     run(paper, [{ opacity: 1 }, { opacity: 0 }], { duration: 180, delay: skipped ? 0 : 60, easing: 'linear', fill: 'both' });
     if (tabbar) {
-      run(tabbar, [{ transform: wide ? 'translateX(-100%)' : 'translateY(100%)' }, { transform: 'none' }],
+      run(tabbar, wide ? [{ opacity: 0, transform: 'translateX(-12px)' }, { opacity: 1, transform: 'none' }] : [{ transform: 'translateY(100%)' }, { transform: 'none' }],
         { duration: dur, delay: skipped ? 0 : 80, easing: 'cubic-bezier(0.2, 0.9, 0.3, 1)', fill: 'both' }, true);
     }
 

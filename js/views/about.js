@@ -1,4 +1,4 @@
-/* 巣立ちマップ v4 — js/views/about.js (HOME)
+/* 巣立ちマップ v4 — js/views/about.js (HOME; v7 area section: SYSTEM)
    About (#/about): who makes this, 中学生のみなさんへ, まなぶ, listing standards, how info is checked,
    privacy, disclaimer, contact, map data and credits. VISUAL-SPEC §7.11.
    v5 (SPEC-v5 Part B: fewer words on screen, full detail kept): h1 (rises) + a one-line lead, the `about-team`
@@ -45,6 +45,7 @@
     'about.nav.junior': { ja: '中学生のみなさんへ', en: 'For junior high students' },
     'about.nav.learn': { ja: 'まなぶ — お金のきほん', en: 'Learn — money basics' },
     'about.nav.rules': { ja: '掲載基準', en: 'What we list' },
+    'about.nav.area': { ja: 'のせている地域', en: 'Area covered' },
     'about.nav.check': { ja: '情報の確認方法', en: 'How we check' },
     'about.nav.privacy': { ja: 'プライバシー', en: 'Privacy' },
     'about.nav.disclaimer': { ja: '免責', en: 'Disclaimer' },
@@ -89,7 +90,17 @@
 
     'about.rules.h': { ja: '掲載基準', en: 'What we list' },
     'about.rules.yesH': { ja: 'のせるもの', en: 'We list' },
-    'about.rules.y1': { ja: '国・東京都・区市町村などの<b>公的な制度と窓口</b>', en: '<b>Public programs and offices</b> run by the national government, Tokyo, and cities/wards' },
+    'about.rules.y1': { ja: '国・都県・区市町村などの<b>公的な制度と窓口</b>', en: '<b>Public programs and offices</b> run by the national government, the prefectures, and cities, wards and towns' },
+
+    /* v7 (SYSTEM): the area covered — 関東 — with every number counted from the data */
+    'about.area.h': { ja: 'のせている地域', en: 'Area covered' },
+    'about.area.lead': { ja: '関東の1都6県です。', en: 'The seven prefectures of Kanto.' },
+    'about.area.note': { ja: '東京都は区市町村の窓口まで。ほかの6県は、県と政令市などのおもな支援です。', jr: '東京都は区市町村の窓口まで。ほかの6県は、県と大きな市のおもな支援です。', en: 'Tokyo down to its city and ward offices; the other six: the main programs of the prefecture and its big cities.' },
+    'about.area.all': { ja: '国・全国の団体', en: 'National & nationwide' },
+    'about.area.allSub': { ja: 'どこに住んでいても', en: 'Wherever you live' },
+    'about.area.label': { ja: '都県ごとの支援の数', en: 'Programs per prefecture' },
+    'about.area.p1': { ja: '質問で住んでいる都県・区市町村を答えると、そこで使える支援だけが出ます。関東の外に住んでいる人には、国の制度と全国の団体の支援が出ます。', jr: '質問で住んでいる所を答えると、そこで使える支援だけが出ます。', en: 'Answer where you live in the questions and you see only what you can use there. Outside Kanto, you see national programs and nationwide nonprofits.' },
+    'about.area.p2': { ja: '県の制度の中には、住んでいる所ではなく、どこの施設・里親家庭から巣立ったかで決まるものがあります。それぞれの支援のページの「対象」に書いています。', en: 'Some prefecture programs go by where you left care, not where you live now. Each program page says so under "Who can use it".' },
     'about.rules.y2': { ja: '実績のある<b>NPOの無料の支援</b>（相談・居場所・住まいなど）', en: '<b>Free support from established nonprofits</b> (talking, drop-in places, housing)' },
     'about.rules.y3': { ja: '公式のページで、内容をたしかめられたもの', en: 'Things we could confirm on an official page' },
     'about.rules.noH': { ja: 'のせないもの', en: 'We never list' },
@@ -104,7 +115,7 @@
     'about.check.s2h': { ja: '出典と確認日をのせる', en: 'We show the source and the date' },
     'about.check.s3h': { ja: '年に1回以上、見直す', en: 'We review at least once a year' },
     'about.check.s4h': { ja: 'まちがいは直す', en: 'We fix mistakes' },
-    'about.check.s1': { ja: '<b>公式のページを読む。</b>国・都・区市町村・運営団体の、その支援のページそのものを読んで書いています。', en: '<b>We read the official page</b> for each program — the exact page, not just a homepage.' },
+    'about.check.s1': { ja: '<b>公式のページを読む。</b>国・都県・区市町村・運営団体の、その支援のページそのものを読んで書いています。', en: '<b>We read the official page</b> for each program — the exact page, not just a homepage.' },
     'about.check.s2': { ja: '<b>出典と確認日をのせる。</b>どの支援のページにも、読んだページへのリンクと、確認した日があります。', en: '<b>We show the source and the date.</b> Every program page links to its source and shows when we checked it.' },
     'about.check.s3': { ja: '<b>年に1回以上、見直す。</b>金額や条件は4月（新年度）に変わることが多いので、その前後は特にていねいに確認します。', en: '<b>We review at least once a year,</b> with extra care around April, when amounts and rules often change.' },
     'about.check.s4': { ja: '<b>まちがいは直す。</b>それぞれの支援のページにある「まちがいを報告」から教えてください。', en: '<b>We fix mistakes.</b> Use "Report a mistake" on any program page.' },
@@ -230,6 +241,28 @@
     '</section>';
   }
 
+  /* v7: how many programs each 都県 has (東京都 first, then code order), and how many are for everyone — counted from
+     the data (SM.matchUtil.recPref: a record's prefecture), never written by hand */
+  function coverage() {
+    var U = SM.matchUtil || {}, ps = programs(), tv = SM.tokyoVersion || {}, n = {}, all = 0;
+    var prefs = (SM.data && SM.data.prefs && SM.data.prefs.length ? SM.data.prefs : (U.prefs ? U.prefs() : [])).slice();
+    if (!prefs.length) return '';
+    ps.forEach(function (x) {
+      if (!x || !x.id || tv[x.id]) return;   // a national record with a Tokyo version counts once (SM.ui.listedCount)
+      var r = U.recPref ? U.recPref(x) : (x.pref || (x.basis === 'tokyo' || x.basis === 'local' ? '13' : null));
+      if (r) n[r] = (n[r] || 0) + 1; else all++;
+    });
+    prefs.sort(function (a, b) { return (a.code === '13' ? -1 : 0) - (b.code === '13' ? -1 : 0) || (a.code < b.code ? -1 : 1); });
+    var u = t('about.unit');
+    function row(k, v, cls, sub) {
+      return '<li class="cov-row' + (cls ? ' ' + cls : '') + '"><span class="cov-k">' + esc(k) + (sub ? '<small class="cov-sub">' + esc(sub) + '</small>' : '') + '</span>' +
+        '<span class="cov-v"><b class="num" data-count="' + v + '">' + v + '</b>' + (u ? '<span class="cov-u">' + esc(u) + '</span>' : '') + '</span></li>';
+    }
+    return '<ol class="cov" role="list" aria-label="' + esc(t('about.area.label')) + '">' +
+      prefs.map(function (pr) { return row(en() ? (pr.en || pr.name) : pr.name, n[pr.code] || 0, ''); }).join('') +
+      row(t('about.area.all'), all, 'is-all', t('about.area.allSub')) + '</ol>';
+  }
+
   function orgList(items, max, moreKey) {
     var counts = {};
     items.forEach(function (o) {
@@ -256,7 +289,7 @@
 
   function bullets(items) { return '<ul class="bullets ab-bullets">' + items.map(function (h) { return '<li>' + h + '</li>'; }).join('') + '</ul>'; }
 
-  var NAV = ['who', 'junior', 'learn', 'rules', 'check', 'privacy', 'disclaimer', 'contact', 'credits'];
+  var NAV = ['who', 'junior', 'learn', 'rules', 'area', 'check', 'privacy', 'disclaimer', 'contact', 'credits'];
   function navList() { return NAV.filter(function (id) { return id !== 'learn' || lessons().length > 0; }); }
 
   // facts as a row of small neutral tags ("a・b・c"), the way home shows them
@@ -325,6 +358,12 @@
         '<div class="ab-right"><span class="tag tag-right">' + esc(t('about.rules.rightH')) + '</span><p>' + esc(t('about.rules.right')) + '</p></div>'
     });
 
+    var area = sec('area', t('about.area.h'), {
+      lead: esc(t('about.area.lead')),
+      body: coverage() + p('about.area.note', 'ab-note'),
+      more: p('about.area.p1') + p('about.area.p2')
+    });
+
     // how we check: four short steps on screen; what each means, and the source list, folded
     var ps = programSources();
     var check = sec('check', t('about.check.h'), {
@@ -387,7 +426,7 @@
     var foot = '<footer class="ab-foot">' + (mark ? '<div class="ab-foot-mark">' + mark + '</div>' : '') +
       '<p>' + esc(t('about.foot', { v: SM.version || '4.0.0', d: fmtDate(SM.updated || '2026-10-17') })) + '</p></footer>';
 
-    return who + junior + learn + rules + check + privacy + disc + contact + credits + foot;
+    return who + junior + learn + rules + area + check + privacy + disc + contact + credits + foot;
   }
 
   function render() {

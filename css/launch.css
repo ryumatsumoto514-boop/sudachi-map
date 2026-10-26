@@ -16,9 +16,11 @@
 html.lx-full:not(.lx-in) #view { opacity: 0; animation: lx-restore-o 1ms linear 12s forwards; }
 html.lx-full .tabbar { transform: translateY(100%); animation: lx-restore-t 1ms linear 12s forwards; }
 /* desktop: the rail slides in from the left under the splash (54 < 55): the logo flies over it */
-@media (min-width: 900px) { html.lx-full .tabbar { transform: translateX(-100%); z-index: 54; } }
+/* (a short slide with a fade, not from off-screen: a slow frame never shows the icons cut at the edge) */
+@media (min-width: 900px) { html.lx-full .tabbar { transform: translateX(-12px); opacity: 0; z-index: 54; animation-name: lx-restore-r; } }
 @keyframes lx-restore-o { from, to { opacity: 1; } }
 @keyframes lx-restore-t { from, to { transform: none; } }
+@keyframes lx-restore-r { from, to { transform: none; opacity: 1; } }
 
 /* ------------------------------------------------------------------ returning beat: the tab bar rises once
    (boot writes it; the static <nav> is empty and never shows empty) */

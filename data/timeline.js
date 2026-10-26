@@ -118,7 +118,7 @@
       sub: { ja: 'ここからがスタート。できなかったことは、あとからでも大丈夫。', en: 'This is the start. Anything left undone can still be done later.' },
       tasks: [
         { id: 'hoken', ja: '次の日から病院は自分の保険。マイナ保険証の登録か、資格確認書が届くまでどうするかを聞いておく', en: 'From tomorrow you use your own insurance. Register your My Number card as your insurance card, or ask what to do until your eligibility certificate (資格確認書) arrives.', p: ['kokuho'] },
-        { id: 'denwacho', ja: '職員の連絡先と、よりそいホットラインを電話帳に入れる', en: 'Save your staff contact and the Yorisoi Hotline in your phone', p: ['yorisoi'] }
+        { id: 'denwacho', ja: '職員の連絡先と、よ\u2060り\u2060そ\u2060いホットラインを電話帳に入れる', en: 'Save your staff contact and the Yorisoi Hotline in your phone', p: ['yorisoi'] }
       ]
     },
     {

@@ -159,6 +159,8 @@
     kinds.forEach(function (k) {
       ((jr && CI[k + ':jr']) || CI[k] || []).forEach(function (id) { if (ids.indexOf(id) === -1) ids.push(id); });
     });
+    // v7: lines the person can use where they live (another prefecture's own line drops out; SM.search.route)
+    if (SM.search && SM.search.route) ids = SM.search.route(ids, true);
     var rows = ids.map(progById).filter(Boolean).slice(0, 4).map(function (p) {
       var c = p.contact || {}, name = L(p.name), hours = L(c.hours);
       var free = c.phone && isFree(c.phone) ? t('ui.free') : '';

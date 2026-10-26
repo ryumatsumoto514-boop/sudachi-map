@@ -26,57 +26,24 @@
 /* a ruled row that links somewhere (ward hint, 中学生 filter) */
 .v-find .f-rowlink { width: 100%; margin-top: var(--s-4); border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); text-align: left; }
 
-/* tools above a list: underline tabs (だれの支援か), sticky under the bars, then count + sort */
-.v-find .f-tools { display: grid; gap: 0; }
-.v-find .f-tools > * { min-width: 0; }
-.v-find .f-basis {
-  position: sticky; top: var(--f-stick); z-index: 6;
-  margin-inline: calc(var(--gutter) * -1); padding-inline: var(--gutter);
-  background: var(--paper);
-}
-.v-find .f-basis-tabs { margin-inline: calc(var(--gutter) * -1); padding-inline: var(--gutter); scroll-padding-inline: var(--gutter); }
-.v-find .f-basis-tabs > button { padding: 0 12px; }
-.v-find .f-basis-tabs > button:first-child { padding-left: 0; }
-/* the sliding underline (SM.motion.indicator). base.css gives every .seg-tabs child `background: none !important`
-   and the tab's min-height, which also hits the indicator: restore it here */
-.v-find .seg-tabs > .m-indicator { display: block; min-height: 0; height: 2px; padding: 0; bottom: 0; background: var(--ink) !important; }
-.v-find .f-tab-n { font: 500 var(--fs-xs)/1 var(--font-num); color: var(--ink-3); font-variant-numeric: tabular-nums; }
-.v-find .f-basis-tabs > [aria-pressed="true"] .f-tab-n { color: var(--ink); }
-.v-find .f-list-head { display: flex; justify-content: space-between; align-items: center; gap: var(--s-3); min-height: 60px; }
-.v-find .f-list-n { flex: none; display: inline-flex; align-items: baseline; gap: 2px; margin: 0; white-space: nowrap; }
-.v-find .f-list-num { font: 700 var(--t-num-l)/1 var(--font-num); letter-spacing: var(--ls-num); font-variant-numeric: tabular-nums; }
-.v-find .f-list-n .unit { font-size: var(--t-label); }
-.v-find .f-sort { display: inline-flex; align-items: center; gap: var(--s-2); min-width: 0; }
-.v-find .f-sort-k { flex: none; font-family: var(--font-display); font-size: var(--t-label); font-weight: 500; letter-spacing: var(--ls-label); color: var(--ink-3); }
-.v-find .f-sort-sel {
-  width: auto; max-width: 11.5em; min-height: var(--tap); padding: 6px 34px 6px 12px;
-  font-family: var(--font-display); font-size: var(--t-meta); font-weight: 500;
-  background-color: transparent; background-position: right 10px center;
-}
-.v-find .f-tools + .pcards > .pcard:first-child { border-top: 2px solid var(--ink); }
-
-/* ================================================================ browse */
-.v-find .f-browse { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--f-gap); }
+/* ================================================================ browse (v7)
+   #/find reads top to bottom in one order: the headline, the guided way in (.f-way), the search box, then every
+   support with ONE filter system (.f-lay: the topic list + しぼりこむ, removable chips over the list). Desktop
+   (≥1100): the way in is one band, the search sits under it, then filters on the left (4) and the list (8). */
+.v-find .f-browse { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-6); }
 .v-find .f-browse > * { min-width: 0; }
-.v-find .f-side { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-5); align-content: start; }
-.v-find .f-side > * { min-width: 0; }
-.v-find .f-side-more { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--f-gap); margin-top: var(--s-3); }
-.v-find .f-side-more > * { min-width: 0; }
-.v-find .f-side-more:empty { display: none; }
-.v-find .f-side-stick { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-5); align-content: start; }
-.v-find .f-side-stick > * { min-width: 0; }
-.v-find .f-cats-slot { min-width: 0; }
-.v-find .f-cats-slot:empty { display: none; }
-.v-find .f-browse-body { display: grid; gap: var(--f-gap); }
+.v-find .f-start { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-6); }
+.v-find .f-start > * { min-width: 0; }
+.v-find .f-browse-body { display: grid; gap: var(--f-gap); min-width: 0; }
 .v-find .f-browse-body > * { min-width: 0; }
-.v-find .f-searchbox { display: grid; gap: var(--s-4); }
+.v-find .f-searchbox { display: grid; gap: var(--s-3); }
 .v-find .f-search-wrap { position: relative; }
 .v-find .f-search-wrap .search-clear[hidden] { display: none; }
 .v-find .f-suggest { display: grid; gap: var(--s-2); }
 .v-find .f-suggest-row { padding-block: 2px; }
 
-/* the way in (v5): one line + one button. new: 6つの質問で、合う支援がわかる [質問に答える →] 1分
-   returning: 64件 あなたに合いそうな支援 [結果を見る →] 変える. A 2px ink rule on top, no band, no card. */
+/* the way in (v5): one line + one button. new: 6つの質問で、合う支援がわかる [質問に答える →] 6問・3分
+   returning: 62件 あなたに合いそうな支援 [結果を見る →] 変える. A 2px ink rule on top, no band, no card. */
 .v-find .f-way { display: grid; gap: var(--s-3); padding-top: var(--s-4); border-top: 2px solid var(--ink); }
 .v-find .f-way-t {
   display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s-1) var(--s-3);
@@ -93,35 +60,152 @@
   font-family: var(--font-display); font-size: var(--t-ui); font-weight: 700; color: var(--action-text);
   text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 0.28em;
 }
-.v-find .f-way.is-mini { margin-top: var(--s-8); }
-/* returning: one compact band — 64件 あなたに合いそうな支援 · 結果を見る → · 答えを変える */
-.v-find .f-back { display: grid; gap: var(--s-4); }
-.v-find .f-back-t { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s-1) var(--s-3); font-family: var(--font-display); font-weight: 700; }
+.v-find .f-way.is-mini { margin-top: var(--f-gap); }
 .v-find .f-back-n { line-height: 1; }
 body.lang-en .v-find .f-back-n .unit { margin-left: 0.25em; }
 /* ふりがな wider than its word stays centred over it (状況 never opens up into 状 況) */
 .v-find ruby { ruby-align: center; }
 .v-find .f-back-line { font-size: var(--t-h3); line-height: var(--lh-title); letter-spacing: var(--ls-0); }
-.v-find .f-back-acts { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-5); }
-.v-find .f-back-acts > .btn-primary { flex: 1 1 220px; }
-/* new visitor: the way in (eyebrow, one 蛍光ペン phrase, the primary) */
-.v-find .f-cta { display: grid; gap: var(--s-2); padding-top: var(--s-5); border-top: 2px solid var(--ink); }
-.v-find .f-cta-title { font-family: var(--font-display); font-weight: 700; font-size: var(--t-h2); line-height: var(--lh-heading); letter-spacing: var(--ls-0); text-wrap: balance; }
-.v-find .f-cta-body { font-size: var(--t-meta); color: var(--ink-2); }
-.v-find .f-cta-acts { margin-top: var(--s-2); }
-.v-find .f-cta.is-mini { margin-top: var(--s-8); }
-.v-find .f-cta.is-mini .f-cta-title { font-size: var(--t-h3); }
 
-/* 01 困りごとから見る: system list rows (32px mark, count, arrow); the mark morphs into the category page */
+/* the list layout: the left column (topics + しぼりこむ) and the list. Phone, #/find: the topics are big ruled rows
+   (困りごとから見る) above the list; a topic page shows them as one row of tabs instead. */
+.v-find .f-lay { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--f-gap); }
+.v-find .f-lay > * { min-width: 0; }
+.v-find .f-fac { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-6); align-content: start; }
+.v-find .f-fac > * { min-width: 0; }
+.v-find .f-lay.is-cat > .f-fac { display: none; }
+.v-find .f-panel.f-panel-d { display: none; }
+.v-find .f-fac-all { display: none; }
 .v-find .f-cats { display: grid; grid-template-columns: minmax(0, 1fr); border-top: 0; }
 .v-find .f-cats > li { min-width: 0; }
 .v-find .f-cats > li + li { border-top: 1px solid var(--rule); }
-.v-find .f-cats .list-item { min-height: 72px; }
+.v-find .f-cats .list-item { min-height: 64px; }
 .v-find .f-cats .list-title { font-size: var(--t-h3); }
 @media (min-width: 600px) and (max-width: 1099px) {
   .v-find .f-cats { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--s-6); }
-  .v-find .f-cats > li:nth-child(2) { border-top: 0; }
+  .v-find .f-cats > li:nth-child(2), .v-find .f-cats > li:nth-child(3) { border-top: 0; }
 }
+
+/* the list: its heading + count (and the phone's しぼりこむ), the panel, what is filtered, the rows */
+.v-find .f-lst { display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; }
+.v-find .f-lst > * { min-width: 0; }
+.v-find .f-lst > .f-crisis, .v-find .f-lst > .callout { margin-bottom: var(--s-6); }
+.v-find .f-lh {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s-1) var(--s-3);
+  padding-bottom: var(--s-3); border-bottom: 2px solid var(--ink);
+}
+.v-find .f-lh-t { font-family: var(--font-display); font-size: var(--t-h2); font-weight: 700; line-height: var(--lh-heading); letter-spacing: var(--ls-0); }
+.v-find .f-lh-t:focus, .v-find .f-lh-n:focus { outline: none; }
+.v-find .f-lh-n { display: inline-flex; align-items: baseline; gap: 2px; margin: 0; white-space: nowrap; }
+.v-find .f-lh-num { font: 700 var(--t-num-l)/1 var(--font-num); letter-spacing: var(--ls-num); font-variant-numeric: tabular-nums; }
+.v-find .f-lh-n .unit { font-family: var(--font-display); font-size: var(--t-label); font-weight: 500; }
+body.lang-en .v-find .f-lh-n .unit { display: none; }
+.v-find .f-ftoggle {
+  margin-left: auto; align-self: center; display: inline-flex; align-items: center; gap: var(--s-2);
+  min-height: var(--tap); padding: 0 var(--s-3); border: 1px solid var(--ink); border-radius: var(--r-ctl);
+  font-family: var(--font-display); font-size: var(--t-meta); font-weight: 700; color: var(--ink); background: var(--paper);
+  transition: background-color var(--dur-quick) var(--ease-standard);
+}
+.v-find .f-ftoggle .icon { width: 18px; height: 18px; }
+.v-find .f-ftoggle[aria-expanded="true"] { background: var(--ink); color: var(--paper); }
+.v-find .f-ftoggle-n {
+  display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px;
+  font: 700 12px/1 var(--font-num); background: var(--action-fill); color: var(--on-action-fill); border-radius: var(--r-ctl);
+}
+@media (hover: hover) { .v-find .f-ftoggle:not([aria-expanded="true"]):hover { background: var(--paper-2); } }
+/* the phone's panel: ruled groups under the head, inset by nothing (flat), the list slides down with it */
+.v-find .f-panel-p { padding: var(--s-2) 0 var(--s-4); border-bottom: 1px solid var(--rule); }
+.v-find .f-panel { display: grid; gap: var(--s-5); }
+.v-find .f-panel[hidden] { display: none; }
+.v-find .f-pg { display: grid; gap: var(--s-2); min-width: 0; }
+.v-find .f-pg-k { font-family: var(--font-display); font-size: var(--t-label); font-weight: 700; letter-spacing: var(--ls-label); color: var(--ink-3); }
+/* だれの支援: ruled radio rows — a square marker, the name, the count */
+.v-find .f-fopts { display: grid; border-top: 1px solid var(--rule); }
+.v-find .f-fopt {
+  display: flex; align-items: center; gap: var(--s-3); width: 100%; min-height: var(--tap); padding: 0 var(--s-1) 0 0;
+  border-bottom: 1px solid var(--rule); text-align: left; color: var(--ink);
+  font-family: var(--font-display); font-size: var(--t-ui); font-weight: 500;
+}
+.v-find .f-fopt-i { flex: none; position: relative; width: 18px; height: 18px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--rule-2); transition: box-shadow 160ms var(--ease-standard); }
+.v-find .f-fopt[aria-checked="true"] .f-fopt-i { box-shadow: inset 0 0 0 6px var(--action-fill); }
+.v-find .f-fopt[aria-checked="true"] { font-weight: 700; }
+.v-find .f-fopt-l { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.v-find .f-fopt-n { flex: none; font: 500 var(--t-meta)/1 var(--font-num); color: var(--ink-3); font-variant-numeric: tabular-nums; }
+@media (hover: hover) { .v-find .f-fopt:hover { background: var(--paper-2); } }
+.v-find .f-fopt:focus-visible { outline-offset: -3px; }
+/* 条件: checkboxes (a real input under a drawn square) */
+.v-find .f-checks { display: grid; border-top: 1px solid var(--rule); }
+.v-find .f-check {
+  position: relative; display: flex; align-items: center; gap: var(--s-3); min-height: var(--tap); padding: 6px 0;
+  border-bottom: 1px solid var(--rule); cursor: pointer;
+  font-family: var(--font-display); font-size: var(--t-ui); font-weight: 500; color: var(--ink); line-height: var(--lh-ui);
+}
+.v-find .f-check > input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; pointer-events: none; }
+.v-find .f-check-box {
+  flex: none; display: grid; place-items: center; width: 20px; height: 20px; border-radius: var(--r-ctl);
+  box-shadow: inset 0 0 0 1.5px var(--rule-2); color: transparent; transition: background-color 160ms var(--ease-standard), box-shadow 160ms var(--ease-standard);
+}
+.v-find .f-check-box .icon { width: 14px; height: 14px; stroke-width: 3; }
+.v-find .f-check > input:checked + .f-check-box { background: var(--action-fill); box-shadow: none; color: var(--on-action-fill); }
+.v-find .f-check > input:focus-visible + .f-check-box { outline: 2px solid var(--focus, var(--ink)); outline-offset: 2px; }
+.v-find .f-check-l { min-width: 0; overflow-wrap: anywhere; }
+@media (hover: hover) { .v-find .f-check:hover { background: var(--paper-2); } }
+.v-find .f-sort-sel {
+  width: 100%; min-height: var(--tap); padding: 6px 34px 6px 12px;
+  font-family: var(--font-display); font-size: var(--t-meta); font-weight: 500;
+  background-color: transparent; background-position: right 10px center;
+}
+/* what is filtered: one row of removable chips (ink outline, ×), すべて外す at the end */
+.v-find .f-active { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); padding: var(--s-3) 0 var(--s-1); }
+.v-find .f-active-k { font-family: var(--font-display); font-size: var(--t-label); font-weight: 700; letter-spacing: var(--ls-label); color: var(--ink-3); margin-right: 2px; }
+.v-find .f-achip {
+  position: relative; display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 8px 0 12px;
+  border: 1px solid var(--ink); border-radius: var(--r-ctl); background: var(--paper);
+  font-family: var(--font-display); font-size: var(--t-meta); font-weight: 700; color: var(--ink);
+  transition: background-color var(--dur-quick) var(--ease-standard);
+}
+.v-find .f-achip::after { content: ""; position: absolute; inset: -4px 0; }   /* 44px hit area */
+.v-find .f-achip .icon { width: 16px; height: 16px; stroke-width: 2.25; color: var(--ink-2); }
+@media (hover: hover) { .v-find .f-achip:hover { background: var(--paper-2); } .v-find .f-achip:hover .icon { color: var(--ink); } }
+.v-find .f-achip:active { background: var(--paper-3); }
+.v-find .f-aclear {
+  display: inline-flex; align-items: center; min-height: var(--tap); padding: 0 var(--s-1);
+  font-family: var(--font-display); font-size: var(--t-meta); font-weight: 700; color: var(--action-text);
+  text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 0.28em;
+}
+.v-find .f-lst-rows { display: grid; min-width: 0; }
+.v-find .f-lst-rows > * { min-width: 0; }
+.v-find .f-lst-rows > .empty { margin-top: var(--s-5); }
+/* あなたに合いそう 12 / ほかの支援 40: plain labels with their count over a hairline */
+.v-find .f-sub {
+  display: flex; justify-content: space-between; align-items: baseline; gap: var(--s-3);
+  margin-top: var(--s-6); padding-bottom: var(--s-2); border-bottom: 1px solid var(--ink);
+  font-family: var(--font-display); font-size: var(--t-ui); font-weight: 700; line-height: var(--lh-title);
+}
+.v-find .f-lst-rows > .f-sub:first-child { margin-top: var(--s-4); }
+.v-find .f-sub-n { flex: none; font: 500 var(--t-meta)/1 var(--font-num); color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.v-find .f-sub-n .unit { font-family: var(--font-display); }
+.v-find .f-sub + .pcards > .pcard:first-child { border-top: 0; }
+.v-find .f-active + .f-lst-rows > .pcards > .pcard:first-child, .v-find .f-lh + .f-panel-wrap + .f-lst-rows > .pcards > .pcard:first-child { border-top: 0; }
+
+/* a topic page on a phone: all topics as one row of tabs (mark, name, count); the current one is underlined */
+.v-find .f-ctabs { margin: 0 calc(var(--gutter) * -1) var(--s-5); border-bottom: 1px solid var(--rule); }
+.v-find .f-ctabs-row {
+  display: flex; gap: 0; overflow-x: auto; scrollbar-width: none; padding-inline: var(--gutter); scroll-padding-inline: var(--gutter);
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 24px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 24px), transparent);
+}
+.v-find .f-ctabs-row::-webkit-scrollbar { display: none; }
+.v-find .f-ctab {
+  flex: none; display: inline-flex; align-items: center; gap: 6px; min-height: 48px; padding: 0 12px;
+  font-family: var(--font-display); font-size: var(--t-meta); font-weight: 500; color: var(--ink-2); text-decoration: none;
+  box-shadow: inset 0 -2px 0 transparent; transition: box-shadow var(--dur-quick) var(--ease-standard), color var(--dur-quick) var(--ease-standard);
+}
+.v-find .f-ctab:first-child { padding-left: 0; }
+.v-find .f-ctab .cat-icon { --mark: 22px; }
+.v-find .f-ctab-n { font: 500 var(--fs-xs)/1 var(--font-num); color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.v-find .f-ctab[aria-current="page"] { color: var(--ink); font-weight: 700; box-shadow: inset 0 -3px 0 var(--ink); }
+.v-find .f-ctab[aria-current="page"] .f-ctab-n { color: var(--ink); }
+@media (min-width: 1100px) { .v-find .f-ctabs { display: none; } }
 
 /* search results */
 .v-find .f-sresults { display: grid; gap: var(--s-5); }
@@ -328,6 +412,54 @@ html.m-reduce .v-find .f-opt[aria-checked="true"]::after { opacity: 1; }
   .v-find .f-area-grid > .f-area-b[aria-checked="true"]:nth-child(3n + 1)::before { left: 0; }
 }
 
+/* Q3 (v7): 都県 → 区市町村. Step 1 is a ruled 2-column table of the seven prefectures (name, reading, → since it
+   leads on), then まだ決めていない / 関東の外. Step 2 opens with the prefecture's name and 都県を変える, then
+   「まだ決めていない（神奈川県全体）」 and the cities. Search hits replace the step while typing. */
+.v-find .f-area-host, .v-find .f-area-step { display: grid; gap: var(--s-6); min-width: 0; }
+.v-find .f-area-host[hidden], .v-find .f-area-hits[hidden] { display: none; }
+.v-find .f-area-step > * { min-width: 0; }
+.v-find .f-area-step[data-step="pref"] > .f-ag-label { margin-bottom: calc(var(--s-6) * -1 + var(--s-2)); }
+.v-find .f-area-none:empty { display: none; }
+.v-find .f-area-none { font-family: var(--font-display); font-size: var(--t-label); font-weight: 700; letter-spacing: var(--ls-label); color: var(--ink-3); }
+.v-find .f-area-none.is-none { font-size: var(--t-ui); color: var(--ink-2); letter-spacing: var(--ls-0); }
+.v-find .f-area-hits .f-area-grid { border-top: 1px solid var(--rule); }
+.v-find .f-pref-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: 2px solid var(--ink); }
+.v-find .f-pref-b {
+  position: relative; isolation: isolate; display: flex; align-items: center; justify-content: space-between; gap: var(--s-2);
+  min-width: 0; min-height: 64px; padding: var(--s-2) var(--s-3); text-align: left; color: var(--ink);
+  border-bottom: 1px solid var(--rule); transition: background-color var(--dur-quick) var(--ease-standard);
+}
+.v-find .f-pref-grid > .f-pref-b:nth-child(odd) { border-right: 1px solid var(--rule); padding-left: 0; }
+.v-find .f-pref-t { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.v-find .f-pref-b .f-area-name { font-size: var(--t-h3); }
+.v-find .f-pref-b .arrow { flex: none; --arrow-s: 18px; color: var(--ink-2); transition: translate var(--spring-snappy-dur, 240ms) var(--spring-snappy, ease-out); }
+@media (hover: hover) {
+  .v-find .f-pref-b:hover { background: var(--paper-2); }
+  .v-find .f-pref-b:hover .arrow { translate: 3px 0; color: var(--ink); }
+}
+.v-find .f-pref-b[aria-checked="true"] { box-shadow: inset 0 -3px 0 var(--action-fill); }
+.v-find .f-pref-b[aria-checked="true"] .f-area-name { color: var(--action-text); }
+.v-find .f-pref-b:focus-visible { outline-offset: -4px; }
+.v-find .f-area-cur {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-1) var(--s-3);
+  padding-bottom: var(--s-2); border-bottom: 2px solid var(--ink);
+}
+.v-find .f-area-cur-name { font-family: var(--font-display); font-size: var(--t-h2); font-weight: 700; line-height: var(--lh-heading); }
+.v-find .f-area-cur-name:focus { outline: none; }
+.v-find .f-area-change {
+  display: inline-flex; align-items: center; gap: var(--s-2); min-height: var(--tap); padding: 0 var(--s-1);
+  font-family: var(--font-display); font-size: var(--t-meta); font-weight: 700; color: var(--action-text);
+}
+.v-find .f-area-change .arrow { --arrow-s: 16px; }
+.v-find .f-area-change > span { text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 0.28em; }
+.v-find .f-area-step .f-area-special > .opts { margin-top: 0; }
+@media (max-width: 359px) {
+  .v-find .f-pref-grid { grid-template-columns: minmax(0, 1fr); }
+  .v-find .f-pref-grid > .f-pref-b:nth-child(odd) { border-right: 0; }
+}
+body.is-big .v-find .f-pref-grid { grid-template-columns: minmax(0, 1fr); }
+body.is-big .v-find .f-pref-grid > .f-pref-b:nth-child(odd) { border-right: 0; }
+
 /* q→q view transition (MOTION-SPEC §4 Questions): the progress group and the strip stay where they are while the
    question slides; inside them the counter rolls, the line grows and the figure walks (live new snapshots). */
 html.f-qq .v-find .f-q-top { view-transition-name: sm-progress; }
@@ -516,11 +648,6 @@ body.is-ruby .v-find .f-top-item .pcard-mark { justify-content: flex-start; }   
 /* ================================================================ category */
 .v-find .f-catv { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-6); }
 .v-find .f-catv > * { min-width: 0; }
-.v-find .f-cat-side { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-5); align-content: start; }
-.v-find .f-cat-side > * { min-width: 0; }
-.v-find .f-cat-main { min-width: 0; }
-.v-find .f-cat-main > * + * { margin-top: var(--s-6); }
-.v-find .f-cat-main > .f-tools + * { margin-top: 0; }
 /* the sign, the title and the topic's scene stand on one 2px ground line in the topic's colour */
 .v-find .f-cat-hero { display: grid; gap: var(--s-3); }
 .v-find .f-cat-stage {
@@ -549,17 +676,6 @@ body.is-ruby .v-find .f-top-item .pcard-mark { justify-content: flex-start; }   
 .v-find .f-cat-sec { display: grid; }
 .v-find .f-cat-sec + .f-cat-sec { margin-top: var(--f-gap); }
 .v-find .f-cat-local { margin-top: var(--s-6); }
-.v-find .f-cat-others { display: grid; gap: var(--s-2); margin-top: var(--f-gap); }
-.v-find .f-co-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--s-5); border-top: 1px solid var(--rule); }
-.v-find .f-co-list > li { min-width: 0; border-bottom: 1px solid var(--rule); }
-.v-find .f-co {
-  position: relative; isolation: isolate;
-  display: flex; align-items: center; gap: var(--s-3); min-height: 56px;
-  color: var(--ink); text-decoration: none; font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui);
-}
-@media (hover: hover) { .v-find .f-co:hover > span:last-child { text-decoration: underline; text-underline-offset: 0.3em; } }
-@media (min-width: 600px) { .v-find .f-co-list { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-
 /* ================================================================ desktop (VISUAL-SPEC §3.2: 4 / 8, left column sticky) */
 @media (min-width: 900px) {
   .view.v-find, .subbar:not([hidden]) + .view.v-find { --f-stick: calc(var(--appbar-h) + var(--safe-t)); }
@@ -599,28 +715,56 @@ body.is-ruby .v-find .f-top-item .pcard-mark { justify-content: flex-start; }   
 @keyframes f-ground-on { from { transform: scale(0, 0.75); } to { transform: scale(1, 0.75); } }
 @media (min-width: 1100px) {
   .v-find { --f-gap: var(--s-9); }
-  .v-find :is(.f-browse, .f-res, .f-catv) {
+  .v-find .f-res {
     grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); column-gap: var(--s-9); align-items: start;
   }
   /* a side column stays in view only when it fits the screen (find.js sets .is-stick); never a nested scroller */
-  .v-find :is(.f-side-stick, .f-res-side, .f-cat-side).is-stick { position: sticky; top: var(--sticky-top); }
-  /* browse: the title, then 01 困りごとから見る as a full-width index, then search + 36件 (4) | 02 すべての支援 (8) */
-  .v-find .f-browse { grid-template-areas: "head head" "cats cats" "side body"; row-gap: var(--s-9); }
-  .v-find .f-browse > .f-side { display: contents; }
-  .v-find .f-browse .f-head { grid-area: head; }
-  .v-find .f-browse .f-head .f-lead { max-width: 32em; }
-  .v-find .f-cats-slot { grid-area: cats; }
-  .v-find .f-browse .f-side-stick { grid-area: side; align-self: start; }
-  .v-find .f-browse .f-side-stick .f-side-more { margin-top: var(--s-5); }
-  .v-find .f-browse-body { grid-area: body; }
-  .v-find .f-cats-slot .f-cats { grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: var(--s-6); }
-  .v-find .f-cats-slot .f-cats > li:nth-child(-n + 3) { border-top: 0; }
-  .v-find .f-cats-slot .f-cats .list-item { min-height: 72px; }
-  .v-find .f-res-main > .band, .v-find .f-res-main > .f-jump, .v-find .f-basis, .v-find .f-jump-tabs, .v-find .f-basis-tabs { margin-inline: 0; padding-inline: 0; }
+  .v-find :is(.f-fac, .f-res-side).is-stick { position: sticky; top: var(--sticky-top); }
+  /* browse: the way in as one band (line left, button right), the search under it, then filters (4) | list (8) */
+  .v-find .f-browse { gap: var(--s-7); }
+  .v-find .f-start { gap: var(--s-6); }
+  .v-find .f-way:not(.is-mini) { grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: var(--s-7); padding-top: var(--s-5); }
+  .v-find .f-way:not(.is-mini) .f-way-t { font-size: var(--t-h2); }
+  .v-find .f-way:not(.is-mini) .f-way-acts { flex-wrap: nowrap; }
+  .v-find .f-way:not(.is-mini) .f-way-acts > .btn { flex: none; min-width: 240px; }
+  .v-find .f-way.is-back .f-back-n { font-size: var(--t-num-xl); }
+  .v-find .f-way.is-back .f-back-line { font-size: var(--t-h3); }
+  .v-find .f-searchbox { grid-template-columns: minmax(0, 1fr); }
+  .v-find .f-searchbox > .f-suggest .chips-scroll { flex-wrap: wrap; overflow: visible; margin-inline: 0; padding-inline: 0; -webkit-mask-image: none; mask-image: none; }
+  .v-find .f-searchbox > .f-suggest .chips-scroll::after { content: none; }
+  .v-find .f-lay { grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); column-gap: var(--s-9); align-items: start; }
+  .v-find .f-lay.is-cat > .f-fac { display: grid; }
+  .v-find .f-panel.f-panel-d { display: grid; }
+  .v-find .f-panel-wrap, .v-find .f-ftoggle { display: none; }
+  .v-find .f-fac-all { display: block; }
+  /* the left column's topic list: compact ruled rows; the current topic is an ink bar on the left + bold */
+  .v-find .f-fac .f-cats { grid-template-columns: minmax(0, 1fr); border-top: 1px solid var(--rule); }
+  .v-find .f-fac .f-cats > li + li { border-top: 1px solid var(--rule); }
+  .v-find .f-fac .f-cats .list-item { position: relative; min-height: 52px; gap: var(--s-3); }
+  .v-find .f-fac .f-cats .list-title { font-size: var(--t-ui); font-weight: 500; }
+  .v-find .f-fac .f-cats .cat-icon { --mark: 26px; }
+  .v-find .f-fac .f-cats .list-ic { width: 26px; display: grid; place-items: center; color: var(--ink-2); }
+  .v-find .f-fac .f-cats .list-count-v { font-size: var(--t-meta); font-weight: 500; color: var(--ink-3); }
+  .v-find .f-fac .f-cats .list-count .unit { display: none; }
+  .v-find .f-fac .f-cats .list-chev { display: none; }
+  .v-find .f-fac .f-cats .list-item[aria-current="page"] { background: var(--paper-2); box-shadow: inset 3px 0 0 var(--ink); padding-left: var(--s-3); }
+  .v-find .f-fac .f-cats .list-item[aria-current="page"] .list-title { font-weight: 700; }
+  .v-find .f-fac .f-cats .list-item[aria-current="page"] .list-count-v { color: var(--ink); font-weight: 700; }
+  .v-find .f-fac .section-head { margin-bottom: var(--s-2); }
+  .v-find .f-fac .section-title { font-size: var(--t-h3); }
+  .v-find .f-fac .section-rule { display: none; }
+  .v-find .f-lh { min-height: 52px; }
+  .v-find .f-active:empty { display: none; }
+  /* a search on desktop: the programs (8) and the rest (まなぶ · ツール · 場所 · やること) beside them (4) */
+  .v-find .f-browse-body.is-search .f-sresults { grid-template-columns: minmax(0, 8fr) minmax(0, 4fr); column-gap: var(--s-9); align-items: start; }
+  .v-find .f-browse-body.is-search .f-sresults > * { grid-column: 1; }
+  .v-find .f-browse-body.is-search .f-sresults > .f-sg:not(.f-sg-support) { grid-column: 2; }
+  .v-find .f-browse-body.is-search .f-sresults > .f-sg-support { grid-row: span 6; }
+  .v-find .f-res-main > .band, .v-find .f-res-main > .f-jump, .v-find .f-jump-tabs { margin-inline: 0; padding-inline: 0; }
   .v-find .f-res-main > .band { margin-inline: 0; padding-inline: var(--s-5); }   /* F41: inside the column, inset like the red block */
-  .v-find .f-res-main > .f-crisis, .v-find .f-cat-side > .f-crisis { padding-inline: var(--s-5); }
-  .v-find .f-side .chips-scroll, .v-find .f-res-side .chips-scroll { flex-wrap: wrap; overflow: visible; margin-inline: 0; padding-inline: 0; -webkit-mask-image: none; mask-image: none; }
-  .v-find .f-side .chips-scroll::after, .v-find .f-res-side .chips-scroll::after { content: none; }
+  .v-find .f-res-main > .f-crisis, .v-find .f-lst > .f-crisis { padding-inline: var(--s-5); }
+  .v-find .f-res-side .chips-scroll { flex-wrap: wrap; overflow: visible; margin-inline: 0; padding-inline: 0; -webkit-mask-image: none; mask-image: none; }
+  .v-find .f-res-side .chips-scroll::after { content: none; }
   .v-find .f-res-stage { max-width: none; }
   /* the narrow results column: the answers wrap as whole answers, 変える sits on its own line under them */
   .v-find .f-res-side .f-answers > summary { flex-wrap: wrap; row-gap: 0; }
@@ -637,14 +781,14 @@ body.is-big .v-find .f-ans-list > li .f-ans { padding-left: 0; }
 body.is-big .v-find .f-ans-list > li:nth-last-child(-n + 2):nth-child(odd) { border-bottom: 1px solid var(--rule); }
 @media (max-width: 359px) {
   .v-find .f-area-grid { grid-template-columns: minmax(0, 1fr); }
-  .v-find .f-area-grid > .f-area-b:nth-child(odd) { border-right: 0; }
-  .v-find .f-co-list { grid-template-columns: minmax(0, 1fr); }
+  .v-find .f-area-grid > .f-area-b:nth-child(odd) { border-right: 0; padding-left: var(--s-3); }
+  .v-find .f-area-grid > .f-area-b:nth-child(odd)::before { left: 0; }
   .v-find .f-cat-art { display: none; }
 }
 body.lang-en .v-find :is(.f-q-k, .f-why-k, .f-answers-title, .f-ans-k, .f-sort-k, .f-q-hint) { text-transform: uppercase; letter-spacing: var(--ls-label); }
 html.m-reduce .v-find .f-q-fig-m { display: none; }
 @media print {
-  .v-find .f-searchbox, .v-find .f-tools, .v-find .f-filters, .v-find .f-jump, .v-find .f-reset, .v-find .f-q-nav,
+  .v-find .f-searchbox, .v-find .f-fac, .v-find .f-ftoggle, .v-find .f-active, .v-find .f-filters, .v-find .f-jump, .v-find .f-reset, .v-find .f-q-nav,
   .v-find .f-more, .v-find .f-cat-others, .v-find .f-q-journey { display: none; }
   .v-find .f-crisis, .v-find .f-top, .v-find .f-back { background: none; }
   .v-find .f-res-stage .il { display: none; }
@@ -756,12 +900,51 @@ body.is-big .v-find .f-chat-open { justify-self: start; white-space: normal; }
 .v-find .f-cat-missing { display: grid; gap: var(--s-5); }
 
 /* F03: in the narrow side column the number never sits under its 電話する button: the button goes under it */
-.v-find :is(.f-cat-side, .f-res-side, .f-side) .contact-item { flex-wrap: wrap; row-gap: var(--s-2); }
+
+.v-find .f-res-side .contact-item { flex-wrap: wrap; row-gap: var(--s-2); }
 @media (min-width: 1100px) {
-  .v-find :is(.f-cat-side, .f-res-side) .contact-phone { flex-direction: column; align-items: flex-start; }
-  .v-find :is(.f-cat-side, .f-res-side) .contact-phone .contact-main { width: 100%; }
+  .v-find .f-res-side .contact-phone { flex-direction: column; align-items: flex-start; }
+  .v-find .f-res-side .contact-phone .contact-main { width: 100%; }
 }
 
 /* F26: on a short or 文字を大きく phone the scene gives its room to the question (the progress line stays) */
 @media (max-width: 899px) and (max-height: 719px) { .v-find .f-q-journey { display: none; } }
 @media (max-width: 899px) { body.is-big .v-find .f-q-journey { display: none; } }
+
+/* ================================================================ v7 integration
+   one red row instead of the full 「今夜、いる場所がない？」 panel when nobody answered 今いる場所がない (it opens the
+   緊急 sheet; 44px+ target, the red rule of the home page's 緊急 line) */
+.v-find .f-crisis-row {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-1) var(--s-3);
+  width: 100%; min-height: 52px; margin: 0 0 var(--s-4); padding: var(--s-2) 0;
+  border: 0; border-top: 2px solid var(--red); border-bottom: 1px solid var(--rule); border-radius: 0; background: none;
+  color: var(--ink); font: inherit; text-align: left; cursor: pointer;
+}
+.v-find .f-crisis-row-k { font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); color: var(--ink); }
+.v-find .f-crisis-row-v { display: inline-flex; align-items: center; gap: var(--s-2); color: var(--red-text); font-family: var(--font-display); font-size: var(--t-ui); }
+.v-find .f-crisis-row-v b { font-weight: 700; }
+.v-find .f-crisis-row-v .icon { width: 20px; height: 20px; }
+@media (hover: hover) { .v-find .f-crisis-row:hover b { text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 0.24em; } }
+.v-find .f-group .f-crisis-row { margin-top: var(--s-2); }
+/* 「ほかに まずはこれ に2件」 under a section head */
+.v-find .f-group-also { margin: var(--s-1) 0 var(--s-2); font-size: var(--t-meta); color: var(--ink-3); }
+/* area not answered: why there are no 区市町村 rows, and the way to get them */
+.v-find .f-noarea { display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--s-3); margin: var(--s-2) 0 var(--s-1); font-size: var(--t-meta); color: var(--ink-2); }
+.v-find .f-noarea-go, .v-find .f-res-area-go {
+  display: inline-flex; align-items: center; gap: 6px; min-height: var(--tap);
+  font-family: var(--font-display); font-weight: 700; color: var(--action-text);
+  text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 0.28em;
+}
+.v-find .f-res-area { display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--s-3); color: var(--ink-2); }
+/* chip rows on a phone (3–6 chips): wrap to a second line instead of running off the edge */
+@media (max-width: 899px) {
+  .v-find :is(.f-filter-chips, .f-searchbox > .f-suggest .chips-scroll) {
+    flex-wrap: wrap; overflow: visible; margin-inline: 0; padding-inline: 0; -webkit-mask-image: none; mask-image: none;
+  }
+  .v-find :is(.f-filter-chips, .f-searchbox > .f-suggest .chips-scroll)::after { content: none; }
+}
+/* the results' topic index on desktop: one line, tighter tabs (never a lone tab on a second line) */
+@media (min-width: 900px) {
+  .v-find .f-jump-tabs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .v-find .f-jump-b { padding: 0 var(--s-2); white-space: nowrap; flex: none; }
+}

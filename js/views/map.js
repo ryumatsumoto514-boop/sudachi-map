@@ -1,8 +1,10 @@
 /* 巣立ちマップ v4 — js/views/map.js (MAP)
-   SM.views.map: a real vector map of mainland Tokyo (MapLibre GL JS 4.7.1, vendored; data baked into
-   data/map/*.js — nothing is fetched at runtime) + area picker + filters + a ruled list of places.
+   SM.views.map: a real vector map of 関東 (MapLibre GL JS 4.7.1, vendored; data baked into data/map/*.js — nothing
+   is fetched at runtime) + area picker + filters + a ruled list of places. Tokyo is drawn in full detail; the
+   other six prefectures (v7) are lighter and their detail is loaded per prefecture (data/map/kanto/<pref>.js).
    Routes: #/map  ·  #/map/CODE  ·  #/map/CODE/ID  (ID = program id, or "programId~index" for one location).
-   CODE may also be "all" (= 東京都ぜんぶ). No geolocation, ever.
+   CODE: a 5-digit 区市町村 code anywhere in 関東 (政令市 = the city code, e.g. 14100), a 2-digit prefecture code
+   (#/map/14 = 神奈川県), or "all" (= 関東ぜんぶ). No geolocation, ever.
 
    Layout. Phone/tablet (< 1100px): a stage. The header and controls scroll away, the map frame sticks under
    the app bar, and the list is a sheet that slides over the map with the page's own (native) scroll — so it
@@ -38,8 +40,12 @@
     'map.lead2': { ja: 'がわかります。', jr: 'がわかります。', en: ', with phone numbers.' },
     'map.pick': { ja: '区市町村を選ぶ', en: 'Choose a city / ward' },
     'map.change': { ja: '変える', en: 'Change' },
-    'map.all': { ja: '東京都ぜんぶ', en: 'All of Tokyo' },
-    'map.allSub': { ja: '地図で東京都の全体を見る', en: 'See the whole map' },
+    'map.all': { ja: '関東ぜんぶ', en: 'All of Kanto' },
+    'map.allSub': { ja: '地図で関東の全体を見る', en: 'See the whole map' },
+    'map.prefs': { ja: '都県', en: 'Prefecture' },
+    'map.prefAll': { ja: '{name}ぜんぶ', en: 'All of {name}' },
+    'map.prefAllSub': { ja: '{name}の全体を見る', en: 'See all of {name}' },
+    'map.prefPlaces': { ja: '{name}の区市町村', en: 'Cities in {name}' },
     'map.yours': { ja: 'あなたの区市町村', en: 'Your area' },
     'map.yoursShort': { ja: 'あなた', en: 'You' },
     'map.backYours': { ja: '{name}にもどる', en: 'Back to {name}' },
@@ -58,12 +64,12 @@
     'map.jrOnly': { ja: '中学生向け', en: 'For junior high' },
     'map.jrAll': { ja: 'すべての場所', en: 'All places' },
     'map.jrNote': { ja: '中学生が相談できる場所だけを出しています。', en: 'Showing only places junior-high students can use.' },
-    'map.mapLabel': { ja: '東京都の地図。{name}', en: 'Map of Tokyo. {name}' },
-    'map.canvas': { ja: '東京都の地図（矢印キーで動かせます。＋と−で拡大・縮小）', en: 'Map of Tokyo (arrow keys move it, + and − zoom)' },
+    'map.mapLabel': { ja: '関東の地図。{name}', en: 'Map of Kanto. {name}' },
+    'map.canvas': { ja: '関東の地図（矢印キーで動かせます。＋と−で拡大・縮小）', en: 'Map of Kanto (arrow keys move it, + and − zoom)' },
     'map.zoomIn': { ja: '拡大', en: 'Zoom in' },
     'map.zoomOut': { ja: '縮小', en: 'Zoom out' },
     'map.fitShort': { ja: '全体', en: 'All' },
-    'map.fit': { ja: '東京都の全体を見る', en: 'Show all of Tokyo' },
+    'map.fit': { ja: '関東の全体を見る', en: 'Show all of Kanto' },
     'map.fitArea': { ja: '{name}を見る', en: 'Show {name}' },
     'map.north': { ja: '北', en: 'N' },
     'map.count': { ja: '{n}か所', en: '{n} places' },
@@ -71,11 +77,11 @@
     'map.inArea': { ja: '{name}の中', en: 'In {name}' },
     'map.near': { ja: '近くの区市町村', en: 'Nearby areas' },
     'map.nearSub': { ja: '近い順。{name}に住んでいても使えます', en: 'Closest first. You can use these from {name} too' },
-    'map.allList': { ja: '東京都の場所', en: 'Places in Tokyo' },
+    'map.allList': { ja: '関東の場所', en: 'Places in Kanto' },
     'map.noneInArea': { ja: '{name}の中には、まだ場所がのっていません。近くの場所か、電話・LINEで話せる窓口を見てみてね。', en: 'No places listed in {name} yet. Try the nearby ones, or talk by phone or LINE.' },
     'map.toConsult': { ja: '電話・LINEで話せる窓口', en: 'Talk by phone or LINE' },
     'map.none': { ja: 'この区市町村には、まだ登録がありません', en: 'Nothing listed here yet' },
-    'map.noneBody': { ja: '近くの区市町村か、東京都の窓口を見てみよう。', en: 'Try a nearby area, or the Tokyo-wide offices.' },
+    'map.noneBody': { ja: '近くの区市町村か、都や県の窓口を見てみよう。', en: 'Try a nearby area, or the prefecture-wide offices.' },
     'map.resetCat': { ja: 'すべて表示', en: 'Show everything' },
     'map.more': { ja: 'もっと見る（あと{n}か所）', en: 'Show {n} more' },
     'map.dist': { ja: '約{d}km', en: '~{d} km' },
@@ -132,7 +138,7 @@
     'map.hint': { ja: '地図の区市町村をタップしても選べます。', en: 'You can also tap the map.' },
     'map.askGo': { ja: '{name}を見る', en: 'Show {name}' },
     // FIX-B (v6)
-    'map.badArea': { ja: 'その区市町村は見つかりませんでした。東京都ぜんぶを表示しています。', en: 'That area was not found. Showing all of Tokyo.' },
+    'map.badArea': { ja: 'その区市町村は見つかりませんでした。関東ぜんぶを表示しています。', en: 'That area was not found. Showing all of Kanto.' },
     'map.badPlace': { ja: 'その場所は見つかりませんでした。一覧から選んでください。', en: 'That place was not found. Pick one from the list.' },
     'map.progPage': { ja: 'この支援のページ', en: 'About this support' },
     'map.areasShort': { ja: '区市町村', en: 'Areas' }
@@ -161,7 +167,23 @@
     return null;
   }
   function areaName(a) { return a ? (lang() === 'en' ? (a.en || a.name) : a.name) : ''; }
-  function isCode(c) { return typeof c === 'string' && /^13\d{3}$/.test(c) && !!areaBy(c); }
+  /* v7: 関東. A code is a 区市町村 (5 digits) or a prefecture (2 digits: 08 茨城 … 14 神奈川) */
+  var PREF_ORDER = ['13', '14', '11', '12', '08', '09', '10'];   // the order people list them in (東京 first)
+  function prefList() { return (SM.data && SM.data.prefs) || []; }
+  function prefBy(code) { var l = prefList(); for (var i = 0; i < l.length; i++) if (l[i] && l[i].code === code) return l[i]; return null; }
+  function prefName(pc) { var p = prefBy(pc); return p ? (lang() === 'en' ? (p.en || p.name) : p.name) : ''; }
+  function isPrefCode(c) { return typeof c === 'string' && /^\d\d$/.test(c) && !!prefBy(c); }
+  function isCity(c) { return typeof c === 'string' && /^\d{5}$/.test(c) && !!areaBy(c) && !!prefBy(c.slice(0, 2)); }
+  function isCode(c) { return isCity(c) || isPrefCode(c); }
+  function prefOfCode(c) { return typeof c === 'string' && /^\d{2}(\d{3})?$/.test(c) ? c.slice(0, 2) : null; }
+  /* the name of what a code shows: 練馬区 / 横浜市 / 神奈川県 ('' when unknown) */
+  function placeName(code) { return isPrefCode(code) ? prefName(code) : areaName(areaBy(code)); }
+  /* the person's prefecture first, then 東京 · 神奈川 · 埼玉 · 千葉 · 茨城 · 栃木 · 群馬 */
+  function prefOrder() {
+    var m = prefOfCode(mineCode()), out = m ? [m] : [];
+    PREF_ORDER.forEach(function (c) { if (out.indexOf(c) < 0 && prefBy(c)) out.push(c); });
+    return out;
+  }
   function isIsland(code) { var a = areaBy(code); return !!(a && a.group === 'islands'); }
   /* one switch for reduced motion (MOTION-SPEC §7): the OS setting OR 設定 › 動きを少なく */
   function reduced() {
@@ -207,8 +229,8 @@
     clearTimeout(statusT);
     statusT = setTimeout(function () {
       var st = S.root && S.root.querySelector('#m-status'); if (!st) return;
-      var a = areaBy(S.code), n = S.root.querySelector('#m-list .m-count [data-n]'), en = lang() === 'en';
-      st.textContent = (a ? areaName(a) : t('map.all')) + (en ? ': ' : '：') +
+      var n = S.root.querySelector('#m-list .m-count [data-n]'), en = lang() === 'en';
+      st.textContent = (S.code ? placeName(S.code) : t('map.all')) + (en ? ': ' : '：') +
         (n ? n.getAttribute('data-n') + (en ? ' ' : '') + t('map.unit') : t('map.none'));
     }, 300);
   }
@@ -285,14 +307,22 @@
   function catMatch(r) { return (S.cat ? fcat(r) === S.cat : inAll(r)) && passJr(r); }
 
   /* ------------------------------------------------------------------ data */
+  /* can someone living in `code` (a 区市町村 or a prefecture) use this record? SPEC-v7: [] = anywhere, ['14'] = in
+     神奈川県, ['14100'] = 横浜市 only; another prefecture's own records are out (match.js usableIn) */
   function eligible(p, code) {
     if (!code) return true;
-    var ar = (p.for && p.for.areas) || [];
+    var U = SM.matchUtil;
+    if (U && U.usableIn) { try { return U.usableIn(p, code) !== false; } catch (e) { } }
+    var ar = ((p.for && p.for.areas) || []).map(String);
+    if (!ar.length && p.basis === 'tokyo') ar = ['13'];
+    var pc = prefOfCode(code), rp = p.pref || (p.basis === 'tokyo' || p.basis === 'local' ? '13' : null);
+    if (rp && (p.basis === 'tokyo' || p.basis === 'pref' || p.basis === 'local') && rp !== pc) return false;
     if (!ar.length) return true;
-    return ar.indexOf('13') >= 0 || ar.indexOf(code) >= 0;
+    return ar.indexOf(pc) >= 0 || ar.indexOf(code) >= 0 || (code.length === 2 && ar.some(function (c) { return c.slice(0, 2) === pc; }));
   }
-  var MAINLAND = [138.9, 35.47, 139.95, 35.93];
-  function onMap(lat, lng) { return lng >= MAINLAND[0] && lng <= MAINLAND[2] && lat >= MAINLAND[1] && lat <= MAINLAND[3]; }
+  /* on the map: 関東 (the Tokyo islands lie south of it and are not drawn) */
+  var ONMAP = [138.35, 34.85, 140.95, 37.2];
+  function onMap(lat, lng) { return lng >= ONMAP[0] && lng <= ONMAP[2] && lat >= ONMAP[1] && lat <= ONMAP[3]; }
   var LOCS = null, LOCS_N = -1;
   function allLocations() {
     var progs = (SM.data && SM.data.programs) || [], g = geo();
@@ -317,7 +347,8 @@
   function pinRecords() { return inScope(S.code).filter(function (r) { return r.hasGeo && catMatch(r); }); }
   function centerOf(code) {
     var g = geo();
-    if (g && g.labels && g.labels[code] && g.unproject) { var l = g.labels[code]; return g.unproject(l[0], l[1]); }
+    var l0 = g && ((g.labels && g.labels[code]) || (g.prefLabels && g.prefLabels[code]));
+    if (l0 && g.unproject) { var l = l0; return g.unproject(l[0], l[1]); }
     var a = areaBy(code);
     return a && a.lat ? { lat: a.lat, lng: a.lng } : null;
   }
@@ -364,9 +395,9 @@
     var a = routeArgs(args);
     S.bad = null;
     var code = a[0];
-    if (code === 'all' || code === '13') code = null;
+    if (code === 'all') code = null;
     else if (!isCode(code)) {
-      // FIX-B (F17): an unknown code (#/map/99999) shows all of Tokyo and says so; mount() fixes the address
+      // FIX-B (F17): an unknown code (#/map/99999) shows all of Kanto and says so; mount() fixes the address
       S.bad = a[0] ? 'area' : null;
       code = null;
       if (!a[0]) code = mineCode();
@@ -405,19 +436,23 @@
 
   function controlsHtml() {
     var U = ui();
-    var a = areaBy(S.code);
-    var mine = mineCode(), mineArea = mine ? areaBy(mine) : null;
+    var mine = mineCode(), mineName = mine ? placeName(mine) : '';
     var isMine = !!mine && S.code === mine;
     var scope = inScope(S.code).filter(passJr);
-    var counts = {}; scope.forEach(function (r) { counts[fcat(r)] = (counts[fcat(r)] || 0) + 1; });
+    /* v7: one count everywhere — the places INSIDE the chosen area (the list head 「横浜市の中 26か所」 and the
+       関東 index row say the same number); a topic with places only nearby keeps its chip, at 0 */
+    var isPfC = isPrefCode(S.code);
+    var inside = function (r) { return !S.code || (isPfC ? prefOfCode(r.loc.area) === S.code : r.loc.area === S.code); };
+    var counts = {}, seen = {};
+    scope.forEach(function (r) { var k = fcat(r); seen[k] = 1; if (inside(r)) counts[k] = (counts[k] || 0) + 1; });
 
     var picker = '<button type="button" class="m-picker" data-act="map-pick" aria-haspopup="dialog" data-press>' +
       '<span class="m-picker-k">' + esc(isMine ? t('map.yours') : t('map.area')) + '</span>' +
-      '<span class="m-picker-v">' + esc(a ? areaName(a) : t('map.all')) + '</span>' +
+      '<span class="m-picker-v">' + esc(S.code ? placeName(S.code) : t('map.all')) + '</span>' +
       '<span class="m-picker-go"><span>' + esc(t('map.change')) + '</span>' + icon('chevron-down') + '</span></button>';
 
     var back = '';
-    if (mineArea && !isMine) back = '<button type="button" class="m-back-mine" data-act="map-area" data-code="' + esc(mine) + '">' + arrow('l') + '<span>' + esc(t('map.backYours', { name: areaName(mineArea) })) + '</span></button>';
+    if (mineName && !isMine) back = '<button type="button" class="m-back-mine" data-act="map-area" data-code="' + esc(mine) + '">' + arrow('l') + '<span>' + esc(t('map.backYours', { name: mineName })) + '</span></button>';
 
     var jr = '';
     if (isJunior() && U.seg) {
@@ -427,15 +462,15 @@
       ], { act: 'map-jr', label: t('map.jrLabel') }) + '</div>';
     }
 
-    var chips = [U.chip ? U.chip(t('map.catAll'), { act: 'map-cat', pressed: !S.cat, attrs: 'data-cat=""', count: scope.filter(inAll).length }) : ''];
+    var chips = [U.chip ? U.chip(t('map.catAll'), { act: 'map-cat', pressed: !S.cat, attrs: 'data-cat=""', count: scope.filter(function (r) { return inAll(r) && inside(r); }).length }) : ''];
     // 児童相談所 is a kind of 相談 place: a sub-filter right after 相談・こころ, with its 話 mark (every chip in the
     // row reads the same way: mark · name · count)
     /* FIX-B (F23): 児童相談所 is an extra layer, not a part of すべて (すべて leaves it out). It sits after a rule,
        with an outlined 話, and carries no count: 「すべて 19 … 児童相談所 22」 read as a part bigger than the
        whole. Picking it shows its count in the list head like any other filter. */
-    var jis = counts.jisou || S.cat === 'jisou' ? U.chip(catLabel('jisou'), { act: 'map-cat', pressed: S.cat === 'jisou', cat: 'consult', attrs: 'data-cat="jisou"' }) : '';
+    var jis = seen.jisou || S.cat === 'jisou' ? U.chip(catLabel('jisou'), { act: 'map-cat', pressed: S.cat === 'jisou', cat: 'consult', attrs: 'data-cat="jisou"' }) : '';
     catOrder().forEach(function (k) {
-      if (!counts[k] && S.cat !== k) return;
+      if ((!seen[k] || !counts[k]) && S.cat !== k) return;
       chips.push(U.chip(catLabel(k), { act: 'map-cat', pressed: S.cat === k, cat: k, count: counts[k] || 0, attrs: 'data-cat="' + esc(k) + '"' }));
     });
     if (jis) chips.push('<span class="m-cats-sep" aria-hidden="true"></span>' + jis);
@@ -446,11 +481,14 @@
   /* the simple map (no WebGL): the bay and the big rivers from the overview water (base.js), projected into the
      SVG's units once: rings away from mainland Tokyo and under 2 units² dropped, thinned (Douglas-Peucker,
      0.3 units ≈ 25 m), written as relative moves (≈ 0.25 MB of path) */
-  var SVG_WATER = null;
+  var SVG_WATER = null, SVG_WK = false;
   function svgWater(g) {
-    if (SVG_WATER != null) return SVG_WATER;
-    var W = SM.data.mapLayers && SM.data.mapLayers.waterLo;
-    if (!W || !g || !g.project) return '';
+    if (SVG_WATER != null && SVG_WK === !!(SM.data.mapKanto)) return SVG_WATER;
+    SVG_WK = !!(SM.data.mapKanto);
+    var W0 = SM.data.mapLayers && SM.data.mapLayers.waterLo, K = SM.data.mapKanto;
+    if (!W0 || !g || !g.project) return '';
+    // v7: base.js has the water around Tokyo only; kanto.js adds the sea and lakes of the rest of 関東
+    var W = { features: W0.features.concat(K && K.waterLo ? K.waterLo.features : []) };
     var out = [], TOL = 0.3, vb = g.vb || [0, 0, 1000, 520], M = 20;
     var thin = function (p) {
       var keep = new Uint8Array(p.length), st = [[0, p.length - 1]];
@@ -497,48 +535,83 @@
   var waterLoad = 0;
   function svgWaterFill(root) {
     var wp = root.querySelector('.m-water'); if (!wp || wp.getAttribute('d')) return;
-    var put = function () { if (!wp.isConnected) return; var d = svgWater(geo()); if (d) wp.setAttribute('d', d); };
     var idle = window.requestIdleCallback || function (f) { return setTimeout(f, 300); };
+    var put = function () { if (!wp.isConnected) return; loadKanto().then(function () { idle(function () { if (!wp.isConnected) return; var d = svgWater(geo()); if (d) wp.setAttribute('d', d); }); }); };
     if (SM.data.mapLayers && SM.data.mapLayers.waterLo) { idle(put); return; }
     var cn = navigator.connection;
     if (waterLoad || (cn && cn.saveData)) return;
     waterLoad = 1;
     idle(function () {
       var s = document.createElement('script'); s.src = 'data/map/base.js'; s.async = true;
-      s.onload = function () { idle(function () { var w = S.root && S.root.querySelector('.m-water'); if (w && !w.getAttribute('d')) { var d = svgWater(geo()); if (d) w.setAttribute('d', d); } }); };
+      s.onload = function () { loadKanto().then(function () { idle(function () { var w = S.root && S.root.querySelector('.m-water'); if (w && !w.getAttribute('d')) { var d = svgWater(geo()); if (d) w.setAttribute('d', d); } }); }); };
       s.onerror = function () { waterLoad = 0; };
       document.head.appendChild(s);
     });
   }
   /* the map frame. GL ready: an empty slot the live map moves into. Otherwise: the SVG (placeholder while
      MapLibre loads, or the v3 fallback map) + the loading line. Furniture (zoom, scale, credit) is shared. */
+  /* the SVG's box of a code: a 区市町村's, or a prefecture's */
+  function boxOf(code) { var g = geo(); return code && g ? ((g.boxes && g.boxes[code]) || (g.prefBoxes && g.prefBoxes[code]) || null) : null; }
+  function selPath(code) { var g = geo(); return code && g ? (g.paths[code] || (g.prefs && g.prefs[code]) || '') : ''; }
+  function wardPaths(vb, m) {
+    var g = geo(), out = '';
+    Object.keys(g.paths).forEach(function (c) {
+      var bx = vb && g.boxes[c];
+      if (bx && (bx[0] > vb[0] + vb[2] + m || bx[0] + bx[2] < vb[0] - m || bx[1] > vb[1] + vb[3] + m || bx[1] + bx[3] < vb[1] - m)) return;
+      out += '<path class="m-ward' + (c === S.code ? ' is-sel' : '') + '" data-code="' + c + '" d="' + g.paths[c] + '"/>';
+    });
+    return out;
+  }
+  function prefPaths() {
+    var g = geo(); if (!g.prefs) return '';
+    return Object.keys(g.prefs).map(function (c) { return '<path class="m-pref" d="' + g.prefs[c] + '"/>'; }).join('');
+  }
+  /* the other prefectures' 区市町村 for the simple map (data/map/geo-kanto.js, ≈ 0.1 MB, once) */
+  var geoMoreP = null;
+  function geoMore() {
+    var g = geo();
+    if (!g || !g.more || (SM.data && SM.data.geoKanto)) return Promise.resolve();
+    if (geoMoreP) return geoMoreP;
+    geoMoreP = new Promise(function (res) {
+      var src = g.more; if (SM._vsrc) { try { src = SM._vsrc(src); } catch (e) { } }
+      var s = document.createElement('script'); s.src = src; s.async = true;
+      s.onload = function () { res(); }; s.onerror = function () { geoMoreP = null; res(); };
+      document.head.appendChild(s);
+    });
+    return geoMoreP;
+  }
+  /* the wards that came with geo-kanto.js go into a drawn SVG (placeholder or simple map) */
+  function svgAddWards(root) {
+    var w = root && root.querySelector('.m-svg .m-wards'); if (!w) return;
+    var have = {}; Array.prototype.forEach.call(w.querySelectorAll('.m-ward'), function (p) { have[p.getAttribute('data-code')] = 1; });
+    var g = geo(), add = '';
+    Object.keys(g.paths).forEach(function (c) { if (!have[c]) add += '<path class="m-ward' + (c === S.code ? ' is-sel' : '') + '" data-code="' + c + '" d="' + g.paths[c] + '"/>'; });
+    if (add) w.insertAdjacentHTML('beforeend', add);
+    var se = root.querySelector('.m-svg .m-sel'); if (se && S.code) se.setAttribute('d', selPath(S.code));
+  }
   function mapShellHtml() {
     var a = areaBy(S.code), g = geo();
-    var label = esc(t('map.mapLabel', { name: a ? areaName(a) : t('map.all') }));
+    var label = esc(t('map.mapLabel', { name: S.code ? placeName(S.code) : t('map.all') }));
     var glReady = GL.state === 'ready' && S.engine === 'gl';
     var svg = '';
     if (!glReady && g) {
-      var paths = '', ph = S.engine !== 'svg';
+      var ph = S.engine !== 'svg';
       // the placeholder only needs the wards around the area it is framed on (less to parse in the update)
-      var vb = ph && !willFly() && S.code && !isIsland(S.code) && g.boxes && g.boxes[S.code], m = vb ? Math.max(vb[2], vb[3]) * 1.2 : 0;
-      Object.keys(g.paths).forEach(function (c) {
-        var bx = vb && g.boxes[c];
-        if (bx && (bx[0] > vb[0] + vb[2] + m || bx[0] + bx[2] < vb[0] - m || bx[1] > vb[1] + vb[3] + m || bx[1] + bx[3] < vb[1] - m)) return;
-        paths += '<path class="m-ward' + (c === S.code ? ' is-sel' : '') + '" data-code="' + c + '" d="' + g.paths[c] + '"/>';
-      });
+      var vb = ph && !willFly() && S.code && !isIsland(S.code) && boxOf(S.code), m = vb ? Math.max(vb[2], vb[3]) * 1.2 : 0;
+      var paths = wardPaths(vb, m);
       svg = '<div class="m-svgwrap' + (ph ? ' is-ph' : '') + '">' +
         '<svg class="m-svg" viewBox="' + esc(phViewBox()) + '" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">' +
+          '<g class="m-prefs">' + prefPaths() + '</g>' +
           '<g class="m-wards">' + paths + '</g>' +
           (ph ? '' : '<path class="m-water" d="' + svgWater(g) + '"/>') +
           '<path class="m-mine" d=""/>' +
-          '<path class="m-sel" d="' + (S.code && g.paths[S.code] ? g.paths[S.code] : '') + '"/>' +
+          '<path class="m-sel" d="' + selPath(S.code) + '"/>' +
         '</svg></div>' +
         '<div class="m-labels" aria-hidden="true"></div>' +
         '<div class="m-pins"></div>';
     }
     var island = !!(a && a.group === 'islands');
-    var areaBtn = S.code && !island ?
-      '<button type="button" class="m-zbtn m-zarea" data-act="map-fit-area" aria-label="' + esc(t('map.fitArea', { name: areaName(a) })) + '" title="' + esc(t('map.fitArea', { name: areaName(a) })) + '"><span aria-hidden="true"' + (shortName(a).length > 3 ? ' class="is-long"' : '') + '>' + esc(shortName(a)) + '</span></button>' : '';
+    var areaBtn = S.code && !island ? zareaHtml() : '';
     var loading = (!glReady && S.engine !== 'svg') ?
       '<div class="m-load" aria-hidden="true"><i class="m-load-bar"></i><span class="m-load-t">' + esc(t('map.loading')) + '</span></div>' : '';
     return '<section class="m-mapwrap' + (S.engine === 'svg' ? ' is-svg' : '') + '" aria-label="' + label + '">' +
@@ -563,6 +636,17 @@
       (island ? ui().callout(esc(t('map.islandsBody', { name: areaName(a) })), 'info', { title: t('map.islandsTitle') }) : '') +
       '</section>';
   }
+  /* the zoom stack's 4th button: back to the chosen area (or prefecture) */
+  function zareaHtml() {
+    var lab = t('map.fitArea', { name: placeName(S.code) }), sn = shortCode(S.code);
+    return '<button type="button" class="m-zbtn m-zarea" data-act="map-fit-area" aria-label="' + esc(lab) + '" title="' + esc(lab) + '"><span aria-hidden="true"' + (sn.length > 3 ? ' class="is-long"' : '') + '>' + esc(sn) + '</span></button>';
+  }
+  function shortCode(code) {
+    if (!isPrefCode(code)) return shortName(areaBy(code));
+    var p = prefBy(code);
+    if (lang() === 'en') return (p.en || '').length <= 7 ? p.en : 'Pref.';
+    return p.short || p.name.replace(/[都県]$/, '');
+  }
   function shortName(a) {
     if (!a) return '';
     // English: a name that does not fit the 44px button says what it is instead (「Shinju.」 read as a typo);
@@ -578,18 +662,34 @@
   /* (all of Tokyo is the widest view already: with no area chosen there is nothing to fly to, the pins drop) */
   function flyable() { return !!(S.code && !isIsland(S.code) && !S.focus && !reduced()); }
   function willFly() { return S.engine === 'gl' && !GL.map && !GL.flewIn && flyable(); }
+  /* v7: where the opening flight starts — the chosen 区市町村's prefecture (Tokyo: mainland Tokyo, as before), or all
+     of 関東 for a prefecture */
+  function flyFromVB() {
+    var g = geo(), pc = isCity(S.code) ? S.code.slice(0, 2) : null;
+    if (pc === '13') return g.tokyoVb || g.vb;
+    return (pc && g.prefBoxes && g.prefBoxes[pc]) || g.vb;
+  }
+  function kb(code) {
+    var b = SM.mapStyle && SM.mapStyle.kBounds ? SM.mapStyle.kBounds(code) : null;
+    return b || SM.data.mapMeta.bounds;
+  }
+  function flyFromBounds() {
+    var pc = isCity(S.code) ? S.code.slice(0, 2) : null;
+    var m = pc === '13' ? SM.data.mapMeta.bounds : kb(pc || 'all');
+    return { b: [[m[0], m[1]], [m[2], m[3]]], max: 12 };
+  }
   /* the simple map: the first frame is where its flight starts (all of Tokyo first, a little further out later) */
   function svgFrom() {
-    var g = geo(); if (S.engine !== 'svg' || !flyable() || !g.boxes || !g.boxes[S.code]) return null;
-    if (!V.flown) return g.vb;
-    var b = g.boxes[S.code], k = 1.6;
+    var g = geo(); if (S.engine !== 'svg' || !flyable() || !boxOf(S.code)) return null;
+    if (!V.flown) return flyFromVB();
+    var b = boxOf(S.code), k = 1.6;
     return [b[0] - b[2] * (k - 1) / 2, b[1] - b[3] * (k - 1) / 2, b[2] * k, b[3] * k];
   }
   function phViewBox() {
     var g = geo(); if (!g) return '0 0 100 100';
-    var fb = willFly() ? g.vb : svgFrom();
+    var fb = willFly() ? flyFromVB() : svgFrom();
     if (fb) return fb.map(function (v) { return (+v).toFixed(1); }).join(' ');
-    var b = (S.code && !isIsland(S.code) && g.boxes && g.boxes[S.code]) ? g.boxes[S.code] : g.vb;
+    var b = (S.code && !isIsland(S.code) && boxOf(S.code)) || g.vb;
     return b.map(function (v) { return (+v).toFixed(1); }).join(' ');
   }
 
@@ -615,6 +715,11 @@
     if (ar && (p.locations || []).length > 1) { var an = areaName(ar); if (an && pen.indexOf(an) === -1) text = pen + ' (' + an + ')'; }
     return { text: text, ja: false, sub: loc.name && loc.name !== text ? loc.name : '' };
   }
+  /* a long Japanese name gets break chances where the script changes (よこはま若者|サポートステーション, 区役所|生活支援課)
+     and before a bracket, so a name wider than its column breaks between words, never inside サポートステー|ション */
+  function wbrJa(html) {
+    return String(html).replace(/([ぁ-ゟ一-鿿々])(?=[ァ-ヺー])|([ァ-ヺー])(?=[一-鿿々])|(?=[（(])/g, function (m) { return m + '<wbr>'; });
+  }
   function rowHtml(r, dist) {
     var p = r.p, loc = r.loc, U = ui();
     var ar = loc.area ? areaBy(loc.area) : null;
@@ -628,7 +733,7 @@
     if (dist != null) meta.push('<span class="m-loc-dist">' + esc(t('map.dist', { d: dist < 10 ? dist.toFixed(1) : Math.round(dist) })) + '</span>');
     var prog = name.indexOf(L(p.name)) === -1 ? '<a class="m-loc-prog" href="#/p/' + esc(encodeURIComponent(p.id)) + '"><span class="sr-only">' + esc(t('map.program')) + ': </span><span>' + esc(L(p.name)) + '</span>' + arrow('r') + '</a>' : '';
     var head = '<div class="m-loc-head"><div class="m-loc-titles">' +
-      '<h3 class="m-loc-name"' + (ln.ja ? ' lang="ja"' : '') + '>' + esc(name) + '</h3>' +
+      '<h3 class="m-loc-name"' + (ln.ja ? ' lang="ja"' : '') + '>' + (lang() === 'en' && !ln.ja ? esc(name) : wbrJa(esc(name))) + '</h3>' +
       (ln.sub ? '<p class="m-loc-ja" lang="ja">' + esc(ln.sub) + '</p>' : '') +
       (meta.length ? '<p class="m-loc-meta">' + meta.join('') + '</p>' : '') + '</div>' +
       (r.hasGeo ? '<button type="button" class="m-loc-pin" data-act="map-show" data-key="' + esc(r.key) + '" aria-label="' + esc(t('map.onMap') + (lang() === 'en' ? ': ' : '：') + name) + '">' + icon('pin') + '<span class="m-lp-l" aria-hidden="true">' + esc(t('map.onMap')) + '</span><span class="m-lp-s" aria-hidden="true">' + esc(t('map.onMapShort')) + '</span></button>' : '') +
@@ -673,7 +778,8 @@
   /* part: 'head' = the area's own section only (an area change paints it at tap time), 'rest' = what follows it */
   function listHtml(roll, first, part) {
     var U = ui();
-    var a = areaBy(S.code);
+    var a = S.code ? { name: placeName(S.code) } : null, isPf = isPrefCode(S.code);
+    var inSel = function (r) { return isPf ? prefOfCode(r.loc.area) === S.code : r.loc.area === S.code; };
     var list = inScope(S.code).filter(catMatch);
     var html = '';
     var note = jrOn() ? '<p class="m-jrnote">' + esc(t('map.jrNote')) + '</p>' : '';
@@ -684,16 +790,16 @@
     function byCat(x, y) { return (catRank[x.cat] - catRank[y.cat]) || (audRank(x) - audRank(y)) || String(x.loc.name).localeCompare(String(y.loc.name), 'ja'); }
 
     if (a) {
-      var inA = list.filter(function (r) { return r.loc.area === S.code; }).sort(byCat);
+      var inA = list.filter(inSel).sort(byCat);
       var c = centerOf(S.code);
-      var others = list.filter(function (r) { return r.loc.area !== S.code; }).map(function (r) {
+      var others = list.filter(function (r) { return !inSel(r); }).map(function (r) {
         return { r: r, d: (c && r.hasLL) ? km(c.lat, c.lng, r.loc.lat, r.loc.lng) : null };
       }).sort(function (x, y) { return (x.d == null ? 1e9 : x.d) - (y.d == null ? 1e9 : y.d); });
       if (part !== 'rest') {
         // the 中学生 note under the count (the sheet's peek shows 「練馬区の中 N か所」 first)
-        html += '<section class="m-group" aria-labelledby="m-g1">' + head('01', t('map.inArea', { name: areaName(a) }), inA.length, null, roll).replace('<h2 class="section-title"', '<h2 class="section-title" id="m-g1"') + note;
+        html += '<section class="m-group" aria-labelledby="m-g1">' + head('01', t('map.inArea', { name: a.name }), inA.length, null, roll).replace('<h2 class="section-title"', '<h2 class="section-title" id="m-g1"') + note;
         if (inA.length) html += '<div class="m-locs">' + (first ? inA.slice(0, 1) : inA).map(function (r) { return rowHtml(r, null); }).join('') + '</div>';
-        else html += U.callout(esc(t('map.noneInArea', { name: areaName(a) })) + ' <a href="#/find/cat/consult">' + esc(t('map.toConsult')) + '</a>', 'info');
+        else html += U.callout(esc(t('map.noneInArea', { name: a.name })) + ' <a href="#/find/cat/consult">' + esc(t('map.toConsult')) + '</a>', 'info');
         html += '</section>';
       }
       if (first || part === 'head') return html;
@@ -707,29 +813,37 @@
           '</section>';
       }
     } else if (!S.showAll) {
-      // all Tokyo: a ruled index of 区市町村 (name + count); rows appear once an area is picked
+      // all of 関東: a ruled index of 区市町村 (name + count) per prefecture (Tokyo in its three parts); rows appear
+      // once an area is picked
+      // a row's number = what opening that area lists under 「〇〇の中」: its places a resident there can use
       var ag = {};
-      list.forEach(function (r) { var k = r.loc.area || 'zz'; (ag[k] = ag[k] || []).push(r); });
+      list.forEach(function (r) { var k = r.loc.area || 'zz'; if (k !== 'zz' && !eligible(r.p, k)) return; (ag[k] = ag[k] || []).push(r); });
       var picked = S.focus ? list.filter(function (r) { return r.key === S.focus; })[0] : null;
       html += note;
       if (picked) html += '<section class="m-group">' + head('', t('map.picked'), null) + '<div class="m-locs">' + rowHtml(picked, null) + '</div></section>';
       // FIX-B (F43): a narrow or big-text sheet head keeps to one line next to its count
       html += '<section class="m-group">' + head('01', t(bigText() || window.innerWidth < 360 ? 'map.areasShort' : 'map.areas'), list.length, null, roll);
       if (first) return html + '</section>';
-      ['23ku', 'tama', 'islands'].forEach(function (gk) {
-        var codes = areas().filter(function (x) { return x.group === gk && ag[x.code]; });
-        if (!codes.length) return;
-        html += '<h3 class="m-agroup">' + esc(t('map.g.' + gk)) + '</h3><div class="m-agrid">' + codes.map(function (x) {
-          return '<button type="button" class="m-acell" data-act="map-area" data-code="' + esc(x.code) + '" data-flip-key="a-' + esc(x.code) + '" data-press>' +
-            '<span class="m-acell-n">' + esc(areaName(x)) + '</span><span class="m-acell-c num">' + ag[x.code].length + '</span>' + arrow('r') + '</button>';
-        }).join('') + '</div>';
+      var cell = function (x) {
+        return '<button type="button" class="m-acell" data-act="map-area" data-code="' + esc(x.code) + '" data-flip-key="a-' + esc(x.code) + '" data-press>' +
+          '<span class="m-acell-n">' + esc(areaName(x)) + '</span><span class="m-acell-c num">' + ag[x.code].length + '</span>' + arrow('r') + '</button>';
+      };
+      prefOrder().forEach(function (pc) {
+        var subs = pc === '13' ? ['23ku', 'tama', 'islands'] : [pc], out = '';
+        subs.forEach(function (gk) {
+          var codes = areas().filter(function (x) { return x.code.slice(0, 2) === pc && (pc !== '13' || x.group === gk) && ag[x.code]; });
+          if (!codes.length) return;
+          out += (pc === '13' ? '<h4 class="m-asub">' + esc(t('map.g.' + gk)) + '</h4>' : '') + '<div class="m-agrid">' + codes.map(cell).join('') + '</div>';
+        });
+        if (out) html += '<h3 class="m-agroup">' + esc(prefName(pc)) + '</h3>' + out;
       });
       html += '<div class="m-more-wrap">' + U.button(t('map.showAllCards'), { act: 'map-more', variant: 'secondary', block: true, icon: 'list' }) + '</div></section>';
     } else {
-      // all Tokyo, every place as a row (opt-in): grouped by 区市町村 in code order
-      var groups = {}, order = [];
+      // all of 関東, every place as a row (opt-in): grouped by 区市町村, prefectures in prefOrder(), codes in order
+      var groups = {}, order = [], po = prefOrder();
       list.forEach(function (r) { var k = r.loc.area || 'zz'; if (!groups[k]) { groups[k] = []; order.push(k); } groups[k].push(r); });
-      order.sort();
+      var rank = function (k) { var i = po.indexOf(String(k).slice(0, 2)); return (i < 0 ? 9 : i) + ':' + k; };
+      order.sort(function (x, y) { return rank(x) < rank(y) ? -1 : rank(x) > rank(y) ? 1 : 0; });
       html += note + '<section class="m-group">' + head('01', t('map.allList'), list.length);
       if (first) return html + '</section>';
       order.forEach(function (k) {
@@ -796,14 +910,18 @@
     s: ['13201', '13209', '13212', '13224', '13225'],
     w: ['13205', '13218', '13227', '13228', '13303', '13305', '13307', '13308']
   };
+  /* the region a 区市町村 belongs to at the region level: Tokyo's four parts, and one per other prefecture ('P:14') */
   function regionOf(code) {
     var a = areaBy(code); if (!a) return null;
+    var pc = String(code).slice(0, 2);
+    if (pc !== '13') return prefBy(pc) ? 'P:' + pc : null;
     if (a.group === '23ku') return 'ku';
     for (var k in TAMA) if (TAMA[k].indexOf(code) >= 0) return k;
     return a.group === 'tama' ? 'n' : null;
   }
   function regionCodes(k) { return areas().filter(function (a) { return regionOf(a.code) === k; }).map(function (a) { return a.code; }); }
   function chipName(it) {
+    if (it.pref) return prefName(it.pref);
     if (it.chip === 'region') return t('map.r.' + it.region);
     return areaName(areaBy(it.code));
   }
@@ -812,14 +930,22 @@
     if (lang() === 'en') { var e = a.en || a.name; return e.length <= 6 ? e : e.slice(0, 5) + '.'; }
     return a.name.replace(/[区市町村]$/, '') || a.name;
   }
-  var AP = null;
+  var AP = null, APn = -1;
   function areaPts() {
-    if (AP) return AP;
     var f = SM.data && SM.data.mapLayers && SM.data.mapLayers.areaLabels;
     if (!f) return {};
-    AP = {};
+    if (AP && APn === f.features.length) return AP;
+    AP = {}; APn = f.features.length;
     f.features.forEach(function (x) { AP[x.properties.code] = x.geometry.coordinates; });
     return AP;
+  }
+  /* a prefecture chip's point: its name's point on the map (kanto.js), else the middle of its 区市町村 */
+  function prefPt(pc, P) {
+    var K = SM.data && SM.data.mapKanto, f = K && K.prefLabels && K.prefLabels.features.filter(function (x) { return x.properties.code === pc; })[0];
+    if (f) return f.geometry.coordinates;
+    var sx = 0, sy = 0, n = 0;
+    for (var c in P) if (c.slice(0, 2) === pc) { sx += P[c][0]; sy += P[c][1]; n++; }
+    return n ? [sx / n, sy / n] : null;
   }
   function recArea(r) {
     var P = areaPts(), c = r.loc.area;
@@ -836,15 +962,25 @@
   function buildChips(recs) {
     var P = areaPts(), by = {};
     recs.forEach(function (r) { var c = recArea(r); if (c) (by[c] = by[c] || []).push(r); });
-    GL.chips = []; GL.chipBy = {}; GL.regions = []; GL.regionBy = {};
-    var rg = {};
+    GL.chips = []; GL.chipBy = {}; GL.regions = []; GL.regionBy = {}; GL.prefChips = []; GL.prefBy = {};
+    var rg = {}, pg = {};
     Object.keys(by).forEach(function (c) {
       var p = P[c], it = { key: 'a:' + c, code: c, chip: 'area', lng: p[0], lat: p[1], m: by[c] };
       GL.chips.push(it); GL.chipBy[it.key] = it;
       var k = regionOf(c);
       if (k) { rg[k] = rg[k] || []; Array.prototype.push.apply(rg[k], by[c]); }
+      var pc = c.slice(0, 2);
+      if (prefBy(pc)) { pg[pc] = pg[pc] || []; Array.prototype.push.apply(pg[pc], by[c]); }
+    });
+    // one chip per prefecture: the region level keeps it for the six outside Tokyo (the same pin, no swap)
+    Object.keys(pg).forEach(function (pc) {
+      var pt = prefPt(pc, P); if (!pt) return;
+      var it = { key: 'P:' + pc, pref: pc, code: pc, chip: 'region', lng: pt[0], lat: pt[1], m: pg[pc] };
+      GL.prefChips.push(it); GL.prefBy[it.key] = it;
+      if (pc !== '13') { GL.regions.push(it); GL.regionBy[it.key] = it; }
     });
     Object.keys(rg).forEach(function (k) {
+      if (k.charAt(0) === 'P') return;
       // anchored at the mean of all its areas' label points (stable whatever the filter)
       var cs = regionCodes(k).filter(function (c) { return P[c]; }), sx = 0, sy = 0;
       cs.forEach(function (c) { sx += P[c][0]; sy += P[c][1]; });
@@ -893,7 +1029,9 @@
     fk: '', colSig: null, colData: null                 // focus pulled out of its cluster; label collision proxies
   };
   /* levels: ≤ REGION_L the four regions, CHIP_L one chip per 区市町村, above that hierarchical clusters */
-  var MINZ = 7, MAXZ = 17, CR = 40, REGION_L = 8, CHIP_L = 9;
+  /* v7: ≤ PREF_L one chip per prefecture (all of 関東 on a phone), REGION_L Tokyo's four parts + the other
+     prefectures, CHIP_L one per 区市町村 */
+  var MINZ = 7, MAXZ = 17, CR = 40, PREF_L = 7, REGION_L = 8, CHIP_L = 9;
   var webgl = null;
   function hasWebGL() {
     if (webgl !== null) return webgl;
@@ -915,6 +1053,20 @@
     else probe();
   })();
   function libReady() { return !!(window.maplibregl && SM.mapStyle && SM.data && SM.data.mapMeta && SM.data.mapLayers); }
+  /* v7: 関東's overview (data/map/kanto.js, ≈ 0.26 MB) loads beside MapLibre; without it the map is Tokyo's */
+  var kantoP = null;
+  function loadKanto() {
+    if (SM.data && SM.data.mapKanto) return Promise.resolve();
+    if (kantoP) return kantoP;
+    kantoP = new Promise(function (res) {
+      var src = 'data/map/kanto.js'; if (SM._vsrc) { try { src = SM._vsrc(src); } catch (e) { } }
+      var s = document.createElement('script'); s.src = src; s.async = true;
+      s.onload = function () { mark('kanto'); res(); };
+      s.onerror = function () { kantoP = null; res(); };
+      document.head.appendChild(s);
+    });
+    return kantoP;
+  }
   /* MapLibre + the base data, in order, on first use. LAUNCH's SM.loadMapLib already warms this on intent
      (pointerdown on a map link); this is the same loader for when launch.js is not there. */
   var ownLoad = null;
@@ -953,12 +1105,14 @@
   var EMPTY = { type: 'FeatureCollection', features: [] };
   function ringsOf(code) {
     var A = SM.data.mapLayers && SM.data.mapLayers.areas; if (!A || !code) return EMPTY;
-    var out = [];
-    A.features.forEach(function (f) {
+    var out = [], F = isPrefCode(code) && SM.mapStyle.prefFeatures ? SM.mapStyle.prefFeatures(code) : A.features;
+    F.forEach(function (f) {
       if (!f.properties || f.properties.code !== code) return;
       var polys = f.geometry.type === 'Polygon' ? [f.geometry.coordinates] : f.geometry.coordinates;
       polys.forEach(function (poly) {
         var ring = poly[0]; if (!ring || ring.length < 4) return;
+        // a prefecture: its islets and piers are left out of the drawn border (smudges under the lift shadow)
+        if (F !== A.features) { var x0 = 180, x1 = -180, y0 = 90, y1 = -90; ring.forEach(function (c) { if (c[0] < x0) x0 = c[0]; if (c[0] > x1) x1 = c[0]; if (c[1] < y0) y0 = c[1]; if (c[1] > y1) y1 = c[1]; }); if (x1 - x0 < 0.03 && y1 - y0 < 0.03) return; }
         // start at the northernmost point, so every border draws from the top
         var pts = ring.slice(0, ring.length - 1), top = 0;
         for (var i = 1; i < pts.length; i++) if (pts[i][1] > pts[top][1]) top = i;
@@ -1053,9 +1207,9 @@
     var meta = SM.data.mapMeta;
     if (S.code && !isIsland(S.code)) {
       var b = SM.mapStyle.areaBounds(S.code);
-      if (b) return { b: [[b[0], b[1]], [b[2], b[3]]], max: 14 };
+      if (b) return { b: [[b[0], b[1]], [b[2], b[3]]], max: isPrefCode(S.code) ? 11 : 14 };
     }
-    var m = meta.bounds;
+    var m = kb('all') || meta.bounds;
     return { b: [[m[0], m[1]], [m[2], m[3]]], max: 12 };
   }
   /* area fits leave the category chips' lap free too (phone, page at its top): a place drawn under 住まい could
@@ -1110,7 +1264,7 @@
     GL.startTok = gen;
     GL.state = 'loading';
     mark('start');
-    loadLib().then(function () { mark('lib'); return fontsReady(); }).then(function () {
+    Promise.all([loadLib().then(function () { mark('lib'); }), loadKanto()]).then(function () { return fontsReady(); }).then(function () {
       mark('fonts');
       if (GL.startTok !== gen) return;
       if (gen !== S.gen || !S.frame || !S.frame.isConnected) { GL.state = 'idle'; return; }
@@ -1139,7 +1293,7 @@
       SM.mapStyle.setTheme(GL.theme);
       var tb = targetBounds();
       GL.flyIn = willFly();
-      if (GL.flyIn) { var mb = SM.data.mapMeta.bounds; tb = { b: [[mb[0], mb[1]], [mb[2], mb[3]]], max: 12 }; }
+      if (GL.flyIn) tb = flyFromBounds();
       var opts = {
         container: el, style: fullStyle(GL.theme, GL.lang, !reduced()),
         localIdeographFontFamily: SM.mapStyle.fontFamily, maxBounds: SM.data.mapMeta.maxBounds,
@@ -1158,6 +1312,12 @@
     }
     GL.map = map;
     try { SM.mapStyle.attach(map, { theme: GL.theme, detailDelay: false, busy: function () { return GL.flying || !!GL.draw || now() < (GL.restUntil || 0); } }); } catch (e) { }
+    // a prefecture's detail is in: the chosen 区市町村's border is redrawn from its 25 m polygon
+    SM.mapStyle.onKanto = function (pc) {
+      var c = GL.drawCode;
+      if (!GL.map || !c || c.length !== 5 || c.slice(0, 2) !== pc || GL.draw) return;
+      var src = GL.map.getSource('m-sel'); if (src && GL.selCode === c) { try { src.setData(ringsOf(c)); } catch (e) { } }
+    };
     var loaded = false;
     map.on('error', function (ev) {
       if (loaded) return;
@@ -1462,6 +1622,7 @@
     glPrime(code);
     GL.drawCode = code;
     try { SM.mapStyle.select(map, code); } catch (e) { }
+    if (code && code.length === 5 && code.slice(0, 2) !== '13' && SM.mapStyle.ensureKanto) { try { SM.mapStyle.ensureKanto(code.slice(0, 2)); } catch (e) { } }
     var cam = cameraFor(targetBounds());
     if (GL.pinsEl && !reduced()) { GL.pinsEl.classList.add('is-away'); pinAux(); }
     var drew = false, dropped = false;
@@ -1515,13 +1676,15 @@
     GL.drawCode = code;
     if (GL.selCode !== code) { src.setData(ringsOf(code)); GL.selCode = code; }
     var th = GL.theme;
-    if (!animate || reduced()) { try { map.setPaintProperty('m-sel-draw', 'line-gradient', gradient(1, th)); } catch (e) { } glLift(true, false); return; }
+    // a prefecture's long coast (piers, ports) smudges under the shadow: it is drawn flat
+    var lift = !isPrefCode(code);
+    if (!animate || reduced()) { try { map.setPaintProperty('m-sel-draw', 'line-gradient', gradient(1, th)); } catch (e) { } glLift(lift, false); return; }
     var t0 = now(), dur = 760;
     try { map.setPaintProperty('m-sel-draw', 'line-gradient', gradient(0, th)); } catch (e) { }
     (function step() {
       var k = Math.min(1, (now() - t0) / dur);
       try { map.setPaintProperty('m-sel-draw', 'line-gradient', gradient(EASE_DRAW(k), th)); } catch (e) { return; }
-      if (k < 1) GL.draw = raf(step); else { GL.draw = 0; glLift(true, true); }
+      if (k < 1) GL.draw = raf(step); else { GL.draw = 0; glLift(lift, true); }
     })();
   }
 
@@ -1562,14 +1725,19 @@
     var key = S.code + ':' + GL.w + 'x' + GL.h;
     if (GL.fitKey !== key) {
       var cam = null;
-      try { var b = SM.mapStyle.areaBounds(S.code); if (b) cam = GL.map.cameraForBounds([[b[0], b[1]], [b[2], b[3]]], { padding: insets(0, false), maxZoom: 14 }); } catch (e) { cam = null; }
+      try { var b = SM.mapStyle.areaBounds(S.code); if (b) cam = GL.map.cameraForBounds([[b[0], b[1]], [b[2], b[3]]], { padding: insets(0, false), maxZoom: isPrefCode(S.code) ? 11 : 14 }); } catch (e) { cam = null; }
       GL.fitKey = key; GL.fitZ = cam ? cam.zoom : 0;
     }
     return GL.fitZ;
   }
   function levelFor(zoom) {
     var lv = clamp(Math.floor(zoom + 0.2), MINZ, MAXZ);
-    if (lv <= CHIP_L && lv > REGION_L && S.code) { var fz = areaFitZ(); if (fz && fz < CHIP_L + 0.8 && zoom >= fz - 0.35) lv = CHIP_L + 1; }
+    if (lv <= CHIP_L && S.code) {
+      var fz = areaFitZ();
+      // a chosen prefecture, framed: its 区市町村 chips (not one 「神奈川県 | 25」 chip)
+      if (isPrefCode(S.code)) { if (fz && lv < CHIP_L && zoom >= fz - 0.35) lv = CHIP_L; }
+      else if (lv > REGION_L && fz && fz < CHIP_L + 0.8 && zoom >= fz - 0.35) lv = CHIP_L + 1;
+    }
     return lv;
   }
   /* the key at level zTo of the cluster that holds level-zFrom item `key` (up[z] maps level z keys to z − 1) */
@@ -1580,21 +1748,29 @@
   }
   /* the same across the overview levels (cluster → 区市町村 chip → region) */
   function parentKey(it, zFrom, zTo) {
+    if (zTo <= PREF_L) {
+      if (it.pref) return it.key;
+      if (it.region) return 'P:13';
+      var a0 = it.chip === 'area' ? it.code : majorArea(it.m);
+      return a0 ? 'P:' + a0.slice(0, 2) : null;
+    }
     if (zTo <= REGION_L) {
       if (it.chip === 'region') return it.key;
       var a = it.chip === 'area' ? it.code : majorArea(it.m), k = a && regionOf(a);
-      return k ? 'r:' + k : null;
+      return k ? (k.charAt(0) === 'P' ? k : 'r:' + k) : null;
     }
     if (zTo <= CHIP_L) { if (it.chip) return it.key; var a2 = majorArea(it.m); return a2 ? 'a:' + a2 : null; }
     if (it.chip) return null;
     return ancestor(it.key, zFrom, zTo);
   }
   function itemAtLevel(z, key) {
+    if (z <= PREF_L) return GL.prefBy[key] || null;
     if (z <= REGION_L) return GL.regionBy[key] || null;
     if (z <= CHIP_L) return GL.chipBy[key] || null;
     return itemAt(z, key);
   }
   function itemsAt(z) {
+    if (z <= PREF_L) return GL.prefChips || [];
     if (z <= REGION_L) return GL.regions;
     if (z <= CHIP_L) return GL.chips;
     return GL.idx.levels[z] || [];
@@ -1753,7 +1929,7 @@
     if (!away) for (var k in GL.pins) {
       var p = GL.pins[k], it = p.it, w, h, c = 1, o = null;
       if (p.culled) continue;   // its area name shows on the canvas instead (and may take the spot)
-      if (it.chip) { w = chipW(it, !!p.compact); h = 30; if (it.code) codes.push(it.code); if (p.dx || p.dy) o = [p.dx || 0, p.dy || 0]; }
+      if (it.chip) { w = chipW(it, !!p.compact); h = 30; if (it.code) codes.push(it.code); if (it.region) codes.push('13'); if (p.dx || p.dy) o = [p.dx || 0, p.dy || 0]; }
       else if (it.m.length > 1) { w = h = it.m.length > 9 ? 44 : 38; }
       else { c = 0; var on = k === GL.selKey; w = on ? 40 : 32; h = on ? 52 : 42; }
       var id = 'm-col-' + Math.round(w) + 'x' + h;
@@ -1893,7 +2069,7 @@
   }
   function scaleTo(pxPerM) {
     var el = S.frame && S.frame.querySelector('.m-scale'); if (!el) return;
-    var steps = [50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000], d = 20000;
+    var steps = [50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000], d = 50000;
     for (var i = 0; i < steps.length; i++) if (steps[i] * pxPerM >= 48) { d = steps[i]; break; }
     var bar = el.querySelector('.m-scale-bar'), tx = el.querySelector('.m-scale-t');
     var w = Math.round(d * pxPerM);
@@ -1925,8 +2101,8 @@
   }
   function targetVB() {
     var g = geo();
-    if (S.code && g.boxes && g.boxes[S.code]) {
-      var b = g.boxes[S.code].slice();
+    if (S.code && boxOf(S.code)) {
+      var b = boxOf(S.code).slice();
       if (b[2] < 26) { var dx = (26 - b[2]) / 2; b[0] -= dx; b[2] = 26; }
       if (b[3] < 26) { var dy = (26 - b[3]) / 2; b[1] -= dy; b[3] = 26; }
       return fitAspect(b, 0.16);
@@ -2016,9 +2192,22 @@
       focusTo(to || (S.root && S.root.querySelector('.m-zfit')));
     }
   }
+  /* a label's point: a 区市町村's, or (zoomed far out) a prefecture's */
+  function labelPt(c) { var g = geo(); return (g.labels && g.labels[c]) || (g.prefLabels && g.prefLabels[c]) || null; }
   function svgLabels() {
     var g = geo(); if (!V.labels || !V.vb) return;
     var s = svgBoxSize(), scale = s.w / V.vb[2], placed = [], html = '';
+    // all of 関東 (more than ≈ 900 units across): the seven prefecture names (and the chosen place's)
+    if (V.vb[2] > 900 && g.prefLabels) {
+      Object.keys(g.prefLabels).forEach(function (c) {
+        var p = toPx(g.prefLabels[c][0], g.prefLabels[c][1]);
+        if (p[0] < -40 || p[1] < -20 || p[0] > s.w + 40 || p[1] > s.h + 20) return;
+        html += '<span class="m-label is-pref' + (c === S.code ? ' is-sel' : '') + '" data-code="' + c + '">' + esc(prefName(c)) + '</span>';
+      });
+      if (isCity(S.code) && g.labels[S.code]) html += '<span class="m-label is-sel" data-code="' + S.code + '">' + esc(placeName(S.code)) + '</span>';
+      V.labels.innerHTML = html;
+      return;
+    }
     var codes = Object.keys(g.labels);
     codes.sort(function (a, b) { return (b === S.code) - (a === S.code) || (g.boxes[b][2] * g.boxes[b][3]) - (g.boxes[a][2] * g.boxes[a][3]); });
     codes.forEach(function (c) {
@@ -2052,7 +2241,7 @@
     if (V.labels) {
       var ls = V.labels.children;
       for (var j = 0; j < ls.length; j++) {
-        var l = g.labels[ls[j].getAttribute('data-code')];
+        var l = labelPt(ls[j].getAttribute('data-code')); if (!l) continue;
         var q = toPx(l[0], l[1]);
         ls[j].style.transform = 'translate(' + q[0].toFixed(1) + 'px,' + q[1].toFixed(1) + 'px) translate(-50%,-50%)';
       }
@@ -2071,11 +2260,11 @@
     if (V.selEl) {
       if (V.selEl.getAnimations) { try { V.selEl.getAnimations().forEach(function (a) { a.cancel(); }); } catch (e) { } }
       V.selEl.style.strokeDasharray = ''; V.selEl.style.strokeDashoffset = '';
-      var d = S.code && g.paths[S.code] ? g.paths[S.code] : '';
+      var d = selPath(S.code);
       V.selEl.setAttribute('d', d);
       if (d && draw && motion('drawLine') && !reduced()) { try { SM.motion.drawLine(V.selEl, { duration: 760 }); } catch (e) { } }
     }
-    if (V.mineEl) V.mineEl.setAttribute('d', mine && mine !== S.code && g.paths[mine] ? g.paths[mine] : '');
+    if (V.mineEl) V.mineEl.setAttribute('d', mine && mine !== S.code ? selPath(mine) : '');
     svgStrokes();
   }
   function svgMount(root) {
@@ -2089,6 +2278,9 @@
     V.vb = null; V.clusters = [];
     if (!V.box || !V.svg || !geo()) return;
     if (wrap) wrap.classList.add('is-svg');
+    // the other prefectures' 区市町村 (lazy): drawn into this SVG when they arrive
+    var g0 = S.gen;
+    geoMore().then(function () { if (g0 !== S.gen || !V.svg || !V.svg.isConnected) return; svgAddWards(root); svgPaint(false); svgLayout(false); });
     var sw = root.querySelector('.m-svgwrap'); if (sw) sw.classList.remove('is-ph');
     if (V.svg && !V.svg.querySelector('.m-water')) {
       var wpath = document.createElementNS('http://www.w3.org/2000/svg', 'path'); wpath.setAttribute('class', 'm-water');
@@ -2545,7 +2737,7 @@
       /* an area change replaces every row, so there is nothing to FLIP (and its layout reads cost ~250ms at 4x
          CPU, all before the flight could start): the new rows rise in by CSS (.is-swap), and the "near" section
          is appended once the camera has landed */
-      var part = opts.move && areaBy(S.code) ? 'head' : undefined;
+      var part = opts.move && S.code ? 'head' : undefined;
       S.restTok = (S.restTok || 0) + 1;
       l.classList.toggle('is-swap', !!opts.move && !reduced());
       var fill = function () { keepFocus(l, function () { l.innerHTML = listHtml(false, false, part); ruby(l); }); };
@@ -2566,7 +2758,7 @@
     }
     zoomStack();
     var wrap = S.root.querySelector('.m-mapwrap');
-    if (wrap) wrap.setAttribute('aria-label', t('map.mapLabel', { name: a ? areaName(a) : t('map.all') }));
+    if (wrap) wrap.setAttribute('aria-label', t('map.mapLabel', { name: S.code ? placeName(S.code) : t('map.all') }));
     if (S.engine === 'gl' && GL.map && GL.state === 'ready') {
       if (opts.move) { GL.code = S.code; glSelectArea(true); }
       else glPins(opts.drop ? 'drop' : 'instant');
@@ -2580,7 +2772,7 @@
       if (sv) {
         sv.setAttribute('viewBox', phViewBox());
         Array.prototype.forEach.call(sv.querySelectorAll('.m-ward'), function (p) { p.classList.toggle('is-sel', p.getAttribute('data-code') === S.code); });
-        var se = sv.querySelector('.m-sel'), g = geo(); if (se && g) se.setAttribute('d', S.code && g.paths[S.code] ? g.paths[S.code] : '');
+        var se = sv.querySelector('.m-sel'); if (se) se.setAttribute('d', selPath(S.code));
       }
     }
     setHash();
@@ -2602,17 +2794,14 @@
   /* the zoom stack's 4th button follows the chosen area */
   function zoomStack() {
     var z = S.root && S.root.querySelector('.m-zoom'); if (!z) return;
-    var a = areaBy(S.code), old = z.querySelector('.m-zarea');
+    var old = z.querySelector('.m-zarea');
     if (old) old.parentNode.removeChild(old);
-    if (a && a.group !== 'islands') {
-      var lab = t('map.fitArea', { name: areaName(a) }), sn = shortName(a);
-      z.insertAdjacentHTML('beforeend', '<button type="button" class="m-zbtn m-zarea" data-act="map-fit-area" aria-label="' + esc(lab) + '" title="' + esc(lab) + '"><span aria-hidden="true"' + (sn.length > 3 ? ' class="is-long"' : '') + '>' + esc(sn) + '</span></button>');
-    }
+    if (S.code && !isIsland(S.code)) z.insertAdjacentHTML('beforeend', zareaHtml());
   }
 
   function setArea(code, o) {
     o = o || {};
-    if (code === 'all' || code === '13' || !isCode(code)) code = null;
+    if (code === 'all' || !isCode(code)) code = null;
     wardAskClose();
     S.code = code; S.focus = null; S.showAll = false;
     peekClose(true);
@@ -2657,10 +2846,13 @@
   }
 
   /* ------------------------------------------------------------------ area picker sheet */
-  function groupOf(code) { var a = areaBy(code); return a ? a.group : null; }
+  function groupOf(code) { var a = isCity(code) && code.slice(0, 2) === '13' ? areaBy(code) : null; return a ? a.group : null; }
+  /* v7: 都県 first (seven buttons, 東京 first), then that prefecture's 区市町村 (Tokyo: 23区 / 多摩 / 島しょ).
+     The search looks through all of 関東. */
   function pickerHtml() {
     var U = ui(), mine = mineCode();
     var g0 = groupOf(S.code) || groupOf(mine) || '23ku';
+    var p0 = prefOfCode(S.code) || prefOfCode(mine) || '13';
     function opt(code, title, sub, on) {
       return '<button type="button" class="m-pk-opt" data-act="map-area" data-code="' + esc(code) + '" aria-pressed="' + on + '" data-press>' +
         '<span class="m-pk-text"><b>' + esc(title) + '</b><small>' + esc(sub) + '</small></span>' +
@@ -2668,30 +2860,50 @@
     }
     var top = '<div class="m-pk-top">' +
       opt('all', t('map.all'), t('map.allSub'), !S.code) +
-      (mine ? opt(mine, areaName(areaBy(mine)), t('map.yours'), S.code === mine) : '') + '</div>';
+      (mine ? opt(mine, placeName(mine), t('map.yours'), S.code === mine) : '') + '</div>';
+    var po = PREF_ORDER.filter(function (c) { return prefBy(c); });
+    var prefs = '<div class="m-pk-prefs" role="group" aria-label="' + esc(t('map.prefs')) + '">' + po.map(function (pc) {
+      var p = prefBy(pc), nm = lang() === 'en' ? p.en : (p.short || p.name);
+      return '<button type="button" class="m-pk-pref" data-act="map-pk-pref" data-value="' + pc + '" aria-pressed="' + (pc === p0) + '" aria-label="' + esc(prefName(pc)) + '" data-press>' +
+        '<span>' + esc(nm) + '</span>' + (pc === prefOfCode(mine) ? '<small>' + esc(t('map.yoursShort')) + '</small>' : '') + '</button>';
+    }).join('') + '</div>';
+    var cell = function (a) {
+      return '<button type="button" class="m-pk-cell" data-act="map-area" data-code="' + a.code + '" aria-pressed="' + (a.code === S.code) + '" data-q="' + esc(kanaNorm(a.name + ' ' + a.kana + ' ' + a.en)) + '" data-press>' +
+        '<span>' + esc(areaName(a)) + '</span>' + (a.code === mine ? '<small>' + esc(t('map.yoursShort')) + '</small>' : '') + '</button>';
+    };
     var seg = U.seg ? '<div class="m-pk-seg">' + U.seg(['23ku', 'tama', 'islands'].map(function (k) {
       return { label: t('map.g.' + k), value: k, pressed: k === g0 };
     }), { act: 'map-pk-group', label: t('map.groups') }) + '</div>' : '';
-    var body = ['23ku', 'tama', 'islands'].map(function (gk) {
-      var items = areas().filter(function (a) { return a.group === gk; });
-      return '<section class="m-pk-group" data-group="' + gk + '"' + (gk !== g0 ? ' hidden' : '') + '><h3 class="m-pk-gtitle">' + esc(t('map.g.' + gk)) + '</h3><div class="m-pk-grid">' +
-        items.map(function (a) {
-          var sel = a.code === S.code;
-          return '<button type="button" class="m-pk-cell" data-act="map-area" data-code="' + a.code + '" aria-pressed="' + sel + '" data-q="' + esc(kanaNorm(a.name + ' ' + a.kana + ' ' + a.en)) + '" data-press>' +
-            '<span>' + esc(areaName(a)) + '</span>' + (a.code === mine ? '<small>' + esc(t('map.yoursShort')) + '</small>' : '') + '</button>';
-        }).join('') + '</div></section>';
+    var body = po.map(function (pc) {
+      var nm = prefName(pc);
+      var groups = pc === '13' ? ['23ku', 'tama', 'islands'].map(function (gk) {
+        var items = areas().filter(function (a) { return a.code.slice(0, 2) === '13' && a.group === gk; });
+        return '<section class="m-pk-group" data-group="' + gk + '"><h3 class="m-pk-gtitle">' + esc(nm + (lang() === 'en' ? ' · ' : ' ') + t('map.g.' + gk)) + '</h3><div class="m-pk-grid">' + items.map(cell).join('') + '</div></section>';
+      }).join('') : '<section class="m-pk-group" data-group="' + pc + '"><h3 class="m-pk-gtitle">' + esc(nm) + '</h3><div class="m-pk-grid">' +
+        areas().filter(function (a) { return a.code.slice(0, 2) === pc; }).map(cell).join('') + '</div></section>';
+      return '<section class="m-pk-pane" data-pref="' + pc + '" aria-label="' + esc(t('map.prefPlaces', { name: nm })) + '">' +
+        '<div class="m-pk-popt">' + opt(pc, t('map.prefAll', { name: nm }), t('map.prefAllSub', { name: nm }), S.code === pc) + '</div>' +
+        (pc === '13' ? seg : '') + groups + '</section>';
     }).join('');
-    return '<div class="v-map m-pk" data-group="' + g0 + '">' +
+    return '<div class="v-map m-pk" data-group="' + g0 + '" data-pref="' + p0 + '">' +
       (U.searchField ? U.searchField({ id: 'm-pk-q', placeholder: t('map.search'), label: t('map.search') }) : '<input id="m-pk-q" type="search">') +
-      top + seg + '<div class="m-pk-body">' + body + '<p class="m-pk-none" hidden>' + esc(t('map.noHit')) + '</p></div></div>';
+      top + prefs + '<div class="m-pk-body">' + body + '<p class="m-pk-none" hidden>' + esc(t('map.noHit')) + '</p></div></div>';
   }
-  function pkGroup(pk, g) {
-    pk.setAttribute('data-group', g);
+  /* what the picker shows: the chosen prefecture's pane (Tokyo: its chosen part), or every match of the search */
+  function pkSync(pk) {
+    var pf = pk.getAttribute('data-pref') || '13', g = pk.getAttribute('data-group') || '23ku', q = pk.classList.contains('is-search');
+    Array.prototype.forEach.call(pk.querySelectorAll('.m-pk-pref'), function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-value') === pf)); });
     Array.prototype.forEach.call(pk.querySelectorAll('.m-pk-seg [data-value]'), function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-value') === g)); });
-    if (!pk.classList.contains('is-search')) {
-      Array.prototype.forEach.call(pk.querySelectorAll('.m-pk-group'), function (s) { s.hidden = s.getAttribute('data-group') !== g; });
-    }
+    Array.prototype.forEach.call(pk.querySelectorAll('.m-pk-pane'), function (pane) {
+      var mine = pane.getAttribute('data-pref') === pf, vis = 0;
+      Array.prototype.forEach.call(pane.querySelectorAll('.m-pk-group'), function (s) {
+        var on = q ? !!s.querySelector('.m-pk-cell:not([hidden])') : mine && (pf !== '13' || s.getAttribute('data-group') === g);
+        s.hidden = !on; if (on) vis++;
+      });
+      pane.hidden = !vis;
+    });
   }
+  function pkGroup(pk, g) { pk.setAttribute('data-group', g); pkSync(pk); }
   function openPicker() {
     if (!SM.sheet) return;
     SM.sheet(pickerHtml(), {
@@ -2699,22 +2911,19 @@
       mount: function (dlg) {
         var q = dlg.querySelector('#m-pk-q'), pk = dlg.querySelector('.m-pk');
         if (!q || !pk) return;
+        pkSync(pk);
         q.addEventListener('input', function () {
           var v = kanaNorm(q.value).replace(/[区市町村]$|(く|し|まち|むら)$/, '');
           var any = false;
           pk.classList.toggle('is-search', !!v);
-          Array.prototype.forEach.call(pk.querySelectorAll('.m-pk-group'), function (sec) {
-            var vis = 0;
-            Array.prototype.forEach.call(sec.querySelectorAll('.m-pk-cell'), function (b) {
-              var ok = !v || b.getAttribute('data-q').indexOf(v) >= 0;
-              b.hidden = !ok; if (ok) vis++;
-            });
-            sec.hidden = v ? !vis : sec.getAttribute('data-group') !== pk.getAttribute('data-group');
-            if (vis) any = true;
+          Array.prototype.forEach.call(pk.querySelectorAll('.m-pk-cell'), function (b) {
+            var ok = !v || b.getAttribute('data-q').indexOf(v) >= 0;
+            b.hidden = !ok; if (ok && v) any = true;
           });
-          var top = pk.querySelector('.m-pk-top'); if (top) top.hidden = !!v;
-          var seg = pk.querySelector('.m-pk-seg'); if (seg) seg.hidden = !!v;
-          var none = pk.querySelector('.m-pk-none'); if (none) none.hidden = any;
+          pkSync(pk);
+          ['.m-pk-top', '.m-pk-prefs', '.m-pk-seg'].forEach(function (sel) { var el = pk.querySelector(sel); if (el) el.hidden = !!v; });
+          Array.prototype.forEach.call(pk.querySelectorAll('.m-pk-popt'), function (el) { el.hidden = !!v; });
+          var none = pk.querySelector('.m-pk-none'); if (none) none.hidden = !v || any;
         });
       }
     });
@@ -2726,6 +2935,11 @@
     SM.on('map-pk-group', function (el) {
       var pk = el.closest && el.closest('.m-pk'); if (!pk) return;
       pkGroup(pk, el.getAttribute('data-value') || '23ku');
+    });
+    SM.on('map-pk-pref', function (el) {
+      var pk = el.closest && el.closest('.m-pk'); if (!pk) return;
+      pk.setAttribute('data-pref', el.getAttribute('data-value') || '13');
+      pkSync(pk);
     });
     SM.on('map-area', function (el) {
       var code = el.getAttribute('data-code');
@@ -2806,7 +3020,7 @@
     SM.on('map-fit', function () {
       peekClose();
       if (S.engine === 'gl' && GL.map) {
-        var mb = SM.data.mapMeta.bounds, cam = cameraFor({ b: [[mb[0], mb[1]], [mb[2], mb[3]]], max: 12 });
+        var mb = kb('all'), cam = cameraFor({ b: [[mb[0], mb[1]], [mb[2], mb[3]]], max: 12 });
         if (cam) glMove(cam.center, cam.zoom, {});
         return;
       }
@@ -2928,6 +3142,13 @@
       return;
     }
     var b = null;
+    // a prefecture chip frames its prefecture (its 区市町村 chips, or Tokyo's four parts, take over)
+    if (it.pref) {
+      var pb = SM.mapStyle.areaBounds(it.pref); if (!pb) return;
+      var pcam = cameraFor({ b: [[pb[0], pb[1]], [pb[2], pb[3]]], max: 10 });
+      if (pcam) glMove(pcam.center, Math.max(pcam.zoom, (it.pref === '13' ? CHIP_L : REGION_L) + 0.05), {});
+      return;
+    }
     regionCodes(it.region).forEach(function (c) {
       var x = SM.mapStyle.areaBounds(c); if (!x) return;
       b = b ? [Math.min(b[0], x[0]), Math.min(b[1], x[1]), Math.max(b[2], x[2]), Math.max(b[3], x[3])] : x.slice();
@@ -3042,6 +3263,8 @@
         // first visit, or still loading from an earlier one: this mount takes the start over
         loadStart(S.frame);
         glStart(gen);
+        // a place outside Tokyo: its 区市町村 join the placeholder when geo-kanto.js is in (Tokyo never needs it)
+        if (S.code && S.code.slice(0, 2) !== '13') geoMore().then(function () { if (gen === S.gen && root.isConnected && root.querySelector('.m-svgwrap.is-ph')) svgAddWards(root); });
       }
     });
   }

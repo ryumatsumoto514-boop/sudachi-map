@@ -56,13 +56,13 @@
 
   SM.data.programs.push(
 
-    /* ───────── ふらっとホーム（東京都 社会的養護自立支援拠点事業）───────── */
+    /* ───────── ふ\u2060ら\u2060っ\u2060とホーム（東京都 社会的養護自立支援拠点事業）───────── */
     {
       id: 'tokyo-flat-hinatabokko',
-      name: { ja: '日向ぼっこ（ふらっとホーム）', en: 'Hinatabokko (Flat Home drop-in)' },
+      name: { ja: '日向ぼっこ（ふ\u2060ら\u2060っ\u2060とホーム）', en: 'Hinatabokko (Flat Home drop-in)' },
       hook: { ja: 'ほっとできる場所と、話せる人がほしい', en: 'I want a place to relax and someone to talk to' },
       summary: {
-        ja: '施設や里親家庭で育った人などが集まれる居場所です。くらしや仕事のことも相談できます。東京都の「ふらっとホーム」の1つです。',
+        ja: '施設や里親家庭で育った人などが集まれる居場所です。くらしや仕事のことも相談できます。東京都の「ふ\u2060ら\u2060っ\u2060とホーム」の1つです。',
         en: 'A drop-in space for people with care experience, where you can also talk about daily life and work. One of Tokyo\'s "Flat Home" bases.'
       },
       cat: ['consult', 'work'],
@@ -74,7 +74,7 @@
       docs: [],
       ask: ['初めて行きたいです。面談はいつできますか？', 'どんなことを相談できますか？', '行くときに持っていくものはありますか？'],
       caution: { ja: '水曜・土曜はお休みです。初めての人は前もって面談が必要です。' },
-      supporter: { ja: '東京都 社会的養護自立支援拠点事業（ふらっとホーム事業）令和8年度補助事業者。個別相談は随時受付。' },
+      supporter: { ja: '東京都 社会的養護自立支援拠点事業（ふ\u2060ら\u2060っ\u2060とホーム事業）令和8年度補助事業者。個別相談は随時受付。' },
       effort: 'low',
       for: { stages: ['hs3', 'left0', 'left1', 'nohs'], paths: [], care: CARE, careOnly: false, age: null, areas: ['13'] },
       deadline: { ja: 'いつでも相談できます', en: 'Anytime', leaveMonths: null, months: null, always: true },
@@ -90,13 +90,13 @@
         hours: '月・木・金・日 12:00–18:00／火 14:00–20:00（水・土 休み）', note: '高田馬場駅から歩いて3分。初めての人は事前面談あり'
       }],
       source: { org: 'NPO法人 日向ぼっこ', url: 'https://hinatabokko2006.com/access/', checked: C },
-      sources2: [{ org: '東京都福祉局（ふらっとホーム事業）', url: FLAT }],
+      sources2: [{ org: '東京都福祉局（ふ\u2060ら\u2060っ\u2060とホーム事業）', url: FLAT }],
       verifiedBy: V
     },
 
     {
       id: 'tokyo-flat-b4s-akiba',
-      name: { ja: 'B4S PORT あきば（ふらっとホーム）', en: 'B4S PORT Akiba (Flat Home drop-in)' },
+      name: { ja: 'B4S PORT あ\u2060き\u2060ば（ふ\u2060ら\u2060っ\u2060とホーム）', en: 'B4S PORT Akiba (Flat Home drop-in)' },
       hook: { ja: '安心して過ごせる場所と、人に聞かれたくない相談先がほしい', en: 'I want a safe place to hang out and a private place to talk' },
       summary: {
         ja: 'ブリッジフォースマイルが東京都から受けて開いている居場所です。無料で使えて、予約すると1対1の相談（1回60分）もできます。',
@@ -111,7 +111,7 @@
       docs: [],
       ask: ['初めて行きたいです。いつ予約できますか？', '個別に相談したいです。どの日時なら空いていますか？', 'ごはんは出ますか？'],
       caution: { ja: '利用には予約が必要です。予約の電話は平日10時〜18時です。' },
-      supporter: { ja: '東京都 ふらっとホーム事業の補助事業者（認定NPO法人ブリッジフォースマイル）。メール andyou@b4s.jp。B4Sは令和8年11月に都内でもう1か所開設予定（都のページでは事業所名未定）。' },
+      supporter: { ja: '東京都 ふ\u2060ら\u2060っ\u2060とホーム事業の補助事業者（認定NPO法人ブリッジフォースマイル）。メール andyou@b4s.jp。B4Sは令和8年11月に都内でもう1か所開設予定（都のページでは事業所名未定）。' },
       effort: 'low',
       for: { stages: ['hs3', 'left0', 'left1', 'nohs'], paths: [], care: CARE, careOnly: false, age: null, areas: ['13'] },
       deadline: { ja: 'いつでも（予約制）', en: 'Anytime (booking needed)', leaveMonths: null, months: null, always: true },
@@ -121,18 +121,18 @@
         hours: { ja: '居場所: 火・土 15時〜20時／木 15時〜18時。電話予約: 平日10時〜18時', en: 'Open Tue/Sat 15–20, Thu 15–18. Phone booking weekdays 10–18' }
       },
       locations: [{
-        name: 'B4S PORT あきば', area: '13106', addr: '東京都台東区柳橋1-6-2 アーク柳橋401',
+        name: 'B4S PORT あ\u2060き\u2060ば', area: '13106', addr: '東京都台東区柳橋1-6-2 アーク柳橋401',
         lat: 35.696064, lng: 139.786850, phone: '03-6842-6766',
         hours: '火・土 15:00–20:00／木 15:00–18:00', note: '予約制（電話かLINE）'
       }],
       source: { org: '認定NPO法人ブリッジフォースマイル', url: 'https://www.b4s.jp/post-7599/', checked: C },
-      sources2: [{ org: '東京都福祉局（ふらっとホーム事業）', url: FLAT }],
+      sources2: [{ org: '東京都福祉局（ふ\u2060ら\u2060っ\u2060とホーム事業）', url: FLAT }],
       verifiedBy: V
     },
 
     {
       id: 'tokyo-flat-satellite-tachikawa',
-      name: { ja: 'サテライト立川（ふらっとホーム）', en: 'Satellite Tachikawa (Flat Home drop-in)' },
+      name: { ja: 'サテライト立川（ふ\u2060ら\u2060っ\u2060とホーム）', en: 'Satellite Tachikawa (Flat Home drop-in)' },
       hook: { ja: 'お金や仕事のこと、だれかに相談したい', en: 'I want to talk to someone about money or work' },
       summary: {
         ja: '施設や里親家庭でくらした人のための拠点です。お金・仕事・人間関係・健康・法律のことを相談でき、困ったときは一時的に泊まれることもあります。無料です。',
@@ -147,7 +147,7 @@
       docs: [],
       ask: ['相談の予約をしたいです。空いている日はありますか？', '就職や進学のことも相談できますか？', '住むところに困ったとき、一時的に泊まれますか？'],
       caution: { ja: '木曜・日曜はお休みです。Googleマップでは別の会社名（ハードフェースウエルドカンパニー）で出ることがあります。' },
-      supporter: { ja: '東京都 ふらっとホーム事業の補助事業者（一般社団法人リーチ奨学育英会）。予約は https://reserva.be/reach 。FAX 042-595-7761。' },
+      supporter: { ja: '東京都 ふ\u2060ら\u2060っ\u2060とホーム事業の補助事業者（一般社団法人リーチ奨学育英会）。予約は https://reserva.be/reach 。FAX 042-595-7761。' },
       effort: 'low',
       for: { stages: ['hs3', 'left0', 'left1', 'nohs'], paths: [], care: CARE, careOnly: true, age: null, areas: ['13'] },
       deadline: { ja: 'いつでも（予約制）', en: 'Anytime (booking needed)', leaveMonths: null, months: null, always: true },
@@ -162,13 +162,13 @@
         hours: '10:00–21:00（木・日 休み）', note: 'JR南武線 西国立駅から歩いて3分。予約制'
       }],
       source: { org: '一般社団法人リーチ奨学育英会', url: 'https://shiseiikuei.or.jp/satellite-tachikawa/', checked: C },
-      sources2: [{ org: '東京都福祉局（ふらっとホーム事業）', url: FLAT }],
+      sources2: [{ org: '東京都福祉局（ふ\u2060ら\u2060っ\u2060とホーム事業）', url: FLAT }],
       verifiedBy: V
     },
 
     {
       id: 'tokyo-flat-yuzuriha',
-      name: { ja: 'アフターケア相談所 ゆずりは（ふらっとホーム）', en: 'Yuzuriha Aftercare Center (Flat Home)' },
+      name: { ja: 'アフターケア相談所 ゆ\u2060ず\u2060り\u2060は（ふ\u2060ら\u2060っ\u2060とホーム）', en: 'Yuzuriha Aftercare Center (Flat Home)' },
       hook: { ja: '役所や病院に、いっしょに行ってくれる人がほしい', en: 'I want someone to come with me to the city office or hospital' },
       summary: {
         ja: '住まい・くらし・仕事・進学の困りごとを、1対1で一緒に考えてくれます。生活保護の申請や、病院・不動産屋への付きそいも。相談は無料で、年齢制限もありません。',
@@ -178,28 +178,28 @@
       kind: 'service', basis: 'npo', right: false,
       amount: { ja: '相談は無料', en: 'Free' }, repay: null,
       who: { ja: '施設などを出て、くらし・仕事・進学が不安な人。親や家族から離れたい人。年齢制限はありません。' },
-      how: { ja: '電話かホームページのお問い合わせフォームで連絡します。毎週水曜13時〜17時の「ゆずりはサロン」は予約なしで行けます。' },
+      how: { ja: '電話かホームページのお問い合わせフォームで連絡します。毎週水曜13時〜17時の「ゆ\u2060ず\u2060り\u2060はサロン」は予約なしで行けます。' },
       where: { ja: '電話・フォームで相談（住所はホームページにのっていません）' },
       docs: [],
       ask: ['生活保護の申請に、いっしょに行ってもらえますか？', '部屋を探したいです。不動産屋に付きそってもらえますか？', 'サロンには予約なしで行っていいですか？'],
       caution: { ja: '住所はホームページにのっていません。行き方は電話で聞いてください。フォームの返事には数日かかります。' },
-      supporter: { ja: '社会福祉法人 子供の家。東京都 ふらっとホーム事業の補助事業者（ゆずりは／ながれる）。都のページでは、子供の家が令和8年10月にもう1か所開設予定（名称未定）。' },
+      supporter: { ja: '社会福祉法人 子供の家。東京都 ふ\u2060ら\u2060っ\u2060とホーム事業の補助事業者（ゆ\u2060ず\u2060り\u2060は／ながれる）。都のページでは、子供の家が令和8年10月にもう1か所開設予定（名称未定）。' },
       effort: 'low',
       for: { stages: ['hs3', 'left0', 'left1', 'nohs'], paths: [], care: CARE, careOnly: false, age: null, areas: ['13'] },
       deadline: { ja: 'いつでも相談できます', en: 'Anytime', leaveMonths: null, months: null, always: true },
       contact: {
-        phone: '042-315-6738', phoneLabel: 'ゆずりは・ながれる', line: null, chat: 'https://www.acyuzuriha.com/contact/',
+        phone: '042-315-6738', phoneLabel: 'ゆ\u2060ず\u2060り\u2060は・ながれる', line: null, chat: 'https://www.acyuzuriha.com/contact/',
         web: YUZU, hours: null
       },
       locations: [],
-      source: { org: '社会福祉法人 子供の家 ゆずりは', url: YUZU, checked: C },
-      sources2: [{ org: '東京都福祉局（ふらっとホーム事業）', url: FLAT }],
+      source: { org: '社会福祉法人 子供の家 ゆ\u2060ず\u2060り\u2060は', url: YUZU, checked: C },
+      sources2: [{ org: '東京都福祉局（ふ\u2060ら\u2060っ\u2060とホーム事業）', url: FLAT }],
       verifiedBy: V
     },
 
     {
       id: 'yuzuriha-kousotsunintei',
-      name: { ja: 'ゆずりは 高卒認定 学習会', en: 'Yuzuriha study group for the high-school equivalency exam' },
+      name: { ja: 'ゆ\u2060ず\u2060り\u2060は 高卒認定 学習会', en: 'Yuzuriha study group for the high-school equivalency exam' },
       hook: { ja: '高校を出ていないけど、もう一度勉強したい', en: 'I didn\'t finish high school but want to study again' },
       summary: {
         ja: '高卒認定（高校卒業と同じ資格）をとるための無料の学習会です。交通費は全額出て、軽食もあります。講師が学びたいことに合わせて教えてくれます。',
@@ -209,8 +209,8 @@
       kind: 'service', basis: 'npo', right: false,
       amount: { ja: '無料・交通費は全額支給', en: 'Free; travel costs fully covered' }, repay: null,
       who: { ja: '高卒認定をとりたい人。ほかに学びたいことがある人も相談できます。' },
-      how: { ja: '参加したいときは、前もって ゆずりは に連絡します。毎週木曜18時〜20時です。' },
-      where: { ja: 'アフターケア相談所 ゆずりは（場所は電話で確認）' },
+      how: { ja: '参加したいときは、前もって ゆ\u2060ず\u2060り\u2060は に連絡します。毎週木曜18時〜20時です。' },
+      where: { ja: 'アフターケア相談所 ゆ\u2060ず\u2060り\u2060は（場所は電話で確認）' },
       docs: [],
       ask: ['高卒認定の学習会に参加したいです。次はいつですか？', '勉強がかなり苦手でも大丈夫ですか？', '交通費はどうやってもらえますか？'],
       caution: { ja: '参加したいときは、前もって連絡しよう。' },
@@ -218,15 +218,15 @@
       effort: 'low',
       for: { stages: ['nohs', 'left0', 'left1'], paths: ['study', 'unsure'], care: [], careOnly: false, age: null, areas: ['13'] },
       deadline: { ja: '毎週木曜 18時〜20時（いつでも始められます）', en: 'Every Thursday 18:00–20:00', leaveMonths: null, months: null, always: true },
-      contact: { phone: '042-315-6738', phoneLabel: 'ゆずりは', line: null, chat: 'https://www.acyuzuriha.com/contact/', web: YUZU, hours: { ja: '学習会: 毎週木曜 18時〜20時', en: 'Thu 18:00–20:00' } },
+      contact: { phone: '042-315-6738', phoneLabel: 'ゆ\u2060ず\u2060り\u2060は', line: null, chat: 'https://www.acyuzuriha.com/contact/', web: YUZU, hours: { ja: '学習会: 毎週木曜 18時〜20時', en: 'Thu 18:00–20:00' } },
       locations: [],
-      source: { org: '社会福祉法人 子供の家 ゆずりは', url: YUZU, checked: C },
+      source: { org: '社会福祉法人 子供の家 ゆ\u2060ず\u2060り\u2060は', url: YUZU, checked: C },
       verifiedBy: V
     },
 
     {
       id: 'yuzuriha-koubou',
-      name: { ja: 'ゆずりは工房（ジャムづくり）', en: 'Yuzuriha Workshop (jam making)' },
+      name: { ja: 'ゆ\u2060ず\u2060り\u2060は工房（ジャムづくり）', en: 'Yuzuriha Workshop (jam making)' },
       hook: { ja: '毎日働くのはまだしんどい。少しずつ働いてみたい', en: 'Working every day is too hard right now; I want to start small' },
       summary: {
         ja: 'スタッフといっしょにジャムをつくる仕事の場です。工賃（お給料）と交通費の全額を、その日にもらえます。',
@@ -236,8 +236,8 @@
       kind: 'service', basis: 'npo', right: false,
       amount: { ja: '工賃と交通費（全額）を当日支給', en: 'Same-day pay plus full travel costs' }, repay: null,
       who: { ja: '毎日働くことがむずかしい人。人とやりとりすることに緊張や不安がある人。' },
-      how: { ja: '参加したいときは、前もって ゆずりは に連絡します。毎週木曜13時〜16時です。' },
-      where: { ja: 'アフターケア相談所 ゆずりは（場所は電話で確認）' },
+      how: { ja: '参加したいときは、前もって ゆ\u2060ず\u2060り\u2060は に連絡します。毎週木曜13時〜16時です。' },
+      where: { ja: 'アフターケア相談所 ゆ\u2060ず\u2060り\u2060は（場所は電話で確認）' },
       docs: [],
       ask: ['工房に参加してみたいです。見学できますか？', '毎週来られなくても大丈夫ですか？', '工賃はいくらくらいですか？'],
       caution: null,
@@ -245,16 +245,16 @@
       effort: 'low',
       for: { stages: ['left0', 'left1', 'nohs'], paths: ['work', 'unsure'], care: [], careOnly: false, age: null, areas: ['13'] },
       deadline: { ja: '毎週木曜 13時〜16時', en: 'Every Thursday 13:00–16:00', leaveMonths: null, months: null, always: true },
-      contact: { phone: '042-315-6738', phoneLabel: 'ゆずりは', line: null, chat: 'https://www.acyuzuriha.com/contact/', web: YUZU, hours: { ja: '工房: 毎週木曜 13時〜16時', en: 'Thu 13:00–16:00' } },
+      contact: { phone: '042-315-6738', phoneLabel: 'ゆ\u2060ず\u2060り\u2060は', line: null, chat: 'https://www.acyuzuriha.com/contact/', web: YUZU, hours: { ja: '工房: 毎週木曜 13時〜16時', en: 'Thu 13:00–16:00' } },
       locations: [],
-      source: { org: '社会福祉法人 子供の家 ゆずりは', url: YUZU, checked: C },
+      source: { org: '社会福祉法人 子供の家 ゆ\u2060ず\u2060り\u2060は', url: YUZU, checked: C },
       verifiedBy: V
     },
 
     /* ───────── ブリッジフォースマイル（自主事業）───────── */
     {
       id: 'b4s-port-shimokita',
-      name: { ja: 'B4S PORT しもきた', en: 'B4S PORT Shimokita' },
+      name: { ja: 'B4S PORT し\u2060も\u2060き\u2060た', en: 'B4S PORT Shimokita' },
       hook: { ja: 'だれかと一緒にごはんを食べたい', en: 'I want to share a meal with someone' },
       summary: {
         ja: 'おしゃべりしたり、一緒にごはんを作って食べたり、ゆっくりしたりできる居場所です。金・日は夕食があります。個別相談（1回30分）もできます。',
@@ -274,12 +274,12 @@
       for: { stages: ['hs3', 'left0', 'left1', 'nohs'], paths: [], care: CARE, careOnly: false, age: null, areas: ['13'] },
       deadline: { ja: 'いつでも（予約制）', en: 'Anytime (booking needed)', leaveMonths: null, months: null, always: true },
       contact: {
-        phone: '080-5652-1963', phoneLabel: 'PORT しもきた（開いている時間だけ）', line: null, chat: null,
+        phone: '080-5652-1963', phoneLabel: 'PORT し\u2060も\u2060き\u2060た（開いている時間だけ）', line: null, chat: null,
         web: 'https://www.b4s.jp/post-6426/',
         hours: { ja: '水 14時〜18時／金・日 16時〜20時（夕食あり）', en: 'Wed 14–18, Fri/Sun 16–20 (dinner)' }
       },
       locations: [{
-        name: 'B4S PORT しもきた', area: '13112', addr: '東京都世田谷区北沢2-10-15 藤和下北沢ハイタウンA614',
+        name: 'B4S PORT し\u2060も\u2060き\u2060た', area: '13112', addr: '東京都世田谷区北沢2-10-15 藤和下北沢ハイタウンA614',
         lat: 35.661770, lng: 139.668610, phone: '080-5652-1963',
         hours: '水 14:00–18:00／金・日 16:00–20:00', note: '予約制。電話は開いている時間だけ'
       }],
@@ -725,7 +725,7 @@
 
     {
       id: 'tokyo-wakasapo',
-      name: { ja: 'わかさぽ（とうきょう若者ヘルスサポート）', en: 'Wakasapo (Tokyo Teen Health Support)' },
+      name: { ja: 'わ\u2060か\u2060さ\u2060ぽ（と\u2060う\u2060き\u2060ょ\u2060う若者ヘルスサポート）', en: 'Wakasapo (Tokyo Teen Health Support)' },
       hook: { ja: 'からだや心のことを、こっそり聞きたい', en: 'I want to ask about my body or feelings privately' },
       summary: {
         ja: '10代のからだや心の悩みに、看護師などが電話やメールで答えてくれます。無料のフリーダイヤルです。',
@@ -745,7 +745,7 @@
       for: { stages: ['jhs12', 'jhs3', 'hs12', 'hs3', 'left0', 'nohs'], paths: [], care: [], careOnly: false, age: { min: 12, max: 19 }, areas: ['13'] },
       deadline: null,
       contact: {
-        phone: '0120-372-463', phoneLabel: 'わかさぽ', line: null, chat: null, web: WOMEN,
+        phone: '0120-372-463', phoneLabel: 'わ\u2060か\u2060さ\u2060ぽ', line: null, chat: null, web: WOMEN,
         hours: { ja: '月〜金 15時〜20時／土・日 9時〜14時（元日は休み）', en: 'Mon–Fri 15–20, Sat/Sun 9–14' }
       },
       locations: [],

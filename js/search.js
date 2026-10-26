@@ -13,8 +13,10 @@
         weights name > aliases/tags > summary > body, IDF-weighted (bigrams that occur in no document are ignored, so
         particles and typos do not sink a query); hiragana queries also match a reading layer made from
         data/ruby.js (家賃 → やちん). English: word tokens, light stemming, prefix and one/two-typo matches.
-     4. context: the person's 区市町村 (local records up, other wards' local records down unless named), 中学生 /
-        adult (records not for them go down), Tokyo versions of national schemes.
+     4. context: the person's 区市町村 and prefecture (v7, all of 関東: their city's and prefecture's records up,
+        another prefecture's or another city's own records down unless the query names that place), 中学生 /
+        adult (records not for them go down), the 都県 versions of national schemes (自立支援資金貸付 …).
+        A prefecture typed in the query (神奈川, さいたま, ちば …) counts as naming it: its records come up.
 
    API (SM.search)
      build() -> ms                    builds the fast phase once (names, tags, summaries + readings). Lazy.
@@ -235,11 +237,44 @@
     d.allEn = d.e.join(' ');
   }
 
+  // a 区市町村 by code, or (v7) a prefecture by its 2-digit code: {name, kana, en}
   function areaName(code) {
+    code = code == null ? '' : String(code);
+    if (/^\d{2}$/.test(code)) return prefRec(code);
     var a = SM.area ? SM.area(code) : null;
     if (!a) { var list = SM.data.areas || []; for (var i = 0; i < list.length; i++) if (list[i].code === code) { a = list[i]; break; } }
     return a;
   }
+  function prefList() {
+    var U = SM.matchUtil, l = SM.data.prefs;
+    if (l && l.length) return l;
+    try { if (U && U.prefs) return U.prefs() || []; } catch (e) { }
+    return [];
+  }
+  function prefRec(code) {
+    var l = prefList();
+    for (var i = 0; i < l.length; i++) if (l[i] && String(l[i].code) === code) return l[i];
+    return null;
+  }
+  function prefOf(code) {
+    code = code == null ? '' : String(code);
+    return /^\d{5}$/.test(code) ? code.slice(0, 2) : /^\d{2}$/.test(code) ? code : null;
+  }
+  function isCity(code) { return typeof code === 'string' && /^\d{5}$/.test(code); }
+  // the prefecture a 都・県・区市町村 record belongs to (SM.matchUtil.recPref when match.js is there)
+  function recPref(p) {
+    var U = SM.matchUtil;
+    if (U && U.recPref) { try { return U.recPref(p); } catch (e) { } }
+    if (!p) return null;
+    if (p.pref) return String(p.pref);
+    if (p.basis === 'tokyo') return '13';
+    var ar = (p.for && p.for.areas) || [];
+    for (var i = 0; i < ar.length; i++) { var x = prefOf(ar[i]); if (x) return x; }
+    return p.basis === 'local' ? '13' : null;
+  }
+  // national schemes each 都県 runs as its own program (program.js shows the person's version the same way)
+  var VERSIONED = { 'jiritsu-shikin': 1, 'saposute': 1 };
+  var PREF_SLUG = { '08': 'ibaraki', '09': 'tochigi', '10': 'gunma', '11': 'saitama', '12': 'chiba', '13': 'tokyo', '14': 'kanagawa' };
   function kindLabel(k) {
     return ({ grant: '給付 もらえる お金 grant', loan: '貸付 借りる loan', loan_forgivable: '貸付 返さなくていい場合 loan',
       service: '相談 窓口 service', hotline: '電話 相談 ホットライン hotline phone line', procedure: '手続き 役所 procedure',
@@ -254,8 +289,11 @@
 
   function programDoc(p) {
     var areas = (p.for && p.for.areas) || [];
-    var areaWords = areas.map(function (c) { var a = areaName(c); return a ? a.name + ' ' + a.kana : ''; }).join(' ');
-    var areaEn = areas.map(function (c) { var a = areaName(c); return a ? a.en : ''; }).join(' ');
+    // v7: the record's prefecture is a tag too (神奈川県 かながわけん), so 「神奈川 奨学金」 finds 神奈川県's own
+    var rp = recPref(p), tagCodes = areas.slice();
+    if (rp && tagCodes.indexOf(rp) === -1 && (p.pref || p.basis === 'tokyo' || p.basis === 'pref')) tagCodes.push(rp);
+    var areaWords = tagCodes.map(function (c) { var a = areaName(c); return a ? a.name + ' ' + a.kana : ''; }).join(' ');
+    var areaEn = tagCodes.map(function (c) { var a = areaName(c); return a ? a.en : ''; }).join(' ');
     var c = p.contact || {};
     var locs = (p.locations || []).map(function (l) { return l.name || ''; }).join(' ');
     var dl = p.deadline || {};
@@ -421,13 +459,33 @@
     BYKEY = {};
     list.forEach(function (d) { BYKEY[d.key] = d; });
     DF = {};
+    /* v7: every 区市町村 of 関東 plus the seven prefectures (code '14' …: 神奈川県 / 神奈川 / かながわ / kanagawa).
+       A town whose bare name is a prefecture's (茨城町) or an everyday word needs its suffix; its English name is
+       left out when it is a prefecture's (Ibaraki). */
+    var PREFS = prefList(), PSHORT = {}, PEN = {};
+    PREFS.forEach(function (pr) { if (!pr) return; PSHORT[pr.short || pr.name.replace(/[都県]$/, '')] = 1; if (pr.en) PEN[pr.en.toLowerCase()] = 1; });
+    // everyday words, common surnames or famous places that are also a 区市町村's bare name: need the suffix
+    var AMB = /^(国立|中央|大島|府中|昭島|小川|一宮|白子|長生|大和|明和|富士見|日の出|みどり|東海|河内|境|上野|昭和|高山|大泉|吉岡|川島|中井|大井|二宮|開成|松田|神崎|吉見|美里|茂木|益子|芳賀|野木|塩谷|玉村|板倉|下仁田|葉山|寒川|清川)$/;
+    var bareN = {};
+    (SM.data.areas || []).forEach(function (a) { var b = a.name.replace(/[区市町村]$/, ''); (bareN[b] = bareN[b] || []).push(a); });
     AREA_NAMES = (SM.data.areas || []).map(function (a) {
       var bare = a.name.replace(/[区市町村]$/, '');
       var kana = norm(a.kana), kanaBare = kana.replace(/(く|し|ちょう|まち|むら|そん)$/, '');
-      var amb = /^(国立|中央|大島|府中|昭島)$/.test(bare);   // also common words: need the 区/市 suffix
+      // a bare name two places share (千代田区 / 千代田町, 八千代市 / 八千代町) stays with the 区・市 only
+      var twin = (bareN[bare] || []).length > 1 && (!/^(ku|shi)$/.test(a.type) || bareN[bare].filter(function (x) { return /^(ku|shi)$/.test(x.type); }).length > 1);
+      var amb = AMB.test(bare) || !!PSHORT[bare] || twin;
+      var en = a.en ? a.en.toLowerCase().replace(/[^a-z]/g, '') : '';
       return { code: a.code, name: norm(a.name), bare: bare.length >= 2 && !amb ? norm(bare) : null,
         kana: kana.length >= 4 ? kana : null, kanaBare: kanaBare.length >= 3 && !amb ? kanaBare : null,
-        en: a.en ? stem(a.en.toLowerCase().replace(/[^a-z]/g, '')) : null };
+        en: en && !PEN[en] && !twin ? stem(en) : null };
+    });
+    PREFS.forEach(function (pr) {
+      if (!pr) return;
+      var short = pr.short || pr.name.replace(/[都県]$/, '');
+      var kana = norm(pr.kana || ''), kanaBare = kana.replace(/(けん|と)$/, '');
+      AREA_NAMES.push({ code: String(pr.code), pref: true, name: norm(pr.name), bare: short.length >= 2 ? norm(short) : null,
+        kana: kana.length >= 4 ? kana : null, kanaBare: kanaBare.length >= 3 ? kanaBare : null,
+        en: pr.en ? stem(pr.en.toLowerCase().replace(/[^a-z]/g, '')) : null });
     });
     DOCS = list;
   }
@@ -655,7 +713,6 @@
     return { area: c.area !== undefined ? c.area : (a.area || null), junior: junior, adult: adult && !junior,
       lang: c.lang || (SM.lang ? SM.lang() : 'ja') };
   }
-  function isWard(code) { return typeof code === 'string' && /^13\d{3}$/.test(code); }
   function jrOk(p) {
     var U = SM.matchUtil;
     if (U && typeof U.jrOk === 'function') { try { return !!U.jrOk(p); } catch (e) { } }
@@ -671,26 +728,45 @@
     }
     return false;
   }
+  /* v7 (Kanto). named: the places in the query ({code: 1}, prefectures as 2-digit codes). The person's area may be a
+     city (14100), a prefecture (14), 'other' or null. */
   function ctxScore(d, ctx, named, ts, pureArea) {
     var s = 0;
     if (d.type === 'program') {
       var p = d.rec, ar = d.areas || [];
-      var wardOnly = ar.length > 0 && ar.every(isWard);
+      var cityOnly = ar.length > 0 && ar.every(isCity);
+      var rp = recPref(p);
+      var myPref = ctx.area && ctx.area !== 'other' ? prefOf(ctx.area) : null, myCity = isCity(ctx.area) ? ctx.area : null;
+      var anyNamed = false, namedPref = {};
+      for (var k in named) { anyNamed = true; var np = prefOf(k); if (np) namedPref[np] = 1; }
       var namedHit = ar.some(function (c) { return named[c]; }) || nameHasArea(d, named);
-      var anyNamed = false; for (var k in named) { anyNamed = true; break; }
-      // a ward named in the query + a record of that ward that also matches the words: that is the answer
+      // the prefecture, or a place in it, was named: its prefecture-wide records (not another city's own) come up
+      var prefNamed = !namedHit && !!rp && !!namedPref[rp] && p.basis !== 'local';
+      // a place named in the query + a record of that place that also matches the words: that is the answer
       if (namedHit) s += 14 + (ts >= 2 ? 24 : 0);
+      else if (prefNamed) s += 8 + (ts >= 2 ? 12 : 0);
       // only a place name: the broad くらしの相談 desk of that place before narrower services
-      if (namedHit && pureArea) s += (p.cat || []).length * 0.5;
-      else if (wardOnly) {
-        if (isWard(ctx.area) && ar.indexOf(ctx.area) !== -1) s += 8;
-        else s -= anyNamed ? 30 : (isWard(ctx.area) ? 14 : 6);
-      } else if (anyNamed && ar.length && ar.indexOf('13') === -1) s -= 10;
+      if ((namedHit || prefNamed) && pureArea) s += (p.cat || []).length * 0.5;
+      else if (cityOnly) {
+        if (myCity && ar.indexOf(myCity) !== -1) s += 8;
+        else s -= anyNamed ? 30 : (myCity ? 14 : 6);
+      } else if (anyNamed && rp && !namedPref[rp]) s -= 24;
+      // another prefecture's own record, not asked for by name: well down; the person's own prefecture: a little up
+      if (myPref && rp && !namedPref[rp]) s += rp === myPref ? (cityOnly ? 0 : 3) : -14;
+      // one of its windows is in the person's own city (川崎市の人 → 川崎市にある拠点)
+      if (myCity && !cityOnly && (p.locations || []).some(function (l) { return l && String(l.area) === myCity; })) s += 3;
+      // no area answered yet: the national ones (for everyone) before any one prefecture's
+      if (!ctx.area && rp && !namedPref[rp] && !cityOnly) s -= 3;
       if (ctx.junior && !jrOk(p)) s -= 22;
       var ag = p.for && p.for.age;
       if (ctx.adult && ag && ag.max != null && ag.max < 18) s -= 12;
-      if (SM.tokyoVersion && SM.tokyoVersion[p.id] && ctx.area !== 'other') s -= 6;
-      if (ctx.area === 'other' && ar.length) s -= 12;
+      // a national scheme the person's own 都県 runs as its own program: that one first (Tokyo: SM.tokyoVersion)
+      var vp = myPref || (!ctx.area ? '13' : null);
+      if (vp && p.basis === 'national' && !p.pref && (VERSIONED[p.id] || (SM.tokyoVersion && SM.tokyoVersion[p.id]))) {
+        var own = vp === '13' && SM.tokyoVersion && SM.tokyoVersion[p.id] ? SM.tokyoVersion[p.id] : PREF_SLUG[vp] + '-' + p.id;
+        if (BYKEY['program:' + own] && (vp !== '13' || (SM.tokyoVersion && SM.tokyoVersion[p.id]))) s -= 6;
+      }
+      if (ctx.area === 'other' && (ar.length || rp)) s -= 12;
     } else if (d.type === 'lesson') {
       if (ctx.junior) s += d.level === 'jr' ? 5 : d.level === 'hs' ? -3 : 0;
       else if (ctx.adult && d.level === 'jr') s -= 5;
@@ -703,6 +779,31 @@
       if (ctx.area === d.id) s += 2;
     }
     return s;
+  }
+
+  /* v7: the lexicon names records of every 都県 in one list. For someone in prefecture X, another prefecture's own
+     record gives its place to X's version of the same scheme (自立支援資金貸付 …) or drops out, so the curated order
+     stays about what this person can use. Outside 関東 ('other'): national and NPO records only. With no area
+     answered, everything stays — except in crisis lists, which keep national and Tokyo lines (as before v7).
+     Also SM.search.route(ids, crisis) for the view's own crisis rows. */
+  function routeIds(ids, crisis, ctx) {
+    ctx = ctx || context();
+    var myPrefQ = ctx.area && ctx.area !== 'other' ? prefOf(ctx.area) : null;
+    var out = [];
+    (ids || []).forEach(function (id) {
+      var p = SM.program ? SM.program(id) : null;
+      var rp = p ? recPref(p) : null;
+      var away = !!rp && (myPrefQ ? rp !== myPrefQ : ctx.area === 'other' ? true : (!!crisis && rp !== '13'));
+      if (away) {
+        var base = id.replace(/^(tokyo|kanagawa|saitama|chiba|ibaraki|tochigi|gunma)-/, '');
+        var own = myPrefQ ? PREF_SLUG[myPrefQ] + '-' + base : '';
+        var twin = VERSIONED[base] ? (own && SM.program(own) ? own : base) : null;
+        if (twin && SM.program(twin) && out.indexOf(twin) === -1) out.push(twin);
+        return;
+      }
+      if (out.indexOf(id) === -1) out.push(id);
+    });
+    return out;
   }
 
   var GROUP = { program: 'support', lesson: 'learn', tool: 'tools', task: 'tasks', area: 'places' };
@@ -731,7 +832,22 @@
       var fz = fuzzyConcepts(n, toks, cm.covered, exact);
       if (fz.length) { hits = hits.concat(fz); out.fuzzy = !cm.hits.length; }
     }
-    var named = mentionedAreas(chunks, n, toks);
+    // v7: lexicon place words that are not 区市町村 names (横浜市の区, 大宮, 浦和 …) name their city (concept.a). They
+    // are taken out before the 区市町村 names are looked for, so 「港北区」 does not also name 東京都北区.
+    var placeWords = [], placeCodes = [];
+    hits.forEach(function (h) {
+      if (!h.c.a) return;
+      placeCodes = placeCodes.concat(splitWords(h.c.a));
+      placeWords = placeWords.concat(h.words);
+    });
+    var nPlace = n, chunksPlace = chunks;
+    if (placeWords.length) {
+      var cut = function (x) { placeWords.forEach(function (w) { if (w && !isAscii(w)) x = x.split(w).join(' '); }); return x; };
+      nPlace = cut(n);
+      chunksPlace = chunks.map(cut).join(' ').split(' ').filter(Boolean);
+    }
+    var named = mentionedAreas(chunksPlace, nPlace, toks);
+    placeCodes.forEach(function (code) { named[code] = 1; });
     // only a place name (+ 窓口 / 役所 / どこ …): the map of that place is the answer
     var pureArea = false;
     if (Object.keys(named).length) {
@@ -740,16 +856,24 @@
         if (!named[a.code]) return;
         [a.name, a.kana, a.bare, a.kanaBare].forEach(function (x) { if (x) rest = rest.split(x).join(''); });
       });
+      placeWords.forEach(function (w) { if (w && !isAscii(w)) rest = rest.split(w).join(''); });
       rest = rest.replace(/まどぐち|窓口|くやくしょ|区役所|しやくしょ|市役所|役所|やくしょ|ちかく|近く|ばしょ|場所|どこ|まつぷ|ちず|地図|しゆうへん|周辺|[区市町村]|[のでにへ]|ある/g, '');
       pureArea = rest.length <= 1 && !toks.some(function (t) { return !/^(map|office|offices|near|place|places)$/.test(t) && AREA_NAMES.every(function (a) { return a.en !== t; }); });
     }
 
     var boost = {};
     var addB = function (key, v) { boost[key] = (boost[key] || 0) + v; };
+    // v7: a query that names places in ONE prefecture (「横浜 家賃」) is about that prefecture, wherever the person lives
+    var anyNamedQ = false, nPrefs = {};
+    Object.keys(named).forEach(function (c) { anyNamedQ = true; var pf = prefOf(c); if (pf) nPrefs[pf] = 1; });
+    var nPrefList = Object.keys(nPrefs);
+    var rctx = nPrefList.length === 1 ? { area: nPrefList[0], junior: ctx.junior, adult: ctx.adult, lang: ctx.lang } : ctx;
+    // a lexicon place word (港北区, 大宮) brings up the map of its city like the city's own name does
+    hits.forEach(function (h) { if (h.c.a) splitWords(h.c.a).forEach(function (code) { addB('area:' + code, 40); }); });
     hits.forEach(function (h) {
       var c2 = h.c, s = h.s * c2.weight;
       if (c2.young && ctx.adult) s *= 0.4;
-      var ps = (ctx.junior && c2.jr) ? c2.jr : c2.p;
+      var ps = routeIds((ctx.junior && c2.jr) ? c2.jr : c2.p, false, rctx);
       ps.forEach(function (id, i) { addB('program:' + id, s * Math.max(14, 40 - i * 4)); });
       c2.l.forEach(function (id, i) { addB('lesson:' + id, s * Math.max(10, 30 - i * 5)); });
       c2.t.forEach(function (id, i) { addB('tool:' + id, s * Math.max(12, 30 - i * 5)); });
@@ -762,18 +886,32 @@
     if (kinds.length) {
       var CR = lex().crisisIds || {};
       kinds.forEach(function (k) {
-        var ids = (ctx.junior && CR[k + ':jr']) || CR[k] || [];
+        var ids = routeIds((ctx.junior && CR[k + ':jr']) || CR[k] || [], true, ctx);
         ids.forEach(function (id, i) { addB('program:' + id, 60 - i * 5); });
       });
     }
 
+    // v7: "a record of that place that also matches the words" is judged on the words other than the place name
+    // (「横浜 家賃」: 家賃), or every record naming 横浜 would count as matching
+    var restChunks = null;
+    if (anyNamedQ && !pureArea) {
+      restChunks = chunks.map(function (ch) {
+        AREA_NAMES.forEach(function (a) {
+          if (!named[a.code]) return;
+          [a.name, a.kana, a.bare, a.kanaBare].forEach(function (x) { if (x) ch = ch.split(x).join(''); });
+        });
+        placeWords.forEach(function (w) { if (w && !isAscii(w)) ch = ch.split(w).join(''); });
+        return ch.replace(/^[のでにへはがを]+/, '');
+      }).filter(function (ch) { return ch.length > 0; });
+    }
     var res = [];
     for (var i = 0; i < DOCS.length; i++) {
       var d = DOCS[i];
       var ts = n.length < 2 && !toks.length ? 0 : textScore(d, chunks, toks);
       var b = boost[d.key] || 0;
       if (ts < 2.2 && !b) continue;
-      var score = ts + b + d.prior + ctxScore(d, ctx, named, ts, pureArea);
+      var tsW = restChunks && d.type === 'program' ? textScore(d, restChunks, toks) : ts;
+      var score = ts + b + d.prior + ctxScore(d, ctx, named, tsW, pureArea);
       if (score < 3) continue;
       res.push({ d: d, score: score, ts: ts, b: b });
     }
@@ -861,6 +999,7 @@
     ready: function () { return !!DOCS; },
     full: function () { return FULL; },
     query: query,
+    route: function (ids, crisis) { return routeIds(ids, crisis); },
     starters: starters,
     norm: norm,
     fold: fold,

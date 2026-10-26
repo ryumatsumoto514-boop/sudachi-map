@@ -7,8 +7,8 @@
   'use strict';
 
   var SM = window.SM = window.SM || {};
-  SM.version = window.__smV || '6.0.0';
-  SM.updated = '2026-10-21';
+  SM.version = window.__smV || '7.0.0';
+  SM.updated = '2026-10-26';
   SM.data = SM.data || {};
   var D = SM.data;
   if (!Array.isArray(D.programs)) D.programs = [];
@@ -296,8 +296,27 @@
   /* ------------------------------------------------------------------ i18n */
   var STR = {};
   SM.lang = function () { return SM.state.settings.lang === 'en' ? 'en' : 'ja'; };
+  /* v7 (SYSTEM): one shared table; a later SM.strings call REPLACES a key another file already set (in development
+     the console names it; tools/strings-check.js finds duplicates inside a file and collisions between files).
+     SM.t never shows a raw {placeholder}: one with no value (no vars, or vars[n] undefined / null) is dropped with
+     one neighbouring space, and in development the console names the key, once. A missing key still returns the
+     key itself (callers test s === key to fall back to their own table), with a warning in development.
+     SM.tRaw(key) keeps the placeholders, for the few callers that split a string around a number they set apart. */
+  var DEV = (function () {
+    try { var l = window.location; return l.protocol === 'file:' || /^(localhost|127\.0\.0\.1|\[::1\])$/.test(l.hostname) || /[?&]dev\b/.test(l.search); } catch (e) { return false; }
+  })();
+  SM.dev = DEV;
+  var warned = {};
+  function warnOnce(id, msg) {
+    if (!DEV || warned[id]) return;
+    warned[id] = 1;
+    try { console.warn('[SM.t] ' + msg); } catch (e) { }
+  }
   SM.strings = function (obj) {
-    if (obj) Object.keys(obj).forEach(function (k) { STR[k] = obj[k]; });
+    if (obj) Object.keys(obj).forEach(function (k) {
+      if (DEV && STR[k] && JSON.stringify(STR[k]) !== JSON.stringify(obj[k])) warnOnce('d:' + k, 'key "' + k + '" defined twice; the later one wins');
+      STR[k] = obj[k];
+    });
   };
   // 中学生 copy: {ja, jr, en} — jr wins (in Japanese) while body.is-junior
   function useJr() {
@@ -306,14 +325,24 @@
     return b ? b.classList.contains('is-junior') : SM.isJunior();
   }
   SM.useJr = useJr;
+  function pick(key) {
+    var e = STR[key];
+    if (!e) { warnOnce('k:' + key, 'no string for key "' + key + '"'); return String(key); }
+    if (typeof e === 'string') return e;
+    if (e.jr && useJr()) return e.jr;
+    var v = e[SM.lang()];
+    return (v !== undefined && v !== null) ? String(v) : (e.ja || '');
+  }
+  SM.tRaw = pick;
   SM.t = function (key, vars) {
-    var e = STR[key], s;
-    if (!e) s = key;
-    else if (typeof e === 'string') s = e;
-    else if (e.jr && useJr()) s = e.jr;
-    else { var v = e[SM.lang()]; s = (v !== undefined && v !== null) ? v : (e.ja || ''); }
-    if (vars) s = s.replace(/\{(\w+)\}/g, function (m, n) { return vars[n] !== undefined && vars[n] !== null ? vars[n] : m; });
-    return s;
+    var s = pick(key);
+    if (s.indexOf('{') === -1) return s;
+    return s.replace(/( ?)\{(\w+)\}( ?)/g, function (m, a, n, b) {
+      var v = vars ? vars[n] : undefined;
+      if (v !== undefined && v !== null) return a + v + b;
+      warnOnce('v:' + key + ':' + n, 'key "' + key + '" needs {' + n + '}');
+      return a && b ? ' ' : '';
+    });
   };
   SM.L = function (obj) {
     if (obj === null || obj === undefined) return '';

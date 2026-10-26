@@ -7,157 +7,105 @@
    ghost (a clone appended to <body>) keeps its look while it fades.
    ===================================================================== */
 
-/* ---------- page rhythm ---------- */
-.view.v-plan > .plan-hero { margin-top: var(--s-6); }
-.view.v-plan > .plan-body { margin-top: var(--s-8); }
-.v-plan .plan-flow > * + * { margin-top: var(--s-6); }
-.v-plan .plan-flow > .plan-saved { margin-top: var(--sec-gap); }
-.v-plan .plan-flow > .plan-saved + .plan-tools { margin-top: var(--s-8); }
-.v-plan .plan-body > .plan-tl { margin-top: var(--sec-gap); }
+/* ---------- page rhythm (v7: status strip → timeline (いま first) → 保存した支援 → 見せる・残す) ---------- */
+.view.v-plan > .plan-hero { margin-top: var(--s-5); }
+.view.v-plan > .plan-body { margin-top: var(--s-6); }
+.v-plan .plan-flow { margin-top: var(--sec-gap); }
+.v-plan .plan-flow > * + * { margin-top: var(--sec-gap); }
 
 /* ---------- head: やること + the 高校受験 / 巣立ち switch ---------- */
 .v-plan .plan-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-3) var(--s-5); }
 .v-plan .plan-h1 { flex: none; }
 .v-plan .plan-track { flex: 1 1 240px; max-width: 360px; }
 
-/* ---------- hero: countdown + the person on the same ground line + date + progress ----------
-   The count block and the picture share one grid row aligned on their LAST baseline: the picture has no
-   baseline, so its bottom edge sits on the number's baseline; translateY(12.5%) then puts the artboard's
-   ground line (y 140 of 160) exactly there. */
-.v-plan .plan-hero {
-  container: plan-hero / inline-size;
+/* ---------- status strip: count · (person) · date · できたこと ----------
+   Phone: [count | できたこと] over [date + 変える]; a 2px ink rule on top, hairlines between, like a station board.
+   Wide (container ≥ 760px): one row, the person walking to the door between the count and the date. */
+.v-plan .plan-hero { container: plan-hero / inline-size; border-top: 2px solid var(--ink); padding-top: var(--s-3); }
+.v-plan .plan-hero-in {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 120px);
-  grid-template-areas: "count il" "meta meta";
-  column-gap: var(--s-4);
-  align-items: last baseline;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 132px);
+  grid-template-areas: "count prog" "date date";
+  column-gap: var(--s-5);
+  align-items: end;
 }
-.v-plan .plan-hero:not(.has-il) { grid-template-columns: minmax(0, 1fr); grid-template-areas: "count" "meta"; }
 .v-plan .plan-count { grid-area: count; min-width: 0; }
-.v-plan .plan-hero-il { grid-area: il; justify-self: end; width: 100%; max-width: 120px; transform: translateY(12.5%); }
-@container plan-hero (max-width: 299px) { .v-plan .plan-hero-il { display: none; } }
-@container plan-hero (max-width: 379px) { .v-plan .plan-count.is-long ~ .plan-hero-il { display: none; } }
-
-.v-plan .plan-count-k {
+.v-plan .plan-hero-il { display: none; grid-area: il; }
+.v-plan .plan-count-k, .v-plan .plan-prog-k, .v-plan .plan-date-k {
   font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui);
   letter-spacing: var(--ls-label); color: var(--ink-2);
 }
 .v-plan .plan-count-big {
   display: flex; align-items: baseline; flex-wrap: nowrap;
-  margin-top: var(--s-1);
-  font-size: var(--t-num-hero); line-height: var(--lh-num); color: var(--ink);
+  font-size: var(--t-num-xl); line-height: var(--lh-num); color: var(--ink);
 }
 .v-plan .plan-count-num {
   font-family: var(--font-num); font-weight: 700; font-size: 1em; line-height: var(--lh-num);
   letter-spacing: var(--ls-num); font-variant-numeric: tabular-nums; white-space: nowrap;
 }
 .v-plan .plan-count-pre, .v-plan .plan-count-unit {
-  flex: none; font-family: var(--font-display); font-weight: 500; font-size: var(--t-unit); line-height: 1; letter-spacing: var(--ls-0);
+  flex: none; font-family: var(--font-display); font-weight: 500; font-size: 0.42em; line-height: 1; letter-spacing: var(--ls-0);
 }
 .v-plan .plan-count-pre { margin-right: 0.12em; }
-.v-plan .plan-count-unit { margin-left: 0.1em; }
-.v-plan .plan-count-today { font-family: var(--font-display); font-weight: 700; font-size: 1em; line-height: var(--lh-num); letter-spacing: var(--ls-0); }
-.v-plan .plan-count-sub { font-family: var(--font-display); font-weight: 700; font-size: var(--t-h3); line-height: var(--lh-title); color: var(--ink); }
+.v-plan .plan-count-unit { margin-left: 0.12em; }
+.v-plan .plan-count-today { font-family: var(--font-display); font-weight: 700; font-size: 0.8em; line-height: var(--lh-num); letter-spacing: var(--ls-0); }
+.v-plan .plan-count-sub { margin-top: 2px; font-family: var(--font-display); font-weight: 700; font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink); }
 
-/* date + note + progress */
-.v-plan .plan-meta { grid-area: meta; align-self: start; display: grid; gap: var(--s-4); min-width: 0; margin-top: var(--s-6); }
+/* できたこと: number pair + one bar (no unexplained tick) */
+.v-plan .plan-prog { grid-area: prog; display: grid; gap: 6px; min-width: 0; padding-bottom: 6px; }
+.v-plan .plan-prog-row { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0 var(--s-2); }
+.v-plan .plan-prog-num { white-space: nowrap; color: var(--ink); }
+.v-plan .plan-prog-num b { font-family: var(--font-num); font-weight: 700; font-size: var(--t-num-l); line-height: 1; letter-spacing: var(--ls-0); }
+.v-plan .plan-prog-of { font-family: var(--font-num); font-weight: 500; font-size: var(--t-meta); line-height: 1; color: var(--ink-3); }
+.v-plan .plan-prog-bar { position: relative; height: 6px; background: var(--paper-3); overflow: hidden; }
+.v-plan .plan-prog-fill { position: absolute; inset: 0; display: block; background: var(--action); transform-origin: left center; }
+.v-plan .plan-prog.is-all .plan-prog-k { color: var(--action-text); font-weight: 700; }
+
+/* the day it counts to: label (+ 仮の日付) / date / one plain line · 変える */
 .v-plan .plan-date {
+  grid-area: date;
   display: flex; align-items: center; gap: var(--s-3);
-  min-height: 64px; padding: var(--s-2) 0;
+  min-height: 64px; margin-top: var(--s-3); padding: var(--s-2) 0;
   border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule);
 }
-.v-plan .plan-date-main { flex: 1; min-width: 0; display: grid; gap: 2px; }
-.v-plan .plan-date-k {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px;
-  font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui);
-  letter-spacing: var(--ls-label); color: var(--ink-3);
-}
+.v-plan .plan-date-main { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.v-plan .plan-date-k { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; color: var(--ink-3); }
 .v-plan .plan-date-k .tag { letter-spacing: var(--ls-0); }
 .v-plan .plan-date-v {
   font-family: var(--font-num); font-weight: 700; font-size: var(--fs-base); line-height: var(--lh-ui);
   letter-spacing: var(--ls-0); font-variant-numeric: tabular-nums; color: var(--ink);
 }
-.v-plan .plan-date-edit { flex: none; }
 .v-plan .plan-date-note { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3); }
-/* v5: the 仮の日付 explanation is a quiet 「くわしく」 under the date row */
-.v-plan .plan-date-more { margin-top: calc(var(--s-3) * -1); }
-.v-plan .plan-date-more > .more-btn { font-size: var(--t-meta); color: var(--ink-2); }
-.v-plan .plan-date-more > .more-body { padding: 0; }
+.v-plan .plan-date-edit { flex: none; }
 
-.v-plan .plan-prog { display: grid; gap: var(--s-2); }
-.v-plan .plan-prog-row { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); }
-.v-plan .plan-prog-k {
-  font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui);
-  letter-spacing: var(--ls-label); color: var(--ink-3);
+@container plan-hero (max-width: 339px) {
+  .v-plan .plan-hero-in { grid-template-columns: minmax(0, 1fr); grid-template-areas: "count" "prog" "date"; row-gap: var(--s-3); }
 }
-.v-plan .plan-prog-num { white-space: nowrap; color: var(--ink); }
-.v-plan .plan-prog-num b { font-family: var(--font-num); font-weight: 700; font-size: var(--t-num-l); line-height: 1; letter-spacing: var(--ls-0); }
-.v-plan .plan-prog-of { font-family: var(--font-num); font-weight: 500; font-size: var(--t-ui); line-height: 1; color: var(--ink-3); }
-.v-plan .plan-prog-bar { position: relative; height: 8px; background: var(--paper-3); }
-.v-plan .plan-prog-fill { position: absolute; inset: 0; display: block; background: var(--action); transform-origin: left center; }
-.v-plan .plan-prog-tick {
-  display: none; position: absolute; top: -4px; bottom: -4px; width: 1px;
-  left: calc(var(--due, 0) * 100%); background: var(--ink);
+@container plan-hero (min-width: 560px) {
+  .v-plan .plan-hero-in { grid-template-columns: minmax(0, 1fr) minmax(0, 200px); }
+  .v-plan .has-il > .plan-hero-in { grid-template-columns: minmax(0, 1fr) 112px minmax(0, 200px); grid-template-areas: "count il prog" "date date date"; }
+  .v-plan .has-il .plan-hero-il { display: block; justify-self: center; width: 112px; align-self: end; margin-bottom: -4px; }
 }
-.v-plan .plan-prog-due { display: none; position: relative; height: calc(var(--t-micro) * 1.3); margin-top: calc(var(--s-1) * -1); }
-.v-plan .plan-prog-due > span {
-  position: absolute; top: 0; left: calc(var(--due, 0) * 100%); transform: translateX(calc(var(--due, 0) * -100%));
-  font-family: var(--font-display); font-weight: 500; font-size: var(--t-micro); line-height: 1.3; letter-spacing: var(--ls-0);
-  color: var(--ink-3); white-space: nowrap;
+@container plan-hero (min-width: 820px) {
+  .v-plan .plan-hero-in, .v-plan .has-il > .plan-hero-in {
+    grid-template-columns: auto 104px minmax(0, 1fr) minmax(180px, 240px);
+    grid-template-areas: "count il date prog";
+    column-gap: var(--s-6);
+  }
+  .v-plan .plan-hero:not(.has-il) > .plan-hero-in { grid-template-columns: auto minmax(0, 1fr) minmax(180px, 240px); grid-template-areas: "count date prog"; }
+  .v-plan .has-il .plan-hero-il { width: 104px; }
+  .v-plan .plan-count-big { font-size: var(--fs-5xl); }
+  .v-plan .plan-date { align-self: end; margin: 0; padding: 0 0 6px var(--s-6); min-height: 0; border: 0; border-left: 1px solid var(--rule); }
+  .v-plan .plan-prog { padding-left: var(--s-6); border-left: 1px solid var(--rule); }
 }
-.v-plan .plan-prog.has-due .plan-prog-tick, .v-plan .plan-prog.has-due .plan-prog-due { display: block; }
+.v-plan .plan-hero-il .il, .v-plan .plan-hero-il svg { display: block; width: 100%; height: auto; }
 
-/* ---------- いま band (--paper-2, full bleed on phones) ---------- */
-.v-plan .plan-now {
-  position: relative;
-  display: grid; gap: var(--s-4); justify-items: start;
-  margin-inline: calc(var(--gutter) * -1);
-  padding: var(--s-6) var(--gutter);
-  background: var(--paper-2);
-}
-.v-plan .plan-now > * { max-width: 100%; }
-.v-plan .plan-now-text { display: grid; gap: var(--s-2); justify-items: start; min-width: 0; }
-.v-plan .plan-now-k { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
-.v-plan .plan-now-tag, .v-plan .tl-now {
-  display: inline-flex; align-items: center; min-height: 22px; padding: 0 8px;
-  background: var(--action-fill); color: var(--on-action-fill);
-  font-family: var(--font-display); font-weight: 700; font-size: var(--t-label); line-height: 1; letter-spacing: var(--ls-label);
-  white-space: nowrap;
-}
-.v-plan .plan-now-when {
-  font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui);
-  letter-spacing: var(--ls-label); color: var(--ink-2);
-}
-.v-plan .plan-now-title { font-size: var(--t-h2); line-height: var(--lh-title); }
-.v-plan .plan-now-next {
-  display: block; margin-bottom: 2px;
-  font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui); letter-spacing: var(--ls-label); color: var(--ink-3);
-}
-.v-plan .plan-now-left {
-  display: flex; align-items: baseline; gap: 4px;
-  font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); line-height: 1.2; color: var(--ink-2);
-}
-.v-plan .plan-now-n { margin: 0 2px; font-family: var(--font-num); font-weight: 700; font-size: var(--t-num-l); line-height: 1; letter-spacing: var(--ls-0); color: var(--ink); font-variant-numeric: tabular-nums; }
-.v-plan .plan-now-of { margin-left: 6px; font-family: var(--font-num); font-weight: 500; color: var(--ink-3); font-variant-numeric: tabular-nums; }
-:lang(ja) .v-plan .plan-now-of { margin-left: 0; font-family: var(--font-display); font-size: var(--t-meta); }
-body.lang-en .v-plan .plan-now-of { margin: 0 2px 0 4px; }
-.v-plan .plan-now-meta { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-2); }
-.v-plan .plan-now-from {
-  font-family: var(--font-num); font-weight: 700; font-size: var(--t-ui); line-height: var(--lh-ui);
-  letter-spacing: var(--ls-0); font-variant-numeric: tabular-nums; color: var(--ink);
-}
-.v-plan .plan-now-nx { display: flex; flex-wrap: wrap; gap: 0 10px; }
-.v-plan .plan-now-nx b { font-family: var(--font-display); font-weight: 700; color: var(--ink); }
-.v-plan .plan-jump { width: 100%; justify-content: space-between; }
-.v-plan .plan-now-il { width: 160px; max-width: 100%; }
-.v-plan .plan-now.is-all .plan-now-title, .v-plan .plan-now.is-done .plan-now-title { font-size: var(--t-h3); }
-
-/* ---------- tools: two ruled rows (icon 20 · h3 16 · meta · arrow) ---------- */
-.v-plan .plan-tools .list-item { min-height: 72px; }
+/* ---------- side blocks: 保存した支援 · 見せる・残す ---------- */
+.v-plan .plan-tools-list .list-item { min-height: 72px; }
 .v-plan .plan-tools .list-ic { width: 24px; }
 .v-plan .plan-tools .list-chev { color: var(--ink); }
 
-/* ---------- 01 saved: compact program rows + remove ---------- */
+/* 保存した支援: compact program rows + remove */
 .v-plan .plan-saved { display: grid; }
 .plan-saved-item { position: relative; }
 .plan-saved-item > .pcard { border-bottom: 0; }
@@ -174,7 +122,52 @@ body.lang-en .v-plan .plan-now-of { margin: 0 2px 0 4px; }
 .plan-saved-item .plan-remove .icon { width: 20px; height: 20px; }
 @media (hover: hover) { .plan-saved-item .plan-remove:hover { background: var(--paper-3); color: var(--ink); } }
 .plan-saved-item .plan-remove:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
-.v-plan .plan-saved-empty .empty { padding-top: var(--s-5); }
+
+/* nothing saved: an invitation — how saving works, this period's supports, the way to find more */
+.v-plan .plan-saved-empty { display: grid; justify-items: start; gap: var(--s-2); padding-top: var(--s-4); }
+.v-plan .plan-empty-k { font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); line-height: var(--lh-ui); color: var(--ink); }
+.v-plan .plan-empty-line { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-2); }
+.v-plan .plan-empty-relk {
+  margin-top: var(--s-3);
+  font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui); letter-spacing: var(--ls-label); color: var(--ink-3);
+}
+.v-plan .plan-empty-rel { width: 100%; border-top: 1px solid var(--rule); }
+.v-plan .plan-empty-rel .list-item { min-height: 56px; }
+.v-plan .plan-empty-go {
+  display: inline-flex; align-items: center; gap: 6px; min-height: var(--tap);
+  font-family: var(--font-display); font-weight: 700; font-size: var(--fs-sm); color: var(--action-text); text-decoration: none;
+}
+.v-plan .plan-empty-go > span:not(.arrow) { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.3em; }
+@media (hover: hover) { .v-plan .plan-empty-go:hover > span:not(.arrow) { text-decoration-thickness: 2px; } }
+.v-plan .plan-empty-go:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+/* the いま tag on the timeline */
+.v-plan .tl-now {
+  display: inline-flex; align-items: center; min-height: 22px; padding: 0 8px;
+  background: var(--action-fill); color: var(--on-action-fill);
+  font-family: var(--font-display); font-weight: 700; font-size: var(--t-label); line-height: 1; letter-spacing: var(--ls-label);
+  white-space: nowrap;
+}
+
+/* the current period, all ticked: one line + the way to the next period (shown only on .is-complete) */
+.v-plan .tl-cur-done { display: none; }
+.v-plan .tl > li.is-current.is-complete .tl-cur-done {
+  display: grid; justify-items: start; gap: 2px;
+  margin-top: var(--s-3); padding: var(--s-3) var(--s-4);
+  background: var(--action-tint);
+}
+.v-plan .tl-cur-done-t { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); line-height: var(--lh-ui); color: var(--action-text); }
+.v-plan .tl-cur-done-mk { flex: none; width: 8px; height: 14px; margin: -4px 2px 0; border: solid currentColor; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+.v-plan .tl-cur-go {
+  display: inline-flex; align-items: center; gap: 8px; min-height: var(--tap); padding: 0; border: 0; background: none; cursor: pointer; text-align: left;
+  font-family: var(--font-display); font-weight: 700; font-size: var(--t-meta); line-height: 1.4; color: var(--ink);
+}
+.v-plan .tl-cur-go > span:not(.arrow) { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.3em; }
+.v-plan .tl-cur-go:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.v-plan .tl-now-go { margin-top: var(--s-1); }
+.v-plan .tl-now-go .tl-link { display: inline-flex; align-items: center; min-height: var(--tap); color: var(--action-text); font-family: var(--font-display); font-weight: 700; font-size: var(--t-meta); text-decoration: none; }
+.v-plan .tl-now-go .tl-link > span { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.3em; }
+.v-plan .tl-now-go .tl-link .arrow { --arrow-s: 16px; margin-left: 6px; }
 
 /* ---------- 02 timeline: one 1px rule, square stations; the green line is the road walked ----------
    Each <li> draws the rule from its station down to the next one (li::before). .tl-fill (JS: top/height from
@@ -429,6 +422,7 @@ body.lang-en .tl-item .tl-seal { font-size: var(--t-micro); padding: 0 4px; }
   font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui); letter-spacing: var(--ls-label); color: var(--ink-2);
 }
 .v-plan .plan-date-opts .opt { min-height: 60px; }
+.v-plan .plan-date-def { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-2); }
 
 .v-plan .ics-lead, .v-plan .cs-lead { font-size: var(--t-ui); line-height: var(--lh-meta); color: var(--ink-2); }
 .v-plan .ics-list { margin: 0; padding: 0; list-style: none; display: grid; border-top: 2px solid var(--ink); border-bottom: 1px solid var(--rule); }
@@ -458,40 +452,23 @@ body.lang-en .tl-item .tl-seal { font-size: var(--t-micro); padding: 0 4px; }
 /* ---------- wider screens ---------- */
 @media (min-width: 600px) {
   .v-plan .tl-wrap { --rail: 28px; --indent: calc(var(--rail) + 16px); }
-  .v-plan .plan-hero { grid-template-columns: minmax(0, 1fr) minmax(0, 168px); }
-  .v-plan .plan-hero-il { max-width: 168px; }
-  .v-plan .plan-now { margin-inline: 0; padding: var(--s-6); }
-  .v-plan .plan-now.has-il { grid-template-columns: 160px minmax(0, 1fr); column-gap: var(--s-6); align-items: end; }
-  .v-plan .plan-now.has-il > .plan-now-il { grid-row: 1 / span 2; align-self: center; }
-  .v-plan .plan-now.has-il > :not(.plan-now-il) { grid-column: 2; }
-  .v-plan .plan-now.has-il > .plan-jump { width: auto; justify-self: start; }
-  .v-plan .plan-jump { width: auto; min-width: 280px; }
 }
 
-/* desktop: the hero spans the page (count · person · date and progress), then 5 / 7 columns:
-   いま, tools and saved on the left; the timeline on the right of one hairline */
+/* desktop: the status strip spans the page; under it the timeline is the wide column (いま on the first screen) and
+   保存した支援 + 見せる・残す stand beside it, right of one hairline (sticky while they fit in the window) */
 @media (min-width: 1100px) {
   .view.v-plan { --col: calc(var(--container) + 2 * var(--gutter)); }
-  .v-plan .plan-hero {
-    grid-template-columns: auto minmax(0, 200px) minmax(300px, 1fr);
-    grid-template-areas: "count il meta";
-    column-gap: var(--s-8);
-  }
-  .v-plan .plan-hero:not(.has-il) { grid-template-columns: auto minmax(300px, 1fr); grid-template-areas: "count meta"; }
-  .v-plan .plan-hero-il { max-width: 200px; }
-  .v-plan .plan-meta { margin-top: 0; align-self: end; }
-  .view.v-plan > .plan-body { margin-top: var(--sec-gap); }
-  .v-plan .plan-body:has(> .plan-tl) { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); align-items: start; }
-  .v-plan .plan-body:has(> .plan-tl) > .plan-flow { padding-right: var(--s-8); }
-  .v-plan .plan-body.is-stick > .plan-flow { position: sticky; top: var(--sticky-top); }
-  .v-plan .plan-body > .plan-tl { margin-top: 0; padding-left: var(--s-8); border-left: 1px solid var(--rule); min-height: 100%; }
-  /* the timeline is right beside: its own いま entry says the same, so the plain band steps aside */
-  .v-plan .plan-body:has(> .plan-tl) .plan-now:is(.is-now, .is-early) { display: none; }
-  .v-plan .plan-flow > .plan-now:is(.is-now, .is-early) + * { margin-top: 0; }
-  .v-plan .plan-now.has-il { grid-template-columns: minmax(0, 1fr); }
-  .v-plan .plan-now.has-il > * { grid-column: 1; }
-  .v-plan .plan-now.has-il > .plan-now-il { grid-row: auto; }
-  .v-plan .plan-jump { width: 100%; min-width: 0; }
+  .view.v-plan > .plan-body { margin-top: var(--s-7); }
+  .v-plan .plan-body:has(> .plan-tl) { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); align-items: start; }
+  .v-plan .plan-body > .plan-tl { padding-right: var(--s-6); }
+  .v-plan .plan-body:has(> .plan-tl) > .plan-flow { margin-top: 0; padding-left: var(--s-6); border-left: 1px solid var(--rule); min-height: 100%; }
+  .v-plan .plan-body.is-stick > .plan-flow { position: sticky; top: var(--sticky-top); min-height: 0; }
+  .v-plan .plan-flow > * + * { margin-top: var(--s-9); }
+}
+@media (min-width: 1240px) {
+  .v-plan .plan-body:has(> .plan-tl) { grid-template-columns: minmax(0, 7fr) minmax(0, 4fr); }
+  .v-plan .plan-body > .plan-tl { padding-right: var(--s-8); }
+  .v-plan .plan-body:has(> .plan-tl) > .plan-flow { padding-left: var(--s-8); }
 }
 
 /* ---------- printable 相談シート (A4). Hidden on screen. ---------- */
@@ -537,15 +514,6 @@ body.lang-en .tl-item .tl-seal { font-size: var(--t-micro); padding: 0 4px; }
 .v-plan .tl-past-left::before { content: "・"; color: var(--ink-4); }
 .v-plan .tl-past-left.is-warn { color: var(--amber-text); }
 .v-plan .tl-past-left.is-zero { color: var(--action-text); }
-/* F38: the empty 保存した支援 is one line and a link */
-.v-plan .plan-saved-empty.is-line { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0 16px; padding: var(--s-3) 0 0; }
-.v-plan .plan-empty-line { flex: 1 1 14em; min-width: 0; font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-2); }
-.v-plan .plan-empty-go {
-  display: inline-flex; align-items: center; gap: 6px; min-height: var(--tap);
-  font-family: var(--font-display); font-weight: 700; font-size: var(--fs-sm); color: var(--action-text); text-decoration: none;
-}
-@media (hover: hover) { .v-plan .plan-empty-go:hover > span:not(.arrow) { text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 0.28em; } }
-.v-plan .plan-empty-go:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 /* F12: the quick date chips are full 44px targets */
 .v-plan .plan-date-chips .chip, .plan-sheet .plan-date-chips .chip { min-height: 44px; }
 .plan-sheet .plan-date-chips .chip::after { inset: 0; }

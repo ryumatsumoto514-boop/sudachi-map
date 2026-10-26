@@ -1772,6 +1772,21 @@ details.disclose > :not(summary) { padding: 0 0 16px; }
 
 kbd { font-family: var(--font-num); font-size: var(--t-kbd); padding: 1px 6px; background: var(--paper-2); box-shadow: inset 0 0 0 1px var(--rule-2); }
 
+/* coverage board (v7, about 「のせている地域」): one ruled row per 都県, name left, count right like a departure
+   board; two columns from 560px. The "for everyone" row spans the board, set off by an ink rule. */
+.cov { display: grid; grid-template-columns: minmax(0, 1fr); column-gap: 32px; margin: 0 0 12px; padding: 0; list-style: none; border-top: 2px solid var(--ink); }
+.cov-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; min-height: 44px; padding: 10px 0; border-bottom: 1px solid var(--rule); }
+.cov-k { min-width: 0; font-family: var(--font-display); font-weight: 700; font-size: var(--fs-base); line-height: 1.4; color: var(--ink); }
+.cov-sub { display: block; font-family: var(--font-body, inherit); font-weight: 400; font-size: var(--t-meta, 0.8125rem); color: var(--ink-3); }
+.cov-v { flex: none; white-space: nowrap; }
+.cov-v .num { font-weight: 700; font-size: 1.375rem; line-height: 1; letter-spacing: var(--ls-0, 0); }
+.cov-u { margin-left: 2px; font-size: var(--t-meta, 0.8125rem); color: var(--ink-2); }
+.cov-row.is-all { border-top: 1px solid var(--ink); }
+@media (min-width: 560px) {
+  .cov { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cov-row.is-all { grid-column: 1 / -1; }
+}
+
 /* supporter-only blocks */
 .for-supporter { display: none; }
 body.supporter .for-supporter { display: block; }

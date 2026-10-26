@@ -37,13 +37,10 @@
 
   /* ------------------------------------------------------------------ strings */
   SM.strings({
-    'find.title': { ja: 'さがす', en: 'Find' },
     'find.browse.h1': { ja: '支援をさがす', en: 'Find support' },
-    'find.browse.lead': { ja: '言葉でさがすか、困りごとから見てみよう。', en: 'Search by word, or start from what you need.' },
     'find.search.ph': { ja: '例：家賃、奨学金、保証人', jr: '例：高校、受験、そうだん', en: 'e.g. rent, scholarship, guarantor' },
     'find.search.label': { ja: '支援をさがす', en: 'Search programs' },
     'find.search.clear': { ja: '入力を消す', en: 'Clear' },
-    'find.search.try': { ja: 'よくさがされる言葉', en: 'Popular searches' },
     'find.search.count': { ja: '「{q}」の結果', en: 'results for “{q}”' },
     'find.search.unit': { ja: '件', en: '' },
     'find.search.none': { ja: '見つかりませんでした', en: 'Nothing found' },
@@ -63,41 +60,24 @@
     'find.search.g.places': { ja: '場所', en: 'Places' },
     'find.search.local': { ja: '区や市の窓口・支援（{n}）', en: 'Ward & city offices and programs ({n})' },
     'find.search.localPick': { ja: '住む所をえらぶ', en: 'Choose where you live' },
+    'find.search.elsewhere': { ja: 'ほかの地域の支援（{n}）', en: 'Programs for other areas ({n})' },
     'find.search.live': { ja: '「{q}」：{n}件', en: '“{q}”: {n} results' },
     'find.search.liveNone': { ja: '「{q}」：見つかりませんでした', en: '“{q}”: nothing found' },
     'find.search.lesson': { ja: '{n}分で読める', en: '{n} min read' },
     'find.search.places': { ja: 'か所', en: 'places' },
-    'find.cta.eyebrow': { ja: '質問は6つ・3分ほど', en: '6 questions · about 3 minutes' },
     // v5: the compact way in — one line + one button (+ a 「1分」 chip beside it)
     'find.cta.line': { ja: '6つの質問で、合う支援がわかる', jr: '6つの質問で、合う支援がわかる', en: '6 questions find what fits you' },
     'find.cta.go': { ja: '質問に答える', en: 'Answer' },
     'find.cta.min': { ja: '6問・3分', en: '6 questions · 3 min' },
     'find.search.tryAria': { ja: 'よくさがされる言葉', en: 'Popular searches' },
-    'find.cta.title1': { ja: '答えるだけで、', en: 'Answer a few questions to find ' },
-    'find.cta.mark': { ja: 'あなたに合う支援', en: 'the support that fits you' },
-    'find.cta.title2': { ja: 'がわかる', en: '' },
-    'find.cta.title': { ja: '6つの質問で、あなたに合う支援をしぼりこむ', en: 'Answer 6 questions to find what fits you' },
-    'find.cta.body': { ja: '名前はいりません。答えはこのスマホの中だけ。', en: 'No name needed. Answers stay on this phone.' },
     'find.cta.start': { ja: '質問をはじめる', en: 'Start the questions' },
-    'find.cta.doneEyebrow': { ja: '前に答えた内容から', en: 'From your answers' },
     'find.cta.doneUnit': { ja: '件', en: 'programs' },
-    'find.cta.doneTitle': { ja: 'あなたに合いそうな支援があります', en: 'may fit you' },
-    'find.cta.doneLine': { ja: 'あなたに合いそうな支援', en: 'programs that could help' },
+    'find.cta.doneLine': { ja: 'あなたに合いそうな支援', en: 'that could help you' },
     'find.cta.results': { ja: '結果を見る', en: 'See results' },
     'find.cta.change': { ja: '答えを変える', en: 'Change answers' },
     'find.cats.h': { ja: '困りごとから見る', en: 'Browse by need' },
     'find.cats.unit': { ja: '件', en: '' },
     'find.all.h': { ja: 'すべての支援', en: 'All programs' },
-    'find.all.sub': { ja: '{n}件・東京都と全国の制度、民間の団体', en: '{n} · Tokyo, national and nonprofit' },
-    'find.basis.label': { ja: 'だれの支援か', en: 'Run by' },
-    'find.basis.all': { ja: 'すべて', en: 'All' },
-    'find.basis.allArea': { ja: '{area}で使える', en: 'In {area}' },
-    'find.basis.allAny': { ja: '都内どこでも', en: 'Anywhere in Tokyo' },
-    'find.all.subArea': { ja: '{area}で使える {n}件（ぜんぶで {total}件）', en: '{n} you can use in {area} ({total} in all)' },
-    'find.basis.national': { ja: '国', en: 'National' },
-    'find.basis.tokyo': { ja: '東京都', en: 'Tokyo' },
-    'find.basis.local': { ja: '区市町村', en: 'City / ward' },
-    'find.basis.npo': { ja: '団体', en: 'Nonprofit' },
     'find.sort.label': { ja: '並べ方', en: 'Sort' },
     'find.sort.fit': { ja: 'おすすめ順', en: 'Recommended' },
     'find.sort.free': { ja: '返さなくていい順', en: 'No pay-back first' },
@@ -106,13 +86,10 @@
     'find.more': { ja: 'もっと見る（あと{n}件）', en: 'Show more ({n} more)' },
     'find.less': { ja: '少なく表示', en: 'Show less' },
     'find.none.basis': { ja: 'この条件の支援はまだありません', en: 'No programs match this filter yet' },
-    'find.n': { ja: '{n}件', en: '{n}' },
 
     'find.q.k': { ja: '質問', en: 'Question' },
     'find.q.of': { ja: '質問 {n} / {total}', en: 'Question {n} of {total}' },
-    'find.q.whyK': { ja: 'なぜ聞くの', en: 'Why we ask' },
     'find.q.skip': { ja: 'わからない・スキップ', en: 'Not sure / skip' },
-    'find.q.prev': { ja: '前の質問', en: 'Previous' },
     'find.q.nextN': { ja: '次へ（{n}つ選択中）', en: 'Next ({n} selected)' },
     'find.q.skipNext': { ja: '選ばずに次へ', en: 'Skip for now' },
     'find.q.toResults': { ja: '結果にもどる', en: 'Back to results' },
@@ -125,31 +102,21 @@
     'find.q.multi': { ja: 'いくつでも選べます', en: 'Choose as many as you like' },
     'find.q.optional': { ja: '答えなくてOK', en: 'Optional' },
     'find.q.whyMore': { ja: 'なぜ聞くの', en: 'Why we ask' },
-    'find.q.station': { ja: '質問{n}', en: 'Question {n}' },
     'find.q.private': { ja: '答えはこのスマホの中だけ。どこにも送られません。', en: 'Your answers stay on this phone. Nothing is sent.' },
     'find.q.g.jhs': { ja: '中学生', en: 'Junior high school' },
     'find.q.g.hs': { ja: '高校生', en: 'High school' },
     'find.q.g.left': { ja: '巣立ったあと・そのほか', en: 'After leaving care · other' },
-    'find.area.search': { ja: '区や市の名前（ひらがなでもOK）', en: 'Ward or city name' },
+    'find.area.search': { ja: '区や市の名前（ひらがなでもOK）', en: 'City or ward name' },
     'find.area.none': { ja: '見つかりませんでした。ひらがなでも、さがせます。', en: 'No match. Try another spelling.' },
-    'find.area.note': { ja: 'いまは東京都の支援を中心にのせています。', en: 'This version focuses on Tokyo.' },
     'find.area.g.23ku': { ja: '23区', en: '23 wards' },
     'find.area.g.tama': { ja: '多摩', en: 'Tama area' },
     'find.area.g.islands': { ja: '島しょ', en: 'Islands' },
-    'find.area.special': { ja: 'まだ決まっていないとき', en: 'If you are not sure' },
-    'find.area.unsure': { ja: 'まだ決まっていない', en: 'Not decided yet' },
-    'find.area.unsureHint': { ja: '都内どこでも使える支援', en: 'All-Tokyo programs' },
-    'find.area.other': { ja: '東京都の外', en: 'Outside Tokyo' },
+    'find.area.unsure': { ja: 'まだ決めていない', en: 'Not decided yet' },
+    'find.area.unsureHint': { ja: '全国と都県の支援', en: 'National and prefecture programs' },
+    'find.area.other': { ja: '関東の外', en: 'Outside Kanto' },
     'find.area.otherHint': { ja: '全国の制度と相談先', en: 'National programs' },
 
-    'find.res.eyebrow': { ja: 'あなたの答えから', en: 'From your answers' },
     'find.res.unit': { ja: '件', en: '' },
-    'find.res.mark': { ja: '使えるかもしれない支援', jr: '使えるかもしれない支援や相談先', en: 'programs that could help' },
-    'find.res.after': { ja: 'が見つかりました', en: '' },
-    // the headline sentence in nowrap phrases; the last one carries the 蛍光ペン (VISUAL-SPEC §7.5)
-    'find.res.p1': { ja: '使えるかもしれない', en: 'programs' },
-    'find.res.p2': { ja: '支援が', jr: '支援や相談先が', en: 'that' },
-    'find.res.p3': { ja: '見つかりました', en: 'could help' },
     'find.res.srCount': { ja: '{n}件の', en: '{n}' },
     // 「今、住む場所がない」: a calm headline (no marker, no count roll) and tonight's numbers right under it (FIXER-robust)
     'find.res.urgentTitle': { ja: '今夜の相談先を、先に出しています', jr: '今すぐ相談できるところ', en: 'Where to go tonight comes first' },
@@ -161,9 +128,7 @@
     'find.res.subAll': { ja: '質問に答えると、あなたに合う順にしぼりこめます。', en: 'Answer the questions to narrow these to what fits you.' },
     'find.res.srAll': { ja: '{n}件の', en: '{n}' },
     'find.res.scan': { ja: 'さがしています', en: 'Searching' },
-    'find.res.noAnswers': { ja: '質問に答えると、あなたに合う順に並びます。', en: 'Answer the questions to sort these by fit.' },
     'find.res.answers': { ja: 'あなたの答え', en: 'Your answers' },
-    'find.res.answersHint': { ja: 'タップで変えられます', en: 'Tap to change' },
     'find.res.unset': { ja: '未回答', en: 'Not answered' },
     'find.res.k.stage': { ja: '今', en: 'Now' },
     'find.res.k.path': { ja: '次', en: 'Next' },
@@ -186,12 +151,10 @@
     'find.local.h': { ja: '区や市の支援', en: 'Ward & city programs' },
     'find.local.sub': { ja: '住む場所が決まったら（{n}件）', en: 'Once you know where you live ({n})' },
     'find.local.pick': { ja: '住む場所を選ぶ', en: 'Choose your area' },
-    'find.other.note': { ja: '東京都の外は、全国の制度と相談先を出しています。', en: 'Outside Tokyo: national programs and helplines.' },
+    'find.other.note': { ja: '関東の外は、全国の制度と相談先を出しています。', en: 'Outside Kanto: national programs and helplines.' },
     'find.notHere.title': { ja: 'ほかにもあるかも', en: 'There may be more' },
     'find.notHere.body': { ja: '相談窓口がいっしょに調べてくれます', jr: '大人がいっしょに調べてくれます', en: 'A helpline can look with you' },
     'find.notHere.all': { ja: '相談窓口をすべて見る', en: 'See all helplines' },
-    'find.private.title': { ja: '答えはこのスマホの中だけ', en: 'Your answers stay on this phone' },
-    'find.private.body': { ja: 'どこにも送られません。名前もいりません。', en: 'Nothing is sent anywhere. No name needed.' },
     'find.reset': { ja: '答えを消して、最初から', en: 'Clear answers and start over' },
     'find.reset.done': { ja: '答えを消しました', en: 'Answers cleared' },
     'find.empty.filter': { ja: 'しぼりこみが多すぎるかも', en: 'Maybe too many filters' },
@@ -200,24 +163,13 @@
     'find.empty.none': { ja: 'まだぴったりの支援が見つかりません', en: 'No close match yet' },
     'find.empty.noneBody': { ja: '答えを変えるか、困りごとから見てみよう。', en: 'Change your answers, or browse by topic.' },
 
-    'find.ward.h': { ja: '区や市だけの支援 {n}件', en: '{n} ward & city programs' },
-    'find.ward.sub': { ja: '「区市町村」で、住む場所の支援を見られます', en: 'See them under “City / ward”' },
-    'find.cat.eyebrow': { ja: '困りごと', en: 'Topic' },
     'find.cat.unit': { ja: '件の支援', en: 'programs' },
-    'find.cat.fit': { ja: 'あなたに合いそう', en: 'May fit you' },
-    'find.cat.rest': { ja: 'そのほかの支援', en: 'Other programs' },
-    'find.cat.restSub': { ja: '答えとは合わないかも', en: 'May not match your answers' },
     'find.cat.sos': { ja: '今すぐ話したいときは、上の「緊急」ボタンから。', en: 'If you need to talk right now, use the “Emergency” button at the top.' },
-    'find.cat.localH': { ja: '区や市ごとの支援（{n}）', en: 'Ward & city programs ({n})' },
-    'find.cat.localSub': { ja: '住む所をえらぶと、しぼれます', en: 'Pick where you live to narrow' },
-    'find.cat.localPick': { ja: '住む所をえらぶ', en: 'Choose where you live' },
-    'find.cat.others': { ja: 'ほかの困りごと', en: 'Other topics' },
 
     'find.crisis.title': { ja: '今夜、いる場所がない？', en: 'Nowhere to stay tonight?' },
     'find.crisis.lead': { ja: '番号をタップすると、すぐ電話がかかります。', en: 'Tap a number to call now.' },
     'find.crisis.chal': { ja: 'TOKYOチャレンジネット', en: 'TOKYO Challenge Net' },
     'find.crisis.today': { ja: '今日', en: 'Today' },
-    'find.crisis.open': { ja: '{h}', en: '{h}' },
     'find.crisis.closed': { ja: '日曜・祝日はお休み。よりそいホットライン（24時間）へ', en: 'Closed Sundays & holidays. Call Yorisoi Hotline (24h)' },
     'find.crisis.after': { ja: '今は受付時間外。よりそいホットライン（24時間）へ', en: 'Closed now. Call Yorisoi Hotline (24h)' },
     'find.crisis.yori': { ja: 'よりそいホットライン（24時間）', en: 'Yorisoi Hotline (24h)' },
@@ -229,16 +181,9 @@
     'find.search.helpTitle': { ja: 'こんな支援が近いかもしれません', en: 'These may be what you need' },
     'find.urgent.label': { ja: '今、いる場所がない', jr: '今、家にいられない', en: 'Nowhere to stay now' },
     'find.urgent.hint': { ja: '今夜の相談先を先に出します', jr: '今すぐ話せる所を先に出します', en: 'Tonight\'s help comes first' },
-    'find.urgent.why': { ja: '今、いる場所がないと答えたので', jr: '今、家にいられないと答えたので', en: 'You said you have nowhere to stay now' },
-    'find.stamp.done': { ja: '選びました', en: 'Selected' },
     // labelled rows on a program row besides 「理由」 (match.js why lines with kind 'for' / 'note')
     'find.whyFor': { ja: '対象', en: 'For' },
     'find.whyNote': { ja: 'ポイント', en: 'Tip' },
-    // 中学生: lists are narrowed to what is open to them; a supporter can look at everything (this visit only)
-    'find.jr.filtered': { ja: '中学生向けにしぼっています（ほか{n}件）', en: 'Showing programs for junior high only ({n} more)' },
-    'find.jr.showAll': { ja: 'ぜんぶ見る（職員や先生と見るとき）', jr: 'ぜんぶ見る（職員や先生と見るとき）', en: 'Show all (when looking with staff)' },
-    'find.jr.allOn': { ja: 'すべての支援を表示しています', en: 'Showing every program' },
-    'find.jr.back': { ja: '中学生向けにもどす', en: 'Back to junior high only' },
     // 緊急 sheet → 「話すのがこわいときは」: only places you can reach by LINE or chat
     'find.chat.h': { ja: 'LINE・チャットで話せるところ', jr: 'チャットで話せるところ', en: 'Talk by LINE or chat' },
     'find.chat.intro': { ja: '文字で相談できます。名前は言わなくて大丈夫。', jr: '文字で相談できるよ。名前は言わなくて大丈夫。', en: 'Type instead of calling. No name needed.' },
@@ -247,11 +192,47 @@
     'find.chat.chatTag': { ja: 'チャット', en: 'Chat' },
     'find.chat.openLine': { ja: 'LINEをひらく', en: 'Open LINE' },
     'find.chat.openChat': { ja: 'チャットをひらく', en: 'Open chat' },
-    'find.chat.page': { ja: 'くわしく', en: 'Details' },
     'find.cat.notFound': { ja: 'その困りごとのページは見つかりませんでした', en: 'That topic page was not found' },
     'find.cat.notFoundBody': { ja: '下の困りごとから選んでください。', en: 'Choose a topic below.' },
     'find.cat.nav': { ja: '分野', en: 'Topics' },
-    'find.tag.from': { ja: '{c}の支援', en: '{c}' }
+    'find.tag.from': { ja: '{c}の支援', en: '{c}' },
+    // v7: one filter system over every list (困りごと + しぼりこむ), what is filtered always on screen as removable chips
+    'find.f.toggle': { ja: 'しぼりこむ', en: 'Filter' },
+    'find.f.scope': { ja: 'だれの支援', en: 'Run by' },
+    'find.f.cond': { ja: '条件', en: 'Show only' },
+    'find.f.here': { ja: '{area}で使える', en: 'Usable in {area}' },
+    'find.f.hereAny': { ja: '住む所で使える', en: 'Usable where you live' },
+    'find.f.noArea': { ja: '区市町村の支援は、住む所を答えると出ます', jr: '区や市の支援は、住む所を答えると出るよ', en: 'City and ward programs appear once you say where you live' },
+    'find.f.noAreaGo': { ja: '住む所を答える', en: 'Say where you live' },
+    'find.crisis.row': { ja: '今夜いる場所がない', en: 'Nowhere to stay tonight' },
+    'find.crisis.rowJr': { ja: '家にいられない・帰れない', en: "Can't stay at home" },
+    'find.crisis.rowGo': { ja: '相談先', en: 'Who to call' },
+    'find.group.alsoTop': { ja: 'ほかに「まずはこれ」に{n}件', en: '+{n} in “Start here”' },
+    'find.res.subArea': { ja: '住む所を答えると、もっとしぼれます。', en: 'Say where you live to narrow these down.' },
+    'find.res.areaGo': { ja: '住む所を答える', en: 'Say where you live' },
+    'find.f.nation': { ja: '全国で使える', en: 'Usable anywhere in Japan' },
+    'find.f.jr': { ja: '中学生が使える', en: 'Open to junior high' },
+    'find.f.freeChip': { ja: '返さなくていい', en: 'No pay-back' },
+    'find.f.on': { ja: 'しぼりこみ中', en: 'Filtered' },
+    'find.f.remove': { ja: '「{x}」を外す', en: 'Remove “{x}”' },
+    'find.f.clear': { ja: 'すべて外す', en: 'Clear all' },
+    'find.f.none': { ja: 'この条件の支援はありません', en: 'Nothing matches these filters' },
+    'find.scope.all': { ja: 'すべて', en: 'All' },
+    'find.scope.national': { ja: '国', en: 'National' },
+    'find.scope.local': { ja: '区市町村', en: 'City / town' },
+    'find.scope.npo': { ja: '団体', en: 'Nonprofit' },
+    'find.list.fit': { ja: 'あなたに合いそう', en: 'May fit you' },
+    'find.list.rest': { ja: 'ほかの支援', en: 'Other programs' },
+    'find.list.aria': { ja: '{n}件の支援', en: '{n} programs' },
+    'find.cats.all': { ja: 'すべて', en: 'All' },
+    // v7: Q3 is 都県 → 区市町村
+    'find.area.pick': { ja: '都県をえらぶ', en: 'Choose a prefecture' },
+    'find.area.change': { ja: '都県を変える', en: 'Change prefecture' },
+    'find.area.prefAny': { ja: 'まだ決めていない', en: 'Not decided yet' },
+    'find.area.prefAnyHint': { ja: '{pref}全体の支援', en: 'Programs for all of {pref}' },
+    'find.area.g.shi': { ja: '市', en: 'Cities' },
+    'find.area.g.town': { ja: '町・村', en: 'Towns & villages' },
+    'find.area.found': { ja: '{n}か所', en: '{n} places' }
   });
   function t(k, v) { return SM.t(k, v); }
   function L(o) { return SM.L(o); }
@@ -424,7 +405,7 @@
       ] },
     { n: 3, key: 'area',
       title: { ja: '住む（住む予定の）ところは？', jr: '今、住んでいるところは？', en: 'Where will you live?' },
-      why: { ja: '区や市によって、独自の支援や窓口があるからです。いまは東京都の支援を中心にのせています。', jr: '区や市によって、相談できる場所や支援がちがうからです。', en: 'Each ward or city has its own programs and offices. This version focuses on Tokyo.' } },
+      why: { ja: '都県や区市町村によって、独自の支援や窓口があるからです。', jr: '住んでいる所によって、相談できる場所や支援がちがうからです。', en: 'Each prefecture and city has its own programs and offices.' } },
     { n: 4, key: 'concerns', multi: true,
       title: { ja: '今、気になることは？', en: 'What is on your mind?' },
       why: { ja: '気になることに近い支援から、先に表示します。', en: 'We show programs for these first.' } },
@@ -456,7 +437,7 @@
   /* ------------------------------------------------------------------ state (per viewer) */
   var ui = (SM.store && SM.store.get('find:ui', null)) || {};
   ui.filters = ui.filters || { free: false, now: false, near: false };
-  ui.basis = ui.basis || 'all';
+  delete ui.basis;   // v6's scope tab (stored); v7 keeps every list filter for this visit only (mem.f)
   ui.sort = ui.sort || 'fit';
   /* mem (this visit only):
      quiet      in-place re-render (SM.render): no reveals, nothing deferred
@@ -468,7 +449,12 @@
      leaveT     the pending forward navigation after an answer (restarts when another option is tapped) */
   var mem = {
     q: '', expanded: {}, browseShown: 24, leaving: false, leaveT: null, quiet: false, nav: false, defer: false,
-    lastHash: null, fromQ: null, fromOutside: false, rollFrom: null, focusMore: null, jrAll: false, afterFlush: [], spy: null
+    lastHash: null, fromQ: null, fromOutside: false, rollFrom: null, focusMore: null, afterFlush: [], spy: null,
+    /* the list filters (this visit only, never stored): scope 'all' | 'national' | 'pref:NN' | 'local' | 'npo';
+       here = only what can be used where the person lives (when they said where); jr = only what is open to
+       中学生 (for 中学生); free = only money you never pay back. panel: the phone's しぼりこむ panel is open.
+       areaPick: Q3 shows the prefecture step even though a prefecture is known (都県を変える) */
+    f: { scope: 'all', here: true, jr: true, free: false }, panel: false, areaPick: false
   };
   function saveUi() { try { SM.store.set('find:ui', ui); } catch (e) { } }
 
@@ -478,21 +464,18 @@
     if (U().isJunior) return U().isJunior(a);
     return a.stage === 'jhs12' || a.stage === 'jhs3' || a.age === 'a12';
   }
-  // 中学生 lists show only what is open to them, unless a supporter chose ぜんぶ見る (this visit only:
-  // kept in memory, never stored, so the phone goes back to the junior view next time)
-  function jrFilter() { return junior() && !mem.jrAll; }
-  // a ruled text row with a trailing arrow (list-item from the system)
-  function rowLink(o) {
-    return '<button type="button" class="list-item f-rowlink" data-act="' + o.act + '" data-value="' + esc(o.value) + '"' + (o.id ? ' id="' + o.id + '"' : '') + '>' +
-      '<span class="list-body"><span class="list-title">' + esc(o.title) + '</span>' +
-      (o.sub ? '<span class="list-sub">' + esc(o.sub) + '</span>' : '') + '</span><span class="list-meta">' + arrow('r') + '</span></button>';
+  // 中学生 lists show only what is open to them (U().jrOk), shown as the removable 「中学生が使える」 filter;
+  // taking it off lasts for this visit only (kept in memory, never stored)
+  function jrFilter() { return junior() && mem.f.jr !== false; }
+  // in a search: the same filter as one removable chip over the results (only when it held something back)
+  function jrChip(hidden) {
+    if (!jrFilter() || !hidden) return '';
+    return '<div class="f-active" role="group" aria-label="' + esc(t('find.f.on')) + '"><span class="f-active-k" aria-hidden="true">' + esc(t('find.f.on')) + '</span>' +
+      achip('jr', t('find.f.jr')) + '</div>';
   }
-  function jrNote(hidden, where) {
-    if (!junior()) return '';
-    var on = !!mem.jrAll;
-    if (!on && !hidden) return '';
-    return rowLink({ act: 'find-jr-all', value: on ? '0' : '1', id: 'f-jrall-' + where,
-      title: on ? t('find.jr.allOn') : t('find.jr.filtered', { n: hidden }), sub: on ? t('find.jr.back') : t('find.jr.showAll') });
+  function achip(k, label) {
+    return '<button type="button" class="f-achip" id="f-ac-' + k + '" data-act="find-unf" data-k="' + k + '" aria-label="' + esc(t('find.f.remove', { x: label })) + '">' +
+      '<span>' + esc(label) + '</span>' + ic('close') + '</button>';
   }
   /* a program row. why lines with kind 'for' (who the service is for) or 'note' (a tip) get their own
      labelled row (「対象」「ポイント」) so nobody reads them as the reason they were shown */
@@ -667,7 +650,7 @@
         if (id === 'jiso-189' && allowed && allowed.indexOf(id) === -1) return;
         if (fits && !fits[id]) return;
         var p = SM.program(id);
-        if (!p) return;
+        if (!p || (U().usableIn && !U().usableIn(p, answers().area || null))) return;
         seen[id] = 1; out.push({ p: p, why: [] });
       });
     });
@@ -701,6 +684,13 @@
       '<span class="contact-main"><span class="contact-value">' + esc(label) + '</span></span>' +
       (external ? ic('external', 'contact-go') + '<span class="sr-only">' + esc(t('core.newtab')) + '</span>' : '<span class="f-row-arrow">' + ARROW + '</span>') + '</a>';
   }
+  // the person may live in Tokyo (Tokyo-only crisis lines are offered): a Tokyo area, or no answer yet
+  function tokyoMaybe() {
+    var a = answers().area;
+    if (!a) return true;
+    var pc = U().prefOf ? U().prefOf(a) : null;
+    return pc ? pc === '13' : a !== 'other';
+  }
   function crisisCard(o) {
     o = o || {};
     var id = 'f-crisis-h' + (o.id || '');
@@ -721,8 +711,9 @@
       var c = chalToday();
       title = t('find.crisis.title'); lead = t('find.crisis.lead');
       var hours = c.closedDay ? t('find.crisis.closed') : c.open ? c.label : c.label + '・' + t('find.crisis.after');
-      rows += telRow('0120-874-225', t('find.crisis.chal'), { hours: hours, hoursK: t('find.crisis.today'), open: c.open });
-      if (!c.open || o.withYori) rows += telRow('0120-279-338', t('find.crisis.yori'));
+      // TOKYOチャレンジネット is for people in Tokyo: elsewhere the 24-hour line comes first
+      if (tokyoMaybe()) rows += telRow('0120-874-225', t('find.crisis.chal'), { hours: hours, hoursK: t('find.crisis.today'), open: c.open });
+      if (!tokyoMaybe() || !c.open || o.withYori) rows += telRow('0120-279-338', t('find.crisis.yori'));
       if (allowed.indexOf('seikatsu-hogo') !== -1) rows += linkRow('#/p/seikatsu-hogo', t('find.crisis.hogo'));
       if (line) rows += linkRow(line, t('find.crisis.line'), true);
       if (allowed.indexOf('jiso-189') !== -1) rows += telRow('189', t('find.crisis.189'));
@@ -733,6 +724,12 @@
       '<div class="contact f-crisis-rows">' + rows + '</div></section>';
   }
   SM.findCrisisCard = crisisCard;
+  /* when nobody said "今、いる場所がない": one red row that opens the 緊急 sheet, not the full panel above the list */
+  function crisisRow() {
+    return '<button type="button" class="f-crisis-row" data-act="sos" aria-haspopup="dialog" data-press>' +
+      '<span class="f-crisis-row-k">' + esc(t(junior() ? 'find.crisis.rowJr' : 'find.crisis.row')) + '</span>' +
+      '<span class="f-crisis-row-v">' + ic('phone') + '<b>' + esc(t('find.crisis.rowGo')) + '</b>' + ARROW + '</span></button>';
+  }
 
   function search(q) {
     q = stripEnding(q);
@@ -773,24 +770,10 @@
     if (!by) return rows;
     return rows.slice().sort(function (a, b) { return by(a, b) || idx[a.p.id] - idx[b.p.id]; });
   }
-  // ward-only records for a ward that is not the user's: hidden under 'すべて', shown under '区市町村'
+  // a record the person cannot use where they live, or one made for a city they have not chosen yet
   function otherWard(r) {
-    var ar = (r.p.for && r.p.for.areas) || [];
-    if (!ar.length || !ar.every(U().isWard)) return false;
-    var mine = answers().area;
-    return !(U().isWard(mine) && ar.indexOf(mine) !== -1);
-  }
-  function basisRows(rows) {
-    if (ui.basis === 'all') return rows.filter(function (r) { return !otherWard(r); });
-    var out = rows.filter(function (r) { return r.p.basis === ui.basis; });
-    if (ui.basis === 'local') out = out.filter(function (r) { return !otherWard(r); }).concat(out.filter(otherWard));
-    return out;
-  }
-  function wardHint(rows) {
-    if (ui.basis !== 'all') return '';
-    var n = rows.filter(otherWard).length;
-    if (!n) return '';
-    return rowLink({ act: 'find-basis', value: 'local', id: 'f-wardhint', title: t('find.ward.h', { n: n }) });
+    var use = U().usableIn ? U().usableIn(r.p, myArea()) : 'any';
+    return use === false || use === 'later';
   }
   function isExtraWhy(w) { return !!(w && (w.kind === 'for' || w.kind === 'note')); }
   /* a ruled list of program rows. o.first: rows rendered now (the rest wait for the transition: lazyRows);
@@ -847,94 +830,220 @@
       '<span class="tag tag-neutral f-way-min">' + esc(t('find.cta.min')) + '</span></div></section>';
   }
 
-  function catCounts() {
-    var counts = {};
-    var wardKnown = U().isWard(answers().area);
-    var jrFits = null;
-    if (jrFilter()) { jrFits = {}; SM.match(answers()).forEach(function (r) { jrFits[r.p.id] = 1; }); }
-    programs().forEach(function (p) {
-      if (wardKnown ? otherWard({ p: p }) : isLocalItem({ p: p })) return;
-      if (SM.tokyoVersion && SM.tokyoVersion[p.id] && answers().area !== 'other') return;
-      if (jrFits && !jrFits[p.id]) return;
-      (p.cat || []).forEach(function (c) { counts[c] = (counts[c] || 0) + 1; });
+  /* ------------------------------------------------------------------ the list and its filters (v7)
+     #/find and #/find/cat/KEY show the same list: every support the person can use, best fit first when they
+     answered. ONE filter system: 困りごと (the topic list — rows on a phone, the left column on desktop; a topic is
+     its own page) and しぼりこむ (だれの支援 · 住む所で使える · 中学生が使える · 返さなくていい · 並べ方: a panel under
+     しぼりこむ on a phone, always open in the left column on desktop). What is filtered is always on screen as
+     removable chips over the list (one tap each; すべて外す). Every count is the number of rows a tap would show. */
+  // the person's area as matching knows it: a 5-digit city, a 2-digit prefecture, 'other' or null
+  function myArea() {
+    var a = answers().area;
+    if (a === 'other') return a;
+    return a && U().prefOf && U().prefOf(a) ? String(a) : null;
+  }
+  function hereOn() { return !!myArea() && mem.f.here !== false; }
+  function areaNm(code) { try { return U().areaName ? U().areaName(code, en()) : ''; } catch (e) { return ''; } }
+  function hereLabel() {
+    var a = myArea();
+    if (a === 'other') return t('find.f.nation');
+    var nm = areaNm(a);
+    return nm ? t('find.f.here', { area: nm }) : t('find.f.hereAny');
+  }
+  function scopeKey(p) { return U().scopeOf ? U().scopeOf(p) : (p.basis || 'national'); }
+  function scopeLabel(k) {
+    if (k.indexOf('pref:') === 0) return (U().prefName && U().prefName(k.slice(5), en())) || k.slice(5);
+    return t('find.scope.' + k);
+  }
+  // 国 · (the person's prefecture, 東京都, the other prefectures in code order) · 区市町村 · 団体
+  function scopeOrder(counts) {
+    var mine = U().prefOf ? U().prefOf(myArea()) : null;
+    var prefKeys = Object.keys(counts).filter(function (k) { return k.indexOf('pref:') === 0; }).sort(function (x, y) {
+      var rx = x === 'pref:' + mine ? 0 : x === 'pref:13' ? 1 : 2, ry = y === 'pref:' + mine ? 0 : y === 'pref:13' ? 1 : 2;
+      return rx - ry || (x < y ? -1 : x > y ? 1 : 0);
     });
-    return counts;
+    return ['all', 'national'].concat(prefKeys, ['local', 'npo']);
   }
-  // 01 困りごとから見る: ruled rows whose kanji mark travels into the category page (shared morph)
-  function catList(numLabel) {
-    var counts = catCounts();
-    // reading order on arrival: title, search, words, the way in (+200), then this list (+280 and on)
-    var head = SM.ui.sectionHeader(t('find.cats.h'), { id: 'f-cats-h', num: numLabel, reveal: !mem.quiet });
-    if (!mem.quiet) head = head.replace('data-reveal="up"', 'data-reveal="up" data-reveal-delay="280"').replace('data-reveal="rule" data-reveal-delay="80"', 'data-reveal="rule" data-reveal-delay="360"');
-    return '<section class="f-cats-sec" aria-labelledby="f-cats-h">' + head +
-      '<ul class="f-cats list" role="list"' + R('data-reveal-stagger="50"') + '>' + catOrder().map(function (k, i) {
-        var row = SM.ui.listItem({ title: catName(k), subSr: catHint(k), href: '#/find/cat/' + k, cat: k, id: 'cat:' + k,
-          meta: counts[k] || 0, unit: t('find.cats.unit'), count: !mem.quiet, attrs: 'data-press' });
-        // the kanji mark stamps in as its row arrives (a hanko on the station sign)
-        if (!mem.quiet) row = row.replace('<span class="cat-icon', '<span data-reveal="mark" data-reveal-delay="' + (440 + i * 50) + '" class="cat-icon');
-        return '<li' + (mem.quiet ? '' : ' data-reveal-delay="320"') + '>' + row + '</li>';
-      }).join('') + '</ul></section>';
+  function copyObj(o) { var c = {}; for (var k in o) { if (Object.prototype.hasOwnProperty.call(o, k)) c[k] = o[k]; } return c; }
+  /* every row the list can hold before the filters below: usable where the person lives (when 住む所で使える is
+     on), the ones that fit their answers first (fit = their ids), then the rest by the default rank; 中学生が使える
+     keeps only what is open to 中学生 */
+  function pool() {
+    var a = answers(), area = hereOn() ? myArea() : null;
+    // 住む所で使える turned off: every record in Kanto (match.js everywhere); area unknown: match.js's unanswered rule
+    var opts = !hereOn() && myArea() ? { everywhere: true } : null;
+    // the same base as SM.matchUtil.catCounts (the home stations), so every count agrees
+    var base = U().browseBase ? U().browseBase(a, { here: hereOn(), jr: false }) : SM.match({ concerns: [], area: area }, opts);
+    var rows = base, fit = null;
+    if (SM.state.answered || answeredAny()) {
+      var ans = copyObj(a); ans.area = area;
+      var inBase = {}; base.forEach(function (r) { inBase[r.p.id] = 1; });
+      fit = {}; rows = [];
+      SM.match(ans, opts).forEach(function (r) { if (!r.local && inBase[r.p.id]) { fit[r.p.id] = 1; rows.push(r); } });
+      base.forEach(function (r) { if (!fit[r.p.id]) { r.why = []; rows.push(r); } });
+    }
+    if (jrFilter() && U().jrOk) rows = rows.filter(function (r) { return U().jrOk(r.p); });
+    return { rows: rows, fit: fit };
   }
+  /* the list for one topic (or all of them) with its honest counts: each topic's count is under the current
+     しぼりこみ, each scope's under the current topic, so a tap shows exactly that many rows */
+  function listData(cat) {
+    var P = pool(), all = P.rows, f = mem.f, u = U();
+    var inCat = function (r) { return !cat || (r.p.cat || []).indexOf(cat) !== -1; };
+    var inScope = function (r) { return f.scope === 'all' || scopeKey(r.p) === f.scope; };
+    var freeOk = function (r) { return !f.free || u.isFree(r.p); };
+    var cats = { _all: 0 }, scopes = { all: 0 }, freeN = 0, beforeFree = 0;
+    all.forEach(function (r) {
+      var c = inCat(r), sc = inScope(r), fr = freeOk(r);
+      if (sc && fr) { cats._all++; (r.p.cat || []).forEach(function (k) { cats[k] = (cats[k] || 0) + 1; }); }
+      if (c && fr) { scopes.all++; var k = scopeKey(r.p); scopes[k] = (scopes[k] || 0) + 1; }
+      if (c && sc) { beforeFree++; if (u.isFree(r.p)) freeN++; }
+    });
+    var rows = all.filter(function (r) { return inCat(r) && inScope(r) && freeOk(r); });
+    // in a topic, the rows whose main topic it is lead (中学生: what is made for their stage), inside fit / rest
+    if (cat && ui.sort === 'fit') {
+      var lead = junior() ? function (r) { var st = (r.p.for && r.p.for.stages) || []; return st.indexOf('jhs12') !== -1 || st.indexOf('jhs3') !== -1; } :
+        function (r) { return (r.p.cat || [])[0] === cat; };
+      var isFit = function (r) { return !!(P.fit && P.fit[r.p.id]); };
+      var part = function (rs) { return rs.filter(lead).concat(rs.filter(function (r) { return !lead(r); })); };
+      rows = part(rows.filter(isFit)).concat(part(rows.filter(function (r) { return !isFit(r); })));
+    }
+    rows = sortRows(rows, ui.sort);
+    // dev: with the default しぼりこみ the topic counts must equal the home stations' (one rule, SM.matchUtil.catCounts)
+    if (SM.dev && f.scope === 'all' && !f.free && f.here !== false && f.jr !== false && u.catCounts) {
+      try {
+        var hc = u.catCounts(answers());
+        catOrder().concat(['_all']).forEach(function (k) { if ((hc[k] || 0) !== (cats[k] || 0)) console.warn('[sm] count mismatch', k, hc[k] || 0, cats[k] || 0); });
+      } catch (e) { }
+    }
+    return { cat: cat, rows: rows, fit: P.fit, cats: cats, scopes: scopes, freeN: freeN, beforeFree: beforeFree };
+  }
+  // the topic counts on their own (search none-found, the missing-topic page)
+  function catCounts() { return listData(null).cats; }
 
-  function basisTabs(rows, idp) {
-    var keys = ['all', 'national', 'tokyo', 'local', 'npo'];
-    // 'all' hides other wards' own schemes (they live under 区市町村), so its count does too
-    var c = { all: rows.filter(function (r) { return !otherWard(r); }).length };
-    rows.forEach(function (r) { c[r.p.basis] = (c[r.p.basis] || 0) + 1; });
-    var wardNm = myWardName();
-    return '<div class="f-basis" role="group" aria-label="' + esc(t('find.basis.label')) + '"><div class="seg-tabs f-basis-tabs" data-key="' + idp + '">' +
-      keys.filter(function (k) { return k === 'all' || c[k]; }).map(function (k) {
-        // no ward yet: 'all' leaves out ward-only schemes, so it is named for what it holds (not 「すべて」 beside a bigger total)
-        var lbl = k === 'all' ? (wardNm ? t('find.basis.allArea', { area: wardNm }) : t('find.basis.allAny')) : t('find.basis.' + k);
-        return '<button type="button" aria-pressed="' + (ui.basis === k) + '" data-act="find-basis" data-value="' + k + '" id="' + idp + '-b-' + k + '">' +
-          '<span>' + esc(lbl) + '</span><span class="f-tab-n">' + esc(c[k] || 0) + '</span></button>';
-      }).join('') + '<i class="m-indicator" aria-hidden="true"></i></div></div>';
+  // 困りごとから見る: ruled rows (mark, name, count) whose kanji mark travels into the topic page. On desktop the same
+  // rows form the left column's topic list (すべて on top, the current one marked)
+  function catFacet(cur, d) {
+    var counts = d.cats;
+    var head = SM.ui.sectionHeader(t('find.cats.h'), { id: 'f-cats-h', reveal: !mem.quiet, cls: 'f-fac-h' });
+    var row = function (k, i) {
+      var all = k === '_all';
+      var html = SM.ui.listItem({ title: all ? t('find.cats.all') : catName(k), subSr: all ? '' : catHint(k), href: all ? '#/find' : '#/find/cat/' + k,
+        cat: all ? null : k, icon: all ? 'list' : null, id: all ? 'cat:all' : 'cat:' + k, meta: String(counts[k] || 0), unit: t('find.cats.unit'),
+        count: !mem.quiet, attrs: 'data-press' + ((cur || '_all') === k ? ' aria-current="page"' : '') });
+      // the kanji mark stamps in as its row arrives (a hanko on the station sign)
+      if (!mem.quiet && !all) html = html.replace('<span class="cat-icon', '<span data-reveal="mark" data-reveal-delay="' + (240 + i * 50) + '" class="cat-icon');
+      return '<li class="' + (all ? 'f-fac-all' : '') + '">' + html + '</li>';
+    };
+    return '<nav class="f-cats-sec f-fac-cats" aria-labelledby="f-cats-h">' + head +
+      '<ul class="f-cats list" role="list"' + R('data-reveal-stagger="50"') + '>' + row('_all', 0) +
+      catOrder().map(function (k, i) { return row(k, i); }).join('') + '</ul></nav>';
   }
-  function sortSelect(id) {
-    return '<label class="f-sort" for="' + id + '"><span class="f-sort-k">' + esc(t('find.sort.label')) + '</span>' +
-      '<select class="select f-sort-sel" id="' + id + '" data-act="find-sort">' + ['fit', 'free', 'effort', 'deadline'].map(function (k) {
+  function catList() { return catFacet(null, { cats: catCounts() }); }
+  // a phone's topic page: the other topics as one row of underline tabs (marks), the current one underlined
+  function catTabs(cur, d) {
+    var tab = function (k) {
+      var all = k === '_all', on = (cur || '_all') === k;
+      return '<a class="f-ctab" href="' + (all ? '#/find' : '#/find/cat/' + k) + '"' + (on ? ' aria-current="page"' : '') + ' data-press>' +
+        (all ? '' : SM.ui.catIcon(k, 'xs')) + '<span class="f-ctab-l">' + esc(all ? t('find.cats.all') : catName(k)) + '</span>' +
+        '<span class="f-ctab-n">' + esc(fmtN(d.cats[k] || 0)) + '</span></a>';
+    };
+    return '<nav class="f-ctabs" aria-label="' + esc(t('find.cat.nav')) + '"><div class="f-ctabs-row">' + tab('_all') + catOrder().map(tab).join('') + '</div></nav>';
+  }
+  function activeChips() {
+    var items = [];
+    if (hereOn()) items.push(['here', hereLabel()]);
+    if (jrFilter()) items.push(['jr', t('find.f.jr')]);
+    if (mem.f.scope !== 'all') items.push(['scope', scopeLabel(mem.f.scope)]);
+    if (mem.f.free) items.push(['free', t('find.f.freeChip')]);
+    if (!items.length) return '';
+    return '<div class="f-active" role="group" aria-label="' + esc(t('find.f.on')) + '"><span class="f-active-k" aria-hidden="true">' + esc(t('find.f.on')) + '</span>' +
+      items.map(function (x) { return achip(x[0], x[1]); }).join('') +
+      (items.length > 1 ? '<button type="button" class="f-aclear" id="f-ac-all" data-act="find-unf" data-k="all">' + esc(t('find.f.clear')) + '</button>' : '') + '</div>';
+  }
+  // しぼりこむ: だれの支援 (only the scopes this person has rows in), 条件 (checkboxes), 並べ方
+  function panelBody(d, sfx) {
+    var keys = scopeOrder(d.scopes).filter(function (k) { return k === 'all' || d.scopes[k] || mem.f.scope === k; });
+    var out = '';
+    if (keys.length > 2 || mem.f.scope !== 'all') {
+      out += '<div class="f-pg"><p class="f-pg-k" id="f-pg-s' + sfx + '">' + esc(t('find.f.scope')) + '</p>' +
+        '<div class="f-fopts" role="radiogroup" aria-labelledby="f-pg-s' + sfx + '">' + keys.map(function (k) {
+          var on = mem.f.scope === k;
+          return '<button type="button" class="f-fopt" role="radio" aria-checked="' + on + '" id="f-sc-' + sfx + '-' + k.replace(':', '') + '" data-act="find-scope" data-value="' + esc(k) + '">' +
+            '<span class="f-fopt-i" aria-hidden="true"></span><span class="f-fopt-l">' + esc(k === 'all' ? t('find.scope.all') : scopeLabel(k)) + '</span>' +
+            '<span class="f-fopt-n">' + esc(fmtN(d.scopes[k] || 0)) + '</span></button>';
+        }).join('') + '</div></div>';
+    }
+    var checks = [];
+    if (myArea()) checks.push(['here', hereLabel(), hereOn()]);
+    if (junior()) checks.push(['jr', t('find.f.jr'), jrFilter()]);
+    if (mem.f.free || (d.freeN > 0 && d.freeN < d.beforeFree)) checks.push(['free', t('find.f.freeChip'), !!mem.f.free]);
+    if (checks.length) {
+      out += '<div class="f-pg"><p class="f-pg-k" id="f-pg-c' + sfx + '">' + esc(t('find.f.cond')) + '</p><div class="f-checks" role="group" aria-labelledby="f-pg-c' + sfx + '">' +
+        checks.map(function (c) {
+          return '<label class="f-check" for="f-ck-' + sfx + '-' + c[0] + '"><input type="checkbox" id="f-ck-' + sfx + '-' + c[0] + '" data-act="find-check" data-k="' + c[0] + '"' + (c[2] ? ' checked' : '') + '>' +
+            '<span class="f-check-box" aria-hidden="true">' + ic('check') + '</span><span class="f-check-l">' + esc(c[1]) + '</span></label>';
+        }).join('') + '</div></div>';
+    }
+    out += '<div class="f-pg"><label class="f-pg-k" for="f-sort-' + sfx + '">' + esc(t('find.sort.label')) + '</label>' +
+      '<select class="select f-sort-sel" id="f-sort-' + sfx + '" data-act="find-sort">' + ['fit', 'free', 'effort', 'deadline'].map(function (k) {
         return '<option value="' + k + '"' + (ui.sort === k ? ' selected' : '') + '>' + esc(t('find.sort.' + k)) + '</option>';
-      }).join('') + '</select></label>';
+      }).join('') + '</select></div>';
+    return out;
   }
-  function listHead(n, id) {
-    return '<div class="f-list-head"><p class="f-list-n" aria-live="polite">' + rollNum('list-n', n, 'f-list-num') +
-      '<span class="unit">' + esc(t('find.cats.unit')) + '</span></p>' + sortSelect(id) + '</div>';
+  // how many しぼりこみ differ from where a list starts (shown on the phone's しぼりこむ button)
+  function changedN() {
+    var n = 0;
+    if (mem.f.scope !== 'all') n++;
+    if (mem.f.free) n++;
+    if (myArea() && !hereOn()) n++;
+    if (junior() && !jrFilter()) n++;
+    if (ui.sort !== 'fit') n++;
+    return n;
   }
-  // the sticky bar of a list: underline tabs (who runs it) + count + sort
-  function listTools(rows, idp, sortId, delay) {
-    return '<div class="f-tools"' + (delay != null ? R('data-reveal="fade" data-reveal-delay="' + delay + '"') : '') + '>' +
-      basisTabs(rows, idp) + listHead(basisRows(rows).length, sortId) + '</div>';
+  function listRows(d) {
+    if (!d.rows.length) {
+      return SM.ui.empty(t('find.f.none'), '', SM.ui.button(t('find.empty.clear'), { act: 'find-unf', variant: 'secondary', attrs: 'data-k="all"' }), { illus: 'results-empty' });
+    }
+    var shown = d.rows.slice(0, mem.browseShown);
+    var isFit = function (r) { return !!(d.fit && d.fit[r.p.id]); };
+    var fitN = d.fit ? d.rows.filter(isFit).length : 0;
+    var split = !!d.fit && ui.sort === 'fit' && fitN > 0 && fitN < d.rows.length;
+    var body;
+    var sub = function (key, n, id) {
+      return '<h3 class="f-sub" id="' + id + '" data-flip-key="' + id + '"><span>' + esc(t(key)) + '</span><span class="f-sub-n">' + rollNum(id, n, 'f-sub-num') +
+        '<span class="unit">' + esc(t('find.cats.unit')) + '</span></span></h3>';
+    };
+    if (split) {
+      var a = shown.filter(isFit), b = shown.filter(function (r) { return !isFit(r); });
+      body = sub('find.list.fit', fitN, 'f-sub-fit') + cards(a, { compact: true, first: 8 }) +
+        (b.length ? sub('find.list.rest', d.rows.length - fitN, 'f-sub-rest') + cards(b, { compact: true, noWhy: true, first: Math.max(0, 8 - a.length) }) : '');
+    } else body = cards(shown, { compact: true, first: 8 });
+    var more = d.rows.length > shown.length ?
+      '<div class="f-more-wrap">' + SM.ui.button(t('find.more', { n: d.rows.length - shown.length }), { act: 'find-browse-more', variant: 'secondary', block: true, arrow: 'down', attrs: 'id="f-browse-more"' }) + '</div>' : '';
+    return body + more;
   }
-
-  // the user's own ward (or null): 'すべて' then reads 「練馬区で使える」 so its count makes sense
-  function myWardName() {
-    var code = answers().area;
-    if (!U().isWard(code)) return null;
-    var ar = SM.area ? SM.area(code) : null;
-    return ar ? (en() ? (ar.en || ar.name) : ar.name) : null;
-  }
-  function allList(numLabel) {
-    var a = answers();
-    var jr = jrFilter();
-    var base = SM.state.answered || answeredAny() ? SM.match(a) : SM.match({ concerns: [] });
-    // keep everything in browse: records excluded by answers are appended after (not for 中学生:
-    // records made only for older people stay out of their lists)
-    var seen = {}; base.forEach(function (r) { seen[r.p.id] = 1; });
-    var hidden = 0;
-    SM.match({ concerns: [] }).forEach(function (r) {
-      if (seen[r.p.id]) return;
-      if (jr) { if (!otherWard(r)) hidden++; return; }
-      r.why = []; base.push(r);
-    });
-    var rows = sortRows(basisRows(base), ui.sort);
-    var shown = rows.slice(0, mem.browseShown);
-    var body = rows.length ? cards(shown, { compact: true, noWhy: true, first: 8 }) : SM.ui.empty(t('find.none.basis'), '', '');
-    var more = rows.length > shown.length ?
-      '<div class="f-more-wrap">' + SM.ui.button(t('find.more', { n: rows.length - shown.length }), { act: 'find-browse-more', variant: 'secondary', block: true, arrow: 'down', attrs: 'id="f-browse-more"' }) + '</div>' : '';
-    return '<section class="f-all" aria-labelledby="f-all-h">' +
-      SM.ui.sectionHeader(t('find.all.h'), { id: 'f-all-h', num: numLabel, reveal: !mem.quiet }) +
-      listTools(base, 'f-all', 'f-all-sort') +
-      jrNote(hidden, 'all') + body + more + wardHint(base) + '</section>';
+  /* the list with its filters. o.lead: what stands above the list (a topic's crisis numbers); o.title: the list's
+     heading (#/find), a topic page has its title in the header instead */
+  function listLayout(cat, o) {
+    o = o || {};
+    var d = listData(cat);
+    var n = d.rows.length, cn = changedN();
+    var head = '<div class="f-lh">' + (o.title ? '<h2 class="f-lh-t" id="f-list-h" tabindex="-1">' + esc(o.title) + '</h2>' : '') +
+      '<p class="f-lh-n" id="f-lh-n" tabindex="-1">' + rollNum('list-n', n, 'f-lh-num') + '<span class="unit">' + esc(t('find.cats.unit')) + '</span></p>' +
+      '<button type="button" class="f-ftoggle" id="f-ftoggle" data-act="find-panel" aria-expanded="' + !!mem.panel + '" aria-controls="f-panel-p">' +
+        ic('filter') + '<span>' + esc(t('find.f.toggle')) + '</span>' + (cn ? '<span class="f-ftoggle-n">' + cn + '</span>' : '') + '</button></div>';
+    var panelP = '<div class="f-panel-wrap" id="f-panel-wrap"><div class="f-panel f-panel-p" id="f-panel-p" role="region" aria-label="' + esc(t('find.f.toggle')) + '"' + (mem.panel ? '' : ' hidden') + '>' + panelBody(d, 'p') + '</div></div>';
+    var aside = '<aside class="f-fac" aria-label="' + esc(t('find.f.toggle')) + '">' + catFacet(cat, d) +
+      '<div class="f-panel f-panel-d">' + panelBody(d, 'd') + '</div></aside>';
+    // area not answered: say why no 区市町村 rows are here, and how to get them (one quiet line)
+    var noArea = !myArea() ? '<p class="f-noarea"><span>' + esc(t('find.f.noArea')) + '</span>' +
+      '<a class="f-noarea-go" href="#/find/q/3" data-press>' + esc(t('find.f.noAreaGo')) + ARROW + '</a></p>' : '';
+    var main = '<section class="f-lst"' + (o.title ? ' aria-labelledby="f-list-h"' : ' aria-label="' + esc(t('find.list.aria', { n: n })) + '"') + '>' +
+      (o.lead || '') + (cat ? catTabs(cat, d) : '') + head + panelP + activeChips() + noArea +
+      '<p class="sr-only" role="status" id="f-list-status"></p>' +
+      '<div class="f-lst-rows" id="f-lst-rows">' + listRows(d) + '</div></section>';
+    return '<div class="f-lay ' + (cat ? 'is-cat' : 'is-all') + '">' + aside + main + '</div>';
   }
 
   /* ------------------------------------------------------------------ the さがす box (F05)
@@ -1062,30 +1171,28 @@
   }
   function engineResults(q, res) {
     var terms = res.terms || [];
-    var area = answers().area;
     var kinds = res.crisis && res.crisis.kinds ? res.crisis.kinds : [];
     var nowhere = kinds.indexOf('nowhere') !== -1;
     var other = kinds.filter(function (k) { return k !== 'nowhere'; });
     var housingWords = intentsFor(q).some(function (it) { return it.crisis; });
-    // programs: 中学生 lists hold only what is open to them (a supporter can show all); other wards' and city
+    // programs: 中学生 lists hold only what is open to them (a removable filter chip); other areas. and city
     // windows go into one closed row unless they are for the person's own ward
     var sup = res.groups.support || [];
-    var fits = null, jrHidden = 0;
-    if (jrFilter()) { fits = {}; SM.match(answers()).forEach(function (r) { fits[r.p.id] = 1; }); }
+    var jrOn = jrFilter() && !!U().jrOk, jrHidden = 0;
     var main = [], locals = [], seen = {};
     sup.forEach(function (h) {
       var p = h.rec;
       if (!p || seen[p.id]) return;
       seen[p.id] = 1;
       var r = { p: p };
-      if (fits && !fits[p.id]) { if (!otherWard(r)) jrHidden++; return; }
-      var ar = (p.for && p.for.areas) || [];
-      var mine = U().isWard(area) && ar.indexOf(area) !== -1;
-      if (isLocalItem(r) && !mine) locals.push(p); else main.push(p);
+      if (jrOn && !U().jrOk(p)) { if (!otherWard(r)) jrHidden++; return; }
+      // a city's own window, or anything the person cannot use where they live, waits in one closed row
+      var use = U().usableIn ? U().usableIn(p, myArea()) : 'any';
+      if (use === false || (isLocalItem(r) && use !== 'city')) locals.push(p); else main.push(p);
     });
     var lists = { learn: res.groups.learn || [], tools: res.groups.tools || [], tasks: res.groups.tasks || [], places: res.groups.places || [] };
     var n = main.length + locals.length + lists.learn.length + lists.tools.length + lists.tasks.length + lists.places.length;
-    var jrRow = jrNote(jrHidden, 's');
+    var jrRow = jrChip(jrHidden);
     mem.sLive = { q: q.trim(), n: n, crisis: !!kinds.length };
     if (!n) return noneHtml(q, res, jrRow, nowhere || housingWords);
     var out = '<div class="f-sresults"><p class="f-count">' + rollNum('s-n', n, 'f-count-n') + '<span class="f-count-u">' + esc(t('find.search.unit')) + '</span>' +
@@ -1099,7 +1206,7 @@
     if (main.length || locals.length) {
       var inner = main.length ? '<div class="pcards">' + main.slice(0, cap).map(function (p) { return sCard(p, terms); }).join('') + '</div>' : '';
       var more = main.length > cap ? SM.ui.more(t('find.more', { n: main.length - cap }), '<div class="pcards">' + main.slice(cap).map(function (p) { return sCard(p, terms); }).join('') + '</div>', { inline: true, cls: 'f-s-more', closeLabel: t('find.less') }) : '';
-      var loc = locals.length ? '<div class="f-s-local">' + SM.ui.more(t('find.search.local', { n: locals.length }),
+      var loc = locals.length ? '<div class="f-s-local">' + SM.ui.more(t(myArea() ? 'find.search.elsewhere' : 'find.search.local', { n: locals.length }),
         '<p class="f-s-localpick"><a href="#/find/q/3" class="f-s-localpick-a">' + esc(t('find.search.localPick')) + arrow('r') + '</a></p>' +
         '<div class="pcards">' + locals.map(function (p) { return sCard(p, terms); }).join('') + '</div>', { inline: true, cls: 'f-s-localmore' }) + '</div>' : '';
       out += sGroup('support', inner, main.length + locals.length, more + loc);
@@ -1132,10 +1239,10 @@
     var jrHidden = 0;
     if (jrFilter()) {
       var mine = {}; pinned.concat(rows).forEach(function (r) { mine[r.p.id] = 1; });
-      mem.jrAll = true;
-      try { search(q).forEach(function (r) { if (!mine[r.p.id] && !otherWard(r)) jrHidden++; }); } finally { mem.jrAll = false; }
+      var wasJr = mem.f.jr; mem.f.jr = false;
+      try { search(q).forEach(function (r) { if (!mine[r.p.id] && !otherWard(r)) jrHidden++; }); } finally { mem.f.jr = wasJr; }
     }
-    var jrRow = jrNote(jrHidden, 's');
+    var jrRow = jrChip(jrHidden);
     // the engine is still coming in: a quiet 「さがしています」, never a 「見つかりませんでした」 that flips a moment later
     if (!n && engineWait) {
       mem.sLive = null;
@@ -1159,36 +1266,30 @@
   function browseBody() {
     var q = mem.q.trim();
     if (q) return searchResults(q);
-    // phone: the list is below the first screen (side column first), so all of it waits for the transition
-    return wide() ? allList('02') : lazy(allList('02'));
+    return listLayout(null, { title: t('find.all.h') });
   }
-  // the way in (36件 → 結果を見る): under the search, in the side column that stays in view on desktop; empty while searching
-  function sideMore() { return mem.q.trim() ? '' : ctaBlock(); }
-  // 01 困りごとから見る: above the list on a phone; a full-width 2 × 3 index above the 4 / 8 split on desktop
-  // (never inside the sticky side column, where it needed its own scroller); empty while searching
-  function catsMore() { return mem.q.trim() ? '' : catList('01'); }
-
-  function renderBrowse() {
+  function searchBox() {
     var sug = junior() && !en() ? SUGGEST_JR : SUGGEST;
-    return '<div class="f-browse wide-layout"><div class="f-side">' +
-      '<header class="f-head"><h1 class="f-h1"' + R('data-reveal="line"') + '>' + esc(t('find.browse.h1')) + '</h1></header>' +
-      '<div class="f-side-stick">' +
-      '<div class="f-searchbox" role="search">' +
-        '<div class="f-search-wrap"' + R('data-reveal="up" data-reveal-delay="80"') + '>' + SM.ui.searchField({ id: 'f-q', placeholder: t('find.search.ph'), label: t('find.search.label'), value: mem.q }) +
-        '<button type="button" class="search-clear" id="f-q-clear" aria-label="' + esc(t('find.search.clear')) + '"' + (mem.q ? '' : ' hidden') + '>' + ic('close') + '</button></div>' +
-        '<div class="f-suggest" role="group" aria-label="' + esc(t('find.search.tryAria')) + '">' +
-          '<div class="chips-scroll f-suggest-row"' + R('data-reveal-stagger="50"') + '>' + sug.map(function (s) {
-            var w = L(s);
-            return SM.ui.chip(w, { act: 'find-suggest', pressed: mem.q.trim() === w, attrs: 'data-q="' + esc(w) + '"' + (mem.quiet ? '' : ' data-reveal-delay="140"') });
-          }).join('') + '</div>' +
-        '</div>' +
-        // F44: one polite status for the list under the box (count, or nothing found), said once typing pauses
-        '<p class="sr-only" role="status" aria-live="polite" aria-atomic="true" id="f-s-live"></p>' +
+    return '<div class="f-searchbox" role="search">' +
+      '<div class="f-search-wrap"' + R('data-reveal="up" data-reveal-delay="160"') + '>' + SM.ui.searchField({ id: 'f-q', placeholder: t('find.search.ph'), label: t('find.search.label'), value: mem.q }) +
+      '<button type="button" class="search-clear" id="f-q-clear" aria-label="' + esc(t('find.search.clear')) + '"' + (mem.q ? '' : ' hidden') + '>' + ic('close') + '</button></div>' +
+      '<div class="f-suggest" role="group" aria-label="' + esc(t('find.search.tryAria')) + '">' +
+        '<div class="chips-scroll f-suggest-row"' + R('data-reveal-stagger="50"') + '>' + sug.map(function (x) {
+          var w = L(x);
+          return SM.ui.chip(w, { act: 'find-suggest', pressed: mem.q.trim() === w, attrs: 'data-q="' + esc(w) + '"' + (mem.quiet ? '' : ' data-reveal-delay="220"') });
+        }).join('') + '</div>' +
       '</div>' +
-      '<div class="f-side-more" id="f-side-more">' + sideMore() + '</div>' +
-      '</div></div>' +
-      '<div class="f-cats-slot" id="f-cats-slot">' + catsMore() + '</div>' +
-      '<div id="f-browse-body" class="f-browse-body">' + browseBody() + '</div></div>';
+      // F44: one polite status for the list under the box (count, or nothing found), said once typing pauses
+      '<p class="sr-only" role="status" aria-live="polite" aria-atomic="true" id="f-s-live"></p>' +
+    '</div>';
+  }
+  /* #/find: one headline, then the order you read it in — the guided way in (質問に答える; returning: 62件 結果を見る),
+     the search box, then every support with its filters. Typing swaps the list for the search results (in place). */
+  function renderBrowse() {
+    return '<div class="f-browse wide-layout">' +
+      '<header class="f-head"><h1 class="f-h1"' + R('data-reveal="line"') + '>' + esc(t('find.browse.h1')) + '</h1></header>' +
+      '<div class="f-start">' + ctaBlock() + searchBox() + '</div>' +
+      '<div id="f-browse-body" class="f-browse-body' + (mem.q.trim() ? ' is-search' : '') + '">' + browseBody() + '</div></div>';
   }
 
   function paintSuggest() {
@@ -1214,32 +1315,16 @@
       var rolls = snapRolls();
       mem.sLive = null;
       body.innerHTML = browseBody();
-      var more = document.getElementById('f-side-more');
-      var moreHtml = sideMore();
-      var moreChanged = !!more && (!moreHtml) !== (!more.innerHTML);
-      if (moreChanged) more.innerHTML = moreHtml;
-      var cats = document.getElementById('f-cats-slot');
-      var catsHtml = catsMore();
-      var catsChanged = !!cats && (!catsHtml) !== (!cats.innerHTML);
-      if (catsChanged) cats.innerHTML = catsHtml;
+      body.classList.toggle('is-search', !!mem.q.trim());
       mem.quiet = was; mem.defer = wasDefer;
-      try { SM.applyRuby(body); if (moreChanged && moreHtml) SM.applyRuby(more); if (catsChanged && catsHtml) SM.applyRuby(cats); } catch (e) { }
+      try { SM.applyRuby(body); } catch (e) { }
       // rows that were already on screen keep their band still; new rows get .is-new (their band sweeps in)
       Array.prototype.forEach.call(body.querySelectorAll('.pcard[data-id], .list-item[data-id]'), function (el) {
         if (!before[el.getAttribute('data-id')]) el.classList.add('is-new');
       });
       mcall('mount', body, { instant: true });
-      if (moreChanged && moreHtml) mcall('mount', more, { instant: true });
-      if (catsChanged && catsHtml) mcall('mount', cats, { instant: true });
       mem.rollFrom = rolls; playRolls(body);
-      // coming back from a search the way in and the topics return: they rise in (not a jump)
-      if (animOn()) {
-        [moreChanged && moreHtml ? more : null, catsChanged && catsHtml ? cats : null].forEach(function (box, i) {
-          if (box) anim(box, [{ opacity: 0, transform: 'translateY(12px)' }, { opacity: 1, transform: 'none' }], { duration: 320, delay: 40 + i * 60, easing: 'cubic-bezier(0, 0, 0.2, 1)', fill: 'backwards' });
-        });
-      }
       paintSuggest();
-      wireTabs(body);
     };
     // rows glide to their new places, new rows rise in, gone rows fade where they were (FLIP)
     var m = M();
@@ -1286,7 +1371,6 @@
     }
     var input = root.querySelector('#f-q');
     var clear = root.querySelector('#f-q-clear');
-    whenFlushed(root, wireTabs);
     if (!input) return;
     // the engine's files come in as soon as the box is used (or now, for a query from the address)
     if (mem.q.trim()) {
@@ -1324,27 +1408,6 @@
     });
     if (clear) clear.addEventListener('click', function () { clearTimeout(timer); input.value = ''; update(); input.focus(); });
   }
-  // underline tabs: the 2px indicator sits under the chosen tab and slides when it changes (the bar is rebuilt by
-  // an in-place re-render, so its old position and scroll are carried over)
-  function snapTabs() {
-    var out = {};
-    Array.prototype.forEach.call(document.querySelectorAll('#view .f-basis-tabs[data-key]'), function (bar) {
-      var ind = bar.querySelector('.m-indicator');
-      out[bar.getAttribute('data-key')] = { tf: ind ? ind.style.transform : '', x: bar.scrollLeft };
-    });
-    return out;
-  }
-  function wireTabs(root) {
-    if (!root) return;
-    var from = mem.tabsFrom || {}; mem.tabsFrom = null;
-    Array.prototype.forEach.call(root.querySelectorAll('.f-basis-tabs'), function (bar) {
-      var on = bar.querySelector('[aria-pressed="true"]'), ind = bar.querySelector('.m-indicator');
-      var f = from[bar.getAttribute('data-key')];
-      if (f) { if (f.x) bar.scrollLeft = f.x; if (ind && f.tf) { ind.style.transform = f.tf; ind._smPlaced = true; } }
-      if (on && ind) mcall('indicator', ind, on);
-    });
-  }
-
   SM.on('find-suggest', function (el) {
     var input = document.getElementById('f-q');
     if (!input) return;
@@ -1356,18 +1419,56 @@
     refreshBrowseBody();
     var clear = document.getElementById('f-q-clear'); if (clear) clear.hidden = !mem.q;
   });
-  function rerender() { mem.rollFrom = snapRolls(); mem.tabsFrom = snapTabs(); SM.render(); }
-  SM.on('find-basis', function (el) {
-    ui.basis = el.getAttribute('data-value') || 'all';
-    mem.browseShown = 24; saveUi();
+  /* an in-place re-render after a filter: the rows glide (FLIP), numbers roll; focus stays on the control that was
+     used (same id), or — when that control is gone (a removed chip) — moves to the next chip or the count */
+  function rerender() {
+    var ae = document.activeElement, id = ae && ae.id && ae.closest && ae.closest('#view') ? ae.id : null;
+    var chips = id && /^f-ac-/.test(id) ? Array.prototype.map.call(document.querySelectorAll('#view .f-lst .f-achip, #view .f-lst .f-aclear'), function (b) { return b.id; }) : null;
+    mem.rollFrom = snapRolls();
+    SM.render();
+    if (!id) return;
+    var el = document.getElementById(id);
+    if (!el && chips) { var i = chips.indexOf(id); for (var j = i + 1; j < chips.length && !el; j++) el = document.getElementById(chips[j]); if (!el) el = document.getElementById('f-lh-n'); }
+    if (el && el !== document.activeElement) { try { el.focus({ preventScroll: true }); } catch (e) { } }
+  }
+  var listSayT = null;
+  function sayList() {
+    clearTimeout(listSayT);
+    listSayT = setTimeout(function () {
+      var st = document.getElementById('f-list-status'), n = document.querySelector('#view [data-roll="list-n"]');
+      if (st && n) st.textContent = t('find.list.aria', { n: String(n.textContent || '').replace(/[^\d]/g, '') });
+    }, 250);
+  }
+  function refilter() {
+    mem.browseShown = 24;
+    if (mem.q.trim() && document.getElementById('f-q')) { refreshBrowseBody(); return; }
     reflow(rerender);
+    sayList();
+  }
+  SM.on('find-scope', function (el) { mem.f.scope = el.getAttribute('data-value') || 'all'; refilter(); });
+  SM.on('find-check', function (el) { var k = el.getAttribute('data-k'); if (k) { mem.f[k] = !!el.checked; refilter(); } });
+  SM.on('find-unf', function (el) {
+    var k = el.getAttribute('data-k');
+    if (k === 'all') mem.f = { scope: 'all', here: false, jr: false, free: false };
+    else if (k === 'scope') mem.f.scope = 'all';
+    else if (k) mem.f[k] = false;
+    refilter();
   });
-  SM.on('find-sort', function (el) { ui.sort = el.value || 'fit'; saveUi(); reflow(rerender); });
+  SM.on('find-sort', function (el) { ui.sort = el.value || 'fit'; saveUi(); refilter(); });
+  // the phone's しぼりこむ panel opens in place (the list below slides down with it)
+  SM.on('find-panel', function (btn) {
+    var box = document.getElementById('f-panel-p'), wrap = document.getElementById('f-panel-wrap');
+    if (!box) return;
+    mem.panel = !mem.panel;
+    btn.setAttribute('aria-expanded', mem.panel ? 'true' : 'false');
+    var set = function (v) { box.hidden = !v; };
+    if (wrap && M() && M().expand) mcall('expand', wrap, mem.panel, { setOpen: set, body: box }); else set(mem.panel);
+  });
   SM.on('find-browse-more', function () {
     var before = mem.browseShown;
     mem.browseShown += 24;
-    mem.focusMore = { sel: '.f-all .pcards > .pcard', idx: before };
-    reflow(rerender);
+    mem.focusMore = { sel: '.f-lst-rows .pcards > .pcard', idx: before };
+    reflow(function () { mem.rollFrom = snapRolls(); SM.render(); });
     focusMore();
   });
   // もっと見る: focus moves to the first new row
@@ -1414,28 +1515,83 @@
       (o.hint && L(o.hint) ? '<span class="opt-hint">' + esc(L(o.hint)) + '</span>' : '') + '</span></button>';
   }
 
-  function areaOpts(q, cur) {
-    var areas = (SM.data.areas || []).slice();
-    var groups = ['23ku', 'tama', 'islands'];
-    var html = '<div class="f-area-special" role="group" aria-label="' + esc(t('find.area.special')) + '">' +
-      '<div class="opts">' +
-      radioOpt(q, { v: '13', label: t('find.area.unsure'), hint: t('find.area.unsureHint') }, cur === '13', 'f-opt-special', 2) +
-      radioOpt(q, { v: 'other', label: t('find.area.other'), hint: t('find.area.otherHint') }, cur === 'other', 'f-opt-special', 3) +
-      '</div></div>';
-    groups.forEach(function (g) {
-      var list = areas.filter(function (a) { return a.group === g; });
-      if (!list.length) return;
-      // the ward grid is long and mostly below the fold: it is never reveal-gated (controls render visible)
-      html += '<div class="f-area-group" data-group="' + g + '"><p class="opt-group-label f-ag-label" id="f-ag-' + g + '"><span>' + esc(t('find.area.g.' + g)) + '</span><span class="f-ag-n">' + list.length + '</span></p>' +
-        '<div class="f-area-grid">' + list.map(function (a) {
-          var on = cur === a.code;
-          var hay = U().norm([a.name, a.kana, a.en, a.name.replace(/[区市町村]$/, '')].join(' '));
-          return '<button type="button" class="f-area-b' + (on ? ' is-selected' : '') + '" role="radio" aria-checked="' + on + '" tabindex="-1" data-act="find-answer" data-key="area" data-value="' + esc(a.code) + '" data-hay="' + esc(hay) + '" data-press>' +
-            '<span class="f-area-name" data-noruby>' + esc(en() ? (a.en || a.name) : a.name) + '</span>' +
-            (en() ? '' : '<span class="f-area-kana" lang="ja" data-noruby>' + esc(a.kana || '') + '</span>') + '</button>';
-        }).join('') + '</div></div>';
-    });
-    return html;
+  /* Q3 (v7): 都県 → 区市町村. Step 1: the seven prefectures (東京都 first), まだ決めていない, 関東の外. Step 2: that
+     prefecture's cities, with 「まだ決めていない（神奈川県全体）」 first (= the 2-digit code) and 都県を変える. The
+     search above both finds any Kanto city by name or reading. Old Tokyo answers open on Tokyo's step 2. */
+  // 東京・神奈川・埼玉・千葉・茨城・栃木・群馬: by how many people live there (the SPEC allows a UI order)
+  var PREF_UI = ['13', '14', '11', '12', '08', '09', '10'];
+  function prefsOrdered() {
+    var list = (U().prefs ? U().prefs() : []).slice();
+    var rank = function (p) { var i = PREF_UI.indexOf(String(p.code)); return i === -1 ? 99 : i; };
+    return list.sort(function (x, y) { return rank(x) - rank(y); });
+  }
+  function prefOfArea(a) { return a.pref ? String(a.pref) : String(a.code).slice(0, 2); }
+  function areasIn(pc) { return (SM.data.areas || []).filter(function (a) { return a && prefOfArea(a) === pc; }); }
+  function areaHay(a) {
+    var pf = U().pref ? U().pref(prefOfArea(a)) : null;
+    return U().norm([a.name, a.kana, a.en, String(a.name).replace(/[区市町村]$/, ''), String(a.kana || '').replace(/(く|し|まち|ちょう|むら|そん)$/, ''),
+      pf ? pf.name.replace(/[都県]$/, '') : ''].join(' '));
+  }
+  function areaBtn(a, cur, sub) {
+    var on = cur === a.code;
+    return '<button type="button" class="f-area-b' + (on ? ' is-selected' : '') + '" role="radio" aria-checked="' + on + '" tabindex="-1" data-act="find-answer" data-key="area" data-value="' + esc(a.code) + '" data-press>' +
+      '<span class="f-area-name" data-noruby>' + esc(en() ? (a.en || a.name) : a.name) + '</span>' +
+      (sub ? '<span class="f-area-kana" data-noruby>' + esc(sub) + '</span>' : en() ? '' : '<span class="f-area-kana" lang="ja" data-noruby>' + esc(a.kana || '') + '</span>') + '</button>';
+  }
+  function areaGroup(key, label, list, cur) {
+    if (!list.length) return '';
+    return '<div class="f-area-group" data-group="' + esc(key) + '"><p class="opt-group-label f-ag-label"><span>' + esc(label) + '</span><span class="f-ag-n">' + list.length + '</span></p>' +
+      '<div class="f-area-grid">' + list.map(function (a) { return areaBtn(a, cur); }).join('') + '</div></div>';
+  }
+  function areaStepPref(q, cur) {
+    var curPref = U().prefOf ? U().prefOf(cur) : null;
+    var i = 0;
+    return '<div class="f-area-step" data-step="pref">' +
+      '<p class="opt-group-label f-ag-label" id="f-area-pk">' + esc(t('find.area.pick')) + '</p>' +
+      '<div class="f-pref-grid" role="presentation">' + prefsOrdered().map(function (pf) {
+        var on = curPref === String(pf.code);
+        return '<button type="button" class="f-pref-b' + (on ? ' is-selected' : '') + '" role="radio" aria-checked="' + on + '" tabindex="-1" data-act="find-pref" data-value="' + esc(pf.code) + '" data-press' + rv(1 + i++) + '>' +
+          '<span class="f-pref-t"><span class="f-area-name" data-noruby>' + esc(en() ? (pf.en || pf.name) : pf.name) + '</span>' +
+          (en() ? '' : '<span class="f-area-kana" lang="ja" data-noruby>' + esc(pf.kana || '') + '</span>') + '</span>' + arrow('r') + '</button>';
+      }).join('') + '</div>' +
+      '<div class="f-area-special" role="presentation"><div class="opts">' +
+        radioOpt(q, { v: '', label: t('find.area.unsure'), hint: t('find.area.unsureHint') }, !cur && !!SM.state.answered, 'f-opt-special', 1 + i++) +
+        radioOpt(q, { v: 'other', label: t('find.area.other'), hint: t('find.area.otherHint') }, cur === 'other', 'f-opt-special', 1 + i++) +
+      '</div></div></div>';
+  }
+  function areaStepCity(q, pc, cur) {
+    var pname = U().prefName ? U().prefName(pc, en()) : pc;
+    var list = areasIn(pc);
+    var groups = '';
+    if (pc === '13') {
+      [['23ku', t('find.area.g.23ku')], ['tama', t('find.area.g.tama')], ['islands', t('find.area.g.islands')]].forEach(function (g) {
+        groups += areaGroup(g[0], g[1], list.filter(function (a) { return a.group === g[0]; }), cur);
+      });
+    } else {
+      groups += areaGroup('shi', t('find.area.g.shi'), list.filter(function (a) { return a.type === 'shi' || a.type === 'ku'; }), cur);
+      groups += areaGroup('town', t('find.area.g.town'), list.filter(function (a) { return a.type !== 'shi' && a.type !== 'ku'; }), cur);
+    }
+    return '<div class="f-area-step" data-step="city" data-pref="' + esc(pc) + '">' +
+      '<div class="f-area-cur"><p class="f-area-cur-name" id="f-area-cur" tabindex="-1"' + rv(1) + '>' + esc(pname) + '</p>' +
+        '<button type="button" class="f-area-change" data-act="find-area-back" data-press' + rv(1) + '>' + arrow('l') + '<span>' + esc(t('find.area.change')) + '</span></button></div>' +
+      '<div class="f-area-special" role="presentation"><div class="opts">' +
+        // the prefecture tap stores its code quietly; this row is only shown as chosen once it was chosen itself
+        radioOpt(q, { v: pc, label: t('find.area.prefAny'), hint: t('find.area.prefAnyHint', { pref: pname }) }, cur === pc && mem.prefJust !== pc, 'f-opt-special', 2) +
+      '</div></div>' + groups + '</div>';
+  }
+  function areaStepHtml(q, cur) {
+    var pc = U().prefOf ? U().prefOf(cur) : null;
+    return pc && !mem.areaPick ? areaStepCity(q, pc, cur) : areaStepPref(q, cur);
+  }
+  // the search: any Kanto city by name, reading or prefecture (the chosen prefecture's first), at most 60
+  function areaHits(term, cur) {
+    var mine = U().prefOf ? U().prefOf(cur) : null;
+    var hits = (SM.data.areas || []).filter(function (a) { return a && areaHay(a).indexOf(term) !== -1; });
+    hits.sort(function (x, y) { return (prefOfArea(x) === mine ? 0 : 1) - (prefOfArea(y) === mine ? 0 : 1); });
+    var n = hits.length;
+    return { n: n, html: n ? '<div class="f-area-grid">' + hits.slice(0, 60).map(function (a) {
+      return areaBtn(a, cur, U().prefName ? U().prefName(prefOfArea(a), en()) : '');
+    }).join('') + '</div>' : '' };
   }
 
   /* 質問 3 / 6 · あとで — and the progress as a train line (SPEC-v5 Part A 5): six stations on a 4px rail, the run
@@ -1486,6 +1642,7 @@
   function renderQuestion(nRaw, query) {
     var n = parseInt(nRaw, 10);
     if (!(n >= 1 && n <= TOTAL)) n = 1;
+    if (n !== 3) mem.prefJust = null;
     var q = Q[n - 1];
     var a = answers();
     var ret = query && query.ret === 'results';
@@ -1515,9 +1672,12 @@
       foot = '<div class="q-foot f-q-foot"><button type="button" class="btn btn-primary btn-lg btn-block f-next' + (cs.length || ret || a.urgent ? ' is-ready' : '') + '" id="f-next" data-act="find-next" data-press>' +
         '<span class="f-next-l">' + esc(concernBtnLabel(cs.length, ret, a.urgent)) + '</span>' + arrow('r') + '</button></div>';
     } else if (q.key === 'area') {
+      if (!mem.quiet) mem.areaPick = false;
       body = '<div class="f-area-search"' + rv(k++) + '>' + SM.ui.searchField({ id: 'f-area-q', placeholder: t('find.area.search'), label: t('find.area.search') }) + '</div>' +
         '<div class="f-area" role="radiogroup" aria-labelledby="' + titleId + '">' +
-        '<p class="f-area-none" id="f-area-none" role="status" hidden>' + esc(t('find.area.none')) + '</p>' + areaOpts(q, a.area) + '</div>';
+        '<p class="f-area-none" id="f-area-none" role="status" aria-live="polite"></p>' +
+        '<div class="f-area-hits" id="f-area-hits" hidden></div>' +
+        '<div class="f-area-host" id="f-area-host">' + areaStepHtml(q, a.area || null) + '</div></div>';
     } else if (q.key === 'stage') {
       var cur0 = a.stage, lastG = null;
       body = '<div class="f-opts f-opts-grouped" role="radiogroup" aria-labelledby="' + titleId + '">' +
@@ -1566,7 +1726,7 @@
     } else {
       var c = chalToday();
       var hours = c.closedDay ? t('find.crisis.closed') : c.open ? c.label : c.label + '・' + t('find.crisis.after');
-      rows += telRow('0120-874-225', t('find.crisis.chal'), { hours: hours, hoursK: t('find.crisis.today'), open: c.open });
+      if (tokyoMaybe()) rows += telRow('0120-874-225', t('find.crisis.chal'), { hours: hours, hoursK: t('find.crisis.today'), open: c.open });
       rows += telRow('0120-279-338', t('find.crisis.yori'));
     }
     return rows;
@@ -1648,6 +1808,7 @@
     }
     // the marker fills on the stamp spring and the check draws; a ward cell stamps its ink block
     if (!was) { var ind = el.querySelector('.opt-ind'); if (ind) mcall('check', ind); else stampCell(el); }
+    if (key === 'area' && !val) val = null;   // まだ決めていない
     if (key === 'stage') setStage(val); else SM.setAnswer(key, val);
     var next = box ? box.getAttribute('data-next') : '#/find/results';
     if (key === 'care') next = '#/find/results';
@@ -1851,31 +2012,30 @@
       list.forEach(function (b, x) { b.tabIndex = x === j ? 0 : -1; });
       list[j].focus();
     });
-    // area search
+    // area search (Q3): typing lists matching cities from all of Kanto in place of the step; clearing brings it back
     var input = root.querySelector('#f-area-q');
+    mem.areaRoving = setRoving;
     if (input) {
-      var none = root.querySelector('#f-area-none');
+      var none = root.querySelector('#f-area-none'), hitsBox = root.querySelector('#f-area-hits'), host = root.querySelector('#f-area-host');
       var filter = function () {
         var term = U().norm(input.value);
-        var any = false;
-        Array.prototype.forEach.call(group.querySelectorAll('.f-area-group'), function (g) {
-          var vis = 0;
-          Array.prototype.forEach.call(g.querySelectorAll('[data-hay]'), function (b) {
-            var ok = !term || b.getAttribute('data-hay').indexOf(term) !== -1;
-            b.hidden = !ok; if (ok) vis++;
-          });
-          g.hidden = vis === 0; if (vis) any = true;
-        });
-        var sp = group.querySelector('.f-area-special');
-        if (sp) sp.hidden = !!term && any;
-        if (none) none.hidden = any || !term;
+        var cur = answers().area || null;
+        if (!term) {
+          hitsBox.hidden = true; hitsBox.innerHTML = ''; host.hidden = false; none.textContent = '';
+        } else {
+          var h = areaHits(term, cur);
+          hitsBox.innerHTML = h.html; hitsBox.hidden = !h.n; host.hidden = true;
+          none.textContent = h.n ? t('find.area.found', { n: h.n }) : t('find.area.none');
+          none.classList.toggle('is-none', !h.n);
+          try { SM.applyRuby(hitsBox); } catch (e) { }
+        }
         setRoving();
       };
       input.addEventListener('input', filter);
       input.addEventListener('keydown', function (e) {
         if (e.key === 'Enter') {
           e.preventDefault();
-          var vis = radios().filter(function (b) { return b.hasAttribute('data-hay'); });
+          var vis = radios().filter(function (b) { return b.classList.contains('f-area-b'); });
           if (vis.length === 1) vis[0].click();
           else if (vis.length) vis[0].focus();
         } else if (e.key === 'ArrowDown') {
@@ -1892,6 +2052,55 @@
       }
     }
   }
+  /* Q3 step change (都県 ⇄ 区市町村) in place: the step slides in from the side it comes from (forward from the
+     right), the other way out; focus goes to the prefecture name (forward) or the chosen prefecture (back) */
+  function swapAreaStep(dir) {
+    var host = document.getElementById('f-area-host');
+    var box = host && host.closest('.f-q');
+    if (!host || !box) return;
+    var q = Q[2];
+    var input = document.getElementById('f-area-q');
+    if (input && input.value) { input.value = ''; var hb = document.getElementById('f-area-hits'); if (hb) { hb.hidden = true; hb.innerHTML = ''; } var nn = document.getElementById('f-area-none'); if (nn) nn.textContent = ''; host.hidden = false; }
+    box.classList.remove('has-choice');
+    var was = mem.quiet; mem.quiet = true;
+    host.innerHTML = areaStepHtml(q, answers().area || null);
+    mem.quiet = was;
+    try { SM.applyRuby(host); } catch (e) { }
+    if (mem.areaRoving) mem.areaRoving();
+    var step = host.firstElementChild;
+    if (step) {
+      if (animOn()) {
+        anim(step, [{ opacity: 0 }, { opacity: 1 }], { duration: 240, easing: 'cubic-bezier(0, 0, 0.2, 1)', fill: 'backwards', key: 'astep-o' });
+        anim(step, [{ translate: (40 * dir) + 'px 0' }, { translate: '0 0' }], { spring: 'rise', key: 'astep-t' });
+        Array.prototype.forEach.call(step.querySelectorAll('.f-area-b, .f-pref-b'), function (b, i) {
+          if (i < 12) anim(b, [{ opacity: 0, transform: 'translateY(12px)' }, { opacity: 1, transform: 'none' }], { duration: 300, delay: 60 + i * 30, easing: 'cubic-bezier(0, 0, 0.2, 1)', fill: 'backwards' });
+        });
+      } else if (reduced()) mcall('animate', step, [{ opacity: 0 }, { opacity: 1 }], { duration: 180, easing: 'linear' });
+    }
+    var target = dir > 0 ? document.getElementById('f-area-cur') : host.querySelector('.f-pref-b[aria-checked="true"]') || host.querySelector('.f-pref-b');
+    if (target) { try { target.focus({ preventScroll: true }); } catch (e) { } }
+    // keep the step's top in view (the city list can be long; the prefecture list is short)
+    var top = (document.getElementById('f-area-q') || host).getBoundingClientRect().top;
+    if (top < 0 || top > (window.innerHeight || 800) * 0.6) {
+      var y = window.scrollY + top - 140;
+      // never past the question's step line (質問 3/6 and its rail stay on screen)
+      var qt = box.querySelector('.f-q-top') || document.querySelector('.f-q-top');
+      if (qt) y = Math.min(y, window.scrollY + qt.getBoundingClientRect().top - 120);
+      try { window.scrollTo({ top: Math.max(0, y), behavior: reduced() ? 'auto' : 'smooth' }); } catch (e) { window.scrollTo(0, Math.max(0, y)); }
+    }
+  }
+  SM.on('find-pref', function (el) {
+    if (mem.leaving) return;
+    var pc = el.getAttribute('data-value');
+    if (!pc) return;
+    // the prefecture alone is an answer already (its whole-prefecture support); a city keeps it more precise
+    if ((U().prefOf ? U().prefOf(answers().area) : null) !== pc) { SM.setAnswer('area', pc); mem.prefJust = pc; }
+    mem.areaPick = false;
+    var ind = el.querySelector('.arrow');
+    if (ind) mcall('nudge', ind);
+    swapAreaStep(1);
+  });
+  SM.on('find-area-back', function () { mem.areaPick = true; swapAreaStep(-1); });
   /* ================================================================== RESULTS
      The arrival (MOTION-SPEC §4 Results): the results-arrive strip draws (the protagonist reaches the house under the
      pin), the count stands on the same ground line and rolls from 0 like a station board (the first time for an
@@ -1983,6 +2192,10 @@
   }
   function groupOrder() {
     var cs = (answers().concerns || []).filter(function (c) { return catOrder().indexOf(c) !== -1; });
+    // 進学したい / 高校に行きたい: 学 comes right after まずはこれ
+    var ep = U().effPath ? U().effPath(answers()) : answers().path;
+    if ((ep === 'study' || ep === 'hs') && cs.indexOf('education') !== -1) cs = ['education'].concat(cs.filter(function (c) { return c !== 'education'; }));
+    else if (ep === 'study' || ep === 'hs') cs = ['education'].concat(cs);
     return cs.concat(catOrder().filter(function (c) { return cs.indexOf(c) === -1; }));
   }
 
@@ -2011,7 +2224,10 @@
         '<p class="f-res-count"><b class="f-res-n" id="f-res-n" data-n="' + n + '">' + esc(fmtN(n)) + '</b><span class="unit">' + esc(t('find.res.unit')) + '</span></p></div>' +
       '<h1 class="f-res-title"' + R('data-reveal="line" data-reveal-delay="140"') + '><span class="sr-only">' + esc(t('find.res.srCount', { n: n })) + '</span>' +
         '<mark class="f-mark"><span class="f-mark-ink" aria-hidden="true"></span><span class="f-mark-t">' + esc(t('find.res.h')) + '</span></mark></h1>' +
-      '<p class="f-res-sub ui-wrap"' + R('data-reveal="fade" data-reveal-delay="240"') + '>' + esc(t('find.res.sub')) + '</p>' +
+      (answers().area ? '<p class="f-res-sub ui-wrap"' + R('data-reveal="fade" data-reveal-delay="240"') + '>' + esc(t('find.res.sub')) + '</p>' :
+        // area unknown: the list holds every 都県's programs — the next step is to say where (Q3), said first
+        '<p class="f-res-sub f-res-area ui-wrap"' + R('data-reveal="fade" data-reveal-delay="240"') + '><span>' + esc(t('find.res.subArea')) + '</span>' +
+        '<a class="f-res-area-go" href="#/find/q/3?ret=results" data-press>' + esc(t('find.res.areaGo')) + ARROW + '</a></p>') +
       '<p class="sr-only" role="status" id="f-res-status"></p></header>';
   }
 
@@ -2078,7 +2294,19 @@
       var rest = rows.filter(function (r) { return !topIds[r.p.id]; });
       // F29: the urgent lead counts what is listed below it
       if (urgentLead != null) side[urgentLead] = resHeadUrgent(rest.length);
-      var groups = {}; rest.forEach(function (r) { (groups[r.group] = groups[r.group] || []).push(r); });
+      /* a row sits in its own main topic (cat[0], so its mark is the section's mark) whenever that topic is one the
+         person chose (進学したい counts as choosing 学); only a row whose main topic was NOT chosen joins the chosen
+         topic it also covers (it then carries 「〇〇の支援」 next to its mark) */
+      var chosen = (a.concerns || []).slice();
+      var epth = U().effPath ? U().effPath(a) : a.path;
+      if ((epth === 'study' || epth === 'hs') && chosen.indexOf('education') === -1) chosen.push('education');
+      var secOf = function (r) {
+        var c0 = (r.p.cat || [])[0];
+        if (catOrder().indexOf(c0) !== -1 && (!chosen.length || chosen.indexOf(c0) !== -1)) return c0;
+        return catOrder().indexOf(r.group) !== -1 ? r.group : c0;
+      };
+      var groups = {}; rest.forEach(function (r) { var g = secOf(r); (groups[g] = groups[g] || []).push(r); });
+      var alsoTop = {}; top.forEach(function (r) { var g = secOf(r); alsoTop[g] = (alsoTop[g] || 0) + 1; });
       var order = groupOrder().filter(function (g) { return groups[g] && groups[g].length; });
       var cs = a.concerns || [];
 
@@ -2105,7 +2333,8 @@
         var shown = open ? list : list.slice(0, limit);
         return '<section class="f-group cat-' + g + (mine ? ' is-mine' : '') + '" id="f-g-' + g + '" aria-labelledby="f-gh-' + g + '">' +
           groupHead(g, list.length, mine) +
-          (g === 'housing' && !a.urgent ? crisisCard({ id: '-g' }) : '') +
+          (g === 'housing' && !a.urgent ? crisisRow() : '') +
+          (alsoTop[g] ? '<p class="f-group-also">' + esc(t('find.group.alsoTop', { n: alsoTop[g] })) + '</p>' : '') +
           cards(shown, { dedupWhy: true, noWhy: !any, group: g }) +
           (list.length > limit ? '<button type="button" class="f-more" id="f-more-' + g + '" data-act="find-more" data-g="' + g + '" aria-expanded="' + open + '">' +
             '<span>' + esc(open ? t('find.less') : t('find.more', { n: list.length - limit })) + '</span>' + arrow(open ? 'u' : 'd') + '</button>' : '') +
@@ -2144,11 +2373,6 @@
       '<div class="f-res-main">' + body.join('') + '</div></div>';
   }
 
-  SM.on('find-jr-all', function (el) {
-    mem.jrAll = el.getAttribute('data-value') === '1';
-    mem.browseShown = 24;
-    SM.render();
-  });
   function resRerender() {
     mem.rollFrom = snapRolls();
     mem.jumpFrom = snapJump();
@@ -2351,99 +2575,39 @@
           '<h1 class="f-h1 f-cat-h1"' + R('data-reveal="line" data-reveal-delay="40"') + '>' + esc(title) + '</h1></div>' +
         '<div class="f-cat-art">' + ill('cat-' + key, { size: 'spot' }) + '</div>' +
       '</div>' +
-      '<p class="f-cat-count"' + R('data-reveal="fade" data-reveal-delay="80"') + '><span class="num-xl f-cat-n"><span data-f-count="' + n + '" data-f-seen="find.cat.' + key + '">' + esc(fmtN(n)) + '</span></span>' +
-        '<span class="f-cat-unit">' + esc(t('find.cat.unit')) + '</span></p>' +
+      (n == null ? '' : '<p class="f-cat-count"' + R('data-reveal="fade" data-reveal-delay="80"') + '><span class="num-xl f-cat-n"><span data-f-count="' + n + '" data-f-seen="find.cat.' + key + '">' + esc(fmtN(n)) + '</span></span>' +
+        '<span class="f-cat-unit">' + esc(t('find.cat.unit')) + '</span></p>') +
       // the topic's explanation is one tap away (「くわしく」 opens in place), not a lead paragraph (SPEC-v5 Part B)
       (!intro ? '' : o && o.introOpen ? '<p class="f-cat-intro"' + R('data-reveal="fade" data-reveal-delay="120"') + '>' + esc(intro) + '</p>' :
         '<div class="f-cat-intro"' + R('data-reveal="fade" data-reveal-delay="120"') + '>' +
         (SM.ui.more ? SM.ui.more(null, '<p class="f-cat-intro-t">' + esc(intro) + '</p>', { inline: true, id: 'f-cat-more-' + key }) : '<p>' + esc(intro) + '</p>') + '</div>') +
     '</header>';
   }
+  /* #/find/cat/KEY: the topic's sign, title and scene on one ground line (くわしく opens the topic note in place),
+     then the same list and filters as #/find for this topic. 住まい leads with tonight's numbers. */
   function renderCat(key, query) {
     // F17: an unknown topic says so (with the topics to choose from), never a different page under the wrong address
     if (!SM.CATS || !SM.CATS[key]) {
       return '<div class="f-cat-missing"><header class="f-head"><h1 class="f-h1"' + R('data-reveal="line"') + '>' + esc(t('find.cat.notFound')) + '</h1></header>' +
         '<p class="f-snone-body"' + R('data-reveal="fade" data-reveal-delay="80"') + '>' + esc(t('find.cat.notFoundBody')) + '</p>' + catList() + '</div>';
     }
-    var inCat = function (r) { return (r.p.cat || []).indexOf(key) !== -1; };
-    var jr = jrFilter();
-    // 中学生: the category shows only what is open to them
-    var everything = (jr ? SM.match(answers()) : SM.match({ concerns: [] })).filter(inCat);
     // 緊急 → 「話すのがこわいときは」: #/find/cat/consult?chat=1 lists only LINE / chat services
-    var chat = key === 'consult' && !!query && query.chat === '1';
-    var jrHidden = 0;
-    if (jr) {
-      var mineIds = {}; everything.forEach(function (r) { mineIds[r.p.id] = 1; });
-      SM.match({ concerns: [] }).forEach(function (r) { if (inCat(r) && !mineIds[r.p.id] && !isLocalItem(r) && (!chat || hasChat(r))) jrHidden++; });
-    }
-    if (chat) return renderChat(everything, jrHidden);
-    // one set for the header count, the tabs and the list. With no ward chosen, ward/city
-    // items (mostly for people placed by that ward) wait in a closed group below.
-    var localSet = [];
-    if (!U().isWard(answers().area)) {
-      localSet = everything.filter(isLocalItem);
-      everything = everything.filter(function (r) { return !isLocalItem(r); });
-    } else everything = everything.filter(function (r) { return !otherWard(r); });
-    var inEvery = {}; everything.forEach(function (r) { inEvery[r.p.id] = 1; });
-    var savedBasis = ui.basis;
-    if (ui.basis !== 'all' && !everything.some(function (r) { return r.p.basis === ui.basis; })) ui.basis = 'all';
-    var primaryFirst = function (rows) {
-      // 中学生: what is made for their stage leads (高校のお金 before 消費生活センター), then the rest
-      if (jr) {
-        var forJr = function (r) { var st = (r.p.for && r.p.for.stages) || []; return st.indexOf('jhs12') !== -1 || st.indexOf('jhs3') !== -1; };
-        return rows.filter(forJr).concat(rows.filter(function (r) { return !forJr(r); }));
+    if (key === 'consult' && !!query && query.chat === '1') {
+      var inCat = function (r) { return (r.p.cat || []).indexOf(key) !== -1; };
+      var everything = SM.match({ concerns: [], area: myArea() }).filter(inCat);
+      var jrHidden = 0;
+      if (jrFilter()) {
+        var ok = everything.filter(function (r) { return U().jrOk(r.p); });
+        jrHidden = everything.filter(function (r) { return hasChat(r) && !U().jrOk(r.p); }).length;
+        everything = ok;
       }
-      return rows.filter(function (r) { return r.p.cat[0] === key; }).concat(rows.filter(function (r) { return r.p.cat[0] !== key; }));
-    };
+      return renderChat(everything, jrHidden);
+    }
     var any = SM.state.answered || answeredAny();
-    var side = [], list = [];
-    side.push(catHero(key, catName(key), '', everything.length, L(INTRO[key])));
-    if (key === 'housing') side.push(crisisCard({ id: '-c' }));
-    if (key === 'consult') side.push(SM.ui.callout(esc(t('find.cat.sos')), 'info'));
-
-    /* reading order, top to bottom (never a lower block before the one above it): the sign lands (morph), eyebrow
-       +0, title +40, count +80, intro +120, the list tools +160, then the list from +200 (mountCat), 40 apart */
-    list.push(listTools(everything, 'f-cat', 'f-cat-sort', 160));
-    list.push(jrNote(jrHidden, 'cat'));
-    var tail = '';
-    if (any) {
-      var fit = SM.match(answers()).filter(function (r) { return inCat(r) && !r.local && inEvery[r.p.id]; });
-      var fitIds = {}; fit.forEach(function (r) { fitIds[r.p.id] = 1; });
-      var restRows = everything.filter(function (r) { return !fitIds[r.p.id]; });
-      fit = sortRows(basisRows(primaryFirst(fit)), ui.sort);
-      restRows = sortRows(basisRows(primaryFirst(restRows)), ui.sort);
-      if (fit.length) {
-        list.push('<section class="f-cat-sec" aria-labelledby="f-cf-h">' + SM.ui.sectionHeader(t('find.cat.fit'), { id: 'f-cf-h', sub: t('find.n', { n: fit.length }), action: { label: t('find.cta.change'), href: '#/find/q/1' }, reveal: !mem.quiet }) +
-          cards(fit, { first: wide() ? 3 : 1 }) + '</section>');
-      }
-      if (restRows.length) {
-        tail += '<section class="f-cat-sec" aria-labelledby="f-cr-h">' + SM.ui.sectionHeader(t('find.cat.rest'), { id: 'f-cr-h', sub: t('find.cat.restSub'), reveal: !mem.quiet }) +
-          cards(restRows, { compact: true, noWhy: true }) + '</section>';
-      }
-      if (!fit.length && !restRows.length) list.push(SM.ui.empty(t('find.none.basis'), '', '', { illus: 'results-empty' }));
-      tail += wardHint(everything);
-    } else {
-      var rows = sortRows(basisRows(primaryFirst(everything)), ui.sort);
-      list.push(rows.length ? cards(rows.map(function (r) { return { p: r.p, why: r.local ? r.why : null }; }), { first: wide() ? 3 : 1 }) :
-        SM.ui.empty(t('find.none.basis'), '', '', { illus: 'results-empty' }));
-      tail += wardHint(everything);
-      tail += ctaBlock(true);
-    }
-    if (localSet.length) {
-      tail += '<details class="disclose f-local f-cat-local">' +
-        '<summary><span class="f-local-text"><b>' + esc(t('find.cat.localH', { n: localSet.length })) + '</b>' +
-        '<small>' + esc(t('find.cat.localSub')) + '</small></span></summary>' +
-        '<div class="f-local-body">' + SM.ui.button(t('find.cat.localPick'), { href: '#/find/q/3', variant: 'secondary', size: 'sm' }) +
-        '<div class="pcards">' + localSet.map(function (r) { return pcard(r.p, { why: r.why, compact: true }); }).join('') + '</div></div></details>';
-    }
-    // way-finding: the other topics, as a row of kanji marks (each one morphs into its own page)
-    tail += '<nav class="f-cat-others" aria-label="' + esc(t('find.cat.others')) + '"><p class="eyebrow f-co-h" id="f-co-h">' + esc(t('find.cat.others')) + '</p>' +
-      '<ul class="f-co-list" role="list">' + catOrder().filter(function (k) { return k !== key; }).map(function (k) {
-        return '<li><a class="f-co" href="#/find/cat/' + k + '" data-id="cat:' + k + '" data-press>' + SM.ui.catIcon(k, 'sm', { vt: true }) + '<span>' + esc(catName(k)) + '</span></a></li>';
-      }).join('') + '</ul></nav>';
-    list.push(lazy(tail));
-    ui.basis = savedBasis;
-    return '<div class="f-catv wide-layout"><div class="f-cat-side">' + side.join('') + '</div><div class="f-cat-main">' + list.join('') + '</div></div>';
+    var lead = key === 'housing' ? (answers().urgent ? crisisCard({ id: '-c' }) : crisisRow()) : key === 'consult' ? SM.ui.callout(esc(t('find.cat.sos')), 'info') : '';
+    return '<div class="f-catv wide-layout">' + catHero(key, catName(key), '', null, L(INTRO[key])) +
+      '<div id="f-browse-body" class="f-browse-body">' + listLayout(key, { lead: lead }) + '</div>' +
+      (any ? '' : lazy(ctaBlock(true))) + '</div>';
   }
   function renderChat(everything, jrHidden) {
     var rows = everything.filter(function (r) { return hasChat(r) && !otherWard(r); });
@@ -2452,10 +2616,10 @@
     var first = pref.map(function (id) { for (var i = 0; i < rows.length; i++) if (rows[i].p.id === id) return rows[i]; return null; }).filter(Boolean);
     rows = first.concat(rows.filter(function (r) { return first.indexOf(r) === -1; }));
     var side = catHero('consult', t('find.chat.h'), catName('consult'), rows.length, t('find.chat.intro'), { introOpen: true });
-    var list = jrNote(jrHidden, 'chat') +
+    var list = jrChip(jrHidden) +
       (rows.length ? '<ul class="f-chat-list" role="list"' + R('data-reveal-stagger="50"') + '>' + rows.map(chatRow).join('') + '</ul>' : SM.ui.empty(t('find.none.basis'), '', '', { illus: 'results-empty' })) +
       '<p class="f-chat-all">' + SM.ui.button(t('find.chat.all'), { href: '#/find/cat/consult', variant: 'text' }) + '</p>';
-    return '<div class="f-catv wide-layout"><div class="f-cat-side">' + side + '</div><div class="f-cat-main">' + list + '</div></div>';
+    return '<div class="f-catv wide-layout">' + side + '<div class="f-chat-main-col">' + list + '</div></div>';
   }
   /* F40: in chat mode each row says how to reach them (LINE / チャット), and opens it in one tap; the name opens
      the program page */
@@ -2474,39 +2638,27 @@
       '<a class="btn btn-secondary f-chat-open" href="' + esc(url) + '" target="_blank" rel="noopener" data-press>' + ic(isLine ? 'line' : 'external') +
         '<span>' + esc(open) + '</span><span class="sr-only">' + esc(t('core.newtab')) + '</span></a></li>';
   }
+  // a 区市町村's own record, or one made only for some cities
   function isLocalItem(r) {
-    var ar = (r.p.for && r.p.for.areas) || [];
-    return r.p.basis === 'local' || (ar.length > 0 && ar.every(U().isWard));
+    var ar = U().areasOf ? U().areasOf(r.p) : ((r.p.for && r.p.for.areas) || []);
+    return r.p.basis === 'local' || (ar.length > 0 && ar.every(function (c) { return /^\d{5}$/.test(c); }));
   }
-  function mountCat(root) {
-    countIn(root, 20);   // the digits are already rolling when the count line (+80) fades in: never a bare 件の支援
-    // the list after the header (before the engine's mount: it reads these delays; a scrolled-to reveal ignores them)
-    if (!mem.quiet && !(SM.route && SM.route.instant)) {
-      Array.prototype.forEach.call(root.querySelectorAll('.f-cat-main > .f-cat-sec, .f-cat-main > .pcards, .f-cat-main > .f-chat-list, .f-cat-main > .empty'), function (sec, si) {
-        var base = 200 + si * 40;
-        // the section's own heading (あなたに合いそう・17件・答えを変える) arrives with its list, never ahead of the
-        // header above it (sectionHeader only reveals its rule; the text would stand there from the first frame)
-        var sh = sec.hasAttribute('data-reveal') ? null : sec.querySelector(':scope > .section-head');
-        if (sh && !sh.hasAttribute('data-reveal')) sh.setAttribute('data-reveal', 'fade');
-        Array.prototype.forEach.call(sec.querySelectorAll('[data-reveal]'), function (el) {
-          if (!el.hasAttribute('data-reveal-delay')) el.setAttribute('data-reveal-delay', String(base));
-        });
-        if (sec.hasAttribute('data-reveal') && !sec.hasAttribute('data-reveal-delay')) sec.setAttribute('data-reveal-delay', String(base));
-        Array.prototype.forEach.call(sec.matches('[data-reveal-stagger]') ? [sec] : sec.querySelectorAll('[data-reveal-stagger]'), function (g) {
-          Array.prototype.forEach.call(g.children, function (c) { if (!c.hasAttribute('data-reveal-delay')) c.setAttribute('data-reveal-delay', String(base + 40)); });
-        });
+  function mountList(root) {
+    countIn(root, 20);
+    // a topic page: the list arrives after the header (sign, title +40, くわしく +120), never ahead of it
+    if (!mem.quiet && !(SM.route && SM.route.instant) && root.querySelector('.f-catv')) {
+      Array.prototype.forEach.call(root.querySelectorAll('.f-lst > .f-lst-rows [data-reveal-stagger] > *'), function (c) {
+        if (!c.hasAttribute('data-reveal-delay')) c.setAttribute('data-reveal-delay', '220');
       });
     }
-    wireTabs(root);
   }
-
   /* desktop: a side column stays in view only when all of it fits the screen; it never gets a scroller of its
      own (a nested scroller hid categories with no affordance). Same rule as the tools pages (wireSide). */
   var sideRO = null, sideFit = null;
   function fitSides(root) {
     if (sideRO) { try { sideRO.disconnect(); } catch (e) { } sideRO = null; }
     if (sideFit) { window.removeEventListener('resize', sideFit); sideFit = null; }
-    var els = root.querySelectorAll('.f-side-stick, .f-res-side, .f-cat-side');
+    var els = root.querySelectorAll('.f-fac, .f-res-side');
     if (!els.length || !window.matchMedia) return;
     var mq = window.matchMedia('(min-width: 1100px)');
     // no layout reads on phones, and none inside the page transition's update (MOTION-SPEC §6 rule 2): the
@@ -2560,7 +2712,7 @@
       if (!mem.quiet) {
         later = {}; mem.afterFlush = [];
         if (mem.spy) { try { mem.spy.disconnect(); } catch (e) { } mem.spy = null; }
-        mem.rollFrom = null; mem.resFrom = null; mem.jumpFrom = null; mem.tabsFrom = null;
+        mem.rollFrom = null; mem.resFrom = null; mem.jumpFrom = null;
       }
       var kind = SM.route && SM.route.kind;
       mem.defer = !mem.quiet && !!(M() && M().afterTransition) && !((SM.route && SM.route.restoreY) > 0);
@@ -2585,7 +2737,7 @@
       if (mem.canon && SM.replaceHash) { try { if (SM.replaceHash(mem.canon)) mem.lastHash = SM.route.hash; } catch (e) { } mem.canon = null; }
       if (args[0] === 'q') mountQuestion(root);
       else if (args[0] === 'results') mountResults(root);
-      else if (args[0] === 'cat') mountCat(root);
+      else if (args[0] === 'cat') mountList(root);
       else mountBrowse(root);
       scheduleLater(root);
       if (args[0] !== 'q') fitSides(root);
@@ -2615,7 +2767,7 @@
       mem.leaving = false; mem.quiet = false; mem.nav = false; mem.lastHash = hash;
       later = {}; mem.afterFlush = [];
       if (mem.spy) { try { mem.spy.disconnect(); } catch (e) { } mem.spy = null; }
-      mem.rollFrom = null; mem.resFrom = null; mem.jumpFrom = null; mem.tabsFrom = null;
+      mem.rollFrom = null; mem.resFrom = null; mem.jumpFrom = null;
       mem.defer = !!(M() && M().afterTransition);
       mem.fromQ = from; mem.fromOutside = false;
       qqGen++; clearQQ();

@@ -1,6 +1,6 @@
 # data/map — baked map data for 巣立ちマップ
 
-Real cartography for Tokyo mainland (23区 + 多摩, the 53 areas of `data/areas.js`, islands excluded), baked at
+Real cartography for Tokyo mainland (23区 + 多摩, islands excluded) and, since v7, the rest of 関東 at a lower detail, baked at
 build time into classic-script `.js` files. Nothing is fetched at runtime: no tile server, no glyph server, works
 from `file://` with `connect-src 'none'`. Rendered with the vendored MapLibre GL JS 4.7.1 (`js/vendor/`).
 
@@ -19,6 +19,41 @@ Total ≈ 5.3 MB on disk; the first map paint needs `base.js` only (≈ 80 ms de
 itself (quantized 1e-5°, delta + zigzag varints in base64url, columnar properties), so the bytes stay small and
 the result is plain GeoJSON. `js/vendor/maplibre-gl.js` (803 KB, BSD-3-Clause, `maplibre-gl.LICENSE.txt`) and
 `maplibre-gl.css` are byte-identical to cdnjs `maplibre-gl/4.7.1`.
+
+## v7: all of 関東 (MAP, 2026-10-26)
+
+Tokyo keeps everything above. The other six prefectures (08 茨城 · 09 栃木 · 10 群馬 · 11 埼玉 · 12 千葉 · 14 神奈川) are
+drawn at a lower detail, from two more kinds of file:
+
+| File | Size | Loaded | Contents |
+|---|---|---|---|
+| `kanto.js` | 0.26 MB | by map.js, in parallel with MapLibre (before the first frame) | `SM.data.mapKanto`: `areas` (the 254 区市町村 outside Tokyo, 200 m; props code name kana en group p), `areaLabels` (+ `lz`: 7.4 for the big cities, else 8.1), `prefs` (7 prefecture polygons, 120 m), `prefLabels`, `borders` (prefecture lines, 80 m, `p` = the file that holds its 25 m version), `mask` (outside 関東), `waterLo` (sea + lakes ≥ 30 ha, 90 m), `roadsLo` (高速 only), `rail` (outside the base.js context box), `stations` (171 with minz ≤ 10), `outline` (関東 land + 1.5 km). `SM.data.mapKantoMeta`: bounds, maxBounds, prefBounds, files, detailFrom 8.4 |
+| `kanto/<pref>.js` ×6 | 0.16–0.32 MB, 1.39 MB total | lazily, one per prefecture: when the view (zoom ≥ 8.4) meets the prefecture's land, or at once when one of its 区市町村 is chosen | `SM.data.mapKantoPref[pref]`: `areas` (25 m), `borders` (区市町村 + prefecture lines, 25 m), `water`, `coast`, `streams`, `roads` (高速・国道・主要道), `stationLines`, `stations` (minz 11–13), `labels` (lakes, rivers, peaks, seas) — outside base.js/detail.js's boxes only |
+| `geo-kanto.js` | 0.09 MB | the simple map (no WebGL) only, or its placeholder for a place outside Tokyo | `SM.data.geoKanto`: SVG paths of the 254 区市町村 (same units as `data/geo.js`), merged into `SM.data.geo.paths` |
+
+`data/geo.js` (the simple map / loading placeholder, on the map route) now also has the 7 prefecture outlines
+(`prefs`, mapshaper 900 m), `prefBoxes`, `prefLabels`, and the label point + box of every Kanto 区市町村; its view box is
+all of 関東 (`tokyoVb` keeps the old mainland-Tokyo frame). Total `data/map/` ≈ 7.1 MB (budget ≈ 9 MB).
+
+Runtime (style.js): `kMerge()` runs once in the first `build()` when kanto.js is there — the 区市町村 polygons and
+labels join `areas` / `areaLabels` (so selection, `areaBounds`, hover and taps work for every Kanto code); base
+features with `t: 0` inside the 関東 outline become `t: 1`; the base context stations and prefecture lines are
+replaced by kanto.js's; `mask` becomes the 関東 mask; the forests outside Tokyo are left out (they ended at the old
+context box in a straight line). Every other prefecture feature goes into its own `k-<source>` source, drawn by a
+copy (`k-<layer id>`) of each base layer right above it — a prefecture file's `setData` never re-sends Tokyo. New
+layers: `pref-sel` (a chosen prefecture's tint, `kPrefs` source, feature-state `sel`) and `label-pref` (the seven
+names, z < 8.7; map.js's prefecture chips hide them like area labels). minZoom 5.8. `SM.mapStyle.kBounds(code)`,
+`prefFeatures(code)`, `ensureKanto(pref, cb)`, `onKanto` (hook: a prefecture's detail is in), `kanto()`.
+Without kanto.js (a failed load) the map is exactly the v6 Tokyo map.
+
+Sources for the Kanto files: 国土数値情報 行政区域 N03 2024 (茨城〜神奈川 + 福島・新潟・山梨・長野・静岡 for context),
+鉄道 N02-24, 駅別乗降客数 S12-24 (station rank); 地理院ベクトルタイル optimal_bvmap z9–z11 (WA, RdCL, RvrCL, Anno) and
+experimental_bvmap labels z10–z14 (station kana readings). Area codes and names: 総務省 全国地方公共団体コード
+(R6.1.1), see `data/areas.js`. The credit line on the map is unchanged: 「地理院ベクトルタイル・国土数値情報を加工して作成」.
+Rebuild: tmp7-MAP/scripts — `k_admin.py` → `k_layers.py water|roads|streams` → `k_rail.py` → `k_names.py` →
+`k_js.py`; `k_geo.py` for geo.js / geo-kanto.js (Python runs as `tmp4-MAP-DATA/venv/bin/python -I`, mapshaper from
+tmp4-MAP-DATA/node_modules). Known limits: no streets, parks or 町名 outside Tokyo; 政令市 are one area each (no
+wards); stations outside Tokyo have no 路線 list.
 
 ## Sources, licenses, attribution
 

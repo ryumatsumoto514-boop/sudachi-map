@@ -877,7 +877,7 @@
 
   {
     id: 'yorisoi',
-    name: { ja: 'よりそいホットライン', en: 'Yorisoi Hotline' },
+    name: { ja: 'よ\u2060り\u2060そ\u2060いホットライン', en: 'Yorisoi Hotline' },
     hook: { ja: 'どこに相談したらいいかわからない', en: 'I do not know who to talk to' },
     summary: {
       ja: '24時間、無料で、どんな悩みでも話せる電話です。外国語や、DV・性暴力、性のことなど専門の相談も選べます。',
@@ -892,11 +892,11 @@
     docs: [],
     ask: ['話がまとまっていなくても大丈夫ですか？（大丈夫です）'],
     caution: { ja: 'つながりにくいときは、時間をおいてかけ直してください。050で始まるIP電話からは 050-3655-0279。' },
-    supporter: { ja: '福島県からは 0120-279-226。電話が苦手な本人には、あなたのいばしょ等のチャット窓口も案内。' },
+    supporter: { ja: '福島県からは 0120-279-226。電話が苦手な本人には、あなたのい\u2060ば\u2060し\u2060ょ等のチャット窓口も案内。' },
     effort: 'low',
     for: { stages: [], paths: [], care: [], careOnly: false, age: null, areas: [] },
     deadline: null,
-    contact: { phone: '0120-279-338', phoneLabel: 'よりそいホットライン（無料）', line: null, chat: null, web: 'https://www.since2011.net/yorisoi/', hours: { ja: '24時間', en: '24 hours' } },
+    contact: { phone: '0120-279-338', phoneLabel: 'よ\u2060り\u2060そ\u2060いホットライン（無料）', line: null, chat: null, web: 'https://www.since2011.net/yorisoi/', hours: { ja: '24時間', en: '24 hours' } },
     locations: [],
     source: src('一般社団法人 社会的包摂サポートセンター', 'https://www.since2011.net/yorisoi/'),
     sources2: [{ org: '厚生労働省「まもろうよ こころ」', url: MAMORO }],
@@ -932,7 +932,7 @@
 
   {
     id: 'anata-no-ibasho',
-    name: { ja: 'あなたのいばしょ（チャット相談）', en: 'Anata no Ibasho (chat support)' },
+    name: { ja: 'あなたのい\u2060ば\u2060し\u2060ょ（チャット相談）', en: 'Anata no Ibasho (chat support)' },
     hook: { ja: '電話はこわい。文字なら話せるかも', en: 'Calling is scary, but I could type' },
     summary: {
       ja: '24時間365日、誰でも無料・匿名で使えるチャット相談です。名前を言わなくて大丈夫です。',
@@ -947,14 +947,14 @@
     docs: [],
     ask: ['うまく言えないけど、聞いてほしいです'],
     caution: { ja: '混んでいると、つながるまで時間がかかることがあります。' },
-    supporter: { ja: 'NPO法人あなたのいばしょが運営。厚労省「まもろうよ こころ」にSNS・チャット相談として掲載。' },
+    supporter: { ja: 'NPO法人あなたのい\u2060ば\u2060し\u2060ょが運営。厚労省「まもろうよ こころ」にSNS・チャット相談として掲載。' },
     effort: 'low',
     for: { stages: [], paths: [], care: [], careOnly: false, age: null, areas: [] },
     deadline: null,
     contact: { phone: null, phoneLabel: null, line: null, chat: 'https://talkme.jp/', web: 'https://talkme.jp/', hours: { ja: '24時間365日', en: '24/7' } },
     locations: [],
-    source: src('厚生労働省「まもろうよ こころ」（あなたのいばしょを掲載）', MAMORO),
-    sources2: [{ org: 'NPO法人あなたのいばしょ', url: 'https://talkme.jp/' }],
+    source: src('厚生労働省「まもろうよ こころ」（あなたのい\u2060ば\u2060し\u2060ょを掲載）', MAMORO),
+    sources2: [{ org: 'NPO法人あなたのい\u2060ば\u2060し\u2060ょ', url: 'https://talkme.jp/' }],
     verifiedBy: BY
   },
 

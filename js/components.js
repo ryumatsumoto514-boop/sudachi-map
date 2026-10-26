@@ -65,6 +65,7 @@
     'ui.kind.loan': { ja: '貸付', en: 'Loan' },
     'ui.basis.national': { ja: '国の制度', en: 'National' },
     'ui.basis.tokyo': { ja: '東京都', en: 'Tokyo' },
+    'ui.basis.pref': { ja: '県の制度', en: 'Prefecture' },
     'ui.basis.local': { ja: '区市町村', en: 'Local' },
     'ui.basis.npo': { ja: '民間の団体', en: 'Nonprofit' },
     'ui.right': { ja: '申請は権利', en: 'Your right' },
@@ -221,17 +222,57 @@
     return null;
   }
 
+  /* v7: application months → windows. Consecutive months form one window (12 → 1 counts as consecutive, so a
+     window can wrap the year end). One window: 「4月〜6月」 / 'Apr–Jun'. Two or three: 「4〜5月・8〜9月・12〜1月」 /
+     'Apr–May, Aug–Sep, Dec–Jan'. More than three: 「年4回」 / '4×/year' — the number of windows, never of months. */
+  function monthRuns(months) {
+    var seen = {}, m = [];
+    (months || []).forEach(function (x) { x = +x; if (x >= 1 && x <= 12 && !seen[x]) { seen[x] = 1; m.push(x); } });
+    m.sort(function (a, b) { return a - b; });
+    var runs = [];
+    m.forEach(function (x) {
+      var r = runs[runs.length - 1];
+      if (r && x === r[1] + 1) r[1] = x; else runs.push([x, x]);
+    });
+    // wrap: a window that ends in December and one that starts in January are the same window
+    if (runs.length > 1 && runs[0][0] === 1 && runs[runs.length - 1][1] === 12) {
+      var first = runs.shift();
+      runs[runs.length - 1][1] = first[1];
+    }
+    return runs;
+  }
+  function monthsText(months, isEn) {
+    var runs = monthRuns(months);
+    if (!runs.length) return '';
+    var M = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    if (runs.length === 1) {
+      var r = runs[0];
+      if (r[0] === r[1]) return isEn ? M[r[0] - 1] : r[0] + '月';
+      if (r[1] === r[0] - 1 || (r[0] === 1 && r[1] === 12)) return isEn ? 'All year' : '1年中';
+      return isEn ? M[r[0] - 1] + '–' + M[r[1] - 1] : r[0] + '月〜' + r[1] + '月';
+    }
+    if (runs.length > 3) return isEn ? runs.length + '×/year' : '年' + runs.length + '回';
+    return runs.map(function (r) {
+      if (r[0] === r[1]) return isEn ? M[r[0] - 1] : r[0] + '月';
+      return isEn ? M[r[0] - 1] + '–' + M[r[1] - 1] : r[0] + '〜' + r[1] + '月';
+    }).join(isEn ? ', ' : '・');
+  }
+  /* break chances where the script changes (よこはま若者|サポートステーション) and before a bracket: a name wider than its
+     column breaks between words, never inside a katakana word (auto-phrase + overflow-wrap would cut it anywhere).
+     Takes and returns escaped HTML; English text has no such boundaries, so it is unchanged. */
+  SM.ui.wbrJa = function (html) {
+    if (en()) return String(html);
+    return String(html).replace(/([\u3041-\u309f\u4e00-\u9fff々])(?=[\u30a1-\u30fa\u30fc])|([\u30a1-\u30fa\u30fc])(?=[\u4e00-\u9fff々])|(?=[（(])/g, function (m) { return m + '<wbr>'; });
+  };
+  SM.ui.monthRuns = monthRuns;
+  SM.ui.monthsText = monthsText;
+
   /* deadline → {text (full, v2 format), label (short dt), value (dd), tone} */
   function deadlineInfo(d) {
     if (!d) return null;
     if (d.months && d.months.length) {
-      var m = d.months.slice().sort(function (a, b) { return a - b; });
-      var M = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      var f = function (x) { return en() ? M[x - 1] : x + '月'; };
-      var s = m.length === 1 ? f(m[0]) : f(m[0]) + (en() ? '–' : '〜') + f(m[m.length - 1]);
-      var contiguous = m.every(function (x, i) { return i === 0 || x === m[i - 1] + 1; });
-      if (!contiguous) s = m.length > 3 ? (en() ? m.length + '×/year' : '年' + m.length + '回') : m.map(f).join(en() ? ', ' : '・');
-      return { text: t('ui.months', { m: s }), label: t('ui.fact.apply'), value: s, tone: 'deadline' };
+      var s = monthsText(d.months, en());
+      if (s) return { text: t('ui.months', { m: s }), label: t('ui.fact.apply'), value: s, tone: 'deadline' };
     }
     if (typeof d.leaveMonths === 'number') {
       var n = d.leaveMonths, v;
@@ -254,13 +295,31 @@
   }
   SM.ui.repayLabel = function (p) { var r = repayInfo(p || {}); return r ? r.text : ''; };
 
+  /* v7 (Kanto): who runs it, as a short label. 'tokyo' → 東京都 · 'pref' → that prefecture (神奈川県 …, from
+     p.pref) · 'local' → the one city it belongs to (for.areas, else the one city all its windows are in: 横浜市),
+     else 区市町村 · 'national' / 'npo' as before. An unknown basis shows nothing (never a raw key). */
+  function prefLabel(code) {
+    var U = SM.matchUtil;
+    try { if (U && U.prefName) { var n = U.prefName(code, en()); if (n) return n; } } catch (e) { }
+    var list = (SM.data && SM.data.prefs) || [];
+    for (var i = 0; i < list.length; i++) if (list[i] && String(list[i].code) === String(code)) return en() ? (list[i].en || list[i].name) : list[i].name;
+    return '';
+  }
+  SM.ui.prefLabel = prefLabel;
   function basisLabel(p) {
     if (p.basis === 'local') {
-      var codes = (p.for && p.for.areas) || [];
+      var codes = ((p.for && p.for.areas) || []).map(String);
       var nm = codes.length === 1 && codes[0].length === 5 ? areaName(codes[0]) : null;
+      if (!nm && !codes.some(function (c) { return c.length === 5; })) {
+        var la = {};
+        (Array.isArray(p.locations) ? p.locations : []).forEach(function (l) { if (l && /^\d{5}$/.test(String(l.area || ''))) la[String(l.area)] = 1; });
+        var one = Object.keys(la);
+        if (one.length === 1) nm = areaName(one[0]);
+      }
       return nm || t('ui.basis.local');
     }
-    return p.basis ? t('ui.basis.' + p.basis) : '';
+    if (p.basis === 'pref') return prefLabel(p.pref) || t('ui.basis.pref');
+    return p.basis && STR['ui.basis.' + p.basis] ? t('ui.basis.' + p.basis) : '';
   }
   SM.ui.basisLabel = function (p) { return basisLabel(p || {}); };
 
@@ -620,7 +679,7 @@
       '<div class="pcard-mark">' + SM.ui.catIcon(cat, null, { vt: o.vt !== false }) + '</div>' +
       '<div class="pcard-main">' +
         '<p class="pcard-eyebrow">' + eyebrow.join('<span class="pcard-sep" aria-hidden="true">／</span>') + '</p>' +
-        '<' + h + ' class="pcard-title"' + (o.vt !== false ? ' data-vt="title"' : '') + '><a class="pcard-link" href="' + esc(href) + '">' + esc(name) + '</a></' + h + '>' +
+        '<' + h + ' class="pcard-title"' + (o.vt !== false ? ' data-vt="title"' : '') + '><a class="pcard-link" href="' + esc(href) + '">' + SM.ui.wbrJa(esc(name)) + '</a></' + h + '>' +
         (line ? '<p class="pcard-hook">' + esc(line) + '</p>' : '') +
         (amt && !o.compact ? '<p class="pcard-amount"><span class="sr-only">' + esc(t('ui.amount')) + ': </span>' + amountHtml(amt.text) +
           (amt.more ? '<span class="pcard-amount-more">' + esc(t('ui.amountMore')) + '</span>' : '') + '</p>' : '') +
@@ -656,7 +715,7 @@
     return '<article class="pcard pcard-lean' + (o.compact ? ' pcard-compact' : '') + (saved ? ' is-saved' : '') + '" data-id="' + esc(p.id) + '" data-cat="' + esc(cat) + '">' +
       '<div class="pcard-mark">' + SM.ui.catIcon(cat, null, { vt: o.vt !== false }) + '</div>' +
       '<div class="pcard-main">' +
-        '<' + h + ' class="pcard-title"' + (o.vt !== false ? ' data-vt="title"' : '') + '><a class="pcard-link" href="' + esc(href) + '">' + esc(name) + '</a></' + h + '>' +
+        '<' + h + ' class="pcard-title"' + (o.vt !== false ? ' data-vt="title"' : '') + '><a class="pcard-link" href="' + esc(href) + '">' + SM.ui.wbrJa(esc(name)) + '</a></' + h + '>' +
         (hook ? '<p class="pcard-hook">' + esc(hook) + '</p>' : '') +
         key + tags + why +
       '</div>' + save +

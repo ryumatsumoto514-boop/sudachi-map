@@ -112,6 +112,16 @@
     'pg.local.none': { ja: '{area}の窓口を地図で見る', en: 'See offices near {area}' },
     'pg.local.call': { ja: '窓口に電話', en: 'Call office' },
     'pg.local.callLong': { ja: '{name}に電話する {num}', en: 'Call {name} {num}' },
+    // v7 (Kanto): a city with one office per ward (横浜市 …), and a prefecture whose page lists every city's office
+    'pg.local.multi': { ja: '窓口 {n}か所', en: '{n} offices' },
+    'pg.local.list': { ja: '住んでいる市の窓口は、この県のページの一覧で', jr: '住んでいる市の窓口は、県のページの一覧でわかるよ', en: 'Your city\'s office is in the prefecture\'s list' },
+    'pg.prefVer': { ja: '{pref}に住む人は{pref}版へ', jr: '{pref}に住む人は{pref}版を見てね', en: 'Live in {pref}? See the {pref} version' },
+    'pg.area.k': { ja: '住んでいる所', en: 'Where you live' },
+    'pg.area.where': { ja: '地域', en: 'Area' },
+    'pg.area.origin': { ja: '巣立った所', en: 'Where you left care' },
+    'pg.area.originNote': { ja: '今住んでいる所ではなく、どこの施設・里親家庭から巣立ったかで決まります', jr: '今住んでいる所ではなく、どこの施設や里親家庭から巣立ったかで決まるよ', en: 'Goes by where you left care, not where you live now' },
+    'pg.area.more': { ja: '{list}など {n}か所', en: '{list} and more ({n} places)' },
+    'pg.prefVer.k': { ja: '住んでいる都県の版', en: 'Your prefecture\'s version' },
     'pg.related': { ja: '同じ「{cat}」の支援', en: 'More for {cat}' },
     'pg.related.all': { ja: 'すべて見る', en: 'See all' },
     'pg.bar': { ja: 'この制度でできること', en: 'Actions' },
@@ -134,7 +144,6 @@
     'pg.line': { ja: 'LINEで相談', en: 'Chat on LINE' },
     'pg.chat': { ja: 'チャットで相談', en: 'Online chat' },
     'pg.web': { ja: '公式ページ', en: 'Official page' },
-    'pg.tokyo': { ja: '東京都に住む人は東京都版へ', jr: '東京都に住む人は東京都版を見てね', en: 'In Tokyo? See the Tokyo version' },
     'pg.jaOnly': { ja: '', en: 'Japanese only — you can show this part to the staff.' }
   });
 
@@ -221,36 +230,96 @@
   function webOf(p) { var c = p.contact || {}; return c.web || (p.source && p.source.url) || ''; }
 
   /* ---------------------------------------------------------------- the person's own 区市町村 window (FIX-B v6, F04)
-   * A national / Tokyo-wide program applied for at "区市町村の自立相談支援機関（くらしの相談窓口）" names no office.
-   * The app holds those offices (data/programs-local.js: <slug>-jiritsu-sodan, one per 区市, with its location), the
-   * same records the map shows. With an answered 区市町村: that office (name, phone, 地図で見る). Without: one row to
-   * the map. Facts come only from the data (nothing invented). */
+   * A national / prefecture-wide program applied for at "区市町村の自立相談支援機関（くらしの相談窓口）" names no office.
+   * The app holds those offices: <slug>-jiritsu-sodan records (data/programs-local.js: one per Tokyo 区市; v7 Kanto
+   * files: 政令市・市, and the prefecture's own desk for 町村 residents), the same records the map shows.
+   * With an answered 区市町村: that office (name, phone, 地図で見る); a city with one window per ward (横浜市) shows the
+   * office and how many windows; a prefecture whose desk record lists every city's office (茨城・栃木・群馬) points
+   * to it. Without a city: one row to the map. Facts come only from the data (nothing invented). */
   var LOCAL_RE = /自立相談支援機関|くらしの(困りごと)?相談/;
   function jaText(x) { return x && typeof x === 'object' ? (x.ja || '') : String(x || ''); }
+  function MU() { return SM.matchUtil || {}; }
+  function prefOf(code) {
+    if (MU().prefOf) { try { return MU().prefOf(code); } catch (e) { } }
+    code = code == null ? '' : String(code);
+    return /^\d{5}$/.test(code) ? code.slice(0, 2) : /^\d{2}$/.test(code) ? code : null;
+  }
+  // an office record: the 自立相談支援機関 of a place (川崎市's is called だいJOBセンター)
+  function isOffice(x) { return !!x && (/-jiritsu-sodan$/.test(x.id) || x.id === 'kawasaki-daijob'); }
+  function areasOf(p) {
+    var as = ((p && p.for && p.for.areas) || []).map(String);
+    if (!as.length && p && p.basis === 'tokyo') as = ['13'];
+    return as;
+  }
   function localKind(p) {
-    if (!p || /-jiritsu-sodan$/.test(p.id)) return null;
-    var as = (p.for && p.for.areas) || [];
-    if (as.length && as.indexOf('13') === -1) return null;
+    if (!p || isOffice(p)) return null;
+    var as = areasOf(p);
+    if (as.length) {
+      // a record made for some cities names its own office; a prefecture's record only for people in it
+      if (as.every(function (c) { return /^\d{5}$/.test(c); })) return null;
+      var mp = prefOf(myArea());
+      if (mp && as.indexOf(mp) === -1) return null;
+      if (!mp && as.indexOf('13') === -1 && myArea()) return null;
+    }
     return LOCAL_RE.test(jaText(p.where) + ' ' + jaText(p.how)) ? 'jiritsu' : null;
   }
+  // answers.area when it is a 区市町村 or a prefecture of 関東 (v7: 5-digit or 2-digit code), else null
   function myArea() {
     var a = SM.state && SM.state.answers ? SM.state.answers.area : null;
-    return typeof a === 'string' && /^13\d{3}$/.test(a) ? a : null;
+    return typeof a === 'string' && (/^(08|09|10|11|12|13|14)\d{3}$/.test(a) || /^(08|09|10|11|12|13|14)$/.test(a)) ? a : null;
+  }
+  // the Japanese name of a 区市町村 (the data's 担当 notes are Japanese, whatever the language on screen)
+  function areaJa(code) { var a = code && SM.area ? SM.area(code) : null; return a ? a.name : ''; }
+  function areaType(code) { var a = code && SM.area ? SM.area(code) : null; return a ? a.type : ''; }
+  /* the window of an office record for one 区市町村: its one location there, else the one whose 担当 note names the
+     place, else the record's only location; several there (one per ward) → multi */
+  function pickLoc(x, code) {
+    var locs = Array.isArray(x.locations) ? x.locations : [];
+    var here = [], nm = areaJa(code), named = -1;
+    for (var j = 0; j < locs.length; j++) {
+      var l = locs[j];
+      if (!l) continue;
+      if (String(l.area) === code) here.push(j);
+      if (named === -1 && nm && jaText(l.note).indexOf(nm) !== -1) named = j;
+    }
+    if (here.length === 1) return { i: here[0], n: 1 };
+    if (named !== -1) return { i: named, n: 1, named: true };
+    if (here.length > 1) return { i: -1, n: here.length, multi: true };
+    if (locs.length === 1) return { i: 0, n: 1 };
+    return { i: -1, n: locs.length, multi: locs.length > 1 };
+  }
+  // multi: the record's own main number when it has one (江東区: two windows, one number), none otherwise (横浜市)
+  function office(x, code) {
+    var pl = pickLoc(x, code);
+    var loc = pl.i >= 0 ? x.locations[pl.i] : null;
+    var phone = loc ? (loc.phone || '') : ((x.contact && x.contact.phone) || '');
+    var mapI = loc ? pl.i : -1;
+    return { p: x, loc: loc, i: mapI, n: pl.n, multi: !!pl.multi, mode: 'own', phone: phone, name: loc && loc.name ? loc.name : L(x.name) };
   }
   function localOffice(code) {
     if (!code) return null;
+    code = String(code);
     var ps = (SM.data && SM.data.programs) || [];
-    for (var i = 0; i < ps.length; i++) {
-      var x = ps[i];
-      if (!x || !/-jiritsu-sodan$/.test(x.id)) continue;
-      var as = (x.for && x.for.areas) || [];
-      if (as.indexOf(code) === -1) continue;
-      var locs = Array.isArray(x.locations) ? x.locations : [];
-      var li = 0;
-      for (var j = 0; j < locs.length; j++) if (locs[j] && locs[j].area === code) { li = j; break; }
-      var loc = locs[li] || null;
-      var phone = (loc && loc.phone) || (x.contact && x.contact.phone) || '';
-      return { p: x, loc: loc, i: li, phone: phone, name: loc && loc.name ? loc.name : L(x.name) };
+    var i, x;
+    if (/^\d{5}$/.test(code)) {
+      // 1. an office made for this 区市町村 (a city's own, or the prefecture's desk for its 町村)
+      for (i = 0; i < ps.length; i++) {
+        x = ps[i];
+        if (isOffice(x) && areasOf(x).indexOf(code) !== -1) return office(x, code);
+      }
+    }
+    // 2. outside Tokyo, the prefecture's desk record: a window whose 担当 names the place, the desk's number for
+    //    町村 residents (as its label says), else the record itself — it lists every city's office
+    var pf = prefOf(code);
+    if (!pf || pf === '13' || code.length !== 5) return null;
+    for (i = 0; i < ps.length; i++) {
+      x = ps[i];
+      if (!isOffice(x) || areasOf(x).indexOf(pf) === -1) continue;
+      var pl = pickLoc(x, code);
+      if (pl.named) return office(x, code);
+      var c = x.contact || {}, town = /^(machi|mura)$/.test(areaType(code));
+      if (town && c.phone && /町村/.test(jaText(c.phoneLabel))) return { p: x, loc: null, i: -1, n: 0, multi: false, mode: 'own', phone: c.phone, name: jaText(c.phoneLabel) || L(x.name) };
+      return { p: x, loc: null, i: -1, n: 0, multi: false, mode: 'list', phone: '', name: L(x.name) };
     }
     return null;
   }
@@ -258,28 +327,48 @@
   function localInfo(p) {
     if (!localKind(p)) return null;
     var code = myArea();
-    return { code: code, office: localOffice(code) };
+    return { code: code, office: code && code.length === 5 ? localOffice(code) : null };
+  }
+  // a 区市町村 or (v7) a prefecture code, in the language on screen
+  function placeName(code) {
+    if (!code) return '';
+    if (String(code).length === 2) return SM.ui && SM.ui.prefLabel ? SM.ui.prefLabel(code) : '';
+    return areaName(code);
   }
   function localHtml(p, o) {
     var li = localInfo(p);
     if (!li) return '';
-    var area = li.code ? areaName(li.code) : '';
+    var city = li.code && li.code.length === 5 ? li.code : null;
+    var area = placeName(li.code);
     var off = li.office;
     var pin = '<span class="pg-local-pin" aria-hidden="true">' + ic('pin') + '</span>';
     if (!off) {
-      var href = li.code ? '#/map/' + enc(li.code) : '#/map';
+      // no office in the data for this place (or only the prefecture is known): the map, which lists what there is
+      var href = city ? '#/map/' + enc(city) : '#/map';
       return '<a class="pg-local is-find" href="' + esc(href) + '" data-press="ink"' + (o.still ? '' : rv('up', 320)) + '>' + pin +
-        '<span class="pg-local-text"><span class="pg-local-k">' + esc(li.code ? t('pg.local.kArea', { area: area }) : t('pg.local.k')) + '</span>' +
-        '<span class="pg-local-name">' + esc(li.code ? t('pg.local.none', { area: area }) : t('pg.local.find')) + '</span>' +
-        (li.code ? '' : '<span class="pg-local-sub">' + esc(t('pg.local.findSub')) + '</span>') + '</span>' + arrow('r', 'pg-local-go') + '</a>';
+        '<span class="pg-local-text"><span class="pg-local-k">' + esc(area ? t('pg.local.kArea', { area: area }) : t('pg.local.k')) + '</span>' +
+        '<span class="pg-local-name">' + esc(city ? t('pg.local.none', { area: area }) : t('pg.local.find')) + '</span>' +
+        (city ? '' : '<span class="pg-local-sub">' + esc(t('pg.local.findSub')) + '</span>') + '</span>' + arrow('r', 'pg-local-go') + '</a>';
     }
     var nmAttr = en() && !(off.p.name && off.p.name.en) ? ' lang="ja"' : '';
     var nm = en() && off.p.name && off.p.name.en ? off.p.name.en : off.name;
-    var acts = '<a class="pg-tlink" href="#/map/' + enc(li.code) + '/' + enc(off.p.id + '~' + off.i) + '"><span>' + esc(t('pg.local.map')) + '</span>' + arrow('r') + '</a>' +
-      '<a class="pg-tlink" href="#/p/' + enc(off.p.id) + '"><span>' + esc(t('pg.local.page')) + '</span>' + arrow('r') + '</a>';
+    var page = '<a class="pg-tlink" href="#/p/' + enc(off.p.id) + '"><span>' + esc(t('pg.local.page')) + '</span>' + arrow('r') + '</a>';
+    if (off.mode === 'list') {
+      // the prefecture's desk record, whose page lists each city's office (茨城・栃木・群馬)
+      return '<section class="pg-local" aria-labelledby="pg-h-local"' + (o.still ? '' : rv('up', 320)) + '>' +
+        '<h2 class="pg-local-k" id="pg-h-local">' + pin + '<span>' + esc(t('pg.local.kArea', { area: area })) + '</span></h2>' +
+        '<p class="pg-local-name"' + nmAttr + '>' + esc(nm) + '</p>' +
+        '<p class="pg-local-sub">' + esc(t('pg.local.list')) + '</p>' +
+        '<p class="pg-local-acts">' + page + '</p></section>';
+    }
+    // the map opens where the window is (a 町 served from a desk in another city), on that window when there is one
+    var mapCode = off.loc && /^\d{5}$/.test(String(off.loc.area || '')) ? String(off.loc.area) : city;
+    var mapHref = '#/map/' + enc(mapCode) + (off.i >= 0 ? '/' + enc(off.p.id + '~' + off.i) : '');
+    var acts = '<a class="pg-tlink" href="' + esc(mapHref) + '"><span>' + esc(t('pg.local.map')) + '</span>' + arrow('r') + '</a>' + page;
     return '<section class="pg-local" aria-labelledby="pg-h-local"' + (o.still ? '' : rv('up', 320)) + '>' +
       '<h2 class="pg-local-k" id="pg-h-local">' + pin + '<span>' + esc(t('pg.local.kArea', { area: area })) + '</span></h2>' +
       '<p class="pg-local-name"' + nmAttr + '>' + esc(nm) + '</p>' +
+      (off.multi ? '<p class="pg-local-sub">' + esc(t('pg.local.multi', { n: off.n })) + '</p>' : '') +
       (off.phone ? '<div class="pg-tel-row pg-local-tel"><a class="pg-tel-num" href="' + esc(telHref(off.phone)) + '" tabindex="-1" aria-hidden="true" data-noruby>' + esc(off.phone) + '</a>' +
         '<a class="btn btn-secondary btn-sm pg-tel-call" href="' + esc(telHref(off.phone)) + '" data-press aria-label="' + esc(t('pg.local.callLong', { name: nm, num: off.phone })) + '">' + ic('phone') + '<span>' + esc(t('pg.call')) + '</span></a></div>' : '') +
       '<p class="pg-local-acts">' + acts + '</p></section>';
@@ -389,14 +478,43 @@
     '</header>';
   }
 
-  // national record with a Tokyo-run version (see SM.tokyoVersion in match.js): one link row
-  function tokyoNote(p) {
-    var tid = SM.tokyoVersion && SM.tokyoVersion[p.id];
-    var tp = tid && SM.program(tid);
-    if (!tp) return '';
-    return '<a class="pg-tokyo" href="#/p/' + esc(enc(tid)) + '" data-press="ink"><span class="pg-tokyo-k">' + esc(t('pg.tokyo')) + '</span>' +
-      '<span class="pg-tokyo-n">' + esc(shortName(tp)) + '</span>' + arrow('r', 'pg-tokyo-go') + '</a>';
+  /* v7 (Kanto): a national scheme that each 都県 runs as its own program (自立支援資金貸付, サポステ): the person's
+     prefecture's version as one ruled link row; with no answer yet, every version the app has, as a row of names
+     (東京都 first). Outside Kanto: nothing. (SM.tokyoVersion in match.js is the Tokyo case of the same idea.) */
+  var VERSIONED = ['jiritsu-shikin', 'saposute'];
+  var PREF_SLUG = { '13': 'tokyo', '14': 'kanagawa', '11': 'saitama', '12': 'chiba', '08': 'ibaraki', '09': 'tochigi', '10': 'gunma' };
+  // display order: 東京都, then the code order (Object.keys would put '10'–'14' before '08' and '09')
+  var PREF_ORDER = ['13', '08', '09', '10', '11', '12', '14'];
+  function prefVersions(p) {
+    if (!p || p.basis !== 'national' || p.pref) return [];
+    var ids = VERSIONED.indexOf(p.id) !== -1 ? [] : null;
+    var tv = SM.tokyoVersion && SM.tokyoVersion[p.id];
+    if (!ids && !tv) return [];
+    return PREF_ORDER.map(function (code) {
+      var id = code === '13' && tv ? tv : PREF_SLUG[code] + '-' + p.id;
+      var x = SM.program(id);
+      return x && x !== p ? { code: code, p: x } : null;
+    }).filter(Boolean);
   }
+  function tokyoNote(p) {
+    var vs = prefVersions(p);
+    if (!vs.length) return '';
+    var a = SM.state && SM.state.answers ? SM.state.answers.area : null;
+    if (a === 'other') return '';
+    var pf = myArea() ? prefOf(myArea()) : null;
+    if (a && !pf) return '';
+    if (pf) {
+      var v = vs.filter(function (x) { return x.code === pf; })[0];
+      if (!v) return '';
+      return '<a class="pg-tokyo" href="#/p/' + esc(enc(v.p.id)) + '" data-press="ink"><span class="pg-tokyo-k">' + esc(t('pg.prefVer', { pref: placeName(pf) })) + '</span>' +
+        '<span class="pg-tokyo-n">' + esc(shortName(v.p)) + '</span>' + arrow('r', 'pg-tokyo-go') + '</a>';
+    }
+    return '<nav class="pg-prefs" aria-labelledby="pg-prefs-k"><p class="pg-tokyo-k" id="pg-prefs-k">' + esc(t('pg.prefVer.k')) + '</p>' +
+      '<ul class="pg-prefs-list" role="list">' + vs.map(function (x) {
+        return '<li><a class="pg-tlink" href="#/p/' + esc(enc(x.p.id)) + '"><span>' + esc(placeName(x.code)) + '</span>' + arrow('r') + '</a></li>';
+      }).join('') + '</ul></nav>';
+  }
+
 
   /* ---------------------------------------------------------------- key facts: 3 label / value cells */
   function deadlineHead(p) {
@@ -547,10 +665,25 @@
   }
 
   /* 対象 */
+  /* v7 (Kanto): where it applies, as one label / value line: 住んでいる所 神奈川県 (eligibleBy 'residence'), 巣立った所
+     (eligibleBy 'origin': where you left care, not where you live), else 地域; a list of 町村 is cut after 4 names */
+  function areaLine(p) {
+    var as = ((p.for && p.for.areas) || []).map(String);   // only areas the record names (not 東京都's implicit one)
+    if (!as.length) return '';
+    var names = as.map(placeName).filter(Boolean);
+    if (!names.length) return '';
+    var sep = en() ? ', ' : '・';
+    var v = names.length > 6 ? t('pg.area.more', { list: names.slice(0, 4).join(sep), n: names.length }) : names.join(sep);
+    var origin = p.eligibleBy === 'origin';
+    var k = origin ? 'pg.area.origin' : p.eligibleBy === 'residence' ? 'pg.area.k' : 'pg.area.where';
+    return '<p class="pg-area"><span class="pg-area-k">' + esc(t(k)) + '</span>' +
+      '<span class="pg-area-v">' + esc(v) + '</span>' +
+      (origin ? '<span class="pg-area-n">' + esc(t('pg.area.originNote')) + '</span>' : '') + '</p>';
+  }
   function whoBody(p) {
-    var who = L(p.who);
-    if (!who) return '';
-    return (jaOnly(p.who) ? jaNote() : '') + '<p class="pg-text"' + langAttr(p.who) + '>' + esc(who) + '</p>';
+    var who = L(p.who), area = areaLine(p);
+    if (!who) return area;
+    return area + (jaOnly(p.who) ? jaNote() : '') + '<p class="pg-text"' + langAttr(p.who) + '>' + esc(who) + '</p>';
   }
   /* もらえるもの / 内容: the summary, then every amount line with its notes */
   function getBody(p) {
@@ -842,14 +975,20 @@
     var out = (SM.data.programs || []).filter(function (x) {
       if (!x || x.id === p.id || !x.cat || x.cat[0] !== cat) return false;
       if (jrOk && !jrOk(x)) return false;
+      // v7: the area rule of the results (SM.matchUtil.usableIn): nothing the person cannot use where they live
+      var U = SM.matchUtil;
+      if (U && U.usableIn) return U.usableIn(x, area || null) !== false;
       var as = (x.for && x.for.areas) || [];
       if (as.length && as[0] !== '13' && area && area.length === 5 && as.indexOf(area) === -1) return false;
       if (as.length && area === 'other') return false;
       return true;
     });
+    // with no area answered, another prefecture's own records go below those for everyone (and this one's prefecture)
+    var U2 = SM.matchUtil, myP = U2 && U2.recPref ? U2.recPref(p) : null;
+    function far(x) { if (area || !U2 || !U2.recPref) return 0; var rp = U2.recPref(x); return rp && rp !== myP ? 2 : 0; }
     out.sort(function (a, b) {
-      var sa = (a.basis === p.basis ? 1 : 0) + ((a.cat || []).filter(function (c) { return (p.cat || []).indexOf(c) !== -1; }).length);
-      var sb = (b.basis === p.basis ? 1 : 0) + ((b.cat || []).filter(function (c) { return (p.cat || []).indexOf(c) !== -1; }).length);
+      var sa = (a.basis === p.basis ? 1 : 0) + ((a.cat || []).filter(function (c) { return (p.cat || []).indexOf(c) !== -1; }).length) - far(a);
+      var sb = (b.basis === p.basis ? 1 : 0) + ((b.cat || []).filter(function (c) { return (p.cat || []).indexOf(c) !== -1; }).length) - far(b);
       return sb - sa;
     });
     out = out.slice(0, 3);

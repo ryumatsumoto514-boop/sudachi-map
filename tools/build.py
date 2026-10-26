@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Bundle the start-up CSS and scripts for the public site.
 
-index.html loads 9 stylesheets and 15 scripts one by one; on the hosted site each is a separate request.
+index.html loads 10 stylesheets and 17 scripts one by one; on the hosted site each is a separate request.
 This writes dist/index.html (same page) that loads one dist/css/app.css and one dist/js/app.js instead,
 in the same order. Lazy views, map files, images and fonts are untouched and still load from the root.
 Run from the repo root:  python3 tools/build.py
@@ -17,9 +17,19 @@ js = re.findall(r'^<script src="((?:js|data)/[^"]+)"></script>\n', html, re.M)
 if len(css) < 5 or len(js) < 10:
     sys.exit('unexpected index.html: %d css, %d js' % (len(css), len(js)))
 
+# v7: a data file that is not there (yet) is left out with a warning instead of failing the build; the page works
+# without it (each data file only adds records). A missing js/ or css/ file still stops the build.
+missing = [f for f in css + js if not os.path.isfile(os.path.join(ROOT, f))]
+for f in missing:
+    if not f.startswith('data/'):
+        sys.exit('missing start-up file: %s' % f)
+    print('warning: %s is missing; the bundle goes without it' % f, file=sys.stderr)
+
 def bundle(files, sep):
     out = []
     for f in files:
+        if f in missing:
+            continue
         src = open(os.path.join(ROOT, f), encoding='utf-8').read()
         out.append(sep % f + src.rstrip() + '\n')
     return ''.join(out)
@@ -59,4 +69,4 @@ if n != 1:
 if out.count('<link rel="stylesheet"') != 1 or out.count('<script src=') != 1:
     sys.exit('replacement failed')
 open(os.path.join(DIST, 'index.html'), 'w', encoding='utf-8').write(out)
-print('css %d files, js %d files -> dist/ (build %s)' % (len(css), len(js), BUILD))
+print('css %d files, js %d files -> dist/ (build %s)' % (len(css), len(js) - len(missing), BUILD))

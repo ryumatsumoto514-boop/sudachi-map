@@ -374,12 +374,12 @@
       hogoNote: false,
       locs: [loc('そえる（東大和市役所 本庁舎 2階 エレベーター横）', '13220', '東京都東大和市中央3-930', 35.745262, 139.426498, '042-563-2111', WD + ' 8:30–17:15', '内線1081')] }),
 
-    jiritsu({ code: '13221', slug: 'kiyose', city: '清瀬市', en: 'Kiyose City', wname: 'きよせ生活相談支援センター「いっぽ」', wnameEn: '"Ippo" life consultation center',
+    jiritsu({ code: '13221', slug: 'kiyose', city: '清瀬市', en: 'Kiyose City', wname: 'きよせ生活相談支援センター「い\u2060っ\u2060ぽ」', wnameEn: '"Ippo" life consultation center',
       phone: '042-495-5567', hoursJa: '平日 8時30分〜17時', hoursEn: 'Weekdays 8:30–17:00',
       url: 'https://www.city.kiyose.lg.jp/kenkouiryouhukusi/seikatusiensyakaihukusi/seikatuniokomarinotoki/1004287.html', org: '清瀬市',
       note: '混んでいることがあるので、行く前に電話で予約してください。',
       hogoNote: false,
-      locs: [loc('いっぽ（清瀬市元町1-11-21 1階北側）', '13221', '東京都清瀬市元町1-11-21', 35.773136, 139.51799, '042-495-5567', WD + ' 8:30–17:00', '要予約')] }),
+      locs: [loc('い\u2060っ\u2060ぽ（清瀬市元町1-11-21 1階北側）', '13221', '東京都清瀬市元町1-11-21', 35.773136, 139.51799, '042-495-5567', WD + ' 8:30–17:00', '要予約')] }),
 
     jiritsu({ code: '13222', slug: 'higashikurume', city: '東久留米市', en: 'Higashikurume City', wname: '自立相談支援（福祉総務課 相談支援係）', wnameEn: 'Self-reliance consultation',
       phone: '042-470-7749', hoursJa: '平日 9時〜16時（12時〜13時をのぞく）', hoursEn: 'Weekdays 9:00–16:00 (closed 12–13)',
@@ -455,7 +455,7 @@
   var L = [
     {
       id: 'nerima-habataku',
-      name: { ja: 'ねりま羽ばたく若者応援プロジェクト（練馬区）', en: 'Nerima "Habataku" Youth Support Project' },
+      name: { ja: 'ね\u2060り\u2060ま羽ばたく若者応援プロジェクト（練馬区）', en: 'Nerima "Habataku" Youth Support Project' },
       hook: { ja: '練馬区でひとり暮らし。家賃や光熱費がきびしい', en: 'Living alone in Nerima and rent and bills are tight' },
       summary: {
         ja: '施設や里親家庭で育った、練馬区に住む若者のための支援です。家賃や光熱水費の一部を最長5年補助してくれるほか、毎週の居場所、LINE相談、法律相談、食料の配布もあります。',
@@ -481,7 +481,7 @@
         hours: { ja: '平日 8時30分〜17時15分', en: 'Weekdays 8:30–17:15' }
       },
       locations: [
-        loc('居場所（春日町青少年館 3階・ねりま若者サポートステーション内）', '13120', '東京都練馬区春日町4-16-9', 35.752403, 139.639008, '03-5848-8341', '金 17:00–20:30（居場所）', '申しこみ不要。都営大江戸線 練馬春日町駅A2から歩いて3分')
+        loc('居場所（春日町青少年館 3階・ね\u2060り\u2060ま若者サポートステーション内）', '13120', '東京都練馬区春日町4-16-9', 35.752403, 139.639008, '03-5848-8341', '金 17:00–20:30（居場所）', '申しこみ不要。都営大江戸線 練馬春日町駅A2から歩いて3分')
       ],
       source: { org: '練馬区', url: 'https://www.city.nerima.tokyo.jp/kosodatekyoiku/kodomo/sodan/kodomokateicenter/habataku.html', checked: C },
       sources2: [{ org: '練馬区（チラシ）', url: 'https://www.city.nerima.tokyo.jp/kosodatekyoiku/kodomo/sodan/kodomokateicenter/habataku.files/tirashi-saisyuseiban.pdf' }],
@@ -512,7 +512,9 @@
       caution: { ja: '住んでいる場所ではなく「世田谷区の施設や児童相談所から巣立ったか」で決まります。受付は年に何回かです。令和8年度第3回の受付は 10月16日（金）まで（郵送は当日消印有効）。次の回は区に聞いてください。ほかの自治体の同じような支援を受けていると使えません。' },
       supporter: { ja: '世田谷区児童養護施設退所者等奨学・自立支援基金（寄附）が財源。令和7年度から虐待等の逆境体験があり親族の支援がない若者にも拡大。家賃は四半期ごと振込。毎年2〜3月に実績報告が必要（未提出は取消・返還の可能性）。住宅支援（借上げ区営住宅5戸）・居場所・せたエール（相談）も別にあり。' },
       effort: 'high',
-      for: { stages: ['hs3', 'left0', 'left1'], paths: [], care: CARE, careOnly: true, age: { min: 15, max: 39 }, areas: [] },
+      // v7: a 世田谷区 scheme decided by where you left care (not where you live): city code + eligibleBy 'origin'
+      for: { stages: ['hs3', 'left0', 'left1'], paths: [], care: CARE, careOnly: true, age: { min: 15, max: 39 }, areas: ['13112'] },
+      eligibleBy: 'origin',
       deadline: { ja: '年に数回まとめて受付。次の回は区のページか電話で確認', en: 'Several rounds a year; check the next round', leaveMonths: null, months: null, always: false },
       contact: {
         phone: '03-6304-7740', phoneLabel: '世田谷区 児童相談支援課', line: null, chat: null,
@@ -695,7 +697,7 @@
 
     {
       id: 'toshima-b4s-port-ikebukuro',
-      name: { ja: 'B4S PORT いけぶくろ（豊島区の居場所・相談）', en: 'B4S PORT Ikebukuro (Toshima drop-in & support)' },
+      name: { ja: 'B4S PORT い\u2060け\u2060ぶ\u2060く\u2060ろ（豊島区の居場所・相談）', en: 'B4S PORT Ikebukuro (Toshima drop-in & support)' },
       hook: { ja: '同じ経験をした人と、ごはんを食べて話したい', en: 'I want to eat and talk with people who\'ve been through the same' },
       summary: {
         ja: '豊島区が開く、施設や里親家庭で育った人などのための居場所です。月に1回、みんなで料理して夕ごはんを食べたり、スタッフに相談したりできます。自立の前後の相談（支援計画づくり）も受けられます。',
@@ -719,7 +721,7 @@
         web: 'https://www.city.toshima.lg.jp/525/2606181603.html', hours: { ja: '居場所: 原則 第2日曜 15時〜20時', en: 'Drop-in: 2nd Sunday 15:00–20:00' }
       },
       locations: [
-        loc('B4S PORT いけぶくろ（IKEROOT 1階）', '13116', '東京都豊島区東池袋4-42-16', 35.727962, 139.720795, null, '原則 第2日曜 15:00–20:00', 'LINEで予約')
+        loc('B4S PORT い\u2060け\u2060ぶ\u2060く\u2060ろ（IKEROOT 1階）', '13116', '東京都豊島区東池袋4-42-16', 35.727962, 139.720795, null, '原則 第2日曜 15:00–20:00', 'LINEで予約')
       ],
       source: { org: '豊島区', url: 'https://www.city.toshima.lg.jp/525/2606181603.html', checked: C },
       eligibleBy: 'origin',
