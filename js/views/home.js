@@ -64,7 +64,7 @@
     'home.unit': { ja: '件', en: '' },
 
     /* hero */
-    'home.kicker': { ja: '施設や里親家庭を出る人へ', jr: '施設や里親家庭でくらす中学生へ', en: 'For young people leaving care' },
+    'home.kicker': { ja: '施設や里親家庭でくらす人・出た人へ', en: 'For people living in or leaving care' },
     'home.h1a': { ja: '支援を見つけて、', jr: '支援を見つけて、', en: 'Find support.' },
     'home.h1b': { ja: 'やることに。', jr: 'やることに。', en: 'Make it your plan.' },
     'home.sub': { ja: '名前もログインもいらない。', jr: '名前もログインもいらない。', en: 'No name, no login, nothing sent.' },
@@ -356,7 +356,7 @@
       hline('h-kicker', 'kicker', esc(t('home.kicker'))) +
       hline('h-main', 'l1', esc(t('home.h1a'))) +
       hline('h-main', 'l2', esc(t('home.h1b'))) +
-    '</h1>' + hline('h-sub', 'sub', esc(t('home.sub'))) + '<div class="h-crisis-w">' + crisisLink() + '</div></div>';
+    '</h1>' + hline('h-sub', 'sub', esc(t('home.sub'))) + '</div>';   // the red crisis link left the hero (Ryu, 2026-10-31): 緊急 in the bar and 今すぐ話したい below carry it
   }
   function cta(label, href) {
     if (SM.ui && SM.ui.button) return SM.ui.button(label, { href: href, variant: 'primary', size: 'lg', block: true, cls: 'h-cta', attrs: 'data-press' });
