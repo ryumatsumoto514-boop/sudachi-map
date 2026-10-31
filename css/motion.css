@@ -363,12 +363,98 @@ html.vt-theme::view-transition-new(*) { animation: m-fade-in 220ms linear both; 
 html.vt-fade::view-transition-old(root) { animation: m-fade-out 160ms linear both; }
 html.vt-fade::view-transition-new(root) { animation: m-fade-in 200ms linear both; }
 
+/* ---------- 10b. scroll layer (SPEC-v8 ws3): motion that follows the scroll position ----------
+   html.m-sda = the browser has CSS scroll-driven animations (motion.js sets it). The engine writes the
+   animation on the element inline (name / timeline / range), so this file only holds the keyframes and the
+   gates. Every value is transform / opacity (compositor); the SVG dash is the one main-thread exception, ≤3 a
+   page. Without JS nothing here applies (no .m-sr class), so content is never hidden. */
+.m-sr { animation-timing-function: linear; animation-fill-mode: both; }
+/* a block rising as it enters: it overshoots 2px at 70% of its range and settles — the "heading settles" beat */
+@keyframes m-sr-up    { 0% { opacity: 0; transform: translateY(var(--m-rise)); } 70% { opacity: 1; transform: translateY(-2px); } 100% { opacity: 1; transform: none; } }
+@keyframes m-sr-fade  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes m-sr-left  { 0% { opacity: 0; transform: translateX(-32px); } 70% { opacity: 1; transform: translateX(1px); } 100% { opacity: 1; transform: none; } }
+@keyframes m-sr-right { 0% { opacity: 0; transform: translateX(32px); } 70% { opacity: 1; transform: translateX(-1px); } 100% { opacity: 1; transform: none; } }
+@keyframes m-sr-scale { 0% { opacity: 0; transform: scale(0.92); } 70% { opacity: 1; transform: scale(1.01); } 100% { opacity: 1; transform: none; } }
+@keyframes m-sr-rule  { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes m-sr-line  { from { transform: translateY(108%); } to { transform: none; } }
+@keyframes m-sr-mark  { 0% { opacity: 0; transform: scale(0.6); } 60% { opacity: 1; transform: scale(1.06); } 100% { opacity: 1; transform: none; } }
+.m-sr[data-reveal="rule"], .m-sr[data-sr="rule"] { transform-origin: left center; }
+/* a scrubbed line reveal: the parent keeps the static clip, its .m-line-in child carries the animation */
+.m-sr-clip { clip-path: inset(-0.9em -1em 0 -1em); }
+/* parallax (illustrations and large marks only): ±(--m-par)% of the viewport across the element's cover range */
+@keyframes m-par { from { transform: translateY(calc(var(--m-par, 6) * 1vh)); } to { transform: translateY(calc(var(--m-par, 6) * -1vh)); } }
+/* progress: a bar that fills with the page / a target section */
+@keyframes m-prog-x { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes m-prog-y { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+/* a line that draws with the scroll (SVG: pathLength=1 dash; HTML: scaleX) */
+@keyframes m-dash { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+/* sticky header compaction: the title scales down and the second line lifts away over the first 120px of scroll */
+@keyframes m-compact-title { from { transform: none; } to { transform: scale(0.86); } }
+@keyframes m-compact-hide  { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(-6px); } }
+[data-compact] { transform-origin: left center; }
+/* the sentinel stickyCompact() plants before a sticky element (absolute: at its static position, no room taken) */
+.m-stick-s { position: absolute; width: 1px; height: 2px; opacity: 0; pointer-events: none; }
+/* the reading line (motion.js wireAppbar): the brand's green line draws along the foot of the app bar as the page is
+   read — scroll(root) progress, scaleX from the left; shown only on a page that scrolls (is-on) */
+.appbar .m-readline {
+  position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; z-index: 1;
+  background: var(--action, #0b6e44); transform-origin: left center; transform: scaleX(0);
+  opacity: 0; pointer-events: none; transition: opacity var(--dur-quick) linear;
+}
+.appbar .m-readline.is-on { opacity: 1; }
+/* the app bar: the brand settles to 0.92 as the page starts to scroll (origin at its left, so nothing shifts) */
+.appbar .brand { transform-origin: left center; }
+html:not(.m-sda) .appbar.is-stuck .brand { transition: transform var(--spring-snappy-dur) var(--spring-snappy); transform: scale(0.92); }
+/* end states: a finished scrub lets go of its animation so the view's own transitions and hovers work again */
+.m-sr-done, .m-sr-done > .m-line-in { animation: none !important; }
+/* fallback without scroll-driven animations: the engine writes transform/opacity inline from a rAF driver; nothing
+   here. Reduced motion: every scrubbed element shows its end state (the IO fade in §12 does the arrival). */
+html.m-reduce .m-sr, html.m-reduce .m-sr > .m-line-in, html.m-reduce [data-m-par], html.m-reduce [data-m-prog],
+html.m-reduce [data-m-dash], html.m-reduce [data-compact] { animation: none !important; }
+html.m-reduce .m-sr-clip { clip-path: none !important; }
+
+/* ---------- 10c. micro-interactions (hover: a pointer that can hover; press: motion.js .m-pressed) ----------
+   Every interactive element answers the pointer with movement, not only colour: controls lift 1px, a row's kanji
+   mark lifts and its arrow nudges, a chip's check pops, a checkbox box grows a touch, a map pin grows. */
+:where(.btn, .chip, .pill:not(.pill-sos):not(.pill-exit), .icon-btn, .pcard-save, .seg > button, .seg > a, .more-btn, .toast-act, .back) {
+  transition-property: background-color, border-color, color, box-shadow, translate;
+  transition-duration: var(--dur-quick), var(--dur-quick), var(--dur-quick), var(--dur-quick), var(--spring-snappy-dur);
+  transition-timing-function: var(--ease-standard), var(--ease-standard), var(--ease-standard), var(--ease-standard), var(--spring-snappy);
+}
+@media (hover: hover) and (pointer: fine) {
+  :where(.btn, .chip, .seg > button, .seg > a, .more-btn, .icon-btn, .pcard-save):not([disabled]):not([aria-disabled="true"]):hover { translate: 0 -1px; }
+  :is(.btn, .chip, .seg > button, .seg > a, .more-btn, .icon-btn, .pcard-save).m-pressed, :is(.btn, .chip).m-pressed:hover { translate: 0 1px; }
+  :is(a.list-item, button.list-item, .pcard, .opt, .f-chat-row, .pg-lesson, .ln-row, .tl-hub-row, .m-list-row):hover :is(.cat-icon, .pcard-mark, .ln-row-mark, .opt-mark) { translate: 0 -1px; }
+  :is(.cat-icon, .pcard-mark, .ln-row-mark, .opt-mark) { transition: translate var(--spring-snappy-dur) var(--spring-snappy), background-color var(--dur-quick) var(--ease-standard), color var(--dur-quick) var(--ease-standard); }
+  .check:hover input, .switch-row:hover .switch { scale: 1.06; }
+  .check input, .switch { transition: scale var(--spring-snappy-dur) var(--spring-snappy), background-color var(--dur-quick) var(--ease-standard); }
+  .m-pin:hover .m-pin-in, .m-pin:focus-visible .m-pin-in { scale: 1.08; }
+  .m-pin .m-pin-in { transition: scale var(--spring-snappy-dur) var(--spring-snappy); }
+  .tabbar .tab:hover > svg { translate: 0 -1px; }
+  .tabbar .tab > svg { transition: translate var(--spring-snappy-dur) var(--spring-snappy); }
+}
+/* tab-bar indicator physics: on a switch the bar stretches toward the new tab while it slides (scale composes
+   with the translate that base.css drives; core.js alternates data-ind-n so the keyframes restart each time) */
+@keyframes m-ind-x-a { 0% { scale: 1 1; } 35% { scale: 1.5 1; } 100% { scale: 1 1; } }
+@keyframes m-ind-x-b { 0% { scale: 1 1; } 35% { scale: 1.5 1; } 100% { scale: 1 1; } }
+@keyframes m-ind-y-a { 0% { scale: 1 1; } 35% { scale: 1 1.14; } 100% { scale: 1 1; } }
+@keyframes m-ind-y-b { 0% { scale: 1 1; } 35% { scale: 1 1.14; } 100% { scale: 1 1; } }
+.tabbar.ind-ready[data-ind-n="0"]::before { animation: m-ind-x-a 460ms var(--ease-standard) both; }
+.tabbar.ind-ready[data-ind-n="1"]::before { animation: m-ind-x-b 460ms var(--ease-standard) both; }
+@media (min-width: 900px) {
+  .tabbar.ind-ready[data-ind-n="0"]::before { animation-name: m-ind-y-a; }
+  .tabbar.ind-ready[data-ind-n="1"]::before { animation-name: m-ind-y-b; }
+}
+html.m-reduce .tabbar::before { animation: none !important; }
+
 /* ---------- 11. print: everything visible, final values ---------- */
 @media print {
   .motion-ready .m-pending { opacity: 1 !important; transform: none !important; }
   .motion-ready .m-pending > .m-line-in { transform: none !important; }
   .motion-ready [data-reveal="underline"].m-pending::after { transform: none !important; }
   .motion-ready [data-reveal="line"] { clip-path: none !important; }
+  .m-sr, .m-sr > .m-line-in, [data-m-par], [data-m-prog], [data-m-dash], [data-compact] { animation: none !important; }
+  .m-sr-clip { clip-path: none !important; }
 }
 
 /* ---------- 12. reduced motion (SPEC-v5 Part A): short opacity cross-fades (≤200ms) and colour changes stay;

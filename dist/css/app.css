@@ -2167,12 +2167,98 @@ html.vt-theme::view-transition-new(*) { animation: m-fade-in 220ms linear both; 
 html.vt-fade::view-transition-old(root) { animation: m-fade-out 160ms linear both; }
 html.vt-fade::view-transition-new(root) { animation: m-fade-in 200ms linear both; }
 
+/* ---------- 10b. scroll layer (SPEC-v8 ws3): motion that follows the scroll position ----------
+   html.m-sda = the browser has CSS scroll-driven animations (motion.js sets it). The engine writes the
+   animation on the element inline (name / timeline / range), so this file only holds the keyframes and the
+   gates. Every value is transform / opacity (compositor); the SVG dash is the one main-thread exception, ≤3 a
+   page. Without JS nothing here applies (no .m-sr class), so content is never hidden. */
+.m-sr { animation-timing-function: linear; animation-fill-mode: both; }
+/* a block rising as it enters: it overshoots 2px at 70% of its range and settles — the "heading settles" beat */
+@keyframes m-sr-up    { 0% { opacity: 0; transform: translateY(var(--m-rise)); } 70% { opacity: 1; transform: translateY(-2px); } 100% { opacity: 1; transform: none; } }
+@keyframes m-sr-fade  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes m-sr-left  { 0% { opacity: 0; transform: translateX(-32px); } 70% { opacity: 1; transform: translateX(1px); } 100% { opacity: 1; transform: none; } }
+@keyframes m-sr-right { 0% { opacity: 0; transform: translateX(32px); } 70% { opacity: 1; transform: translateX(-1px); } 100% { opacity: 1; transform: none; } }
+@keyframes m-sr-scale { 0% { opacity: 0; transform: scale(0.92); } 70% { opacity: 1; transform: scale(1.01); } 100% { opacity: 1; transform: none; } }
+@keyframes m-sr-rule  { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes m-sr-line  { from { transform: translateY(108%); } to { transform: none; } }
+@keyframes m-sr-mark  { 0% { opacity: 0; transform: scale(0.6); } 60% { opacity: 1; transform: scale(1.06); } 100% { opacity: 1; transform: none; } }
+.m-sr[data-reveal="rule"], .m-sr[data-sr="rule"] { transform-origin: left center; }
+/* a scrubbed line reveal: the parent keeps the static clip, its .m-line-in child carries the animation */
+.m-sr-clip { clip-path: inset(-0.9em -1em 0 -1em); }
+/* parallax (illustrations and large marks only): ±(--m-par)% of the viewport across the element's cover range */
+@keyframes m-par { from { transform: translateY(calc(var(--m-par, 6) * 1vh)); } to { transform: translateY(calc(var(--m-par, 6) * -1vh)); } }
+/* progress: a bar that fills with the page / a target section */
+@keyframes m-prog-x { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes m-prog-y { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+/* a line that draws with the scroll (SVG: pathLength=1 dash; HTML: scaleX) */
+@keyframes m-dash { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+/* sticky header compaction: the title scales down and the second line lifts away over the first 120px of scroll */
+@keyframes m-compact-title { from { transform: none; } to { transform: scale(0.86); } }
+@keyframes m-compact-hide  { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(-6px); } }
+[data-compact] { transform-origin: left center; }
+/* the sentinel stickyCompact() plants before a sticky element (absolute: at its static position, no room taken) */
+.m-stick-s { position: absolute; width: 1px; height: 2px; opacity: 0; pointer-events: none; }
+/* the reading line (motion.js wireAppbar): the brand's green line draws along the foot of the app bar as the page is
+   read — scroll(root) progress, scaleX from the left; shown only on a page that scrolls (is-on) */
+.appbar .m-readline {
+  position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; z-index: 1;
+  background: var(--action, #0b6e44); transform-origin: left center; transform: scaleX(0);
+  opacity: 0; pointer-events: none; transition: opacity var(--dur-quick) linear;
+}
+.appbar .m-readline.is-on { opacity: 1; }
+/* the app bar: the brand settles to 0.92 as the page starts to scroll (origin at its left, so nothing shifts) */
+.appbar .brand { transform-origin: left center; }
+html:not(.m-sda) .appbar.is-stuck .brand { transition: transform var(--spring-snappy-dur) var(--spring-snappy); transform: scale(0.92); }
+/* end states: a finished scrub lets go of its animation so the view's own transitions and hovers work again */
+.m-sr-done, .m-sr-done > .m-line-in { animation: none !important; }
+/* fallback without scroll-driven animations: the engine writes transform/opacity inline from a rAF driver; nothing
+   here. Reduced motion: every scrubbed element shows its end state (the IO fade in §12 does the arrival). */
+html.m-reduce .m-sr, html.m-reduce .m-sr > .m-line-in, html.m-reduce [data-m-par], html.m-reduce [data-m-prog],
+html.m-reduce [data-m-dash], html.m-reduce [data-compact] { animation: none !important; }
+html.m-reduce .m-sr-clip { clip-path: none !important; }
+
+/* ---------- 10c. micro-interactions (hover: a pointer that can hover; press: motion.js .m-pressed) ----------
+   Every interactive element answers the pointer with movement, not only colour: controls lift 1px, a row's kanji
+   mark lifts and its arrow nudges, a chip's check pops, a checkbox box grows a touch, a map pin grows. */
+:where(.btn, .chip, .pill:not(.pill-sos):not(.pill-exit), .icon-btn, .pcard-save, .seg > button, .seg > a, .more-btn, .toast-act, .back) {
+  transition-property: background-color, border-color, color, box-shadow, translate;
+  transition-duration: var(--dur-quick), var(--dur-quick), var(--dur-quick), var(--dur-quick), var(--spring-snappy-dur);
+  transition-timing-function: var(--ease-standard), var(--ease-standard), var(--ease-standard), var(--ease-standard), var(--spring-snappy);
+}
+@media (hover: hover) and (pointer: fine) {
+  :where(.btn, .chip, .seg > button, .seg > a, .more-btn, .icon-btn, .pcard-save):not([disabled]):not([aria-disabled="true"]):hover { translate: 0 -1px; }
+  :is(.btn, .chip, .seg > button, .seg > a, .more-btn, .icon-btn, .pcard-save).m-pressed, :is(.btn, .chip).m-pressed:hover { translate: 0 1px; }
+  :is(a.list-item, button.list-item, .pcard, .opt, .f-chat-row, .pg-lesson, .ln-row, .tl-hub-row, .m-list-row):hover :is(.cat-icon, .pcard-mark, .ln-row-mark, .opt-mark) { translate: 0 -1px; }
+  :is(.cat-icon, .pcard-mark, .ln-row-mark, .opt-mark) { transition: translate var(--spring-snappy-dur) var(--spring-snappy), background-color var(--dur-quick) var(--ease-standard), color var(--dur-quick) var(--ease-standard); }
+  .check:hover input, .switch-row:hover .switch { scale: 1.06; }
+  .check input, .switch { transition: scale var(--spring-snappy-dur) var(--spring-snappy), background-color var(--dur-quick) var(--ease-standard); }
+  .m-pin:hover .m-pin-in, .m-pin:focus-visible .m-pin-in { scale: 1.08; }
+  .m-pin .m-pin-in { transition: scale var(--spring-snappy-dur) var(--spring-snappy); }
+  .tabbar .tab:hover > svg { translate: 0 -1px; }
+  .tabbar .tab > svg { transition: translate var(--spring-snappy-dur) var(--spring-snappy); }
+}
+/* tab-bar indicator physics: on a switch the bar stretches toward the new tab while it slides (scale composes
+   with the translate that base.css drives; core.js alternates data-ind-n so the keyframes restart each time) */
+@keyframes m-ind-x-a { 0% { scale: 1 1; } 35% { scale: 1.5 1; } 100% { scale: 1 1; } }
+@keyframes m-ind-x-b { 0% { scale: 1 1; } 35% { scale: 1.5 1; } 100% { scale: 1 1; } }
+@keyframes m-ind-y-a { 0% { scale: 1 1; } 35% { scale: 1 1.14; } 100% { scale: 1 1; } }
+@keyframes m-ind-y-b { 0% { scale: 1 1; } 35% { scale: 1 1.14; } 100% { scale: 1 1; } }
+.tabbar.ind-ready[data-ind-n="0"]::before { animation: m-ind-x-a 460ms var(--ease-standard) both; }
+.tabbar.ind-ready[data-ind-n="1"]::before { animation: m-ind-x-b 460ms var(--ease-standard) both; }
+@media (min-width: 900px) {
+  .tabbar.ind-ready[data-ind-n="0"]::before { animation-name: m-ind-y-a; }
+  .tabbar.ind-ready[data-ind-n="1"]::before { animation-name: m-ind-y-b; }
+}
+html.m-reduce .tabbar::before { animation: none !important; }
+
 /* ---------- 11. print: everything visible, final values ---------- */
 @media print {
   .motion-ready .m-pending { opacity: 1 !important; transform: none !important; }
   .motion-ready .m-pending > .m-line-in { transform: none !important; }
   .motion-ready [data-reveal="underline"].m-pending::after { transform: none !important; }
   .motion-ready [data-reveal="line"] { clip-path: none !important; }
+  .m-sr, .m-sr > .m-line-in, [data-m-par], [data-m-prog], [data-m-dash], [data-compact] { animation: none !important; }
+  .m-sr-clip { clip-path: none !important; }
 }
 
 /* ---------- 12. reduced motion (SPEC-v5 Part A): short opacity cross-fades (≤200ms) and colour changes stay;
@@ -2264,14 +2350,15 @@ html.m-reduce.lx-short .tabbar:not(:empty) { animation: none; }
 }
 /* ---- css/home.css ---- */
 /* =====================================================================
-   巣立ちマップ v7 — css/home.css  (HOME)  ·  .v-home and .v-about
-   SPEC-v7 workstream 1: the home page as a transit poster set like a textbook. The green line of the logo is
-   the structure (the route of the six needs, the まなぶ line), the kanji marks are its stations, the numbers are
-   set like a timetable. Paper, 墨 ink, one green; flat, ruled, typographic.
+   巣立ちマップ v8 — css/home.css  (HOME)  ·  .v-home and .v-about
+   SPEC-v8 workstream 1: home as a PATH. The green line of the logo is the structure of the page: the three
+   stations of the person's own path (しらべる → 見つける → やること) in the hero, then the six kanji stations of
+   困りごと, the timetable, the まなぶ line. Paper, 墨 ink, one green; flat, ruled, typographic.
    Tokens and text styles only (base.css): no raw px font sizes, the four tracking tokens, no 900.
    Hover tints only under (hover: hover). Motion: the hero is a CSS choreography under .h-play (home.js adds it;
-   without it everything stands); rows and sections are SM.motion reveals tuned here. transform / opacity only;
-   nothing loops; under html.m-reduce nothing moves (opacity only).
+   without it everything stands); below the fold, lines fill with scroll (SM.motion.scrollLinked / animation-
+   timeline), rows and sections are SM.motion reveals tuned here. transform / opacity only; nothing loops;
+   under html.m-reduce nothing moves (opacity only).
    Layout follows the view's own width (container queries): one set of rules for phone, tablet and desktop.
    ===================================================================== */
 
@@ -2292,7 +2379,7 @@ html.motion-ready:not(.m-reduce) :is(.v-home, .v-about) .m-in .x-rolls:not(:has(
 html.motion-ready:not(.m-reduce) :is(.v-home, .v-about) .x-rolls.m-in:not(:has(.m-odo-w)) { opacity: 0; }
 
 /* short UI strings keep their phrases together (VISUAL-SPEC §2.5) */
-:lang(ja) .v-home :is(.h-staff-b, .h-colo-note, .h-colo .kv dd, .h-offline p, .h-lf-title, .h-lr-t, .h-tt-name),
+:lang(ja) .v-home :is(.h-staff-b, .h-colo-note, .h-colo .kv dd, .h-offline p, .h-lf-title, .h-lr-t, .h-tt-name, .h-st-f, .h-st-next-t),
 :lang(ja) .v-about :is(.ab-lead, .ab-stat-k, .ab-note, .kv dd, .ab-p) {
   word-break: auto-phrase !important; line-break: strict; overflow-wrap: anywhere; text-wrap: pretty;
 }
@@ -2305,21 +2392,19 @@ html.motion-ready:not(.m-reduce) :is(.v-home, .v-about) .x-rolls.m-in:not(:has(.
 .v-home > :is(section, .h-duo, footer) { margin-top: var(--sec-gap); }
 .v-home > .h-hero { margin-top: var(--s-6); }
 .v-home > .jr-banner { margin-top: var(--s-7); }
-.v-home > .h-plan { margin-top: var(--s-9); }
 .v-home > .h-offline { margin-top: var(--s-7); }
-.v-home > .h-ask { margin-top: var(--s-9); }
 .v-home > .h-later { min-height: 50vh; }
-.v-home :is(.h-route, .h-tts, .h-lrs, .h-tools) { list-style: none; margin: 0; padding: 0; }
+.v-home :is(.h-path, .h-route, .h-tts, .h-lrs, .h-tools) { list-style: none; margin: 0; padding: 0; }
 .v-home .h-sec .section-sub { margin: 0; }
 
 /* rows: a flat tint that bleeds past the column on hover (no box, no shadow); press = motion.css ink wash */
-.v-home :is(.h-stop-a, .h-tool, .h-lr, .h-plan-item, .h-lf) { position: relative; isolation: isolate; }
-.v-home :is(.h-stop-a, .h-tool, .h-lr)::before {
+.v-home :is(.h-stop-a, .h-tool, .h-lr, .h-st-a, .h-lf) { position: relative; isolation: isolate; }
+.v-home :is(.h-stop-a, .h-tool, .h-lr, .h-st-a)::before {
   content: ""; position: absolute; inset: 0 calc(var(--bleed) * -1); z-index: -1;
   background: var(--paper-2); opacity: 0; pointer-events: none;
   transition: opacity var(--dur-quick) var(--ease-standard);
 }
-@media (hover: hover) { .v-home :is(.h-stop-a, .h-tool, .h-lr):hover::before { opacity: 1; } }
+@media (hover: hover) { .v-home :is(.h-stop-a, .h-tool, .h-lr, .h-st-a):hover::before { opacity: 1; } }
 .v-home [data-press="ink"]::after { inset: 0 calc(var(--bleed) * -1); }
 .v-home .h-lf[data-press="ink"]::after { inset: 0; }
 
@@ -2342,21 +2427,19 @@ html.motion-ready:not(.m-reduce) :is(.v-home, .v-about) .x-rolls.m-in:not(:has(.
 .v-home .h-mast-sep { align-self: center; width: 1px; height: 0.9em; background: var(--rule-2); }
 body.lang-en .v-home .h-mast { text-transform: uppercase; }
 
-/* ================================================================ hero */
-.v-home .h-hero { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); }
+/* ================================================================ hero: kicker · headline · sub-line */
+.v-home .h-hero { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; }
 .v-home .h-copy { min-width: 0; }
 .v-home .h-title {
   margin: 0; display: block;
   font-family: var(--font-display); font-weight: 700; color: var(--ink);
   letter-spacing: var(--ls-0); text-wrap: initial;
 }
-/* the one sub-line: who it is for */
 .v-home .h-kicker {
   display: block;
   font-weight: 500; font-size: var(--t-kicker); line-height: 1.5; color: var(--ink-2);
   word-break: auto-phrase; text-wrap: balance;
 }
-/* display: one line per span (the copy breaks where the lines break); the size gives way on narrow phones */
 .v-home .h-main {
   display: block; margin-top: var(--s-2);
   font-size: min(var(--fs-4xl), 11.4cqi); line-height: 1.2;
@@ -2364,70 +2447,115 @@ body.lang-en .v-home .h-mast { text-transform: uppercase; }
 }
 .v-home .h-main + .h-main { margin-top: 0; }
 .v-home .h-ln-i { display: block; }
-/* hang the opening bracket: with palt, 「 is half an em wide and its ink begins 0.125em in (Plex 700) */
-.v-home .h-open { margin-left: -0.12em; }
+.v-home .h-sub {
+  display: block; margin-top: var(--s-3);
+  font-family: var(--font-display); font-weight: 500; font-size: var(--t-ui); line-height: var(--lh-ui); color: var(--ink-2);
+}
 body.is-ruby .v-home .h-main { line-height: 1.6; }
 body.lang-en .v-home .h-title { container-type: inline-size; }
-body.lang-en .v-home .h-main { white-space: normal; font-size: min(var(--fs-4xl), 8.6cqi); line-height: 1.12; }
+body.lang-en .v-home .h-main { white-space: normal; font-size: min(var(--fs-4xl), 9.4cqi); line-height: 1.12; }
 body.lang-en .v-home .h-main + .h-main { margin-top: 0.06em; }
 
-/* 蛍光ペン: its own element under the phrase; it sweeps from the left once its line is up (.h-play) */
-.v-home .h-mark { position: relative; z-index: 0; display: inline-block; padding: 0 0.04em; background: none; color: inherit; }
-.v-home .h-mark-t { position: relative; z-index: 1; }
-.v-home .h-mark-ink {
-  position: absolute; z-index: 0; left: 0; right: 0; bottom: 0.08em; height: 0.34em;
-  background: var(--marker); transform-origin: left center; pointer-events: none;
+/* ================================================================ the path: three stations on the green line
+   phone: the line runs down the left through the station squares; each row = square | name, facts, (CTA).
+   The square is the logo's box: ink for 「いまここ」, green with a check once done, an outline ahead.
+   Each station draws its own segment (::before) from its square to the next: done = green, else hairline grey. */
+.v-home .h-path {
+  --mk: 44px; --ln: 4px; --stop: 120ms;
+  position: relative; display: grid; grid-template-columns: minmax(0, 1fr);
+  margin-top: var(--s-6);
+}
+.v-home .h-path-ln { display: none; }
+.v-home .h-st {
+  position: relative; min-width: 0;
+  display: grid; grid-template-columns: var(--mk) minmax(0, 1fr); column-gap: var(--s-4); align-items: start;
+  padding-bottom: var(--s-5);
+}
+.v-home .h-st:last-child { padding-bottom: 0; }
+.v-home .h-st::before {
+  content: ""; position: absolute; z-index: 0; pointer-events: none;
+  left: calc(var(--mk) / 2 - var(--ln) / 2); top: var(--mk); bottom: 0; width: var(--ln);
+  background: var(--rule); transform-origin: center top;
   -webkit-print-color-adjust: exact; print-color-adjust: exact;
 }
-
-/* the picture: edge to edge on the phone; its ground line runs across the whole screen like a horizon, and the
-   band under it is cropped so the CTA sits one step below the line */
-.v-home .h-art { position: relative; min-width: 0; pointer-events: none; }
-.v-home .h-hero.is-new .h-art {
-  margin: var(--s-5) calc(var(--gutter) * -1) calc(-24 / 360 * (100% + 2 * var(--gutter)));
+.v-home .h-st:last-child::before { content: none; }
+.v-home .h-st.is-done::before { background: var(--action); }
+.v-home .h-st-no {
+  position: relative; z-index: 1; width: var(--mk); height: var(--mk);
+  display: grid; place-items: center;
+  background: var(--paper); color: var(--ink-3); box-shadow: inset 0 0 0 2.5px var(--rule-2);
+  font-family: var(--font-num); font-weight: 700; font-size: var(--fs-xl); line-height: 1; letter-spacing: var(--ls-num);
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
 }
-.v-home .h-art .il { width: 100%; max-width: none; }
-/* short phones (SE class): the picture gives way so the CTA and the crisis link stay above the fold */
-@media (max-height: 760px) and (max-width: 899px) {
-  .v-home .h-hero.is-new .h-art { margin-inline: auto; width: 82%; margin-bottom: calc(-24 / 360 * 82%); }
+.v-home .h-st.is-now .h-st-no { background: var(--ink); color: var(--paper); box-shadow: none; }
+.v-home .h-st.is-done .h-st-no { background: var(--action); color: var(--on-action); box-shadow: none; }
+.v-home .h-st-check { width: 24px; height: 24px; }
+.v-home .h-st-body { min-width: 0; display: grid; gap: 0; }
+.v-home .h-st-text { min-width: 0; display: grid; gap: var(--s-1); padding-top: 6px; }
+.v-home .h-st-name {
+  margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-3);
+  font-family: var(--font-display); font-weight: 700; font-size: var(--t-h2); line-height: 1.3; letter-spacing: var(--ls-0); color: var(--ink);
 }
-@media (max-height: 680px) and (max-width: 899px) {
-  .v-home .h-hero.is-new .h-art { width: 64%; margin-bottom: calc(-24 / 360 * 64%); }
+.v-home .h-st.is-ahead .h-st-name { color: var(--ink-3); }
+.v-home .h-st-here {
+  display: inline-block; padding: 3px 8px; background: var(--ink); color: var(--paper);
+  font-size: var(--t-label); font-weight: 700; line-height: 1.4; letter-spacing: var(--ls-label); white-space: nowrap;
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
 }
-
-/* actions: ONE green block, then the crisis link in the emergency red */
-.v-home .h-actions { margin-top: var(--s-5); display: grid; justify-items: stretch; gap: var(--s-1); min-width: 0; }
+body.lang-en .v-home .h-st-here { text-transform: uppercase; }
+.v-home .h-st-facts { display: grid; gap: 2px; min-width: 0; }
+.v-home .h-st-f { font-family: var(--font-display); font-weight: 500; font-size: var(--t-ui); line-height: var(--lh-ui); color: var(--ink-2); }
+.v-home .h-st.is-done .h-st-f { color: var(--ink); }
+.v-home .h-st-f.is-quiet { color: var(--ink-3); }
+.v-home .h-st-f .num { font-family: var(--font-num); font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; letter-spacing: var(--ls-0); }
+.v-home .h-st-prog .num { font-size: var(--fs-lg); }
+/* the countdown: label, then あと N 日 with the number as big as the station name */
+.v-home .h-st-days { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 var(--s-2); }
+.v-home .h-st-days-k { display: inline-flex; align-items: center; gap: var(--s-2); }
+.v-home .h-st-days-v { display: inline-flex; align-items: baseline; color: var(--ink); }
+.v-home .h-st-days-v .num { font-size: var(--fs-2xl); line-height: 1; letter-spacing: var(--ls-num); }
+.v-home .h-st-days-pre { margin-right: 0.15em; }
+.v-home .h-st-days-u { margin-left: 0.1em; }
+body.lang-en .v-home .h-st-days-u { margin-left: 0.3em; }
+.v-home .h-st-tag { padding: 1px 5px; box-shadow: inset 0 0 0 1px var(--rule-2); color: var(--ink-3); font-size: var(--t-label); font-weight: 500; letter-spacing: var(--ls-label); line-height: 1.4; }
+/* つぎ ｜ the task */
+.v-home .h-st-next { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: var(--s-2); align-items: baseline; margin-top: 2px; }
+.v-home .h-st-next-t { display: block; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.v-home .h-st-duo { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 var(--s-4); }
+.v-home .h-st-next-k { font-size: var(--t-label); font-weight: 700; letter-spacing: var(--ls-label); color: var(--action-text); white-space: nowrap; padding-top: 1px; }
+.v-home .h-st-next-t { font-weight: 700; color: var(--ink); }
+body.lang-en .v-home .h-st-next-k { text-transform: uppercase; }
+/* a done station is one row that links back (変える / 結果) */
+.v-home .h-st-a {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: var(--s-3);
+  min-height: var(--mk); color: var(--ink); text-decoration: none;
+}
+.v-home .h-st-go {
+  display: inline-flex; align-items: center; gap: 4px; min-height: var(--tap); padding-top: 6px; align-self: start;
+  font-family: var(--font-display); font-weight: 700; font-size: var(--t-meta); color: var(--action-text); white-space: nowrap;
+}
+.v-home .h-st-go > span { text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 0.28em; }
+.v-home .h-st-go .arrow { --arrow-s: 18px; }
+/* the current station carries the ONE green block, then the crisis link in the emergency red */
+.v-home .h-st-cta { margin-top: var(--s-4); display: grid; justify-items: stretch; gap: var(--s-1); min-width: 0; }
 .v-home .h-cta { min-height: 64px; font-size: var(--fs-lg); }
 .v-home .h-cta > span:first-child { font-size: var(--fs-xl); line-height: 1.3; }
-.v-home .h-crisis { justify-self: start; gap: var(--s-2); font-size: var(--t-ui); color: var(--red-text); text-align: left; }
+.v-home .h-crisis { justify-self: start; gap: var(--s-2); font-size: var(--t-ui); color: var(--red-text); text-align: left; margin-left: calc(var(--s-3) * -1); }
+/* v8: the crisis link lives once, under the sub-line — reachable without scrolling in every state, and off the path */
+.v-home .h-crisis-w { display: flex; margin-top: var(--s-2); }
 .v-home .h-crisis .arrow { --arrow-s: 20px; }
-
-/* ---- returning visitor: the number is the headline */
-.v-home .h-hero.is-back .h-copy { order: 1; }
-.v-home .h-hero.is-back .h-actions { order: 2; }
-.v-home .h-hero.is-back .h-side { order: 3; margin-top: var(--s-9); min-width: 0; }
-.v-home .h-hero.is-back .is-back-art { display: none; }
-.v-home .h-big-row { display: block; margin-top: var(--s-1); line-height: var(--lh-num); }
-.v-home .h-mark-num { font-family: var(--font-num); font-size: var(--t-num-hero); line-height: var(--lh-num); padding: 0 0.03em; }
-.v-home .h-big { font-weight: 700; font-size: inherit; line-height: var(--lh-num); letter-spacing: var(--ls-num); font-variant-numeric: tabular-nums; }
-.v-home .h-big-unit { margin-left: 0.08em; font-weight: 500; font-size: var(--t-unit); letter-spacing: var(--ls-0); }
-.v-home .h-mark-num .h-mark-ink { bottom: 0.02em; height: 0.2em; }
-.v-home .h-title.is-none .h-kicker { font-size: var(--t-h1); font-weight: 700; line-height: var(--lh-heading); color: var(--ink); }
-/* the answers as plain text separated by ／, 変える at its end (only 変える is a control) */
-.v-home .h-answers { margin: var(--s-4) 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--s-2); }
-.v-home .h-ans { font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); color: var(--ink); white-space: nowrap; }
-.v-home .h-ans-sep { margin-right: var(--s-2); font-weight: 500; color: var(--ink-3); }
-.v-home .h-change {
-  display: inline-flex; align-items: center; min-height: var(--tap); padding: 0 var(--s-1);
-  font-family: var(--font-display); font-weight: 700; font-size: var(--t-meta); color: var(--action-text);
-  text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 0.28em;
+/* narrow phones: the CTA may hang under the square so its words have the whole width */
+@container home (max-width: 359px) {
+  .v-home .h-st-cta { margin-left: calc((var(--mk) + var(--s-4)) * -1); }
 }
+body.is-ruby .v-home .h-st-name { line-height: 1.6; }
 
 /* ================================================================ the hero choreography
    .h-play (home.js) starts every part on its own --d, × --h-k (0.55 after a skipped opening):
-   [data-h="line"]  the line rises a little as it fades in      [data-h="rise"]  steps up 24px
-   [data-h="cta"]   slides up 40px on the spring              [data-h="slide"] comes in from the left
-   [data-h="art"]   the picture rises 16px as its figures walk in   .h-mast (draw) the masthead rule draws
+   [data-h="line"]  the line rises a little as it fades in    [data-h="rise"]  steps up 24px
+   [data-h="cta"]   slides up 40px on the spring            [data-h="slide"] comes in from the left
+   [data-h="art"]   the picture rises 16px                   [data-h="path"]  each station's segment draws
+   [data-h="stamp"] a station square stamps in              .h-mast (draw)   the masthead rule draws
    .h-done drops it all once played; .h-land lands it at once (a tap / key). */
 .v-home .h-play:not(.h-done) [data-h="line"] { clip-path: inset(-0.6em -1em -0.35em -1em); }
 .v-home .h-play:not(.h-done) [data-h="line"] > .h-ln-i { animation: h-line 620ms var(--h-rise) calc(var(--d, 0ms) * var(--h-k, 1)) both; }
@@ -2435,36 +2563,28 @@ body.lang-en .v-home .h-main + .h-main { margin-top: 0.06em; }
 .v-home .h-play:not(.h-done) [data-h="art"] { animation: h-art 560ms var(--h-rise) calc(var(--d, 0ms) * var(--h-k, 1)) both; }
 .v-home .h-play:not(.h-done) [data-h="cta"] { animation: h-cta var(--h-spring-dur) var(--h-spring) calc(var(--d, 0ms) * var(--h-k, 1)) both; }
 .v-home .h-play:not(.h-done) [data-h="slide"] { animation: h-slide 480ms var(--h-rise) calc(var(--d, 0ms) * var(--h-k, 1)) both; }
-.v-home .h-play:not(.h-done) .h-mark-ink { animation: h-ink 460ms cubic-bezier(0.65, 0, 0.35, 1) calc(var(--mark-at, 300ms) * var(--h-k, 1)) both; }
+.v-home .h-play:not(.h-done) [data-h="stamp"] { animation: h-stamp 380ms var(--h-spring) calc(var(--d, 0ms) * var(--h-k, 1)) both; }
+.v-home .h-play:not(.h-done) [data-h="path"] .h-st::before { animation: h-seg-y 460ms var(--ease-draw) calc((var(--d, 0ms) + var(--i, 0) * var(--stop) + 120ms) * var(--h-k, 1)) both; }
 .v-home .h-mast.h-play:not(.h-done)::after { animation: h-draw 560ms var(--ease-draw) calc(var(--d, 0ms) * var(--h-k, 1)) both; }
 .v-home .h-mast.h-play:not(.h-done) > * { animation: h-fade 360ms var(--ease-enter) calc((var(--d, 0ms) + 160ms) * var(--h-k, 1)) both; }
-.v-home .h-play.h-land :is([data-h], .h-ln-i, .h-mark-ink),
+.v-home .h-play.h-land :is([data-h], .h-ln-i, .h-st::before),
 .v-home .h-mast.h-land, .v-home .h-mast.h-land::after, .v-home .h-mast.h-land > * { animation: none !important; clip-path: none !important; }
-/* whole lines: a short rise with a fade inside a mask that clears the glyphs, so no frame shows a line cut through */
 @keyframes h-line { from { opacity: 0; transform: translateY(0.42em); } 55% { opacity: 1; } to { opacity: 1; transform: none; } }
 @keyframes h-rise { from { opacity: 0; transform: translateY(24px); } 40% { opacity: 1; } to { opacity: 1; transform: none; } }
 @keyframes h-art { from { opacity: 0; transform: translateY(16px); } 45% { opacity: 1; } to { opacity: 1; transform: none; } }
 @keyframes h-cta { from { opacity: 0; transform: translateY(40px); } 30% { opacity: 1; } to { opacity: 1; transform: none; } }
 @keyframes h-slide { from { opacity: 0; transform: translateX(-28px); } 50% { opacity: 1; } to { opacity: 1; transform: none; } }
-@keyframes h-ink { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes h-stamp { from { opacity: 0; transform: scale(1.5) rotate(-8deg); } 35% { opacity: 1; } to { opacity: 1; transform: none; } }
+@keyframes h-seg-y { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+@keyframes h-seg-x { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 @keyframes h-draw { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 @keyframes h-fade { from { opacity: 0; } to { opacity: 1; } }
-
-/* the picture: the young person walks out of the doorway toward the new home, the staff member rises in to wave */
-.v-home .h-art .il.is-play [data-il="fig"] { animation-name: h-walk; animation-duration: 470ms; animation-timing-function: cubic-bezier(0.25, 0.7, 0.3, 1); }
-.v-home .h-art .il.is-play [data-il="fig2"] { animation-name: h-wave-in; animation-duration: 440ms; animation-timing-function: var(--h-rise); }
-@keyframes h-walk {
-  0% { opacity: 0; transform: translate(-34px, 0); }
-  18% { opacity: 1; }
-  30% { transform: translate(-23px, -2.5px); }
-  55% { transform: translate(-10px, 0); }
-  78% { transform: translate(-3px, -1.5px); }
-  100% { opacity: 1; transform: translate(0, 0); }
-}
-@keyframes h-wave-in { from { opacity: 0; transform: translateY(16px); } 40% { opacity: 1; } to { opacity: 1; transform: none; } }
+/* station 3's facts arrive later (the やること files are lazy): a short cross-fade, nothing moves */
+.v-home .h-st-facts.h-swapped > * { animation: h-fade 240ms var(--ease-enter) both; }
+html.m-reduce .v-home .h-st-facts.h-swapped > * { animation-duration: 150ms; }
 
 /* ================================================================ きく: a fill-in line — label, the blank, the button */
-.v-home .h-ask { display: grid; gap: var(--s-2); }
+.v-home .h-ask { display: grid; gap: var(--s-2); margin-top: var(--s-7); min-width: 0; }
 .v-home .h-ask-k {
   display: inline-flex; align-items: center; gap: var(--s-2);
   font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); line-height: var(--lh-ui); color: var(--ink);
@@ -2494,9 +2614,25 @@ body.lang-en .v-home .h-main + .h-main { margin-top: 0.06em; }
 .v-home .h-ask-go:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .v-home .h-ask-go .arrow { --arrow-s: 20px; }
 @media (hover: hover) { .v-home .h-ask-go:hover span { text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 0.28em; } }
-/* its line draws as it arrives */
-html.motion-ready:not(.m-reduce) .v-home .h-ask.m-pending .h-ask-line::after { transform: scaleX(0); }
-html.motion-ready:not(.m-reduce) .v-home .h-ask.m-in .h-ask-line::after { transition: transform var(--dur-draw) var(--ease-draw) calc(var(--m-delay, 0ms) + 120ms); }
+/* its line draws as the form rises in (hero choreography) */
+.v-home .h-play:not(.h-done) .h-ask .h-ask-line::after { animation: h-draw 520ms var(--ease-draw) calc((var(--d, 0ms) + 140ms) * var(--h-k, 1)) both; }
+.v-home .h-play.h-land .h-ask .h-ask-line::after { animation: none !important; }
+
+/* ================================================================ the walk: the picture, driven by scroll
+   The young person walks out of the doorway toward the new home as the picture scrolls up the screen; the staff
+   member rises to wave. --walk 0 → 1 on the figure (registered property, animated on the view timeline where the
+   browser can; home.js sets it from a rAF scroll listener elsewhere; reduced motion: 1, the final picture). */
+@property --walk { syntax: "<number>"; inherits: true; initial-value: 1; }
+.v-home .h-art { position: relative; min-width: 0; pointer-events: none; margin-top: var(--s-8); }
+.v-home .h-art .il { --walk: 1; width: 100%; max-width: none; }
+.v-home .h-art .il [data-il="fig"] { transform: translateX(calc((1 - var(--walk)) * -44px)); }
+.v-home .h-art .il [data-il="fig2"] { transform: translateY(calc((1 - var(--walk)) * 12px)); opacity: calc(0.25 + 0.75 * var(--walk)); }
+.v-home .h-art .il [data-il="pin"] { transform: translateY(calc((1 - var(--walk)) * -10px)); opacity: var(--walk); }
+.v-home .h-art .il.h-walk-sda { animation: h-walk linear both; animation-timeline: view(); animation-range: entry 0% cover 42%; }
+@keyframes h-walk { from { --walk: 0; } to { --walk: 1; } }
+html.m-reduce .v-home .h-art .il { --walk: 1 !important; animation: none !important; }
+/* edge to edge on the phone: its ground line runs across the whole screen like a horizon */
+.v-home .h-art { margin-left: calc(var(--gutter) * -1); margin-right: calc(var(--gutter) * -1); }
 
 /* ================================================================ sections: the head rises as its rule draws */
 .motion-ready .v-home .h-head.m-pending { transform: translateY(20px); }
@@ -2504,13 +2640,14 @@ html.motion-ready:not(.m-reduce) .v-home .h-ask.m-in .h-ask-line::after { transi
 
 /* ================================================================ 困りごと: the 路線図
    phone: one green line runs down through the six kanji stations; name and count at each stop.
-   ≥760: the line runs across the page, the stations hang on it, name and count under each. */
+   ≥760: the line runs across the page, the stations hang on it, name and count under each.
+   The line (.h-route-ln) fills with scroll: SM.motion.scrollLinked (animation-timeline where supported). */
 .v-home .h-route {
-  --mk: 36px; --ln: 4px; --row: 68px; --stop: 95ms;
+  --mk: 36px; --ln: 4px; --row: 68px; --stop: 95ms; --dir: y;
   position: relative; display: grid; grid-template-columns: minmax(0, 1fr);
 }
-.v-home .h-route::before {
-  content: ""; position: absolute; z-index: 0; pointer-events: none;
+.v-home .h-route-ln {
+  position: absolute; z-index: 0; pointer-events: none; display: block;
   left: calc(var(--mk) / 2 - var(--ln) / 2); width: var(--ln);
   top: calc(var(--row) / 2); bottom: calc(var(--row) / 2);
   background: var(--action); transform-origin: center top;
@@ -2529,7 +2666,6 @@ html.motion-ready:not(.m-reduce) .v-home .h-ask.m-in .h-ask-line::after { transi
 .v-home .h-stop-a::before { left: calc(var(--mk) + var(--s-2)); }
 .v-home .h-stop-mark { position: relative; z-index: 1; display: flex; justify-content: center; }
 .v-home .h-stop .cat-icon { --mark: var(--mk); }
-/* ふりがな on: the reading sits under the mark; the line passes behind it on paper */
 .v-home .h-stop .cat-reading { background: var(--paper); padding: 1px 0; }
 .v-home .h-stop-name { min-width: 0; font-family: var(--font-display); font-weight: 700; font-size: var(--t-h3); line-height: var(--lh-title); letter-spacing: var(--ls-0); }
 .v-home .h-stop-n { display: inline-flex; align-items: baseline; color: var(--ink-2); white-space: nowrap; font-family: var(--font-num); }
@@ -2544,28 +2680,23 @@ html.motion-ready:not(.m-reduce) .v-home .h-ask.m-in .h-ask-line::after { transi
 }
 body.is-ruby .v-home .h-route { --row: 76px; }
 
-/* the train runs: the line draws through the stations; each mark stamps in as the line reaches it, its row
-   slides in beside it, its count rolls (data-count, with its own delay) */
-html.motion-ready:not(.m-reduce) .v-home .h-route.m-pending::before { transform: scaleY(0); }
-html.motion-ready:not(.m-reduce) .v-home .h-route.m-in::before { transition: transform calc(var(--stop) * 6) cubic-bezier(0.35, 0, 0.45, 1) var(--m-delay, 0ms); }
+/* the stations arrive as the list scrolls in: each mark stamps in, its row slides in beside it, its count rolls */
 html.motion-ready:not(.m-reduce) .v-home .h-route.m-pending .h-stop { opacity: 0; }
 html.motion-ready:not(.m-reduce) .v-home .h-route.m-pending :is(.h-stop-name, .h-stop-n, .h-stop-go) { transform: translateX(-16px); }
 html.motion-ready:not(.m-reduce) .v-home .h-route.m-in .h-stop { transition: opacity 240ms var(--ease-enter) calc(var(--m-delay, 0ms) + var(--i) * var(--stop)); }
 html.motion-ready:not(.m-reduce) .v-home .h-route.m-in :is(.h-stop-name, .h-stop-n, .h-stop-go) { transition: transform 460ms var(--h-rise) calc(var(--m-delay, 0ms) + var(--i) * var(--stop) + 40ms); }
 html.motion-ready:not(.m-reduce) .v-home .h-route.m-in .cat-icon { animation: h-stamp 360ms var(--h-spring) calc(var(--m-delay, 0ms) + var(--i) * var(--stop)) both; }
 html.motion-ready .v-home .h-route:is(.m-late, .m-fast, .m-now) .cat-icon { animation-duration: 1ms; animation-delay: 0ms; }
-@keyframes h-stamp { from { opacity: 0; transform: scale(1.5) rotate(-8deg); } 35% { opacity: 1; } to { opacity: 1; transform: none; } }
 
 @container home (min-width: 760px) {
   .v-home .h-route {
-    --mk: 56px; --ln: 6px;
+    --mk: 56px; --ln: 6px; --dir: x;
     grid-template-columns: repeat(6, minmax(0, 1fr)); padding-top: var(--s-6);
   }
-  .v-home .h-route::before {
+  .v-home .h-route-ln {
     top: calc(var(--s-6) + var(--mk) / 2 - var(--ln) / 2); bottom: auto; height: var(--ln); width: auto;
     left: 0; right: 0; transform-origin: left center;
   }
-  html.motion-ready:not(.m-reduce) .v-home .h-route.m-pending::before { transform: scaleX(0); }
   html.motion-ready:not(.m-reduce) .v-home .h-route.m-pending :is(.h-stop-name, .h-stop-n, .h-stop-go) { transform: translateY(12px); }
   .v-home .h-stop + .h-stop::before { content: none; }
   .v-home .h-stop-a {
@@ -2580,24 +2711,6 @@ html.motion-ready .v-home .h-route:is(.m-late, .m-fast, .m-now) .cat-icon { anim
   .v-home .h-stop-go { display: none; }
   @media (hover: hover) { .v-home .h-stop-a:hover .h-stop-mark .cat-icon { box-shadow: 0 0 0 6px var(--paper-2); } }
 }
-
-/* ================================================================ やること preview */
-.v-home .h-days {
-  display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--s-1) var(--s-3);
-  margin: 0; padding: var(--s-4) 0; border-bottom: 1px solid var(--rule);
-}
-.v-home .h-days-k { font-family: var(--font-display); font-weight: 500; font-size: var(--t-ui); color: var(--ink-2); display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); }
-.v-home .h-days.is-text .h-days-k { font-weight: 700; color: var(--ink); }
-.v-home .h-days-v { display: inline-flex; align-items: baseline; color: var(--ink); font-family: var(--font-num); }
-.v-home .h-days-n { font-weight: 700; font-size: var(--t-num-xl); line-height: var(--lh-num); letter-spacing: var(--ls-num); font-variant-numeric: tabular-nums; }
-.v-home .h-days-pre { margin-right: 0.2em; font-family: var(--font-display); font-weight: 500; font-size: var(--t-kicker); }
-.v-home .h-days-unit { margin-left: 0.08em; font-family: var(--font-display); font-weight: 500; font-size: calc(var(--t-num-xl) * 0.38); }
-body.lang-en .v-home .h-days-unit { margin-left: 0.3em; }
-.v-home .h-days + .list { border-top: 0; }
-.v-home .h-plan .list { border-bottom: 0; }
-.v-home .h-plan-item { min-height: 56px; }
-.v-home .h-plan-item .list-title { font-size: var(--t-ui); }
-.v-home .h-plan-more { margin: var(--s-2) 0 0; font-size: var(--t-meta); color: var(--ink-3); }
 
 /* ================================================================ offline: a slim ruled row */
 .v-home .h-offline {
@@ -2616,8 +2729,7 @@ body.lang-en .v-home .h-days-unit { margin-left: 0.3em; }
 }
 .v-home .h-tt-who { min-width: 0; }
 .v-home .h-tt-name { margin: 0; font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); line-height: var(--lh-title); }
-.v-home .h-tt-name a { position: relative; color: var(--ink); text-decoration: none; }
-.v-home .h-tt-name a::after { content: ""; position: absolute; inset: -11px 0; }
+.v-home .h-tt-name a { position: relative; display: inline-flex; align-items: center; min-height: 44px; margin: -10px 0; color: var(--ink); text-decoration: none; }
 @media (hover: hover) { .v-home .h-tt-name a:hover { text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 0.24em; } }
 .v-home .h-tt-tags {
   margin: 2px 0 0;
@@ -2639,7 +2751,6 @@ body.lang-en .v-home .h-tt-tags > span + span::before { content: " · "; }
 @media (hover: hover) { .v-home .h-tt-num:hover .num { text-decoration-color: currentColor; } }
 .v-home .h-tt-ic { display: inline-grid; place-items: center; flex: none; width: 32px; height: 32px; box-shadow: inset 0 0 0 1.5px var(--ink); border-radius: var(--r-ctl); }
 .v-home .h-tt-ic .icon { width: 18px; height: 18px; stroke-width: 2.25; }
-/* a chat-only line: the same box as the phone's, plain words at UI size (never number-size words) */
 .v-home .h-tt-num.is-chat { font-family: var(--font-display); font-size: var(--t-ui); font-weight: 700; color: var(--action-text); }
 .v-home .h-tt-num.is-chat .h-tt-chat { text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 0.28em; }
 .v-home .h-tt-num.is-chat .h-tt-ic { box-shadow: inset 0 0 0 1.5px currentColor; }
@@ -2670,7 +2781,6 @@ html.motion-ready:not(.m-reduce) .v-home .h-tts.m-in .h-tt { transition: opacity
 
 /* the timetable proper: name ……… number on one line, once there is room */
 @container home (min-width: 560px) {
-  /* the name keeps its line (it sets the column), the leader dots take what is left, at least 3em */
   .v-home .h-tt { grid-template-columns: minmax(min(16em, 40%), max-content) minmax(3em, 1fr) auto; column-gap: var(--s-3); padding: var(--s-3) 0; min-height: 76px; }
   .v-home .h-tts:has(.h-tt-alt) .h-tt { grid-template-columns: minmax(min(16em, 40%), max-content) minmax(3em, 1fr) auto 5em; }
   .v-home .h-tt-name { text-wrap: balance; }
@@ -2695,7 +2805,6 @@ html.motion-ready:not(.m-reduce) .v-home .h-tts.m-in .h-tt { transition: opacity
 .v-home .h-lp-of { font-weight: 500; font-size: var(--fs-lg); color: var(--ink-3); }
 .v-home .h-lp-k { font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); letter-spacing: var(--ls-label); color: var(--ink-3); }
 body.lang-en .v-home .h-lp-k { text-transform: uppercase; }
-/* one station per lesson on a 2px line: done = filled green, the next = an ink ring, the rest = open */
 .v-home .h-lp-line {
   --sq: 12px;
   position: relative; display: grid; grid-template-columns: repeat(var(--n, 12), minmax(0, 1fr)); align-items: center; height: 20px;
@@ -2711,7 +2820,6 @@ body.lang-en .v-home .h-lp-k { text-transform: uppercase; }
   position: relative; z-index: 1; justify-self: center; display: block; width: 6px; height: 6px; background: var(--rule-2);
 }
 .v-home .h-ls.is-done { width: 10px; height: 10px; background: var(--action); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-/* you are here: the next lesson, a paper square in an ink frame on the line */
 .v-home .h-ls.is-now { width: 16px; height: 16px; background: var(--paper); box-shadow: inset 0 0 0 3px var(--ink); }
 html.motion-ready:not(.m-reduce) .v-home .h-lp.m-pending .h-lp-line::after { transform: scaleX(0); }
 html.motion-ready:not(.m-reduce) .v-home .h-lp.m-in .h-lp-line::after { transition: transform 560ms var(--ease-draw) calc(var(--m-delay, 0ms) + 120ms); }
@@ -2722,7 +2830,6 @@ html.motion-ready:not(.m-reduce) .v-home .h-lp.m-in .h-ls { transition: transfor
 }
 
 .v-home .h-learn-body { display: grid; gap: var(--s-6); margin-top: var(--s-5); min-width: 0; }
-/* the lesson to read next: its cover, a flat ink label (ここから / つぎ / とちゅう), how far you got */
 .v-home .h-lf { display: grid; gap: var(--s-4); min-width: 0; color: var(--ink); text-decoration: none; }
 .v-home .h-lf-art { position: relative; display: block; min-width: 0; }
 .v-home .h-lf-art .il { width: 100%; }
@@ -2750,7 +2857,6 @@ body.lang-en .v-home .h-lf-flag { text-transform: uppercase; }
 }
 .v-home .h-lf-go { margin-top: var(--s-2); pointer-events: none; }
 @media (hover: hover) { .v-home .h-lf:hover .h-lf-go { background: var(--paper-2); } .v-home .h-lf:hover .h-lf-title { text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 0.2em; } }
-/* このあと: the next three, as rows */
 .v-home .h-lr-w { min-width: 0; }
 .v-home .h-lr-k { margin: 0 0 var(--s-1); font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); letter-spacing: var(--ls-label); color: var(--ink-3); }
 body.lang-en .v-home .h-lr-k { text-transform: uppercase; }
@@ -2764,13 +2870,11 @@ body.lang-en .v-home .h-lr-k { text-transform: uppercase; }
 .v-home .h-lr-m { font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); color: var(--ink-3); white-space: nowrap; }
 .v-home .h-lr .arrow { --arrow-s: 18px; }
 @media (hover: hover) { .v-home .h-lr:hover .h-lr-t { text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 0.24em; } }
-/* phone: the cover beside its words when the column is wide enough to hold both */
 @container home (min-width: 520px) and (max-width: 759px) {
   .v-home .h-lf { grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); align-items: center; gap: var(--s-5); }
 }
 
-/* ================================================================ desktop: まなぶ on 12 columns
-   the line of stations runs the width of the page; the lesson's cover (4) and its words (4), then このあと (4) */
+/* ================================================================ desktop: まなぶ on 12 columns */
 .v-home .h-duo > .h-sec + .h-sec { margin-top: var(--sec-gap); }
 @container home (min-width: 760px) {
   .v-home .h-learn-body { grid-template-columns: minmax(0, 8fr) minmax(0, 4fr); column-gap: var(--s-8); align-items: start; margin-top: var(--s-6); }
@@ -2794,8 +2898,8 @@ body.lang-en .v-home .h-lr-k { text-transform: uppercase; }
 .v-home .h-tool-go { display: inline-flex; }
 .v-home .h-tool-go .arrow { --arrow-s: 20px; }
 @media (hover: hover) { .v-home .h-tool:hover .h-tool-t { text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 0.24em; } }
-.motion-ready .v-home :is(.h-tools > li, .h-plan-list > .h-plan-item).m-pending { transform: translateY(32px); }
-.motion-ready .v-home :is(.h-tools > li, .h-plan-list > .h-plan-item).m-in { transition: opacity 320ms var(--ease-enter), transform var(--h-spring-dur) var(--h-spring); transition-delay: var(--m-delay, 0ms); }
+.motion-ready .v-home :is(.h-tools > li).m-pending { transform: translateY(32px); }
+.motion-ready .v-home :is(.h-tools > li).m-in { transition: opacity 320ms var(--ease-enter), transform var(--h-spring-dur) var(--h-spring); transition-delay: var(--m-delay, 0ms); }
 @container home (min-width: 760px) {
   .v-home .h-tools { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .v-home .h-tools > li + li { padding-left: var(--s-5); border-left: 1px solid var(--rule); }
@@ -2839,40 +2943,54 @@ body.lang-en .v-home .h-colo-ed { text-transform: uppercase; }
 }
 
 /* ================================================================ home: wide (tablet landscape, desktop)
-   the hero on 12 columns: headline 7 | picture 5, the picture's ground line on the baseline of the CTA */
-@container home (min-width: 700px) {
+   the hero on 12 columns: headline 7 | picture 5 (its ground line on the baseline of the copy);
+   the path runs across all 12, one station per column, the line through the squares; きく under it */
+@container home (min-width: 760px) {
   .v-home > .h-hero { margin-top: var(--s-8); }
-  .v-home .h-hero { grid-template-columns: minmax(0, 13fr) minmax(0, 11fr); column-gap: var(--s-8); align-items: end; }
-  .v-home .h-hero .h-copy { grid-column: 1; grid-row: 1; }
-  .v-home .h-hero .h-actions { grid-column: 1; grid-row: 2; }
-  .v-home .h-hero .h-art { grid-column: 2; grid-row: 1 / span 2; align-self: end; }
-  .v-home .h-hero.is-new .h-art { margin: 0 0 calc(-24 / 360 * 100% + var(--s-1)); }
-  .v-home .h-hero.is-back .h-side { grid-column: 2; grid-row: 1 / span 2; align-self: start; margin-top: 0; }
-  .v-home .h-hero.is-back .is-back-art { display: block; margin-bottom: calc(-24 / 360 * 100% + var(--s-1)); }
-  .v-home .h-hero.is-back .is-back-art.is-mini { display: none; }
-  .v-home .h-main { font-size: min(var(--fs-5xl), 6.6cqi); line-height: 1.16; }
-  body.lang-en .v-home .h-main { font-size: min(var(--fs-5xl), 9.4cqi); }
-  .v-home .h-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-6); margin-top: var(--s-7); }
-  .v-home .h-cta-w { flex: 0 1 auto; }
-  .v-home .h-cta { width: auto; min-width: 16em; }
+  .v-home .h-hero {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); column-gap: var(--s-9);
+    grid-template-areas: "copy art" "path path" "ask ask"; align-items: end;
+  }
+  .v-home .h-copy { grid-area: copy; padding-bottom: var(--s-2); }
+  .v-home .h-art { grid-area: art; align-self: end; margin: 0 0 calc(-24 / 360 * 100%); }
+  .v-home .h-path { grid-area: path; }
+  .v-home .h-ask { grid-area: ask; }
+  .v-home .h-main { font-size: min(var(--fs-5xl), 6.2cqi); line-height: 1.14; }
+  body.lang-en .v-home .h-main { font-size: min(var(--fs-5xl), 7.2cqi); }
+  .v-home .h-sub { font-size: var(--t-kicker); margin-top: var(--s-4); }
   .v-home .h-mast { font-size: var(--t-meta); }
-  .v-home > .h-ask { margin-top: var(--s-10); }
-  .v-home .h-ask { grid-template-columns: auto minmax(0, 1fr); column-gap: var(--s-6); align-items: end; }
+
+  /* the path across the page */
+  .v-home .h-path {
+    --mk: 52px; --ln: 6px;
+    grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: var(--s-9); padding-top: var(--s-6); border-top: 1px solid var(--rule);
+  }
+  .v-home .h-st { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto; row-gap: var(--s-4); align-content: start; padding: 0 var(--s-7) 0 0; }
+  .v-home .h-st:last-child { padding-right: 0; }
+  .v-home .h-st::before { left: var(--mk); right: 0; top: calc(var(--s-6) + var(--mk) / 2 - var(--ln) / 2); bottom: auto; height: var(--ln); width: auto; transform-origin: left center; }
+  .v-home .h-play:not(.h-done) [data-h="path"] .h-st::before { animation-name: h-seg-x; }
+  .v-home .h-st-no { font-size: var(--fs-2xl); }
+  .v-home .h-st-text { padding-top: 0; }
+  .v-home .h-st-name { font-size: var(--t-h2); }
+  .v-home .h-st-a { grid-template-columns: minmax(0, 1fr); row-gap: var(--s-2); align-content: start; }
+  .v-home .h-st-go { padding-top: 0; }
+  .v-home .h-st-cta { margin-top: var(--s-5); }
+  .v-home .h-cta { width: auto; min-width: 16em; justify-self: start; }
+  @container home (max-width: 899px) { .v-home .h-cta { min-width: 0; width: 100%; } }
+
+  .v-home .h-ask { grid-template-columns: auto minmax(0, 1fr); column-gap: var(--s-6); align-items: end; margin-top: var(--s-9); }
   .v-home .h-ask-k { padding-bottom: var(--s-4); font-size: var(--t-h3); }
   .v-home .h-ask-in { font-size: var(--t-h3); min-height: 60px; }
 }
-/* returning visitor on a wide screen: the picture, smaller, sits above the やること preview */
-@container home (min-width: 900px) {
-  .v-home .h-hero.is-back .is-back-art.is-mini { display: block; width: 58%; margin: 0 0 var(--s-5) auto; }
-}
-@container home (min-width: 700px) and (max-width: 899px) {
-  .v-home .h-cta-w { flex: 1 1 18em; }
-  .v-home .h-cta { width: 100%; min-width: 0; }
+/* short phones (SE class): the sub-line and the station padding give way so the CTA stays above the fold */
+@media (max-height: 700px) and (max-width: 899px) {
+  .v-home .h-path { margin-top: var(--s-5); }
+  .v-home .h-st { padding-bottom: var(--s-4); }
 }
 
 @media print {
-  .v-home :is(.h-actions, .h-sos, .h-staff, .h-crisis, .h-ask, .h-lf-go, .h-tt-alt, .h-change) { display: none !important; }
-  .v-home .h-route::before { transform: none !important; }
+  .v-home :is(.h-st-cta, .h-sos, .h-staff, .h-crisis, .h-ask, .h-lf-go, .h-tt-alt, .h-st-go) { display: none !important; }
+  .v-home .h-route-ln, .v-home .h-st::before { transform: none !important; }
 }
 
 /* =====================================================================
@@ -3700,7 +3818,7 @@ body.is-ruby .v-find .f-top-item .pcard-mark { justify-content: flex-start; }   
 .v-find .f-cat-intro .more-inline > .more-btn { min-height: var(--tap); }
 /* a card's 「ポイント」 tip opens in place under its facts */
 .v-find .pcard .pcard-more { margin-top: 2px; }
-.v-find .pcard .pcard-more > .more-btn { min-height: 36px; font-size: var(--t-meta); }
+.v-find .pcard .pcard-more > .more-btn { min-height: var(--tap); font-size: var(--t-meta); }
 .v-find .f-cat-sec { display: grid; }
 .v-find .f-cat-sec + .f-cat-sec { margin-top: var(--f-gap); }
 .v-find .f-cat-local { margin-top: var(--s-6); }
@@ -5003,7 +5121,13 @@ body.is-big .v-tools .tl-float-mini { display: none; }
 .v-tools .mn-preset { display: grid; gap: var(--s-2); }
 .v-tools .mn-preset .seg { max-width: 520px; }
 .v-tools .mn-preset .seg > button { padding: 0 6px; }
+.v-tools .mn-preset .select { max-width: 320px; }   /* v8 (MONEY): 8 Kanto places = a native select */
 .v-tools .mn-preset-note { grid-column: 1 / -1; margin: 0; }
+.v-tools .mn-preset-note:empty { display: none; }
+/* v8 (MONEY): 出典 under the calculator — label, one line per statistic, the data's note */
+.v-tools .mn-src { display: grid; gap: 6px; }
+.v-tools .mn-src > p { margin: 0; }
+.v-tools .mn-src > .tl-label { margin-bottom: 2px; }
 
 /* the result: the balance in num-xl (green surplus / amber deficit), in vs out bars, the breakdown */
 .v-tools .mn-result { display: grid; gap: var(--s-5); }
@@ -5109,6 +5233,7 @@ body.is-big .v-tools .tl-float-mini { display: none; }
 /* バイト代 from 時給 × 時間 × 日 */
 .v-tools .mn-wage { margin: var(--s-2) 0 var(--s-2); }
 .v-tools .mn-wage > :not(summary) { margin-bottom: var(--s-3); }
+.v-tools .mn-w-pref { display: grid; gap: 4px; max-width: 260px; }   /* v8 (MONEY): 働く都県 → 最低賃金 */
 .v-tools .mn-w-grid { display: grid; grid-template-columns: minmax(0, 1.3fr) auto minmax(0, 1fr) auto minmax(0, 1fr); align-items: end; gap: var(--s-2); }
 .v-tools .mn-w-f { display: grid; gap: 4px; min-width: 0; }
 .v-tools .mn-w-l {
@@ -5171,7 +5296,7 @@ body.is-big .v-tools .mn-num { width: 6.4em; }
   /* tools.js measures the column at its own height */
   .v-tools .tl-side.is-measure { align-self: start !important; position: static !important; }
   .v-tools .tl-side.is-measure :is(.ck-result, .mn-result) { height: auto !important; }
-  .v-tools .mn-preset { grid-template-columns: auto minmax(0, 520px); align-items: center; column-gap: var(--s-5); }
+  .v-tools .mn-preset { grid-template-columns: max-content minmax(0, 520px); align-items: center; column-gap: var(--s-5); }   /* v8 (MONEY): the label hugs the select */
   .v-tools .mn-big-v { font-size: var(--t-num-xl); }
 }
 
@@ -6204,164 +6329,209 @@ body.lang-en .v-tools :is(.tl-title, .tl-hub-t, .scr-label-title) { word-break: 
 }
 /* ---- css/plan.css ---- */
 /* =====================================================================
-   巣立ちマップ v4 — plan.css (PLAN)  #/plan やること
-   VISUAL-SPEC §7.8 · MOTION-SPEC §4.2 Plan. Paper, ink, hairlines; square stations on one rule; the green line
-   is the road already walked. Tokens only (type roles, the four trackings, 4px space grid). Radius 0, no
-   shadows, no gradients. Scoped under .v-plan (the view <main> and the plan's own sheets, which carry
-   "v-plan plan-sheet"); row internals are keyed on the row class (.tl-item / .plan-saved-item) so a FLIP
-   ghost (a clone appended to <body>) keeps its look while it fades.
+   巣立ちマップ v8 — plan.css (PLAN)  #/plan やること — the roadmap
+   SPEC-v8 workstream 2. Time is the brand's line; every period is a station on it. Phone: the line runs down the
+   left, stations are rows, the current one is open. Desktop (≥1100px): one horizontal line across the page,
+   the open period's tasks under it on the left, つぎの駅・見せる・残す・保存した支援 on the right.
+   Paper, ink, hairlines; the one solid green is the line already travelled (and いま). Tokens only (type roles,
+   the four trackings, 4px space grid). Radius 0, no shadows, no gradients (rings are inset box-shadows = borders
+   that do not take space). Scoped under .v-plan (the view <main> and the plan's own sheets "v-plan plan-sheet");
+   row internals are keyed on the row class (.tl-item / .plan-saved-item) so a FLIP ghost keeps its look.
    ===================================================================== */
 
-/* ---------- page rhythm (v7: status strip → timeline (いま first) → 保存した支援 → 見せる・残す) ---------- */
-.view.v-plan > .plan-hero { margin-top: var(--s-5); }
-.view.v-plan > .plan-body { margin-top: var(--s-6); }
+/* ---------- page rhythm ---------- */
+.view.v-plan > .plan-rm { margin-top: var(--s-6); }
 .v-plan .plan-flow { margin-top: var(--sec-gap); }
 .v-plan .plan-flow > * + * { margin-top: var(--sec-gap); }
 
-/* ---------- head: やること + the 高校受験 / 巣立ち switch ---------- */
-.v-plan .plan-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-3) var(--s-5); }
+/* ---------- head: やること · できたこと n / N · the 高校受験 / 巣立ち switch ---------- */
+.v-plan .plan-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--s-3) var(--s-5); }
+.v-plan .plan-head-l { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s-1) var(--s-5); min-width: 0; }
 .v-plan .plan-h1 { flex: none; }
 .v-plan .plan-track { flex: 1 1 240px; max-width: 360px; }
-
-/* ---------- status strip: count · (person) · date · できたこと ----------
-   Phone: [count | できたこと] over [date + 変える]; a 2px ink rule on top, hairlines between, like a station board.
-   Wide (container ≥ 760px): one row, the person walking to the door between the count and the date. */
-.v-plan .plan-hero { container: plan-hero / inline-size; border-top: 2px solid var(--ink); padding-top: var(--s-3); }
-.v-plan .plan-hero-in {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 132px);
-  grid-template-areas: "count prog" "date date";
-  column-gap: var(--s-5);
-  align-items: end;
-}
-.v-plan .plan-count { grid-area: count; min-width: 0; }
-.v-plan .plan-hero-il { display: none; grid-area: il; }
-.v-plan .plan-count-k, .v-plan .plan-prog-k, .v-plan .plan-date-k {
+.v-plan .plan-prog { display: inline-flex; align-items: baseline; gap: 8px; white-space: nowrap; }
+.v-plan .plan-prog-k {
   font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui);
   letter-spacing: var(--ls-label); color: var(--ink-2);
 }
-.v-plan .plan-count-big {
-  display: flex; align-items: baseline; flex-wrap: nowrap;
-  font-size: var(--t-num-xl); line-height: var(--lh-num); color: var(--ink);
-}
-.v-plan .plan-count-num {
-  font-family: var(--font-num); font-weight: 700; font-size: 1em; line-height: var(--lh-num);
-  letter-spacing: var(--ls-num); font-variant-numeric: tabular-nums; white-space: nowrap;
-}
-.v-plan .plan-count-pre, .v-plan .plan-count-unit {
-  flex: none; font-family: var(--font-display); font-weight: 500; font-size: 0.42em; line-height: 1; letter-spacing: var(--ls-0);
-}
-.v-plan .plan-count-pre { margin-right: 0.12em; }
-.v-plan .plan-count-unit { margin-left: 0.12em; }
-.v-plan .plan-count-today { font-family: var(--font-display); font-weight: 700; font-size: 0.8em; line-height: var(--lh-num); letter-spacing: var(--ls-0); }
-.v-plan .plan-count-sub { margin-top: 2px; font-family: var(--font-display); font-weight: 700; font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink); }
-
-/* できたこと: number pair + one bar (no unexplained tick) */
-.v-plan .plan-prog { grid-area: prog; display: grid; gap: 6px; min-width: 0; padding-bottom: 6px; }
-.v-plan .plan-prog-row { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0 var(--s-2); }
-.v-plan .plan-prog-num { white-space: nowrap; color: var(--ink); }
+.v-plan .plan-prog-num { color: var(--ink); }
 .v-plan .plan-prog-num b { font-family: var(--font-num); font-weight: 700; font-size: var(--t-num-l); line-height: 1; letter-spacing: var(--ls-0); }
 .v-plan .plan-prog-of { font-family: var(--font-num); font-weight: 500; font-size: var(--t-meta); line-height: 1; color: var(--ink-3); }
-.v-plan .plan-prog-bar { position: relative; height: 6px; background: var(--paper-3); overflow: hidden; }
-.v-plan .plan-prog-fill { position: absolute; inset: 0; display: block; background: var(--action); transform-origin: left center; }
 .v-plan .plan-prog.is-all .plan-prog-k { color: var(--action-text); font-weight: 700; }
+.v-plan .plan-nostore { flex-basis: 100%; margin: 0; font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--amber-text); }
+.v-plan .plan-nostore-go {
+  display: inline; min-height: 0; padding: 0; border: 0; background: none; font: inherit; font-weight: 700; color: var(--action-text);
+  text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.25em; cursor: pointer; position: relative;
+}
+.v-plan .plan-nostore-go::after { content: ""; position: absolute; inset: -12px -6px; }
 
-/* the day it counts to: label (+ 仮の日付) / date / one plain line · 変える */
-.v-plan .plan-date {
-  grid-area: date;
-  display: flex; align-items: center; gap: var(--s-3);
-  min-height: 64px; margin-top: var(--s-3); padding: var(--s-2) 0;
-  border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule);
+/* ---------- the roadmap (phone: vertical) ----------
+   .rm-rail is the pale track from the first station to the last; .rm-fill the green part already travelled
+   (JS sets both from the station marks; the fill's <i> is what moves). Stations are the <li>; their head is one
+   button (period · title · n/N · 見る), their body the tasks. */
+.v-plan .rm-wrap {
+  --rail: 28px;                                   /* the line's column; marks sit on its centre */
+  --indent: calc(var(--rail) + 14px);             /* text starts here */
+  --ln: 4px;                                      /* line thickness */
+  --mk: 12px;                                     /* a station mark */
+  --c: 24px;                                      /* a mark's centre = the head's first text line */
+  position: relative;
 }
-.v-plan .plan-date-main { flex: 1; min-width: 0; display: grid; gap: 1px; }
-.v-plan .plan-date-k { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; color: var(--ink-3); }
-.v-plan .plan-date-k .tag { letter-spacing: var(--ls-0); }
-.v-plan .plan-date-v {
-  font-family: var(--font-num); font-weight: 700; font-size: var(--fs-base); line-height: var(--lh-ui);
-  letter-spacing: var(--ls-0); font-variant-numeric: tabular-nums; color: var(--ink);
-}
-.v-plan .plan-date-note { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3); }
-.v-plan .plan-date-edit { flex: none; }
+.v-plan .rm-rail, .v-plan .rm-fill { position: absolute; z-index: 0; pointer-events: none; display: block; }
+.v-plan .rm-rail { left: 0; top: 0; width: var(--ln); margin-left: calc(var(--ln) / -2); background: var(--paper-3); }
+.v-plan .rm-fill { z-index: 1; left: 0; top: 0; width: var(--ln); margin-left: calc(var(--ln) / -2); transform-origin: center top; }
+.v-plan .rm-fill > i { display: block; width: 100%; height: 100%; background: var(--action); transform-origin: center top; }
+.v-plan .rm { position: relative; z-index: 2; display: grid; margin: 0; padding: 0; list-style: none; }
+.v-plan .rm-st { position: relative; min-width: 0; }
 
-@container plan-hero (max-width: 339px) {
-  .v-plan .plan-hero-in { grid-template-columns: minmax(0, 1fr); grid-template-areas: "count" "prog" "date"; row-gap: var(--s-3); }
+/* the station head: one full-width button */
+.v-plan .rm-head {
+  position: relative; z-index: 2; display: block; width: 100%; margin: 0; padding: 0; border: 0; background: none;
+  font: inherit; color: inherit; text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent;
+}                                                   /* z 2: the sign's paper sits over the line (desktop: no .rm stacking) */
+.v-plan .rm-head.is-static { cursor: default; }
+.v-plan .rm-head:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.v-plan .rm-head-in {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: "when count tog" "title title title";
+  align-items: center; column-gap: var(--s-3); row-gap: 2px;
+  min-height: 56px; padding: var(--s-3) 0 var(--s-3) var(--indent);
+  border-bottom: 1px solid var(--rule);
 }
-@container plan-hero (min-width: 560px) {
-  .v-plan .plan-hero-in { grid-template-columns: minmax(0, 1fr) minmax(0, 200px); }
-  .v-plan .has-il > .plan-hero-in { grid-template-columns: minmax(0, 1fr) 112px minmax(0, 200px); grid-template-areas: "count il prog" "date date date"; }
-  .v-plan .has-il .plan-hero-il { display: block; justify-self: center; width: 112px; align-self: end; margin-bottom: -4px; }
-}
-@container plan-hero (min-width: 820px) {
-  .v-plan .plan-hero-in, .v-plan .has-il > .plan-hero-in {
-    grid-template-columns: auto 104px minmax(0, 1fr) minmax(180px, 240px);
-    grid-template-areas: "count il date prog";
-    column-gap: var(--s-6);
-  }
-  .v-plan .plan-hero:not(.has-il) > .plan-hero-in { grid-template-columns: auto minmax(0, 1fr) minmax(180px, 240px); grid-template-areas: "count date prog"; }
-  .v-plan .has-il .plan-hero-il { width: 104px; }
-  .v-plan .plan-count-big { font-size: var(--fs-5xl); }
-  .v-plan .plan-date { align-self: end; margin: 0; padding: 0 0 6px var(--s-6); min-height: 0; border: 0; border-left: 1px solid var(--rule); }
-  .v-plan .plan-prog { padding-left: var(--s-6); border-left: 1px solid var(--rule); }
-}
-.v-plan .plan-hero-il .il, .v-plan .plan-hero-il svg { display: block; width: 100%; height: auto; }
+.v-plan .rm-st:last-child > .rm-head > .rm-head-in { border-bottom: 0; }
+.v-plan .rm-st.is-open > .rm-head > .rm-head-in { border-bottom-color: transparent; }
+.v-plan .rm-head-in > .rm-when { grid-area: when; align-self: end; }
+.v-plan .rm-head-in > .rm-title { grid-area: title; align-self: start; }
+.v-plan .rm-short { display: none; }                /* the short station name is for the desktop line only */
+.v-plan .rm-head-in > .rm-count { grid-area: count; }
+.v-plan .rm-head-in > .rm-tog { grid-area: tog; }
+.v-plan .rm-head:active .rm-head-in { background: var(--wash); }
+@media (hover: hover) { .v-plan .rm-head:not(.is-static):hover .rm-title { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.3em; } }
 
-/* ---------- side blocks: 保存した支援 · 見せる・残す ---------- */
-.v-plan .plan-tools-list .list-item { min-height: 72px; }
-.v-plan .plan-tools .list-ic { width: 24px; }
-.v-plan .plan-tools .list-chev { color: var(--ink); }
-
-/* 保存した支援: compact program rows + remove */
-.v-plan .plan-saved { display: grid; }
-.plan-saved-item { position: relative; }
-.plan-saved-item > .pcard { border-bottom: 0; }
-.plan-saved-item + .plan-saved-item > .pcard { border-top: 1px solid var(--rule); }
-.v-plan .plan-saved-item:first-child > .pcard { border-top: 0; }
-.plan-saved-item .pcard-main { padding-right: 40px; }
-.plan-saved-item .plan-remove {
-  position: absolute; top: 8px; right: -10px; z-index: 3;
-  display: grid; place-items: center;
-  width: var(--tap); height: var(--tap);
-  color: var(--ink-3);
-  transition: background-color var(--dur-quick) var(--ease-standard), color var(--dur-quick) var(--ease-standard);
+/* marks on the line */
+.v-plan .rm-mk {
+  position: absolute; z-index: 3;
+  left: calc(var(--rail) / 2 - var(--mk) / 2); top: calc(var(--c) - var(--mk) / 2);
+  width: var(--mk); height: var(--mk);
+  background: var(--paper); box-shadow: inset 0 0 0 1.5px var(--ink);
+  color: var(--action);                            /* the stamp's ring takes this colour */
 }
-.plan-saved-item .plan-remove .icon { width: 20px; height: 20px; }
-@media (hover: hover) { .plan-saved-item .plan-remove:hover { background: var(--paper-3); color: var(--ink); } }
-.plan-saved-item .plan-remove:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
-
-/* nothing saved: an invitation — how saving works, this period's supports, the way to find more */
-.v-plan .plan-saved-empty { display: grid; justify-items: start; gap: var(--s-2); padding-top: var(--s-4); }
-.v-plan .plan-empty-k { font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); line-height: var(--lh-ui); color: var(--ink); }
-.v-plan .plan-empty-line { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-2); }
-.v-plan .plan-empty-relk {
-  margin-top: var(--s-3);
-  font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui); letter-spacing: var(--ls-label); color: var(--ink-3);
+.v-plan .rm-mk::before, .v-plan .rm-mk::after { content: ""; position: absolute; }
+.v-plan .rm-st.is-past > .rm-head > .rm-mk { background: var(--ink); box-shadow: none; }
+.v-plan .rm-st.is-current { --mk: 20px; }
+.v-plan .rm-st.is-current > .rm-head > .rm-mk { background: var(--action-fill); box-shadow: 0 0 0 3px var(--paper); }
+.v-plan .rm-st.is-milestone { --mk: 20px; --c: 32px; }
+.v-plan .rm-st.is-milestone > .rm-head > .rm-mk { background: var(--ink); box-shadow: none; }
+.v-plan .rm-st.is-milestone > .rm-head > .rm-mk::before { inset: 6px; background: var(--paper); }
+.v-plan .rm-st.is-milestone.is-current > .rm-head > .rm-mk { background: var(--action-fill); }
+/* a finished period: filled, with a check */
+.v-plan .rm-st.is-complete > .rm-head > .rm-mk { background: var(--ink); box-shadow: none; }
+.v-plan .rm-st.is-complete.is-current > .rm-head > .rm-mk { background: var(--action-fill); box-shadow: 0 0 0 3px var(--paper); }
+.v-plan .rm-st.is-complete > .rm-head > .rm-mk::before { display: none; }
+.v-plan .rm-st.is-complete > .rm-head > .rm-mk::after {
+  left: 50%; top: 44%; width: 28%; height: 54%;
+  border: solid var(--paper); border-width: 0 1.5px 1.5px 0;
+  transform: translate(-50%, -50%) rotate(45deg);
 }
-.v-plan .plan-empty-rel { width: 100%; border-top: 1px solid var(--rule); }
-.v-plan .plan-empty-rel .list-item { min-height: 56px; }
-.v-plan .plan-empty-go {
-  display: inline-flex; align-items: center; gap: 6px; min-height: var(--tap);
-  font-family: var(--font-display); font-weight: 700; font-size: var(--fs-sm); color: var(--action-text); text-decoration: none;
-}
-.v-plan .plan-empty-go > span:not(.arrow) { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.3em; }
-@media (hover: hover) { .v-plan .plan-empty-go:hover > span:not(.arrow) { text-decoration-thickness: 2px; } }
-.v-plan .plan-empty-go:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.v-plan .rm-st.is-complete.is-current > .rm-head > .rm-mk::after { border-color: var(--on-action-fill); }
 
-/* the いま tag on the timeline */
-.v-plan .tl-now {
+/* when: いま · 6か月前 · 2026年9月 */
+.v-plan .rm-when {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; min-width: 0;
+  font-family: var(--font-display); font-weight: 500; font-size: var(--t-meta); line-height: 1.5; letter-spacing: var(--ls-0);
+}
+.v-plan .rm-rel { font-weight: 700; color: var(--ink-2); }
+.v-plan .rm-date { font-family: var(--font-num); color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.v-plan .rm-now {
   display: inline-flex; align-items: center; min-height: 22px; padding: 0 8px;
   background: var(--action-fill); color: var(--on-action-fill);
   font-family: var(--font-display); font-weight: 700; font-size: var(--t-label); line-height: 1; letter-spacing: var(--ls-label);
   white-space: nowrap;
 }
+.v-plan .rm-title { font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); line-height: var(--lh-title); color: var(--ink-2); text-wrap: pretty; }
+.v-plan .rm-st:is(.is-current, .is-open) .rm-head-in > .rm-title { color: var(--ink); }
+.v-plan .rm-st.is-current > .rm-head > .rm-head-in > .rm-title { font-size: var(--t-h3); line-height: var(--lh-heading); }
+.v-plan .rm-st.is-past:not(.is-open) .rm-title { color: var(--ink-3); }
 
-/* the current period, all ticked: one line + the way to the next period (shown only on .is-complete) */
+/* n/N できた */
+.v-plan .rm-count {
+  display: inline-flex; align-items: baseline; gap: 0; white-space: nowrap;
+  font-family: var(--font-num); font-weight: 500; font-size: var(--t-meta); line-height: 1; color: var(--ink-3); font-variant-numeric: tabular-nums;
+}
+.v-plan .rm-count-n { font-weight: 700; color: var(--ink-2); }   /* 0/2: no gap before the slash (the odometer slot is exactly one digit) */
+.v-plan .rm-count-w { margin-left: 4px; font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); letter-spacing: var(--ls-label); color: var(--ink-3); }
+.v-plan .rm-st.is-complete .rm-count, .v-plan .rm-st.is-complete .rm-count-n, .v-plan .rm-st.is-complete .rm-count-w { color: var(--action-text); }
+.v-plan .rm-st:not(.is-current) .rm-count-w { display: none; }   /* the word once, on the open period; the head says できたこと */
+
+/* 見る / とじる + the arrow that turns */
+.v-plan .rm-tog {
+  display: inline-flex; align-items: center; justify-content: flex-end; gap: 4px; min-width: var(--tap); min-height: var(--tap); margin-right: -4px;
+  font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); letter-spacing: var(--ls-label); color: var(--ink-3);
+}
+.v-plan .rm-tog .arrow { --arrow-s: 18px; color: var(--ink); transition: rotate var(--spring-snappy-dur) var(--spring-snappy); }
+.v-plan .rm-st.is-open:not(.is-closing) .rm-tog .arrow { rotate: 270deg; }
+.v-plan .rm-head:hover .rm-tog .arrow, .v-plan .rm-head:active .rm-tog .arrow { translate: none; }
+
+/* the milestone (巣立ちの日 / 高校入学): a station sign on the line with the countdown inside it */
+.v-plan .rm-box > .rm-head-in {
+  grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "k k" "d d" "n n" "c tog";
+  align-items: start; column-gap: var(--s-4); row-gap: 0;
+  margin: var(--s-2) 0 var(--s-2) var(--indent); padding: var(--s-3) var(--s-4);
+  border: 2px solid var(--ink); background: var(--paper);
+}
+.v-plan .rm-st.is-current > .rm-box > .rm-head-in { border-color: var(--action); }
+.v-plan .rm-st.is-open > .rm-box > .rm-head-in { border-bottom-color: var(--ink); }
+.v-plan .rm-st.is-current.is-open > .rm-box > .rm-head-in { border-bottom-color: var(--action); }
+.v-plan .rm-box-k { grid-area: k; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.v-plan .rm-box-k > .rm-title { color: var(--ink); font-size: var(--t-h3); line-height: var(--lh-heading); }
+.v-plan .rm-box-d { grid-area: d; margin-top: 2px; padding-bottom: 6px; font-family: var(--font-num); font-weight: 500; font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.v-plan .rm-box-n { grid-area: n; display: flex; align-items: baseline; justify-self: start; color: var(--ink); white-space: nowrap; }
+.v-plan .rm-box-pre, .v-plan .rm-box-u { font-family: var(--font-display); font-weight: 700; font-size: var(--t-meta); line-height: 1; letter-spacing: var(--ls-0); }
+.v-plan .rm-box-pre { margin-right: 4px; }
+.v-plan .rm-box-u { margin-left: 3px; }
+.v-plan .rm-box-num { font-family: var(--font-num); font-weight: 700; font-size: var(--t-num-xl); line-height: var(--lh-num); letter-spacing: var(--ls-num); font-variant-numeric: tabular-nums; }
+.v-plan .rm-box-today { font-family: var(--font-display); font-weight: 700; font-size: var(--t-h1); line-height: var(--lh-num); letter-spacing: var(--ls-0); color: var(--action-text); }
+.v-plan .rm-box > .rm-head-in > .rm-box-c { grid-area: c; align-self: center; margin-top: var(--s-2); }
+.v-plan .rm-box > .rm-head-in > .rm-tog { grid-area: tog; justify-self: end; margin: var(--s-2) -8px -10px 0; }
+.v-plan .rm-box > .rm-head-in > .sr-only { position: absolute; }
+.v-plan .rm-assumed { letter-spacing: var(--ls-0); }
+body.lang-en .v-plan .rm-box-u { font-size: var(--t-label); letter-spacing: var(--ls-label); }
+
+/* いま before the first station / after the last: a plain row, no body */
+.v-plan .rm-now-only .rm-head-in { grid-template-columns: minmax(0, 1fr); grid-template-areas: "when" "title"; }
+.v-plan .rm-now-only .rm-title { color: var(--ink); }
+.v-plan .rm-consult { grid-area: auto; justify-self: start; }
+
+/* a period's tasks */
+.v-plan .rm-body { position: relative; padding: 0 0 var(--s-6) var(--indent); }
+.v-plan .rm-body[hidden] { display: none; }
+.v-plan .rm-st.is-open:not(:last-child) > .rm-body { border-bottom: 1px solid var(--rule); }
+.v-plan .rm-body-in { position: relative; display: grid; gap: var(--s-1); min-width: 0; }
+.v-plan .rm-body-title { display: none; }
+.v-plan .rm-body-title:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.v-plan .rm-left { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-1) var(--s-4); min-height: var(--tap); margin: 0; }
+.v-plan .rm-left-t { font-family: var(--font-display); font-weight: 500; font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-2); }
+.v-plan .rm-left-n { font-family: var(--font-num); font-weight: 700; font-size: var(--t-num-inline); line-height: 1; letter-spacing: var(--ls-0); color: var(--ink); font-variant-numeric: tabular-nums; padding: 0 2px; }
+.v-plan .rm-left-box { padding-top: var(--s-1); }
+.v-plan .rm-edit {
+  position: relative; flex: none; display: inline-flex; align-items: center; justify-content: center;
+  min-height: 44px; padding: 0 var(--s-3); border: 0; background: none; box-shadow: inset 0 0 0 1.5px var(--ink); cursor: pointer;
+  font-family: var(--font-display); font-weight: 700; font-size: var(--t-meta); line-height: 1; color: var(--ink);
+}
+.v-plan .rm-edit::after { content: ""; position: absolute; inset: -4px 0; }
+.v-plan .rm-edit:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+@media (hover: hover) { .v-plan .rm-edit:hover { background: var(--paper-2); } }
+.v-plan .rm-edit:active { background: var(--wash); }
+.v-plan .rm-note, .v-plan .rm-empty { margin: 0; font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3); }
+.v-plan .rm-empty { padding: var(--s-2) 0; }
+
+/* the current period, all ticked: one line + the way to the next station (shown only on .is-complete) */
 .v-plan .tl-cur-done { display: none; }
-.v-plan .tl > li.is-current.is-complete .tl-cur-done {
+.v-plan .rm-st.is-current.is-complete .tl-cur-done {
   display: grid; justify-items: start; gap: 2px;
   margin-top: var(--s-3); padding: var(--s-3) var(--s-4);
   background: var(--action-tint);
 }
-.v-plan .tl-cur-done-t { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); line-height: var(--lh-ui); color: var(--action-text); }
+.v-plan .tl-cur-done-t { display: flex; align-items: center; gap: 10px; margin: 0; font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); line-height: var(--lh-ui); color: var(--action-text); }
 .v-plan .tl-cur-done-mk { flex: none; width: 8px; height: 14px; margin: -4px 2px 0; border: solid currentColor; border-width: 0 2px 2px 0; transform: rotate(45deg); }
 .v-plan .tl-cur-go {
   display: inline-flex; align-items: center; gap: 8px; min-height: var(--tap); padding: 0; border: 0; background: none; cursor: pointer; text-align: left;
@@ -6369,115 +6539,13 @@ body.lang-en .v-tools :is(.tl-title, .tl-hub-t, .scr-label-title) { word-break: 
 }
 .v-plan .tl-cur-go > span:not(.arrow) { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.3em; }
 .v-plan .tl-cur-go:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
-.v-plan .tl-now-go { margin-top: var(--s-1); }
-.v-plan .tl-now-go .tl-link { display: inline-flex; align-items: center; min-height: var(--tap); color: var(--action-text); font-family: var(--font-display); font-weight: 700; font-size: var(--t-meta); text-decoration: none; }
-.v-plan .tl-now-go .tl-link > span { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.3em; }
-.v-plan .tl-now-go .tl-link .arrow { --arrow-s: 16px; margin-left: 6px; }
-
-/* ---------- 02 timeline: one 1px rule, square stations; the green line is the road walked ----------
-   Each <li> draws the rule from its station down to the next one (li::before). .tl-fill (JS: top/height from
-   the first station to いま) is scaled by scroll on a view() timeline; its <i> draws once on arrival. */
-.v-plan .tl-wrap {
-  --rail: 24px;                                 /* rail column; stations sit on its centre line */
-  --indent: calc(var(--rail) + 12px);           /* text starts here */
-  --c0: calc(var(--fs-sm) * 0.75);              /* a station's centre = middle of the first (.tl-when) line */
-  position: relative;
-  margin-top: var(--s-5);
-}
-.v-plan .tl-fill {
-  position: absolute; z-index: 1; left: calc(var(--rail) / 2 - 2px); top: 0; width: 4px; height: 0;
-  transform-origin: center top; pointer-events: none;
-}
-.v-plan .tl-fill > i { display: block; height: 100%; background: var(--action); transform-origin: center top; }
-/* the road ahead inks in under the reading line (JS: top/height from いま to the last station; motion only) */
-.v-plan .tl-trace {
-  display: none; position: absolute; z-index: 1; left: calc(var(--rail) / 2 - 1px); top: 0; width: 2px; height: 0;
-  background: var(--ink-2); transform-origin: center top; transform: scaleY(0); pointer-events: none;
-}
-.v-plan .tl {
-  --m-rise: 8px;
-  position: relative; display: grid; margin: 0; padding: 0; list-style: none;
-}
-.v-plan .tl > li {
-  --c: var(--c0);
-  --mk: 12px;
-  position: relative;
-  min-width: 0;
-  padding: 0 0 var(--s-7) var(--indent);
-}
-.v-plan .tl > li::before {
-  content: ""; position: absolute; z-index: 0;
-  left: calc(var(--rail) / 2 - 0.5px); width: 1px;
-  top: var(--c); bottom: calc(var(--c0) * -1);
-  background: var(--rule-2);
-}
-.v-plan .tl > li:last-child { padding-bottom: 0; }
-.v-plan .tl > li:last-child::before { display: none; }
-
-/* stations */
-.v-plan .tl-mk {
-  position: absolute; z-index: 2;
-  left: calc(var(--rail) / 2 - var(--mk) / 2); top: calc(var(--c) - var(--mk) / 2);
-  width: var(--mk); height: var(--mk);
-  background: var(--paper); box-shadow: inset 0 0 0 1.5px var(--ink);
-  color: var(--action);               /* the stamp's ink ring takes this colour */
-}
-.v-plan .tl-mk::before, .v-plan .tl-mk::after { content: ""; position: absolute; }
-.v-plan .tl > li.is-past { --mk: 10px; }
-.v-plan .tl > li.is-past > .tl-mk { background: var(--ink); box-shadow: none; }
-.v-plan .tl > li.is-current { --mk: 14px; }
-.v-plan .tl > li.is-current > .tl-mk { background: var(--action-fill); box-shadow: none; }
-.v-plan .tl > li.is-milestone { --mk: 18px; }
-.v-plan .tl > li.is-milestone > .tl-mk { background: var(--ink); box-shadow: none; }
-.v-plan .tl > li.is-milestone > .tl-mk::before { inset: 5px; background: var(--paper); }
-.v-plan .tl > li.is-milestone.is-current > .tl-mk { background: var(--action-fill); }
-/* a finished period: filled, with a check */
-.v-plan .tl > li.is-complete { --mk: 14px; }
-.v-plan .tl > li.is-complete > .tl-mk { background: var(--ink); box-shadow: none; }
-.v-plan .tl > li.is-complete.is-current > .tl-mk { background: var(--action-fill); }
-.v-plan .tl > li.is-complete > .tl-mk::before { display: none; }
-.v-plan .tl > li.is-complete > .tl-mk::after {
-  left: 50%; top: 44%; width: 30%; height: 56%;
-  border: solid var(--paper); border-width: 0 1.5px 1.5px 0;
-  transform: translate(-50%, -50%) rotate(45deg);
-}
-.v-plan .tl > li.is-complete.is-current > .tl-mk::after { border-color: var(--on-action-fill); }
-
-/* a period */
-.v-plan .tl-body { position: relative; min-width: 0; display: grid; gap: var(--s-1); }
-.v-plan .tl-when {
-  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; column-gap: 12px;
-  min-height: calc(var(--fs-sm) * 1.5);
-  font-family: var(--font-display); font-weight: 500; font-size: var(--t-meta); line-height: 1.5; letter-spacing: var(--ls-0);
-}
-.v-plan .tl-when-l { min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 2px 10px; }
-.v-plan .tl-now { min-height: 20px; }
-.v-plan .tl-rel { font-weight: 700; color: var(--ink); }
-.v-plan .tl-date { font-family: var(--font-num); color: var(--ink-3); font-variant-numeric: tabular-nums; }
-.v-plan .tl-count { grid-column: 2; font-family: var(--font-num); font-weight: 500; color: var(--ink-3); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.v-plan .tl-count-n { font-weight: 700; color: var(--ink-2); }
-.v-plan .tl > li.is-complete .tl-count, .v-plan .tl > li.is-complete .tl-count-n { color: var(--action-text); }
-.v-plan .tl-title { font-size: var(--t-h3); line-height: var(--lh-title); }
-.v-plan .tl > li.is-current > .tl-body .tl-title, .v-plan .tl > li.is-milestone > .tl-body .tl-title { font-size: var(--t-h2); line-height: var(--lh-heading); }
-.v-plan .tl > li.is-past .tl-title { color: var(--ink-2); }
-.v-plan .tl-sub { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3); }
-.v-plan .tl-now-text { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-2); }
-
-/* the leaving day / 高校入学: a flat band, the station everything points at */
-.v-plan .tl > li.is-milestone > .tl-body {
-  --tl-bg: var(--paper-2);
-  margin: calc(var(--s-3) * -1) 0 0 calc(var(--s-2) * -1);
-  padding: var(--s-3) var(--s-4) var(--s-4) var(--s-2);
-  background: var(--paper-2);
-}
 
 /* the jump target's 6% ink wash (600ms) */
 .v-plan .plan-wash { position: absolute; inset: calc(var(--s-2) * -1); background: var(--ink); opacity: 0; pointer-events: none; z-index: 3; }
 
 /* tasks: ruled rows with a 24px square; ticking fills it, draws the check and stamps 済 */
-.v-plan .tl-items { margin: var(--s-2) 0 0; padding: 0; list-style: none; display: grid; border-top: 1px solid var(--rule); }
-.v-plan .tl > li.is-current > .tl-body > .tl-items, .v-plan .tl-fold-body > .tl-items { margin-top: var(--s-3); }
-.tl-item { position: relative; border-bottom: 1px solid var(--rule); background: var(--tl-bg, var(--paper)); }
+.v-plan .tl-items { margin: var(--s-1) 0 0; padding: 0; list-style: none; display: grid; border-top: 1px solid var(--rule); }
+.tl-item { position: relative; border-bottom: 1px solid var(--rule); background: var(--paper); }
 .tl-item > :not(.tl-wash) { position: relative; z-index: 1; }
 /* a tick: the green wash sweeps the row and fades (plan.js settleRow) */
 .tl-item > .tl-wash { position: absolute; inset: 0; z-index: 0; background: var(--action-tint); transform-origin: left center; opacity: 0; pointer-events: none; }
@@ -6501,9 +6569,11 @@ body.lang-en .v-tools :is(.tl-title, .tl-hub-t, .scr-label-title) { word-break: 
   width: 24px; height: 24px; margin-top: 1px;
   background: var(--field); box-shadow: inset 0 0 0 1.5px var(--ink);
   color: var(--on-action-fill);
+  transition: transform 120ms var(--ease-standard);
 }
 .tl-item .tl-box .icon { width: 24px; height: 24px; stroke-width: 2.75; opacity: 0; }
-@media (hover: hover) { .tl-item .tl-task:hover .tl-box { box-shadow: inset 0 0 0 2px var(--ink); } }
+@media (hover: hover) { .tl-item .tl-task:hover .tl-box { box-shadow: inset 0 0 0 2px var(--ink); transform: scale(1.08); } }
+.tl-item .tl-task:active .tl-box { transform: scale(0.92); }
 .tl-item .tl-check:checked + .tl-box { background: var(--action-fill); box-shadow: none; }
 .tl-item .tl-check:checked + .tl-box .icon { opacity: 1; }
 .tl-item .tl-check:focus-visible + .tl-box { outline: 2px solid var(--focus); outline-offset: 2px; }
@@ -6531,16 +6601,16 @@ body.lang-en .tl-item .tl-seal { font-size: var(--t-micro); padding: 0 4px; }
   margin-top: calc(var(--s-2) * -1); padding: 0 0 var(--s-1) 36px;
   font-size: var(--t-meta);
 }
-.tl-item .tl-link {
+.tl-item .tl-link, .v-plan .rm-consult {
   display: inline-block; align-content: center;
   min-height: var(--tap);
-  color: var(--action-text); font-family: var(--font-display); font-weight: 700;
+  color: var(--action-text); font-family: var(--font-display); font-weight: 700; font-size: var(--t-meta);
   text-decoration: none;
 }
-.tl-item .tl-link > span { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.3em; }
-.tl-item .tl-link .arrow { --arrow-s: 16px; margin-left: 6px; }
-@media (hover: hover) { .tl-item .tl-link:hover > span { text-decoration-thickness: 2px; } }
-/* a saved support placed in the timeline */
+.tl-item .tl-link > span, .v-plan .rm-consult > span { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.3em; }
+.tl-item .tl-link .arrow, .v-plan .rm-consult .arrow { --arrow-s: 16px; margin-left: 6px; }
+@media (hover: hover) { .tl-item .tl-link:hover > span, .v-plan .rm-consult:hover > span { text-decoration-thickness: 2px; } }
+/* a saved support placed in its period */
 .tl-item-prog .tl-item-text { font-family: var(--font-display); font-weight: 700; }
 .tl-item-prog .tl-saved-k {
   display: block;
@@ -6582,45 +6652,71 @@ body.lang-en .tl-item .tl-seal { font-size: var(--t-micro); padding: 0 4px; }
 .v-plan .tl-rel-link > span:last-child { min-width: 0; overflow-wrap: anywhere; }
 @media (hover: hover) { .v-plan .tl-rel-link:hover { text-decoration-color: var(--ink); } }
 
-/* folds (later periods, すぎた時期): a drawn ＋ whose bar turns into － */
-.v-plan :is(.tl-fold, .tl-past) > summary {
-  list-style: none; cursor: pointer;
-  display: flex; align-items: flex-start; gap: var(--s-3);
-  min-height: var(--tap);
-}
-.v-plan :is(.tl-fold, .tl-past) > summary::-webkit-details-marker { display: none; }
-.v-plan :is(.tl-fold, .tl-past) > summary:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
-.v-plan .tl-toggle { position: relative; flex: none; width: var(--tap); height: var(--tap); margin: -11px -12px -11px auto; }
-.v-plan .tl-toggle::before, .v-plan .tl-toggle::after {
-  content: ""; position: absolute; left: 50%; top: 50%; width: 14px; height: 1.5px; margin: -0.75px 0 0 -7px;
-  background: var(--ink);
-}
-.v-plan .tl-toggle::after { rotate: 90deg; transition: rotate var(--spring-snappy-dur) var(--spring-snappy); }
-.v-plan details[open]:not(.is-closing) > summary .tl-toggle::after { rotate: 0deg; }
-.v-plan .tl-fold-head { flex: 1; min-width: 0; display: grid; gap: 2px; }
-/* every period header counts in ONE column: [label + date] 1fr | count | the 44px toggle lane. A folded header's
-   count sits right before its ＋; an open period's count keeps the same lane free, so open or folded, the
-   counts line up down the timeline in the same tabular Plex */
-.v-plan .tl-fold-head .tl-count { margin-left: auto; }
-.v-plan .tl-body > .tl-when .tl-count { margin-right: var(--tap); }
-.v-plan .tl-fold:not([open]) .tl-title { font-size: var(--t-ui); color: var(--ink-2); }
-@media (hover: hover) {
-  .v-plan .tl-fold > summary:hover .tl-title,
-  .v-plan .tl-past > summary:hover .tl-past-title { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.3em; }
-}
-.v-plan .tl-fold-body { display: grid; gap: var(--s-1); padding-top: var(--s-1); }
-
-.v-plan .tl > li.tl-past-wrap { --c: calc(var(--tap) / 2); }
-.v-plan .tl-past > summary { align-items: center; }
-.v-plan .tl-past-head { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; }
-.v-plan .tl-past-title { font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); color: var(--ink-2); }
-.v-plan .tl-past-left { font-family: var(--font-display); font-weight: 500; font-size: var(--t-meta); color: var(--amber-text); }
-.v-plan .tl-past-left.is-zero { color: var(--action-text); }
-.v-plan .tl-past-body { padding-top: var(--s-1); }
-.v-plan .tl-past-note { margin: 0 0 var(--s-5); font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3); }
-.v-plan .tl-inner { margin-left: calc(var(--indent) * -1); }
-
 .v-plan .plan-note { margin-top: var(--s-6); padding-top: var(--s-3); border-top: 1px solid var(--rule); font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3); }
+
+/* ---------- beside / under the roadmap: つぎの駅 · 見せる・残す · 保存した支援 ---------- */
+.v-plan .plan-side-k {
+  margin: 0 0 var(--s-2);
+  font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui); letter-spacing: var(--ls-label); color: var(--ink-3);
+}
+.v-plan .plan-next { display: none; }        /* on a phone the next station is right there on the line */
+.v-plan .plan-next-btn {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "t a" "d a"; align-items: center; column-gap: var(--s-3);
+  width: 100%; min-height: 64px; margin: 0; padding: var(--s-3) 0; border: 0; border-top: 2px solid var(--ink); border-bottom: 1px solid var(--rule); background: none;
+  font: inherit; color: var(--ink); text-align: left; cursor: pointer;
+}
+.v-plan .plan-next-btn > .plan-next-t { grid-area: t; font-family: var(--font-display); font-weight: 700; font-size: var(--t-h3); line-height: var(--lh-title); }
+.v-plan .plan-next-btn > .plan-next-d { grid-area: d; font-family: var(--font-num); font-weight: 500; font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.v-plan .plan-next-btn > .arrow { grid-area: a; --arrow-s: 20px; }
+.v-plan .plan-next-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+@media (hover: hover) { .v-plan .plan-next-btn:hover .plan-next-t { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.3em; } }
+.v-plan .plan-next-none { margin: 0; padding-top: var(--s-2); border-top: 2px solid var(--ink); font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3); }
+
+.v-plan .plan-tools-list .list-item { min-height: 72px; }
+.v-plan .plan-tools .list-ic { width: 24px; }
+.v-plan .plan-tools .list-chev { color: var(--ink); }
+
+/* 保存した支援: compact program rows, each naming its station on the line, + remove */
+.v-plan .plan-saved { display: grid; }
+.plan-saved-item { position: relative; }
+.plan-saved-item > .pcard { border-bottom: 0; }
+.plan-saved-item + .plan-saved-item > .pcard { border-top: 1px solid var(--rule); }
+.v-plan .plan-saved-item:first-child > .pcard { border-top: 0; }
+.plan-saved-item .pcard-main { padding-right: 40px; }
+.plan-saved-item .plan-saved-at {
+  position: relative; margin: -6px 0 0; padding: 0 0 var(--s-3) calc(24px + 12px);
+  font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui); letter-spacing: var(--ls-label); color: var(--ink-3);
+}
+.plan-saved-item .plan-saved-at::before { content: ""; position: absolute; left: 8px; top: 0.45em; width: 8px; height: 8px; background: var(--action); }
+.plan-saved-item .plan-saved-at:not([data-key])::before { background: var(--paper); box-shadow: inset 0 0 0 1.5px var(--ink-3); }
+.plan-saved-item .plan-remove {
+  position: absolute; top: 8px; right: -10px; z-index: 3;
+  display: grid; place-items: center;
+  width: var(--tap); height: var(--tap);
+  color: var(--ink-3);
+  transition: background-color var(--dur-quick) var(--ease-standard), color var(--dur-quick) var(--ease-standard);
+}
+.plan-saved-item .plan-remove .icon { width: 20px; height: 20px; }
+@media (hover: hover) { .plan-saved-item .plan-remove:hover { background: var(--paper-3); color: var(--ink); } }
+.plan-saved-item .plan-remove:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+
+/* nothing saved: an invitation — how saving works, this period's supports, the way to find more */
+.v-plan .plan-saved-empty { display: grid; justify-items: start; gap: var(--s-2); padding-top: var(--s-4); }
+.v-plan .plan-empty-k { font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); line-height: var(--lh-ui); color: var(--ink); }
+.v-plan .plan-empty-line { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-2); }
+.v-plan .plan-empty-relk {
+  margin-top: var(--s-3);
+  font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui); letter-spacing: var(--ls-label); color: var(--ink-3);
+}
+.v-plan .plan-empty-rel { width: 100%; border-top: 1px solid var(--rule); }
+.v-plan .plan-empty-rel .list-item { min-height: 56px; }
+.v-plan .plan-empty-go {
+  display: inline-flex; align-items: center; gap: 6px; min-height: var(--tap);
+  font-family: var(--font-display); font-weight: 700; font-size: var(--fs-sm); color: var(--action-text); text-decoration: none;
+}
+.v-plan .plan-empty-go > span:not(.arrow) { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.3em; }
+@media (hover: hover) { .v-plan .plan-empty-go:hover > span:not(.arrow) { text-decoration-thickness: 2px; } }
+.v-plan .plan-empty-go:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 
 /* ---------- sheets (class "v-plan plan-sheet" on the dialog) ---------- */
 .v-plan .plan-date-qlabel, .v-plan .cs-preview-label {
@@ -6628,6 +6724,9 @@ body.lang-en .tl-item .tl-seal { font-size: var(--t-micro); padding: 0 4px; }
 }
 .v-plan .plan-date-opts .opt { min-height: 60px; }
 .v-plan .plan-date-def { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-2); }
+.v-plan .plan-date-chips .chip, .plan-sheet .plan-date-chips .chip { min-height: 44px; }
+.plan-sheet .plan-date-chips .chip::after { inset: 0; }
+.v-plan .plan-ja { white-space: nowrap; }
 
 .v-plan .ics-lead, .v-plan .cs-lead { font-size: var(--t-ui); line-height: var(--lh-meta); color: var(--ink-2); }
 .v-plan .ics-list { margin: 0; padding: 0; list-style: none; display: grid; border-top: 2px solid var(--ink); border-bottom: 1px solid var(--rule); }
@@ -6641,6 +6740,9 @@ body.lang-en .tl-item .tl-seal { font-size: var(--t-micro); padding: 0 4px; }
 .v-plan .ics-note { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3); }
 .v-plan #plan-ics-dl { justify-content: center; }
 .v-plan .ics-how .bullets { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-2); padding-bottom: var(--s-3); }
+.plan-sheet .ics-text { display: grid; gap: 2px; min-width: 0; }
+.plan-sheet .ics-file { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3); }
+.plan-sheet .ics-file[hidden] { display: none; }
 
 .v-plan .cs-preview { display: grid; gap: 6px; }
 .v-plan .cs-text {
@@ -6654,26 +6756,100 @@ body.lang-en .tl-item .tl-seal { font-size: var(--t-micro); padding: 0 4px; }
 .v-plan .cs-actions > .btn { flex: 1 1 140px; }
 @media (min-width: 640px) { .sheet.v-plan.plan-sheet-wide { width: min(600px, calc(100vw - 48px)); } }
 
-/* ---------- wider screens ---------- */
+/* ---------- wider phones / tablets ---------- */
 @media (min-width: 600px) {
-  .v-plan .tl-wrap { --rail: 28px; --indent: calc(var(--rail) + 16px); }
+  .v-plan .rm-wrap { --rail: 32px; --indent: calc(var(--rail) + 16px); }
 }
 
-/* desktop: the status strip spans the page; under it the timeline is the wide column (いま on the first screen) and
-   保存した支援 + 見せる・残す stand beside it, right of one hairline (sticky while they fit in the window) */
+/* ---------- desktop: the line runs across the page ----------
+   .rm-wrap is one grid: --n columns (one per station, two for the milestone sign). Row 1 = the station heads,
+   row 2 = the open period's tasks (--k columns, left) and つぎの駅・見せる・残す・保存した支援 (the rest, right).
+   The <ol> and <li> are display: contents so heads and bodies place themselves on that grid. */
 @media (min-width: 1100px) {
   .view.v-plan { --col: calc(var(--container) + 2 * var(--gutter)); }
-  .view.v-plan > .plan-body { margin-top: var(--s-7); }
-  .v-plan .plan-body:has(> .plan-tl) { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); align-items: start; }
-  .v-plan .plan-body > .plan-tl { padding-right: var(--s-6); }
-  .v-plan .plan-body:has(> .plan-tl) > .plan-flow { margin-top: 0; padding-left: var(--s-6); border-left: 1px solid var(--rule); min-height: 100%; }
-  .v-plan .plan-body.is-stick > .plan-flow { position: sticky; top: var(--sticky-top); min-height: 0; }
-  .v-plan .plan-flow > * + * { margin-top: var(--s-9); }
+  .view.v-plan > .plan-rm { margin-top: var(--s-7); }
+  .v-plan .rm-wrap {
+    --ln: 6px; --mk: 14px;
+    --rail-y: 44px;                               /* the line's distance from the grid's top */
+    --indent: 0px;
+    display: grid; grid-template-columns: repeat(var(--n, 12), minmax(0, 1fr)); grid-auto-rows: auto;
+    column-gap: 4px; row-gap: var(--s-8); align-items: start;
+  }
+  .v-plan .rm-rail, .v-plan .rm-fill { height: var(--ln); width: auto; margin: calc(var(--ln) / -2) 0 0; transform-origin: left center; }
+  .v-plan .rm-fill > i { transform-origin: left center; }
+  .v-plan .rm, .v-plan .rm-st { display: contents; }
+  .v-plan .rm-head { grid-row: 1; align-self: start; min-width: 0; }
+  .v-plan .rm-head.rm-box { grid-column: span 2; }
+  .v-plan .rm-mk { left: 50%; top: calc(var(--rail-y) - var(--mk) / 2); margin-left: calc(var(--mk) / -2); }
+  .v-plan .rm-st.is-current, .v-plan .rm-st.is-milestone { --mk: 22px; }
+  .v-plan .rm-head-in, .v-plan .rm-now-only .rm-head-in {
+    grid-template-columns: minmax(0, 1fr); grid-template-areas: "when" "title" "count";
+    justify-items: center; align-items: start; row-gap: 4px;
+    min-height: 0; padding: calc(var(--rail-y) + var(--mk) / 2 + 10px) 2px 0; border-bottom: 0;
+    text-align: center;
+  }
+  .v-plan .rm-head:active .rm-head-in { background: none; }
+  .v-plan .rm-when { flex-direction: column; align-items: center; gap: 0; }
+  .v-plan .rm-rel { font-size: var(--t-label); line-height: var(--lh-ui); }
+  .v-plan .rm-date { font-size: var(--t-micro); line-height: var(--lh-ui); }
+  /* いま flies over its station */
+  .v-plan .rm-st.is-current .rm-head-in > .rm-when > .rm-now {
+    position: absolute; left: 50%; top: calc(var(--rail-y) - var(--mk) / 2 - 32px); transform: translateX(-50%);
+  }
+  .v-plan .rm-st.is-current .rm-head-in > .rm-when > .rm-now::after {
+    content: ""; position: absolute; left: 50%; bottom: -6px; margin-left: -5px; border: 5px solid transparent; border-top-color: var(--action-fill); border-bottom: 0;
+  }
+  .v-plan .rm-title, .v-plan .rm-st.is-current > .rm-head > .rm-head-in > .rm-title {
+    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden;
+    font-size: var(--t-label); line-height: var(--lh-ui); color: var(--ink-3); text-wrap: balance;
+  }
+  .v-plan .rm-st:is(.is-current, .is-open) .rm-head-in > .rm-title { color: var(--ink); }
+  .v-plan .rm-st.is-open .rm-head-in > .rm-title { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 0.3em; }
+  /* v8: the station name on the line is the short one (≤8 chars, two lines, never clipped); the full title is in the panel */
+  .v-plan .rm-st > .rm-head > .rm-head-in.has-short > .rm-title { display: none; }
+  .v-plan .rm-head-in.has-short > .rm-short {
+    display: block; grid-area: title; font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); line-height: var(--lh-ui); color: var(--ink-3); text-wrap: balance; word-break: keep-all; overflow-wrap: normal;
+  }
+  /* 「巣立ち」 over 「6か月前」: two short lines instead of a break inside the number */
+  .v-plan .rm-rel { display: flex; flex-direction: column; align-items: center; white-space: nowrap; }
+  .v-plan .rm-st:is(.is-current, .is-open) .rm-head-in.has-short > .rm-short { color: var(--ink); }
+  .v-plan .rm-st.is-open .rm-head-in.has-short > .rm-short { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 0.3em; }
+  .v-plan .rm-st.is-open > .rm-head > .rm-mk { outline: 2px solid var(--ink); outline-offset: 3px; }
+  .v-plan .rm-st.is-open.is-current > .rm-head > .rm-mk { outline-color: var(--action); }
+  .v-plan .rm-count { font-size: var(--t-label); }
+  .v-plan .rm-count-w, .v-plan .rm-tog, .v-plan .rm-head-in > .sr-only { display: none; }
+  /* the sign on the line */
+  .v-plan .rm-box > .rm-head-in {
+    grid-template-columns: minmax(0, 1fr); grid-template-areas: "k" "n" "d" "c";
+    justify-items: start; align-items: start; text-align: left; row-gap: 0;
+    margin: calc(var(--rail-y) - 44px) 0 0; padding: var(--s-2) var(--s-2) var(--s-2);
+  }
+  .v-plan .rm-box > .rm-mk { visibility: hidden; }      /* the sign is the station (JS still measures it) */
+  .v-plan .rm-box-k > .rm-title, .v-plan .rm-st.is-open .rm-box-k > .rm-title { display: block; -webkit-line-clamp: unset; font-size: var(--t-ui); color: var(--ink); text-decoration: none; }
+  .v-plan .rm-box-k > .rm-now { position: static; transform: none; }
+  .v-plan .rm-box-num { font-size: var(--fs-2xl); }
+  .v-plan .rm-box-today { font-size: var(--t-h3); }
+  .v-plan .rm-box > .rm-head-in > .rm-box-c { justify-self: start; margin-top: 4px; }
+  .v-plan .rm-box-d { font-size: var(--t-micro); margin: 0; padding: 0; white-space: nowrap; }
+  .v-plan .rm-box-n { justify-self: start; margin-top: 2px; }
+  /* the open period under the line */
+  .v-plan .rm-body { grid-row: 2; grid-column: 1 / span var(--k, 8); padding: 0 var(--s-8) 0 0; border-bottom: 0 !important; }
+  .v-plan .rm-body-title {
+    display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-3); margin: 0; padding-bottom: var(--s-2); border-bottom: 2px solid var(--ink);
+    font-family: var(--font-display); font-weight: 700; font-size: var(--t-h2); line-height: var(--lh-heading); color: var(--ink); text-wrap: balance;
+  }
+  .v-plan .rm-body-title > .rm-now { position: static; transform: none; }
+  .v-plan .rm-body-in { gap: var(--s-2); }
+  .v-plan .rm-left { min-height: 36px; }
+  .v-plan .tl-items { margin-top: var(--s-1); border-top: 0; }
+  .v-plan .rm-wrap > .plan-flow { grid-row: 2; grid-column: calc(var(--k, 8) + 1) / -1; margin-top: 0; padding-left: var(--s-8); border-left: 1px solid var(--rule); min-width: 0; }
+  .v-plan .plan-flow > * + * { margin-top: var(--s-8); }
+  .v-plan .plan-next { display: block; }
 }
 @media (min-width: 1240px) {
-  .v-plan .plan-body:has(> .plan-tl) { grid-template-columns: minmax(0, 7fr) minmax(0, 4fr); }
-  .v-plan .plan-body > .plan-tl { padding-right: var(--s-8); }
-  .v-plan .plan-body:has(> .plan-tl) > .plan-flow { padding-left: var(--s-8); }
+  .v-plan .rm-wrap { column-gap: 8px; }
+  .v-plan .rm-body { padding-right: var(--s-9); }
+  .v-plan .rm-wrap > .plan-flow { padding-left: var(--s-9); }
 }
 
 /* ---------- printable 相談シート (A4). Hidden on screen. ---------- */
@@ -6712,29 +6888,6 @@ body.lang-en .tl-item .tl-seal { font-size: var(--t-micro); padding: 0 4px; }
   .v-plan .pp-foot { margin-top: 14px; font-size: 8.5pt; color: dimgray; }
 }
 .v-plan ol.pp-progs { list-style: decimal; padding-left: 1.4em; }
-
-/* ---------- FIX-B (v6) ---------- */
-/* F47: the earlier periods' count is neutral; amber only once the reader has ticked something there */
-.v-plan .tl-past-left { color: var(--ink-3); }
-.v-plan .tl-past-left::before { content: "・"; color: var(--ink-4); }
-.v-plan .tl-past-left.is-warn { color: var(--amber-text); }
-.v-plan .tl-past-left.is-zero { color: var(--action-text); }
-/* F12: the quick date chips are full 44px targets */
-.v-plan .plan-date-chips .chip, .plan-sheet .plan-date-chips .chip { min-height: 44px; }
-.plan-sheet .plan-date-chips .chip::after { inset: 0; }
-/* F24: a Japanese gloss inside English text stays one piece */
-.v-plan .plan-ja { white-space: nowrap; }
-/* S9: storage unavailable */
-.v-plan .plan-nostore { margin-top: 6px; font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--amber-text); }
-.v-plan .plan-nostore-go {
-  display: inline; min-height: 0; padding: 0; border: 0; background: none; font: inherit; font-weight: 700; color: var(--action-text);
-  text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.25em; cursor: pointer; position: relative;
-}
-.v-plan .plan-nostore-go::after { content: ""; position: absolute; inset: -12px -6px; }
-/* F39: the real title, and what the calendar file will say under it */
-.plan-sheet .ics-text { display: grid; gap: 2px; min-width: 0; }
-.plan-sheet .ics-file { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3); }
-.plan-sheet .ics-file[hidden] { display: none; }
 /* ---- css/learn.css ---- */
 /* =====================================================================
    巣立ちマップ v4 — learn.css  (owner: LEARN) — まなぶ  #/learn  #/learn/ID
@@ -7125,6 +7278,7 @@ body.is-big .v-learn .ln-opts { gap: 16px; }
 .v-learn .ln-field .help { margin-top: -2px; }
 .v-learn .ln-field-seg { gap: 10px; }
 .v-learn .ln-field-seg .seg { max-width: 24rem; }
+.v-learn .ln-field-seg .select { max-width: 24rem; }   /* v8 (MONEY): the 8 Kanto presets as a select */
 .v-learn .ln-slider { position: relative; height: 36px; }
 .v-learn .ln-slider-track { position: absolute; left: 0; right: 0; top: 16px; height: 4px; background: var(--paper-3); overflow: hidden; pointer-events: none; }
 .v-learn .ln-slider-track > i {

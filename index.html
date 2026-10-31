@@ -220,7 +220,7 @@
   /* S1: the build id. Every lazy file is requested as file?v=<id> (here, core.js SM.need, launch.js
      SM.loadMapLib), so a phone holding last release's files in its cache fetches this release's instead.
      Bump with SM.version on every release (tools/build.py may stamp it). */
-  var V = w.__smV = '7.0.0';
+  var V = w.__smV = '8.0.0';
   /* Lazy views (see 5. above). Order inside a list = execution order. */
   var lazy = w.__smLazy = {
     find: ['js/views/find.js'],
@@ -620,6 +620,7 @@ html.m-reduce .appbar::before,html.m-reduce .appbar::after{content:none!importan
 <script src="data/programs-local.js"></script>
 <script src="data/programs-kanto-s.js"></script>
 <script src="data/programs-kanto-n.js"></script>
+<script src="data/programs-housing-kanto.js"></script>
 <script src="data/learn.js"></script>
 <script src="data/ruby.js"></script>
 <script src="js/match.js"></script>

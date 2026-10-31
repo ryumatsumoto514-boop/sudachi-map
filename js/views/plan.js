@@ -1,35 +1,21 @@
-/* 巣立ちマップ v4 — views/plan.js (PLAN)
- * #/plan  やること. Two tracks, one screen:
- *   'leaving' — 巣立ちの日 + countdown, timeline anchored to the leaving day (data/timeline.js track:'leaving')
- *   'junior'  — 中学生: 高校入学 (April, editable) + countdown, the 高校受験のお金 timeline (track:'junior')
+/* 巣立ちマップ v8 — views/plan.js (PLAN)
+ * #/plan  やること as a roadmap (SPEC-v8 workstream 2). Two tracks, one screen:
+ *   'leaving' — 巣立ちの日 + countdown, periods anchored to the leaving day (data/timeline.js track:'leaving')
+ *   'junior'  — 中学生: 高校入学 (April, editable) + countdown, the 高校受験のお金 periods (track:'junior')
  * The track follows SM.isJunior() (body.is-junior) unless the user picks one with the 高校受験 / 巣立ち switch
  * (stored as SM.store 'plan:track'). Saved programs, .ics export and the 相談シート work for both tracks.
  *
- * v7 (SPEC-v7 §3, usability): the first screen is what to do NOW. A compact status strip (days left · the day it
- *   counts to + 変える, with one plain line when it is a stand-in · できたこと n/N and one bar; the old 「いまの時期まで」
- *   tick and the lone 「くわしく ＋」 are gone), then the timeline starting at いま (past periods folded into one row
- *   above it), checkable in place. 保存した支援 and 見せる・残す (calendar / 相談シート, each with what it is for) follow;
- *   on desktop they stand beside the timeline. Nothing saved = an invitation (how saving works, supports from the
- *   timeline, the way to find more). A finished current period shows 「ぜんぶできた → つぎ」. Kanto: tasks built around a
- *   Tokyo-only program get general wording for people outside 東京都 (LOCAL_TASK); related links drop records the
- *   person's area cannot use.
- * v4 (VISUAL-SPEC §7.8, MOTION-SPEC §4.2 Plan):
- *   - countdown: num-hero digits roll in from 0 on the first view (SM.motion.odometer), later only when N changed
- *     since the last visit (SM.motion.seen 'plan.days.<track>'); a date change rolls old N → new N.
- *     The plan-hero spot stands on the number's baseline.
- *   - progress: 6px track, green fill, a 1px ink tick at "where you'd be by now".
- *   - いま band; when the current period is all done the plan-done spot replaces it (and back, live).
- *   - timeline: 1px rule, square stations; a green line fills from the first station to いま as the reader
- *     scrolls (SM.motion.scrollLinked on a view() timeline). Bodies rise 8px once. いま never moves.
- *   - 済み: the box fills + the check draws (SM.motion.check), a 済 seal stamps, the text dims; the row moves to
- *     the done end of its list by FLIP (smooth); counts roll; toast with 元に戻す (undo reverses the FLIP).
- *   - saved: remove fades the row (120ms ghost) and the rest closes up by FLIP; the timeline rows of that support
- *     go the same way; undo puts it back (rises in) and stamps its mark; the last one out brings saved-empty.
- *   - track switch: the seg fill slides (CSS), the hero morphs in place (numbers roll, labels swap), the
- *     body leaves 90ms / 24px and the new one arrives 220ms from the other side.
- *   - folds (すぎた時期, later periods) open/close by FLIP, never by height.
- *   - first screen first: the timeline (phone) / everything after the first 3 periods (desktop) and saved rows
- *     after the 6th are appended in SM.motion.afterTransition; the printable sheet is built on demand.
+ * v8: time is the brand's line, periods are stations on it. Phone: a vertical line down the left, one row per
+ *   station (when · title · n/N できた · 見る/とじる); the current station carries the いま flag and is open with
+ *   its tasks; past and future stations stay visible as compact rows and open in place. Desktop (≥1100): the
+ *   stations run across the page on a horizontal line (one CSS grid: ol/li are display:contents, the heads sit in
+ *   row 1, the one open body spans row 2 beside つぎの駅 · 見せる・残す · 保存した支援); a station is a tab-like
+ *   button, exactly one is open. The milestone (巣立ちの日 / 高校入学) is a station sign with the countdown inside
+ *   it; the current station's body says 「巣立ちまで あと N日」 + 変える. The green fill runs from the first station
+ *   to いま and on toward the next station by this period's done share: ticking a task moves the line (and the
+ *   next station pulses); a finished period stamps its station. Phone: the fill follows the reader's scroll;
+ *   desktop: it draws on arrival. Saved supports are rows in the station where their deadline falls (as before)
+ *   and the 保存した支援 list names that station (「4か月前の駅」).
  * State: SM.state.leaveDate ('YYYY-MM-DD' | null), SM.state.hsDate ('YYYY-MM-DD' | null, 高校入学),
  * SM.state.done keys 'tl:<m>:<task>' (leaving), 'jr:<groupId>:<task>' (junior), 'pg:<programId>' (saved).
  * Extra (additive): SM.plan = { build, buildICS, planEvents, sheetText, assumedLeave, assumedEntry, addMonths,
@@ -155,9 +141,11 @@
 
     'plan.tl.h': { ja: '巣立ちまでの道のり', en: 'Your timeline' },
     'plan.tl.sub': { ja: 'チェックすると、このスマホに記録されます。', en: 'Ticks are saved on this phone.' },
-    'plan.tl.before': { ja: '{n}か月前', en: '{n} mo. before' },
-    'plan.tl.yearBefore': { ja: '1年前', en: '1 year before' },
-    'plan.tl.after': { ja: '{n}か月後', en: '{n} mo. after' },
+    'plan.tl.before': { ja: '巣立ち{n}か月前', en: '{n} mo. before' },
+    'plan.tl.yearBefore': { ja: '巣立ち1年前', en: '1 year before' },
+    'plan.tl.after': { ja: '巣立ち{n}か月後', en: '{n} mo. after' },
+    'plan.decideDate': { ja: '日にちを決める', jr: '日にちを決める', en: 'Set the date' },
+    'plan.tl.anchorWord': { ja: '巣立ち', en: '' },
     'plan.tl.day': { ja: '当日', en: 'The day' },
     'plan.tl.now': { ja: 'いま', en: 'Now' },
     'plan.tl.nowEarly': { ja: 'まだ先。ゆっくりで大丈夫。', en: 'Plenty of time.' },
@@ -504,7 +492,7 @@
       var tasks = (g.tasks || []).filter(taskFilter(path)).map(function (tk) { return localTask('tl:', tk); }).filter(Boolean)
         .map(function (tk) { return mkTask('tl:' + g.m + ':' + tk.id, tk); });
       return {
-        m: g.m, key: 'g' + g.m, title: L(g.title), sub: g.sub ? L(g.sub) : '',
+        m: g.m, key: 'g' + g.m, title: L(g.title), short: g.short ? L(g.short) : '', sub: g.sub ? L(g.sub) : '',
         when: relLabel(g.m), dateLabel: g.m === 0 ? fmtDateW(date) : fmtMonth(monthStart(date)),
         date: date, start: g.m === 0 ? date : monthStart(date), milestone: g.m === 0, tasks: tasks, progs: []
       };
@@ -534,7 +522,7 @@
       if (g.grade === 'hs1' && milestoneAt === -1) milestoneAt = out.length;
       var tasks = (g.tasks || []).map(function (tk) { return localTask('jr:', tk); }).filter(Boolean)
         .map(function (tk) { return mkTask('jr:' + g.id + ':' + tk.id, tk); });
-      out.push({ id: g.id, key: 'j-' + g.id, title: L(g.title), sub: g.sub ? L(g.sub) : '', when: L(g.when), dateLabel: dateLabel,
+      out.push({ id: g.id, key: 'j-' + g.id, title: L(g.title), short: g.short ? L(g.short) : '', sub: g.sub ? L(g.sub) : '', when: L(g.when), dateLabel: dateLabel,
         date: start, start: start, end: end, milestone: false, tasks: tasks, progs: [] });
     });
     var ms = { id: 'entry', key: 'j-entry', title: t('plan.jr.anchor'), sub: '', when: '', dateLabel: fmtDateW(entry),
@@ -564,12 +552,13 @@
       var d = p.deadline;
       if (!d) return;
       var item = null;
-      if (typeof d.leaveMonths === 'number' && !jr) {
+      var lmPast = typeof d.leaveMonths === 'number' && d.months && d.months.length && addMonths(anchor, d.leaveMonths) < now;
+      if (typeof d.leaveMonths === 'number' && !jr && !lmPast) {
         var n = d.leaveMonths;
         var target = groups[0];
         groups.forEach(function (g) { if (g.m <= n) target = g; });
         item = { date: addMonths(anchor, n), open: false, label: n === 0 ? t('ui.atleave') : t('plan.tl.byDate', { date: fmtMonth(addMonths(anchor, n)) }), short: n === 0 ? t('ui.atleave') : fmtMonth(addMonths(anchor, n)), target: target };
-        if (cur0 >= 0 && item.date < now && groups.indexOf(target) < cur0) { item.target = groups[cur0]; item.label = t('plan.tl.asap'); item.short = t('plan.tl.asap'); item.date = now; }
+        if (cur0 >= 0 && item.date < now && groups.indexOf(target) <= cur0) { item.target = groups[cur0]; item.label = t('plan.tl.asap'); item.short = t('plan.tl.asap'); item.date = now; }
       } else if (d.months && d.months.length) {
         var w = windowInfo(d.months, now);
         if (w && w.date) {
@@ -819,29 +808,59 @@
     if (pp) pp.innerHTML = printHtml(build());
   }
 
+  /* ------------------------------------------------------------------ v8 strings (roadmap) */
+  SM.strings({
+    'plan.rm.h': { ja: '巣立ちまでの道のり', en: 'Your road' },
+    'plan.open': { ja: '見る', en: 'Open' },
+    'plan.close': { ja: 'とじる', en: 'Close' },
+    'plan.doneWord': { ja: 'できた', en: 'done' },
+    'plan.station': { ja: '{when}・{title}・できたこと {done}/{total}', en: '{when}: {title}. Done {done} of {total}' },
+    'plan.stationOpen': { ja: 'この時期のやることを見る', en: 'Show this period’s tasks' },
+    'plan.rm.left': { ja: '巣立ちまで あと{n}日', en: '{n} days until you leave' },
+    'plan.rm.left1': { ja: '巣立ちまで あと1日', en: '1 day until you leave' },
+    'plan.rm.since': { ja: '巣立ってから {n}日', en: '{n} days since you left' },
+    'plan.rm.today': { ja: '巣立ちの日は 今日', en: 'Leaving day is today' },
+    'plan.rm.jrLeft': { ja: '高校入学まで あと{n}日', en: '{n} days until high school' },
+    'plan.rm.jrLeft1': { ja: '高校入学まで あと1日', en: '1 day until high school' },
+    'plan.rm.jrSince': { ja: '高校に入ってから {n}日', en: '{n} days since high school started' },
+    'plan.rm.jrToday': { ja: '高校入学は 今日', en: 'High school starts today' },
+    'plan.box.pre': { ja: 'あと', en: '' },
+    'plan.box.unit': { ja: '日', en: 'days left' },
+    'plan.box.unit1': { ja: '日', en: 'day left' },
+    'plan.box.unitAfter': { ja: '日前', en: 'days ago' },
+    'plan.box.unitAfter1': { ja: '日前', en: 'day ago' },
+    'plan.box.today': { ja: '今日', en: 'Today' },
+    'plan.next.k': { ja: 'つぎの駅', en: 'Next stop' },
+    'plan.next.none': { ja: 'ここが最後の駅', en: 'This is the last stop' },
+    'plan.saved.at': { ja: '{when}の駅', en: 'Stop: {when}' },
+    'plan.saved.anytime': { ja: 'いつでも', en: 'Any time' },
+    'plan.assumedShort': { ja: '決まるまで3月31日で計算', en: 'Counting to March 31 until set' },
+    'plan.jr.assumedShort': { ja: 'いま{g}として計算', en: 'Counting as if in {g}' },
+    'plan.tasksN': { ja: 'やること {n}こ', en: '{n} to-dos' }
+  });
+
   /* ------------------------------------------------------------------ render pieces */
-  var pastOpen = false;
-  var foldOpen = {};         // later periods are folded; remember which ones the user opened
+  var openKeys = {};         // phone: which stations the reader opened / closed (key → bool)
+  var selKey = null;         // desktop: the one open station
   var calm = false;          // the next render is an in-place re-render by this view (no first-view motion)
   var lastCalm = false;
-  var renderGen = 0;         // deferred jobs only land in the render that queued them
-  var deferred = null;       // { gen, jobs: [fn] }
+  var renderGen = 0;
   var lastModel = null;
 
   function countInfo(model) {
     var jr = model.track === 'junior';
     var diff = daysBetween(model.now, model.anchor);
-    if (diff === 0) {
-      return { today: true, k: t(jr ? 'plan.jr.count.todayK' : 'plan.count.todayK'), big: t('plan.count.todayBig'),
-        sub: t(jr ? 'plan.jr.count.todaySub' : 'plan.count.todaySub') };
-    }
     var n = Math.abs(diff);
-    return {
-      today: false, n: n, text: fmtNum(n), before: diff > 0,
-      k: t(diff > 0 ? (jr ? 'plan.jr.count.k' : 'plan.count.k') : (jr ? 'plan.jr.count.kAfter' : 'plan.count.kAfter')),
-      pre: diff > 0 ? t('plan.count.pre') : '',
-      unit: t(n === 1 ? 'plan.count.unit1' : 'plan.count.unit')
-    };
+    var o = { today: diff === 0, n: n, text: fmtNum(n), before: diff > 0 };
+    if (o.today) { o.line = t(jr ? 'plan.rm.jrToday' : 'plan.rm.today'); o.big = t('plan.box.today'); o.pre = ''; o.unit = ''; return o; }
+    if (diff > 0) {
+      o.line = t(n === 1 ? (jr ? 'plan.rm.jrLeft1' : 'plan.rm.left1') : (jr ? 'plan.rm.jrLeft' : 'plan.rm.left'), { n: o.text });
+      o.pre = t('plan.box.pre'); o.unit = t(n === 1 ? 'plan.box.unit1' : 'plan.box.unit');
+    } else {
+      o.line = t(jr ? 'plan.rm.jrSince' : 'plan.rm.since', { n: o.text });
+      o.pre = ''; o.unit = t(n === 1 ? 'plan.box.unitAfter1' : 'plan.box.unitAfter');
+    }
+    return o;
   }
 
   function switchHtml(ti) {
@@ -853,151 +872,42 @@
         '<span>' + esc(it[1]) + '</span></button>';
     }).join('') + '</div>';
   }
-
-  function headHtml(ti) {
-    return '<header class="plan-head">' +
-      '<h1 class="plan-h1" id="plan-h1" data-reveal="line">' + esc(t('plan.h1')) + '</h1>' + switchHtml(ti) + '</header>';
-  }
-
-  /* できたこと: one number pair and one bar. (v7: the 「いまの時期まで」 tick is gone: it was never explained.) */
+  /* できたこと n / N: the one number pair of the page (the line below is its bar) */
   function progressHtml(model) {
-    var pct = model.total ? model.done / model.total : 0;
     var all = model.total > 0 && model.done === model.total;
-    var vt = t('plan.progressOf', { done: model.done, total: model.total });
-    return '<div class="plan-prog' + (all ? ' is-all' : '') + '" id="plan-prog" data-flip-key="ph-prog">' +
-      '<p class="plan-prog-row"><span class="plan-prog-k" data-m="pk">' + esc(t(all ? 'plan.progressAll' : 'plan.progressK')) + '</span>' +
-        '<span class="plan-prog-num num"><b id="plan-prog-done" data-m="pd" data-count="' + model.done + '" data-count-seen="plan.done.' + model.track + '">' + model.done + '</b>' +
-        '<span class="plan-prog-of"> / <span id="plan-prog-total" data-m="pt">' + model.total + '</span></span></span></p>' +
-      '<div class="plan-prog-bar" role="progressbar" aria-label="' + esc(t('plan.progressK')) + '" aria-valuemin="0" aria-valuemax="' + model.total + '" aria-valuenow="' + model.done + '" aria-valuetext="' + esc(vt) + '">' +
-        '<i class="plan-prog-fill m-bar" style="transform:scaleX(' + pct.toFixed(4) + ')"></i></div>' +
-    '</div>';
+    return '<p class="plan-prog' + (all ? ' is-all' : '') + '" id="plan-prog">' +
+      '<span class="plan-prog-k" data-m="pk">' + esc(t(all ? 'plan.progressAll' : 'plan.progressK')) + '</span>' +
+      '<span class="plan-prog-num num"><b id="plan-prog-done" data-m="pd" data-count="' + model.done + '" data-count-seen="plan.done.' + model.track + '">' + model.done + '</b>' +
+      '<span class="plan-prog-of"> / <span id="plan-prog-total" data-m="pt">' + model.total + '</span></span></span></p>';
   }
-
-  /* The status strip: how long is left (count), the day it counts to (date + 変える, and one plain line when the
-     date is a stand-in), and how much is done. One compact band, so the current period's tasks are on the first
-     screen right under it (SPEC-v7 §3). Desktop: one row with the person walking to the door. */
-  function heroHtml(model) {
-    var jr = model.track === 'junior';
-    var c = countInfo(model);
-    var count;
-    if (c.today) {
-      count = '<div class="plan-count is-today"><p class="plan-count-k" data-m="k">' + esc(c.k) + '</p>' +
-        '<p class="plan-count-big"><b class="plan-count-today" id="plan-count-n" data-m="n">' + esc(c.big) + '</b></p>' +
-        '<p class="plan-count-sub" data-m="sub">' + esc(c.sub) + '</p></div>';
-    } else {
-      count = '<div class="plan-count' + (c.n >= 1000 ? ' is-long' : '') + '"><p class="plan-count-k" data-m="k">' + esc(c.k) + '</p>' +
-        '<p class="plan-count-big">' + (c.pre ? '<span class="plan-count-pre" data-m="pre">' + esc(c.pre) + '</span>' : '') +
-          '<b class="plan-count-num num" id="plan-count-n" data-m="n" data-n="' + c.n + '">' + esc(c.text) + '</b>' +
-          '<span class="plan-count-unit" data-m="u">' + esc(c.unit) + '</span></p></div>';
-    }
-    // FIX-B (S9): when this browser cannot keep anything, say so where the plan is (not only inside 設定)
-    if (SM.store && SM.store.available === false) count = count.replace(/<\/div>$/, '<p class="plan-nostore" role="note">' + esc(t('plan.nostore')) + ' <button type="button" class="plan-nostore-go" data-act="settings">' + esc(t('plan.nostoreGo')) + '</button></p></div>');
-    var art = il(jr ? 'plan-jr-hero' : 'plan-hero', { size: 'spot', cls: 'plan-hero-il' + (jr ? ' is-jr' : '') }) ||
-      (jr ? il('plan-hero', { size: 'spot', cls: 'plan-hero-il' }) : '');
-    var what = jr ? t('plan.jr.anchor') : t('plan.leave.label');
-    // a stand-in date says so in one plain line (it was a lone 「くわしく ＋」)
-    var note = model.assumed ? (jr ? t('plan.jr.assumedLine', { g: gradeFor(model.anchor, model.now) }) : t('plan.assumedLine')) : '';
-    var date = '<div class="plan-date" data-flip-key="ph-date">' +
-      '<div class="plan-date-main">' +
-        '<p class="plan-date-k"><span data-m="dk">' + esc(what) + '</span>' + (model.assumed ? '<span class="tag tag-deadline plan-assumed">' + esc(t('plan.assumed')) + '</span>' : '') + '</p>' +
-        '<p class="plan-date-v" data-m="dv">' + esc(fmtDateW(model.anchor)) + '</p>' +
-        (note ? '<p class="plan-date-note" data-m="note">' + esc(note) + '</p>' : '') + '</div>' +
-      '<button type="button" class="btn btn-secondary btn-sm plan-date-edit" id="plan-date-btn" data-act="plan-date" aria-label="' + esc(t('plan.changeLabel', { what: what, date: fmtDate(model.anchor) })) + '"><span>' + esc(t('plan.change')) + '</span></button>' +
-    '</div>';
-    return '<div class="plan-hero' + (art ? ' has-il' : '') + '" data-track="' + model.track + '" data-reveal="" data-reveal-delay="80">' +
-      '<div class="plan-hero-in">' + count + art + date + progressHtml(model) + '</div></div>';
+  function headHtml(ti, model) {
+    var nostore = SM.store && SM.store.available === false ?
+      '<p class="plan-nostore" role="note">' + esc(t('plan.nostore')) + ' <button type="button" class="plan-nostore-go" data-act="settings">' + esc(t('plan.nostoreGo')) + '</button></p>' : '';
+    return '<header class="plan-head">' +
+      '<div class="plan-head-l"><h1 class="plan-h1" id="plan-h1" data-reveal="line">' + esc(t('plan.h1')) + '</h1>' + progressHtml(model) + '</div>' +
+      switchHtml(ti) + nostore + '</header>';
   }
 
   /* the period after `cur` that has something in it (or the milestone) */
-  function nextAfter(model) {
+  function nextAfter(model, from) {
     var g = model.groups;
-    for (var i = Math.max(0, model.cur + 1); i < g.length; i++) if (g[i].total || g[i].milestone) return g[i];
+    var i0 = from != null ? from + 1 : Math.max(0, model.cur + 1);
+    for (var i = i0; i < g.length; i++) if (g[i].total || g[i].milestone) return g[i];
     return null;
   }
   function fromLabel(g) { return t('plan.now.from', { date: g.milestone ? fmtDate(g.date) : fmtMonth(g.start) }); }
+  function groupOf(model, key) { return model.groups.filter(function (x) { return x.key === key; })[0] || null; }
 
-  /* 見せる・残す: the calendar file and the 相談シート, each with the few words that say what it is for */
-  function toolsHtml() {
-    var row = function (act, icon, title, sub) {
-      return SM.ui.listItem({ title: title, sub: sub, icon: icon, act: act, attrs: 'data-press="ink"' });
-    };
-    return '<section class="plan-tools" id="plan-tools" aria-labelledby="plan-tools-h">' +
-      SM.ui.sectionHeader(t('plan.tools.h'), { id: 'plan-tools-h', level: 2, cls: 'plan-side-head' }) +
-      '<div class="list plan-tools-list">' +
-      row('plan-ics', 'calendar', t('plan.act.ics'), t('plan.act.icsSub')) +
-      row('plan-sheet', 'print', t('plan.act.sheet'), t('plan.act.sheetSub')) +
-      '</div></section>';
-  }
-
-  function savedRowHtml(p) {
-    var name = L(p.name);
-    return '<div class="plan-saved-item" data-flip-key="' + esc(p.id) + '">' + SM.ui.programCard(p, { compact: true, showSave: false }) +
-      '<button type="button" class="plan-remove" data-act="plan-remove" data-id="' + esc(p.id) + '" aria-label="' + esc(t('plan.saved.removeLabel', { name: name })) + '" title="' + esc(t('plan.saved.remove')) + '">' + ic('close') + '</button></div>';
-  }
-  /* the programs the current (or the first coming) period's tasks point at, that this person can use */
-  function nowRelated(model, max) {
-    var g = model.groups;
-    var from = model.cur >= 0 ? model.cur : 0;
-    var ids = [];
-    for (var i = from; i < g.length && ids.length < 8; i++) {
-      g[i].tasks.forEach(function (x) { x.p.forEach(function (id) { if (ids.indexOf(id) === -1 && SM.program(id)) ids.push(id); }); });
-      if (ids.length) break;
-    }
-    var seen = {};
-    return ids.filter(function (id) {
-      var nm = L(SM.program(id).name).replace(/[（(].*$/, '');
-      if (seen[nm]) return false;
-      seen[nm] = true; return true;
-    }).slice(0, max || 3).map(function (id) { return SM.program(id); });
-  }
-  /* v7: nothing saved is an invitation, not an empty column: one line on how saving works, the supports that belong
-     to this period (kanji mark + name), and the way to find more */
-  function savedEmptyHtml() {
-    var answered = state().answered;
-    var model = lastModel || build();
-    var rel = nowRelated(model, 3);
-    var go = '<a class="plan-empty-go" href="' + (answered ? '#/find/results' : '#/find') + '"><span>' + esc(answered ? t('plan.empty.results') : t('plan.empty.find')) + '</span>' + arrow() + '</a>';
-    return '<div class="plan-saved-empty">' +
-      '<p class="plan-empty-k">' + esc(t('plan.empty.k')) + '</p>' +
-      '<p class="plan-empty-line">' + esc(t('plan.empty.how')) + '</p>' +
-      (rel.length ? '<p class="plan-empty-relk">' + esc(t('plan.empty.rel')) + '</p><div class="list plan-empty-rel">' + rel.map(function (p) {
-        return SM.ui.listItem({ title: L(p.name).replace(/[（(].*$/, ''), cat: (p.cat && p.cat[0]) || 'procedures', href: '#/p/' + encodeURIComponent(p.id) });
-      }).join('') + '</div>' : '') + go + '</div>';
-  }
-  /* the count in the sub line is its own element, so it can roll when a support is removed or put back */
-  function savedHeadHtml(model) {
-    var n = model.saved.length;
-    return SM.ui.sectionHeader(t('plan.saved.h'), {
-      sub: n ? t('plan.saved.sub', { n: '\u0001' }) + (en() ? ' · ' : '・') + t('plan.saved.why') : null,
-      action: n ? { label: t('plan.saved.more'), href: state().answered ? '#/find/results' : '#/find' } : null,
-      id: 'plan-saved-h', cls: 'plan-side-head'
-    }).replace('\u0001', '<span class="plan-saved-n num">' + n + '</span>');
-  }
-  /* first: how many rows go in now (the rest is appended after the transition) */
-  function savedHtml(model, first) {
-    var body;
-    if (!model.saved.length) body = savedEmptyHtml();
-    else {
-      var n = first == null ? model.saved.length : Math.min(first, model.saved.length);
-      body = '<div class="pcards plan-saved-list" data-reveal-stagger="40">' + model.saved.slice(0, n).map(savedRowHtml).join('') + '</div>';
-    }
-    return '<section class="plan-saved" id="plan-saved" aria-labelledby="plan-saved-h">' + savedHeadHtml(model) + body + '</section>';
-  }
-
-  /* ------------------------------------------------------------------ timeline */
-  /* one line per task: the action reads first, a trailing （…） aside (dates, amounts, where) follows in small type,
-     so the row scans as a to-do and the fact stays on the page */
+  /* ---------- tasks (one line per task; a saved support placed in its period) ---------- */
   function taskText(text) {
     var m = /^(.+?)\s*([（(][^（()）]*[)）])\s*$/.exec(text || '');
     if (!m || m[1].length < 6) return '<span class="tl-item-main">' + jaRuns(text) + '</span>';
     return '<span class="tl-item-main">' + jaRuns(m[1]) + '</span><span class="tl-item-aside">' + jaRuns(m[2]) + '</span>';
   }
-  /* FIX-B (F24): in English, a Japanese word given as a gloss — "(資格確認書)" — is what the paper says, so it stays,
-     but as one unbreakable piece with lang="ja" (it broke after the bracket and read as 「資格確認書)」) */
   function jaRuns(text) {
     var h = esc(text);
     if (!en()) return h;
-    return h.replace(/\(?[\u3000-\u30ff\u3400-\u9fff\uff00-\uffef]+\)?/g, function (w) { return '<span class="plan-ja" lang="ja">' + w + '</span>'; });
+    return h.replace(/\(?[　-ヿ㐀-鿿＀-￯]+\)?/g, function (w) { return '<span class="plan-ja" lang="ja">' + w + '</span>'; });
   }
   function itemId(key) { return 'pt-' + key.replace(/[^A-Za-z0-9-]/g, '_'); }
   function itemHtml(x, i) {
@@ -1005,7 +915,6 @@
     var check = '<input type="checkbox" class="tl-check" id="' + id + '" data-act="plan-done" data-key="' + esc(x.key) + '"' + (x.done ? ' checked' : '') +
       (x.kind === 'prog' ? ' aria-describedby="' + id + '-d"' : '') + '>' +
       '<span class="tl-box" aria-hidden="true">' + ic('check') + '</span>';
-    // the 済 seal floats at the end of the first line, so the lines under it use the full width
     var seal = '<span class="tl-seal" aria-hidden="true">' + esc(t('plan.tl.seal')) + '</span>';
     var open = '<li class="tl-item' + (x.kind === 'prog' ? ' tl-item-prog' : '') + (x.done ? ' is-done' : '') + '" data-flip-key="' + esc(x.key) + '" data-i="' + i + '">';
     if (x.kind === 'prog') {
@@ -1023,13 +932,11 @@
       (x.href ? '<p class="tl-item-meta"><a class="tl-link" href="' + esc(x.href) + '"><span>' + esc(x.hrefLabel || t('plan.tl.tool')) + '</span>' + arrow() + '</a></p>' : '') +
       '</li>';
   }
-  /* done rows sit at the end of their list (in their original order) */
   function itemsHtml(all) {
     var rows = all.map(function (x, i) { return { x: x, i: i }; });
     rows.sort(function (a, b) { return ((a.x.done ? 1 : 0) - (b.x.done ? 1 : 0)) || (a.i - b.i); });
     return rows.map(function (r) { return itemHtml(r.x, r.i); }).join('');
   }
-
   function relatedHtml(g) {
     var ids = [];
     g.tasks.forEach(function (x) { x.p.forEach(function (id) { if (ids.indexOf(id) === -1 && SM.program(id)) ids.push(id); }); });
@@ -1046,128 +953,221 @@
         var p = SM.program(id);
         var nm = L(p.name).replace(/[（(].*$/, '');
         var cat = (p.cat && p.cat[0]) || 'procedures';
-        return '<li><a class="tl-rel-link" href="#/p/' + encodeURIComponent(id) + '">' + SM.ui.catIcon(cat, 'xs') + '<span>' + esc(nm) + '</span></a></li>';
+        return '<li><a class="tl-rel-link" href="#/p/' + encodeURIComponent(id) + '" aria-label="' + esc(nm) + '">' + SM.ui.catIcon(cat, 'xs') + '<span>' + esc(nm) + '</span></a></li>';
       }).join('') + '</ul></details>';
   }
-
-  var TOGGLE = '<span class="tl-toggle" aria-hidden="true"></span>';
-  function countHtml(g) {
+  function countHtml(g, cls) {
     if (!g.total) return '';
-    return '<span class="tl-count num" data-gcount="' + g.key + '" aria-label="' + esc(t('plan.progress') + ' ' + t('plan.progressOf', { done: g.doneN, total: g.total })) + '">' +
-      '<b class="tl-count-n">' + g.doneN + '</b><span class="tl-count-of">/' + g.total + '</span></span>';
+    return '<span class="rm-count num' + (cls ? ' ' + cls : '') + '" data-gcount="' + g.key + '" aria-label="' + esc(t('plan.progress') + ' ' + t('plan.progressOf', { done: g.doneN, total: g.total })) + '">' +
+      '<b class="rm-count-n">' + g.doneN + '</b><span class="rm-count-of">/' + g.total + '</span><small class="rm-count-w">' + esc(t('plan.doneWord')) + '</small></span>';
   }
-  /* the current period, once every row in it is ticked: one line that says so and points at the next period
-     (CSS shows it only on .is-complete, so ticking and unticking never re-render the period) */
   function curDoneHtml(nx) {
     return '<div class="tl-cur-done"><p class="tl-cur-done-t"><span class="tl-cur-done-mk" aria-hidden="true"></span>' + esc(t('plan.cur.done')) + '</p>' +
-      (nx ? '<button type="button" class="tl-cur-go" data-act="plan-jump" data-target="tl-' + esc(nx.key) + '"><span>' + esc(t('plan.cur.next', { t: nx.title, from: fromLabel(nx) })) + '</span>' + arrow('down') + '</button>' : '') +
+      (nx ? '<button type="button" class="tl-cur-go" data-act="plan-jump" data-key="' + esc(nx.key) + '"><span>' + esc(t('plan.cur.next', { t: nx.title, from: fromLabel(nx) })) + '</span>' + arrow('down') + '</button>' : '') +
     '</div>';
   }
-  function groupHtml(g, cls, fold, delay, nx) {
-    var allDone = g.total > 0 && g.doneN === g.total;
-    var isCur = cls.indexOf('is-current') !== -1;
-    // tag + period + date wrap together in column 1; the n/total count always holds column 2 of the first line
-    var whenHtml = '<p class="tl-when" data-noruby><span class="tl-when-l">' +
-      (isCur ? '<span class="tl-now">' + esc(t('plan.tl.now')) + '</span>' : '') +
-      (g.when ? '<span class="tl-rel">' + esc(g.when) + '</span>' : '') +
-      '<span class="tl-date">' + esc(g.dateLabel) + '</span></span>' + countHtml(g) + '</p>';
-    var titleHtml = '<h3 class="tl-title">' + esc(g.title) + '</h3>';
-    // one line per task; the period's kind sub-line is dropped (SPEC-v5: no repeated reassurance)
-    var bodyHtml = (g.all.length ? '<ul class="tl-items" data-reveal-stagger="50">' + itemsHtml(g.all) + '</ul>' : '') +
-      (isCur && g.total ? curDoneHtml(nx) : '') + relatedHtml(g);
-    var inner = fold ?
-      '<details class="tl-fold" data-fold="' + esc(g.key) + '"' + (foldOpen[g.key] ? ' open' : '') + '>' +
-        '<summary class="tl-fold-sum" data-act="plan-fold"><span class="tl-fold-head">' + whenHtml + titleHtml + '</span>' + TOGGLE + '</summary>' +
-        '<div class="tl-fold-body">' + bodyHtml + '</div></details>' :
-      whenHtml + titleHtml + bodyHtml;
-    return '<li class="tl-group ' + cls + (fold ? ' is-folded' : '') + (allDone ? ' is-complete' : '') + (g.milestone ? ' is-milestone' : '') + '" id="tl-' + g.key + '" data-group="' + g.key + '">' +
-      '<span class="tl-mk" aria-hidden="true" data-reveal="mark"' + (delay ? ' data-reveal-delay="' + delay + '"' : '') + '></span>' +
-      '<div class="tl-body" data-reveal=""' + (delay ? ' data-reveal-delay="' + (delay + 60) + '"' : '') + '>' + inner + '</div></li>';
-  }
 
-  /* tasks still open in the periods already behind us. A 中3 opening this for the first time never had the
-     中1・中2 period in front of them, so it is not counted for them (it stays listed, as reading). */
-  function pastLeft(model, pastEnd) {
-    var skipJ12 = model.track === 'junior' && answers().stage === 'jhs3';
+  /* ---------- the roadmap: one station per period ---------- */
+  function isOpenKey(model, key, i) {
+    if (wide()) return (selKey && groupOf(model, selKey)) ? key === selKey : i === Math.max(0, model.cur);
+    if (Object.prototype.hasOwnProperty.call(openKeys, key)) return !!openKeys[key];
+    return i === Math.max(0, model.cur);   // before the first station: its tasks are what comes first
+  }
+  /* the one line under the current period: how long is left (and 変える) */
+  function leftLineHtml(model) {
+    var c = countInfo(model);
+    var html = esc(c.line).replace(esc(c.text), '<b class="num rm-left-n" data-m="ln">' + esc(c.text) + '</b>');
+    return '<p class="rm-left"><span class="rm-left-t">' + html + (model.assumed ? ' <span class="tag tag-deadline rm-assumed">' + esc(t('plan.assumed')) + '</span>' : '') + '</span>' +
+      '<button type="button" class="rm-edit" data-act="plan-date" aria-label="' + esc(t('plan.changeLabel', { what: t(model.track === 'junior' ? 'plan.jr.anchor' : 'plan.leave.label'), date: fmtDate(model.anchor) })) + '"><span>' + esc(t(model.assumed ? 'plan.decideDate' : 'plan.change')) + '</span></button></p>';
+  }
+  function relHtml(when) {
+    // 「巣立ち6か月前」: the anchor word and the distance are two spans so the desktop line can stack them
+    var a = t('plan.tl.anchorWord');
+    if (a && when.indexOf(a) === 0 && when.length > a.length) return '<span class="rm-rel-a">' + esc(a) + '</span><span class="rm-rel-n">' + esc(when.slice(a.length)) + '</span>';
+    return esc(when);
+  }
+  function whenHtml(g, isCur) {
+    return '<span class="rm-when" data-noruby>' +
+      (isCur ? '<span class="rm-now">' + esc(t('plan.tl.now')) + '</span>' : '') +
+      (g.when ? '<span class="rm-rel">' + relHtml(g.when) + '</span>' : '') +
+      '<span class="rm-date">' + esc(g.dateLabel) + '</span></span>';
+  }
+  function togHtml(open) {
+    return '<span class="rm-tog" aria-hidden="true"><span class="rm-tog-l">' + esc(t(open ? 'plan.close' : 'plan.open')) + '</span>' + arrow('down') + '</span>';
+  }
+  /* the milestone (巣立ちの日 / 高校入学): a station sign with the countdown inside it */
+  function boxHtml(g, model, isCur, open, delay) {
+    var jr = model.track === 'junior';
+    var c = countInfo(model);
+    var what = jr ? t('plan.jr.anchor') : t('plan.leave.label');
+    var num = c.today ?
+      '<span class="rm-box-n is-today"><b class="rm-box-today" id="plan-count-n" data-m="n">' + esc(c.big) + '</b></span>' :
+      '<span class="rm-box-n">' + (c.pre ? '<span class="rm-box-pre">' + esc(c.pre) + '</span>' : '') +
+        '<b class="num rm-box-num" id="plan-count-n" data-m="n" data-n="' + c.n + '">' + esc(c.text) + '</b><span class="rm-box-u">' + esc(c.unit) + '</span></span>';
+    return '<button type="button" class="rm-head rm-box" data-act="plan-open" data-key="' + esc(g.key) + '" aria-expanded="' + (open ? 'true' : 'false') + '" aria-controls="rm-b-' + esc(g.key) + '">' +
+      '<span class="rm-mk" aria-hidden="true" data-reveal="mark"' + (delay ? ' data-reveal-delay="' + delay + '"' : '') + '></span>' +
+      '<span class="rm-head-in" data-reveal=""' + (delay ? ' data-reveal-delay="' + (delay + 40) + '"' : '') + '>' +
+        '<span class="rm-box-k">' + (isCur ? '<span class="rm-now">' + esc(t('plan.tl.now')) + '</span>' : '') + '<span class="rm-title" id="rm-t-' + esc(g.key) + '">' + esc(what) + '</span>' +
+          (model.assumed ? '<span class="tag tag-deadline rm-assumed">' + esc(t('plan.assumed')) + '</span>' : '') + '</span>' +
+        '<span class="rm-box-d num" data-m="dv">' + esc(fmtDateW(model.anchor)) + '</span>' + num +
+        countHtml(g, 'rm-box-c') + togHtml(open) + '</span></button>';
+  }
+  function stationHeadHtml(g, isCur, open, delay) {
+    var label = t('plan.station', { when: g.when || g.dateLabel, title: g.title, done: g.doneN, total: g.total });
+    return '<button type="button" class="rm-head" data-act="plan-open" data-key="' + esc(g.key) + '" aria-expanded="' + (open ? 'true' : 'false') + '" aria-controls="rm-b-' + esc(g.key) + '" title="' + esc(t('plan.stationOpen')) + '">' +
+      '<span class="rm-mk" aria-hidden="true" data-reveal="mark"' + (delay ? ' data-reveal-delay="' + delay + '"' : '') + '></span>' +
+      '<span class="rm-head-in' + (g.short ? ' has-short' : '') + '" data-reveal=""' + (delay ? ' data-reveal-delay="' + (delay + 40) + '"' : '') + '>' +
+        whenHtml(g, isCur) +
+        '<span class="rm-title" id="rm-t-' + esc(g.key) + '">' + esc(g.title) + '</span>' +
+        (g.short ? '<span class="rm-short" aria-hidden="true">' + esc(g.short).replace(/\|/g, '<wbr>') + '</span>' : '') +
+        countHtml(g) + togHtml(open) + '<span class="sr-only">' + esc(label) + '</span></span></button>';
+  }
+  function bodyHtml(g, model, i, open) {
+    var isCur = i === model.cur && !model.beyond;   // long after leaving, いま is the row after the last station
+    var nx = isCur ? nextAfter(model) : null;
+    var jr = model.track === 'junior';
+    var note = g.milestone && model.assumed ? '<p class="rm-note">' + esc(jr ? t('plan.jr.assumedShort', { g: gradeFor(model.anchor, model.now) }) : t('plan.assumedShort')) + '</p>' : '';
+    var edit = g.milestone ? '<p class="rm-left rm-left-box"><span class="rm-left-t">' + esc(t('plan.changeLabel', { what: jr ? t('plan.jr.anchor') : t('plan.leave.label'), date: fmtDate(model.anchor) })) + '</span>' +
+      '<button type="button" class="rm-edit" data-act="plan-date"><span>' + esc(t('plan.change')) + '</span></button></p>' : '';
+    return '<div class="rm-body" id="rm-b-' + esc(g.key) + '" role="region" aria-labelledby="rm-t-' + esc(g.key) + '"' + (open ? '' : ' hidden') + '>' +
+      '<div class="rm-body-in">' +
+        '<p class="rm-body-title" aria-hidden="true">' + (isCur && !g.milestone ? '<span class="rm-now">' + esc(t('plan.tl.now')) + '</span>' : '') + esc(g.title) + '</p>' +
+        (isCur ? leftLineHtml(model) : '') + note + edit +
+        (g.all.length ? '<ul class="tl-items" data-reveal-stagger="50">' + itemsHtml(g.all) + '</ul>' : '<p class="rm-empty">' + esc(t('plan.now.emptyT')) + '</p>') +
+        (isCur && g.total ? curDoneHtml(nx) : '') + relatedHtml(g) +
+      '</div></div>';
+  }
+  function stationHtml(g, i, model, k) {
+    var isCur = i === model.cur && !model.beyond;
+    var cls = i < model.cur ? 'is-past' : isCur ? 'is-current' : 'is-future';
+    var open = isOpenKey(model, g.key, i);
+    var allDone = g.total > 0 && g.doneN === g.total;
+    var delay = Math.min(k, 6) * 50;
+    var head = g.milestone ? boxHtml(g, model, isCur, open, delay) : stationHeadHtml(g, isCur, open, delay);
+    return '<li class="rm-st ' + cls + (g.milestone ? ' is-milestone' : '') + (allDone ? ' is-complete' : '') + (open ? ' is-open' : '') + '" id="tl-' + esc(g.key) + '" data-group="' + esc(g.key) + '">' +
+      head + bodyHtml(g, model, i, open) + '</li>';
+  }
+  /* いま before the first station (plenty of time) / after the last one (long after leaving) */
+  function nowOnlyHtml(model, end, k) {
+    var jr = model.track === 'junior';
+    var delay = Math.min(k, 6) * 50;
+    return '<li class="rm-st rm-now-only is-current' + (end ? ' is-end' : '') + '" data-group="' + (end ? 'end' : 'now') + '">' +
+      '<div class="rm-head is-static"><span class="rm-mk" aria-hidden="true" data-reveal="mark"' + (delay ? ' data-reveal-delay="' + delay + '"' : '') + '></span>' +
+      '<span class="rm-head-in" data-reveal=""' + (delay ? ' data-reveal-delay="' + (delay + 40) + '"' : '') + '>' +
+        '<span class="rm-when" data-noruby><span class="rm-now">' + esc(t('plan.tl.now')) + '</span><span class="rm-date">' + esc(fmtDate(model.now)) + '</span></span>' +
+        '<span class="rm-title">' + esc(t(end ? (jr ? 'plan.jr.nowLate' : 'plan.tl.nowLate') : (jr ? 'plan.jr.nowEarly' : 'plan.tl.nowEarly'))) + '</span>' +
+        (end ? '<a class="tl-link rm-consult" href="#/find/cat/consult"><span>' + esc(t('plan.now.consult')) + '</span>' + arrow() + '</a>' : '') +
+      '</span></div></li>';
+  }
+  function roadmapHtml(model) {
+    var g = model.groups;
+    if (!g.length) return '';
+    var out = [], k = 0, cols = 0;
+    if (model.cur === -1) { out.push(nowOnlyHtml(model, false, k++)); cols++; }
+    g.forEach(function (x, i) { out.push(stationHtml(x, i, model, k++)); cols += x.milestone ? 2 : 1; });
+    if (model.beyond) { out.push(nowOnlyHtml(model, true, k++)); cols++; }
+    return '<ol class="rm" data-track="' + model.track + '">' + out.join('') + '</ol>';
+  }
+  function colsOf(model) {
     var n = 0;
-    for (var i = 0; i < pastEnd; i++) {
-      var g = model.groups[i];
-      if (skipJ12 && g.id === 'j12') continue;
-      n += g.total - g.doneN;
-    }
+    if (model.cur === -1) n++;
+    model.groups.forEach(function (x) { n += x.milestone ? 2 : 1; });
+    if (model.beyond) n++;
     return n;
   }
-  /* the top-level <li>s of the timeline, in order */
-  function tlItems(model) {
-    var g = model.groups, out = [];
-    if (!g.length) return out;
-    var jr = model.track === 'junior';
-    var cur = model.cur;
-    var pastEnd = model.beyond ? g.length : cur; // groups [0, pastEnd) are collapsed
-    var k = 0;
-    var dl = function () { var d = Math.min(k, 4) * 50; k++; return d; };
-    if (pastEnd > 0) {
-      var left = pastLeft(model, pastEnd);
-      var touched = model.groups.slice(0, pastEnd).some(function (x) { return x.doneN > 0; });
-      out.push('<li class="tl-past-wrap is-past" id="tl-past-li">' +
-        '<span class="tl-mk" aria-hidden="true"></span>' +
-        '<details class="tl-past" id="tl-past"' + (pastOpen ? ' open' : '') + '>' +
-        '<summary class="tl-past-sum" data-act="plan-fold"><span class="tl-past-head"><span class="tl-past-title">' + esc(t('plan.tl.past', { n: pastEnd })) + '</span>' +
-        '<span class="tl-past-left' + (left ? (touched ? ' is-warn' : '') : ' is-zero') + '">' + esc(left ? t('plan.tl.pastLeft', { n: left }) : t('plan.tl.pastAll')) + '</span></span>' + TOGGLE + '</summary>' +
-        '<div class="tl-past-body"><p class="tl-past-note">' + esc(t('plan.tl.pastNote')) + '</p>' +
-        '<ol class="tl tl-inner">' + g.slice(0, pastEnd).map(function (x) { return groupHtml(x, 'is-past'); }).join('') + '</ol></div>' +
-        '</details></li>');
-      k++;
-    }
-    if (cur === -1) {
-      out.push('<li class="tl-now-only is-current"><span class="tl-mk" aria-hidden="true"></span>' +
-        '<div class="tl-body" data-reveal=""><p class="tl-when" data-noruby><span class="tl-when-l"><span class="tl-now">' + esc(t('plan.tl.now')) + '</span><span class="tl-date">' + esc(fmtDate(model.now)) + '</span></span></p>' +
-        '<p class="tl-now-text">' + esc(t(jr ? 'plan.jr.nowEarly' : 'plan.tl.nowEarly')) + '</p></div></li>');
-      k++;
-    }
-    // expanded: いま + the next period (and the milestone itself); everything later is folded to a header row
-    var openUntil = Math.max(pastEnd, cur) + 1;
-    out.firstN = out.length;
-    for (var j = Math.max(pastEnd, 0); j < g.length; j++) {
-      var cls = j === cur ? 'is-current' : 'is-future';
-      out.push(groupHtml(g[j], cls, j > openUntil && !g[j].milestone, dl(), j === cur ? nextAfter(model) : null));
-      if (j <= openUntil) out.firstN = out.length;
-    }
-    if (model.beyond) {
-      out.push('<li class="tl-now-only is-current is-end"><span class="tl-mk" aria-hidden="true"></span>' +
-        '<div class="tl-body" data-reveal=""><p class="tl-when" data-noruby><span class="tl-when-l"><span class="tl-now">' + esc(t('plan.tl.now')) + '</span><span class="tl-date">' + esc(fmtDate(model.now)) + '</span></span></p>' +
-        '<p class="tl-now-text">' + esc(t(jr ? 'plan.jr.nowLate' : 'plan.tl.nowLate')) + '</p>' +
-        '<p class="tl-now-go"><a class="tl-link" href="#/find/cat/consult"><span>' + esc(t('plan.now.consult')) + '</span>' + arrow() + '</a></p></div></li>');
-    }
-    if (out.firstN == null) out.firstN = out.length;
-    return out;
+
+  /* ---------- beside / below the roadmap: つぎの駅 · 見せる・残す · 保存した支援 ---------- */
+  function nextHtml(model) {
+    var nx = nextAfter(model);
+    var body = nx ?
+      '<button type="button" class="plan-next-btn" data-act="plan-jump" data-key="' + esc(nx.key) + '">' +
+        '<span class="plan-next-t">' + esc(nx.title) + '</span><span class="plan-next-d num">' + esc(fromLabel(nx)) + '</span>' + arrow() + '</button>' :
+      '<p class="plan-next-none">' + esc(t('plan.next.none')) + '</p>';
+    return '<section class="plan-next" id="plan-next" aria-labelledby="plan-next-h"><p class="plan-side-k" id="plan-next-h">' + esc(t('plan.next.k')) + '</p>' + body + '</section>';
   }
-  function tlHeadHtml(model) {
-    var jr = model.track === 'junior';
-    return SM.ui.sectionHeader(t(jr ? 'plan.jr.tl.h' : 'plan.tl.h'), { id: 'plan-tl-h' });
+  function toolsHtml() {
+    var row = function (act, icon, title, sub) {
+      return SM.ui.listItem({ title: title, sub: sub, icon: icon, act: act, attrs: 'data-press="ink"' });
+    };
+    return '<section class="plan-tools" id="plan-tools" aria-labelledby="plan-tools-h">' +
+      SM.ui.sectionHeader(t('plan.tools.h'), { id: 'plan-tools-h', level: 2, cls: 'plan-side-head' }) +
+      '<div class="list plan-tools-list">' +
+      row('plan-ics', 'calendar', t('plan.act.ics'), t('plan.act.icsSub')) +
+      row('plan-sheet', 'print', t('plan.act.sheet'), t('plan.act.sheetSub')) +
+      '</div></section>';
   }
-  /* items: the <li> strings to put in now */
-  function timelineHtml(model, items) {
-    if (!model.groups.length) return '';
-    var jr = model.track === 'junior';
-    return '<section class="plan-tl" id="plan-tl" aria-labelledby="plan-tl-h">' + tlHeadHtml(model) +
-      '<div class="tl-wrap"><span class="tl-fill" aria-hidden="true"><i></i></span><span class="tl-trace" aria-hidden="true"></span>' +
-      '<ol class="tl" data-track="' + model.track + '">' + items.join('') + '</ol></div>' +
-      '<p class="plan-note">' + esc(t(jr ? 'plan.jr.note' : 'plan.tl.note')) + '</p></section>';
+  /* where a saved support sits on the road (the station whose period holds its deadline) */
+  function stationOf(model, id) {
+    var key = 'pg:' + id;
+    for (var i = 0; i < model.groups.length; i++) {
+      var g = model.groups[i];
+      for (var j = 0; j < g.progs.length; j++) if (g.progs[j].key === key) return g;
+    }
+    return null;
+  }
+  function savedRowHtml(p, model) {
+    var name = L(p.name);
+    var g = stationOf(model || lastModel || build(), p.id);
+    var at = g ? t('plan.saved.at', { when: g.milestone ? g.title : (g.when || g.dateLabel) }) : t('plan.saved.anytime');
+    return '<div class="plan-saved-item" data-flip-key="' + esc(p.id) + '">' + SM.ui.programCard(p, { compact: true, showSave: false }) +
+      '<p class="plan-saved-at"' + (g ? ' data-key="' + esc(g.key) + '"' : '') + '>' + esc(at) + '</p>' +
+      '<button type="button" class="plan-remove" data-act="plan-remove" data-id="' + esc(p.id) + '" aria-label="' + esc(t('plan.saved.removeLabel', { name: name })) + '" title="' + esc(t('plan.saved.remove')) + '">' + ic('close') + '</button></div>';
+  }
+  function nowRelated(model, max) {
+    var g = model.groups;
+    var from = model.cur >= 0 ? model.cur : 0;
+    var ids = [];
+    for (var i = from; i < g.length && ids.length < 8; i++) {
+      g[i].tasks.forEach(function (x) { x.p.forEach(function (id) { if (ids.indexOf(id) === -1 && SM.program(id)) ids.push(id); }); });
+      if (ids.length) break;
+    }
+    var seen = {};
+    return ids.filter(function (id) {
+      var nm = L(SM.program(id).name).replace(/[（(].*$/, '');
+      if (seen[nm]) return false;
+      seen[nm] = true; return true;
+    }).slice(0, max || 3).map(function (id) { return SM.program(id); });
+  }
+  function savedEmptyHtml() {
+    var answered = state().answered;
+    var model = lastModel || build();
+    var rel = nowRelated(model, 3);
+    var go = '<a class="plan-empty-go" href="' + (answered ? '#/find/results' : '#/find') + '"><span>' + esc(answered ? t('plan.empty.results') : t('plan.empty.find')) + '</span>' + arrow() + '</a>';
+    return '<div class="plan-saved-empty">' +
+      '<p class="plan-empty-k">' + esc(t('plan.empty.k')) + '</p>' +
+      '<p class="plan-empty-line">' + esc(t('plan.empty.how')) + '</p>' +
+      (rel.length ? '<p class="plan-empty-relk">' + esc(t('plan.empty.rel')) + '</p><div class="list plan-empty-rel">' + rel.map(function (p) {
+        return SM.ui.listItem({ title: L(p.name).replace(/[（(].*$/, ''), cat: (p.cat && p.cat[0]) || 'procedures', href: '#/p/' + encodeURIComponent(p.id) });
+      }).join('') + '</div>' : '') + go + '</div>';
+  }
+  function savedHeadHtml(model) {
+    var n = model.saved.length;
+    return SM.ui.sectionHeader(t('plan.saved.h'), {
+      sub: n ? t('plan.saved.sub', { n: '\u0001' }) + (en() ? ' · ' : '・') + t('plan.saved.why') : null,
+      action: n ? { label: t('plan.saved.more'), href: state().answered ? '#/find/results' : '#/find' } : null,
+      id: 'plan-saved-h', cls: 'plan-side-head'
+    }).replace('\u0001', '<span class="plan-saved-n num">' + n + '</span>');
+  }
+  function savedHtml(model) {
+    var body = model.saved.length ?
+      '<div class="pcards plan-saved-list" data-reveal-stagger="40">' + model.saved.map(function (p) { return savedRowHtml(p, model); }).join('') + '</div>' :
+      savedEmptyHtml();
+    return '<section class="plan-saved" id="plan-saved" aria-labelledby="plan-saved-h">' + savedHeadHtml(model) + body + '</section>';
   }
 
-  /* the body under the status strip: the timeline first (its いま period = what to do now, checkable, on the first
-     screen), then 保存した支援 and 見せる・残す. Desktop: the timeline is the wide column, the other two sit beside it.
-     What is past the next period (folded rows) and saved rows after the 3rd come after the transition. */
-  function bodyParts(model, full) {
-    var items = tlItems(model);
-    var nowN = full ? items.length : (items.firstN || items.length);
-    var savedN = full ? null : 3;
-    var html = '<div class="plan-body" data-flip-key="ph-body">' +
-      timelineHtml(model, items.slice(0, nowN)) +
-      '<div class="plan-flow">' + savedHtml(model, savedN) + toolsHtml() + '</div>' +
-    '</div>';
-    return { html: html, restItems: items.slice(nowN), restSaved: full ? [] : model.saved.slice(savedN) };
+  /* the page body: the roadmap (stations + the open period) and, beside it on desktop / under it on a phone,
+     つぎの駅 · 見せる・残す · 保存した支援. --n / --k size the desktop grid (stations across, the panel 62% of it). */
+  function bodyHtml2(model) {
+    var jr = model.track === 'junior';
+    var n = colsOf(model), k = Math.max(1, Math.round(n * 0.62));
+    return '<section class="plan-rm" id="plan-tl" aria-labelledby="plan-tl-h">' +
+      '<h2 class="sr-only" id="plan-tl-h">' + esc(t(jr ? 'plan.jr.tl.h' : 'plan.tl.h')) + '</h2>' +
+      '<div class="plan-body rm-wrap" data-flip-key="ph-body" style="--n:' + n + ';--k:' + k + '">' +
+        '<span class="rm-rail" aria-hidden="true"></span><span class="rm-fill" aria-hidden="true"><i></i></span>' +
+        roadmapHtml(model) +
+        '<div class="plan-flow">' + nextHtml(model) + toolsHtml() + savedHtml(model) + '</div>' +
+      '</div>' +
+      '<p class="plan-note">' + esc(t(jr ? 'plan.jr.note' : 'plan.tl.note')) + '</p></section>';
   }
 
   /* ------------------------------------------------------------------ view */
@@ -1177,52 +1177,12 @@
     var model = build({ track: ti.track });
     lastModel = model;
     var main = document.getElementById('view');
-    var route = SM.route || {};
-    // in place (SM.render on this page, a sheet's change, settings): everything now, so scroll restores onto
-    // real content. Same for a back navigation that restores below the first screen, and for ?now=1.
-    var inPlace = !!(main && main.classList.contains('v-plan') && main.querySelector('.plan-hero'));
-    var deep = route.kind === 'back' && route.restoreY > (window.innerHeight || 800) * 0.5;
-    var full = calm || inPlace || deep || (route.query && route.query.now === '1') || !M() || typeof M().afterTransition !== 'function';
-    var parts = bodyParts(model, full);
-    var gen = renderGen;
-    deferred = (parts.restItems.length || parts.restSaved.length) ? { gen: gen, items: parts.restItems, saved: parts.restSaved, done: false } : null;
+    var inPlace = !!(main && main.classList.contains('v-plan') && main.querySelector('.plan-rm'));
     lastCalm = calm || inPlace;
     calm = false;
-    return headHtml(ti) + heroHtml(model) + parts.html + '<div class="plan-print" aria-hidden="true"></div>';
+    return headHtml(ti, model) + bodyHtml2(model) + '<div class="plan-print" aria-hidden="true"></div>';
   }
-
-  /* append what render() left for later (inside the containers it rendered, same order and headings) */
-  function runDeferred(root) {
-    var d = deferred;
-    if (!d || d.done || d.gen !== renderGen) return;
-    d.done = true;
-    deferred = null;
-    root = root || view();
-    if (!root || !isPlanRoute()) return;
-    var instant = !!(SM.route && SM.route.instant);
-    if (d.saved.length) {
-      var list = root.querySelector('.plan-saved-list');
-      if (list) {
-        var tmp = document.createElement('div');
-        tmp.innerHTML = d.saved.map(savedRowHtml).join('');
-        applyRuby(tmp);
-        while (tmp.firstChild) list.appendChild(tmp.firstChild);
-        if (M() && M().mount) M().mount(list, { instant: instant });
-      }
-    }
-    var items = d.items;
-    if (items.length) {
-      var ol = root.querySelector('.tl-wrap > ol.tl');
-      if (ol) {
-        var tmp2 = document.createElement('ol');
-        tmp2.innerHTML = items.join('');
-        applyRuby(tmp2);
-        while (tmp2.firstChild) ol.appendChild(tmp2.firstChild);
-        if (M() && M().mount) M().mount(ol, { instant: instant });
-      }
-    }
-  }
-  function flushDeferred() { if (deferred) runDeferred(); }
+  function flushDeferred() { }
 
   var nowScrolled = false;
   window.addEventListener('hashchange', function () { nowScrolled = false; });
@@ -1233,31 +1193,18 @@
     var route = SM.route || {};
     var m = M();
     var first = !route.instant && !lastCalm;
-    // the countdown: digits roll in from blank on the first view, later only when N changed since the last visit
+    // the countdown in the station sign: digits roll in on the first view, later only when N changed
     var num = root.querySelector('#plan-count-n[data-n]');
     if (num && m && m.seen) {
       var n = +num.getAttribute('data-n');
       var key = 'plan.days.' + model.track;
       var prev = m.seen(key, n);
       if (first && m.odometer) {
-        var to = num.textContent;
-        // v5: the station-board roll plays on EVERY arrival (from blank; from the old N when it changed since the
-        // last visit), long enough to be seen on a phone. Not from '0': the ones column would pass 1, 2, 3 and
-        // settle through a legible '163日' while the others had landed. Reduced motion: the number fades in.
         var from = typeof prev === 'number' && isFinite(prev) && prev !== n ? fmtNum(prev) : '';
         if (reduced()) anim(num, [{ opacity: 0 }, { opacity: 1 }], { duration: 180, easing: 'linear' });
-        else m.odometer(num, to, { from: from, duration: 960, delay: 80 });
+        else m.odometer(num, num.textContent, { from: from, duration: 960, delay: 240 });
       }
     }
-    // progress bar: grows from where it was at the last visit (data-count-seen on the number shares the key)
-    var fill = root.querySelector('.plan-prog-fill');
-    if (fill && m && m.seen && first && canAnim() && model.total) {
-      var prevDone = m.seen('plan.done.' + model.track);
-      var pd = typeof prevDone === 'number' && prevDone !== model.done ? prevDone : 0;
-      var a = Math.min(1, pd / model.total), b = model.done / model.total;
-      if (b > a) anim(fill, [{ transform: 'scaleX(' + a + ')' }, { transform: 'scaleX(' + b + ')' }], { duration: 760, delay: 380, easing: EASE('draw'), fill: 'backwards' });
-    }
-    // FIX-B (motion): what was saved since the last visit arrives — its row slides in and its mark stamps
     var newIds = [];
     if (m && m.seen) {
       var ids = (state().saved || []).slice();
@@ -1268,9 +1215,8 @@
     if (toNow) nowScrolled = true;
     var after = function () {
       if (gen !== renderGen || !root.isConnected || !isPlanRoute()) return;
-      runDeferred(root);
       if (toNow) {
-        var c = root.querySelector('.tl > .tl-group.is-current, .tl > .is-current');
+        var c = root.querySelector('.rm > .rm-st.is-current');
         if (c) try { c.scrollIntoView({ block: 'start' }); } catch (e) { }
       }
       wireFill(root, { entrance: first });
@@ -1296,22 +1242,12 @@
     onSave: function () { calm = true; SM.render(); }
   };
 
-  /* ------------------------------------------------------------------ the green line (scroll-linked) */
-  var fillCtl = null, traceCtl = null;
-  function topIn(el, anc) {
-    var y = 0, n = el;
-    while (n && n !== anc) { y += n.offsetTop; n = n.offsetParent; }
-    return n === anc ? y : NaN;
-  }
-  function mkCenter(li, wrap) {
-    var mk = li && li.querySelector(':scope > .tl-mk');
-    if (!mk) return NaN;
-    return topIn(mk, wrap) + mk.offsetHeight / 2;
-  }
-  /* The fill runs from the first station to いま. Its tip follows a reading line at 65% of the viewport:
-     range 'cover A%' → 'cover B%' of its own view() timeline (readRange). */
-  /* the view() range that puts the tip of an H-tall line on the reading line (65% of the viewport). A CSS view()
-     timeline insets the scrollport by the root's scroll-padding (the app bar); the JS fallback does not. */
+  /* ------------------------------------------------------------------ the green line */
+  /* The fill runs from the first station to いま, then on toward the next station by the share of this period's
+     tasks already done: a tick moves the line. Phone (vertical): its tip follows a reading line at 65% of the
+     viewport as the reader scrolls (scrollLinked on a view() timeline); desktop (horizontal strip): it draws once
+     on arrival. Reduced motion / lite: the end state. */
+  var fillCtl = null;
   var SDA = typeof CSS !== 'undefined' && CSS.supports && CSS.supports('animation-timeline', 'view()');
   function readRange(H) {
     var vh = window.innerHeight || 800, pad = 0;
@@ -1320,86 +1256,106 @@
     var A = 0.35 * vh / span * 100, B = (0.35 * vh + H) / span * 100;
     return ['cover ' + A.toFixed(3) + '%', 'cover ' + Math.min(100, B).toFixed(3) + '%'];
   }
-  /* desktop: the left column (tools, saved) stays in view beside the long timeline, but only when it fits in the
-     window; a taller one scrolls with the page (a sticky column whose foot can't be reached is worse) */
-  function syncStick(root) {
-    var body = root && root.querySelector('.plan-body');
-    var flow = body && body.querySelector(':scope > .plan-flow');
-    if (!flow) return;
-    var on = false;
-    // --sticky-top = app bar 56 + 24; plus 24 below so the last row never touches the window edge
-    if (wide() && body.querySelector(':scope > .plan-tl')) on = flow.offsetHeight + 104 <= (window.innerHeight || 800);
-    body.classList.toggle('is-stick', on);
+  function markCenters(wrap) {
+    var wr = wrap.getBoundingClientRect();
+    var lis = wrap.querySelectorAll(':scope > ol.rm > li.rm-st');
+    var out = [];
+    for (var i = 0; i < lis.length; i++) {
+      var mk = lis[i].querySelector(':scope > .rm-head > .rm-mk');
+      if (!mk) { out.push(null); continue; }
+      var r = mk.getBoundingClientRect();
+      out.push({ li: lis[i], x: r.left + r.width / 2 - wr.left, y: r.top + r.height / 2 - wr.top, cur: lis[i].classList.contains('is-current') });
+    }
+    return out;
+  }
+  /* the fill's length now (px along the line) and the geometry it needs */
+  function fillGeom(wrap, model) {
+    var cs = markCenters(wrap).filter(Boolean);
+    if (cs.length < 2) return null;
+    var horiz = wide();
+    var pos = function (c) { return horiz ? c.x : c.y; };
+    var ci = -1;
+    cs.forEach(function (c, i) { if (c.cur) ci = i; });
+    if (ci === -1) return null;
+    var frac = 0;
+    var g = model.cur >= 0 ? model.groups[model.cur] : null;
+    if (g && g.total && cs[ci].li.getAttribute('data-group') === g.key) frac = Math.min(1, g.doneN / g.total);
+    var L = pos(cs[ci]) - pos(cs[0]);
+    if (cs[ci + 1]) L += frac * (pos(cs[ci + 1]) - pos(cs[ci]));
+    return { horiz: horiz, start: pos(cs[0]), end: pos(cs[cs.length - 1]), L: L, cross: horiz ? cs[0].y : cs[0].x };
   }
   function wireFill(root, o) {
     o = o || {};
     root = root || view();
     if (!root) return;
-    syncStick(root);
-    var wrap = root.querySelector('.tl-wrap');
-    var fill = wrap && wrap.querySelector(':scope > .tl-fill');
-    var ol = wrap && wrap.querySelector(':scope > ol.tl');
+    var wrap = root.querySelector('.rm-wrap');
+    var fill = wrap && wrap.querySelector(':scope > .rm-fill');
+    var rail = wrap && wrap.querySelector(':scope > .rm-rail');
     if (fillCtl) { try { fillCtl.destroy(); } catch (e) { } fillCtl = null; }
-    if (ol) wireTrace(wrap, ol);
-    if (!fill || !ol) return;
-    var firstLi = ol.firstElementChild;
-    var curLi = ol.querySelector(':scope > li.is-current');
+    if (!fill || !rail) return;
+    var model = lastModel || build();
+    var gm = fillGeom(wrap, model);
+    if (!gm) { fill.style.display = 'none'; rail.style.display = 'none'; fill._L = 0; return; }
     var inner = fill.firstElementChild;
-    var oldH = fill._h || 0;
-    if (!firstLi || !curLi || firstLi === curLi) { fill.style.display = 'none'; fill._h = 0; return; }
-    var y0 = mkCenter(firstLi, wrap), y1 = mkCenter(curLi, wrap);
-    if (!isFinite(y0) || !isFinite(y1) || y1 - y0 < 2) { fill.style.display = 'none'; fill._h = 0; return; }
-    var H = y1 - y0;
-    fill.style.display = '';
-    fill.style.top = y0 + 'px';
-    fill.style.height = H + 'px';
-    fill._h = H;
+    var oldL = fill._L || 0, oldH = fill._horiz;
+    rail.style.display = '';
+    fill.style.display = gm.L > 1 ? '' : 'none';
+    fill._L = gm.L; fill._horiz = gm.horiz;
+    if (gm.horiz) {
+      rail.style.cssText = 'left:' + gm.start + 'px;width:' + (gm.end - gm.start) + 'px;top:' + gm.cross + 'px';
+      fill.style.left = gm.start + 'px'; fill.style.top = gm.cross + 'px'; fill.style.width = gm.L + 'px'; fill.style.height = '';
+      fill.style.transformOrigin = 'left center';
+      if (inner) inner.style.transformOrigin = 'left center';
+    } else {
+      rail.style.cssText = 'top:' + gm.start + 'px;height:' + (gm.end - gm.start) + 'px;left:' + gm.cross + 'px';
+      fill.style.top = gm.start + 'px'; fill.style.left = gm.cross + 'px'; fill.style.height = gm.L + 'px'; fill.style.width = '';
+      fill.style.transformOrigin = 'center top';
+      if (inner) inner.style.transformOrigin = 'center top';
+    }
     var m = M();
+    var prop = gm.horiz ? 'scaleX' : 'scaleY';
     if (!m || !m.scrollLinked) { fill.style.transform = 'none'; return; }
-    var vh = window.innerHeight || 800;
-    fill.style.transformOrigin = 'center top';
-    fillCtl = m.scrollLinked(fill, { prop: 'scaleY', from: 0, to: 1, range: readRange(H) });
+    if (gm.horiz) fill.style.transform = 'none';
+    else fillCtl = m.scrollLinked(fill, { prop: 'scaleY', from: 0, to: 1, range: readRange(gm.L) });
     if (!inner || !canAnim()) return;
-    if (o.from != null && oldH && Math.abs(oldH - H) > 1) {
-      // a fold opened or closed above いま: the line follows the stations as they slide
-      anim(inner, [{ transform: 'scaleY(' + (oldH / H) + ')' }, { transform: 'none' }], { spring: 'smooth', maxDuration: 400, key: 'tlfill' });
+    if (o.from != null && oldL && oldH === gm.horiz && Math.abs(oldL - gm.L) > 1) {
+      // a station opened/closed, or a tick moved the tip: the line glides from where it was to where it is
+      inner.style.transform = 'none';
+      anim(inner, [{ transform: prop + '(' + (oldL / gm.L) + ')' }, { transform: 'none' }], { spring: 'smooth', maxDuration: 520, key: 'tlfill' });
     } else if (o.entrance) {
-      // already past the reading line when it arrives (desktop: the timeline is on the first screen): draw it once
-      var r = wrap.getBoundingClientRect();
-      if (r.top + y1 < vh * 0.65 && r.top + y1 > 0) {
-        inner.style.transformOrigin = 'center top';
-        anim(inner, [{ transform: 'scaleY(0)' }, { transform: 'none' }], { duration: 560, delay: 120, easing: EASE('draw'), fill: 'backwards', key: 'tlfill' });
+      var r = wrap.getBoundingClientRect(), vh = window.innerHeight || 800;
+      if (gm.horiz || (r.top + gm.start + gm.L < vh * 0.65 && r.top + gm.start > -vh)) {
+        anim(inner, [{ transform: prop + '(0)' }, { transform: 'none' }], { duration: gm.horiz ? 820 : 560, delay: 160, easing: EASE('draw'), fill: 'backwards', key: 'tlfill' });
       }
     }
   }
-  /* The road ahead: an ink line over the pale rule, from いま (or the first station) to the last one, drawn by the
-     same reading line as the reader scrolls. Motion only: without it (reduced, lite) the pale rule stays as it is. */
-  function wireTrace(wrap, ol) {
-    var tr = wrap.querySelector(':scope > .tl-trace');
-    if (traceCtl) { try { traceCtl.destroy(); } catch (e) { } traceCtl = null; }
-    if (!tr) return;
-    var m = M();
-    var lis = ol.children;
-    var startLi = ol.querySelector(':scope > li.is-current') || lis[0];
-    var lastLi = lis[lis.length - 1];
-    if (!m || !m.scrollLinked || !canAnim() || (m.tier && m.tier() !== 'full') || !startLi || !lastLi || startLi === lastLi) { tr.style.display = 'none'; return; }
-    var y0 = mkCenter(startLi, wrap), y1 = mkCenter(lastLi, wrap);
-    if (!isFinite(y0) || !isFinite(y1) || y1 - y0 < 24) { tr.style.display = 'none'; return; }
-    var H = y1 - y0;
-    tr.style.display = 'block';
-    tr.style.top = y0 + 'px';
-    tr.style.height = H + 'px';
-    traceCtl = m.scrollLinked(tr, { prop: 'scaleY', from: 0, to: 1, range: readRange(H) });
-  }
-  var resizeT = null;
+  var resizeT = null, wasWide = null;
   window.addEventListener('resize', function () {
     clearTimeout(resizeT);
-    resizeT = setTimeout(function () { if (view() && isPlanRoute()) wireFill(view()); }, 160);
+    resizeT = setTimeout(function () {
+      var root = view();
+      if (!root || !isPlanRoute()) return;
+      var W = wide();
+      if (wasWide !== null && W !== wasWide) syncOpen(root);
+      wasWide = W;
+      wireFill(root);
+    }, 160);
   });
-  window.addEventListener('beforeprint', function () { if (view()) { flushDeferred(); fillPrint(); } });
+  /* crossing the desktop breakpoint: one open station on the strip, the reader's choices on the phone list */
+  function syncOpen(root) {
+    var model = lastModel || build();
+    var lis = root.querySelectorAll('.rm > li.rm-st[data-group]');
+    Array.prototype.forEach.call(lis, function (li) {
+      var key = li.getAttribute('data-group');
+      var g = groupOf(model, key);
+      if (!g) return;
+      var i = model.groups.indexOf(g);
+      setOpen(li, isOpenKey(model, key, i));
+    });
+  }
+  window.addEventListener('beforeprint', function () { if (view()) fillPrint(); });
 
   /* ------------------------------------------------------------------ counts (in place) */
-  // vis: whether it is laid out (read by the caller BEFORE any write, so a refresh costs one layout, not one per number)
   function rollNum(el, n, vis) {
     if (!el) return;
     var txt = fmtNum(n);
@@ -1410,8 +1366,6 @@
     if (m && m.odometer && vis) m.odometer(el, txt, { from: shown, duration: 420 });
     else { el._smOdoShown = txt; el.textContent = txt; }
   }
-  /* a tap answers first: the box fills and the check draws in the next frame; counts, progress and the band follow
-     one painted frame later (their DOM work would otherwise sit between the tap and the first feedback) */
   var countsQ = false;
   function afterPaint(fn) {
     var go = function () { setTimeout(fn, 0); };
@@ -1420,7 +1374,12 @@
   function refreshSoon() {
     if (countsQ) return;
     countsQ = true;
-    afterPaint(function () { countsQ = false; if (view()) refreshCounts(); });
+    afterPaint(function () { countsQ = false; if (view()) { refreshCounts(); wireFill(view(), { from: true }); } });
+  }
+  function swapOrSet(el, text) {
+    if (!el) return;
+    var m = M();
+    if (m && m.swapText && !rubyOn() && el.offsetParent !== null) m.swapText(el, text); else el.textContent = text;
   }
   function refreshCounts(model) {
     model = model || build();
@@ -1428,18 +1387,11 @@
     var root = view();
     if (!root) return model;
     var m = M();
-    // reads first (one layout). Inside a closed <details> fold nothing is shown: answered without a read, since a
-    // layout read there unlocks and lays out the whole folded period (about 90ms on a slow phone)
-    var vis = function (el) {
-      if (!el) return false;
-      var d = el.closest('details:not([open])'), s = d && el.closest('summary');
-      if (d && !(s && s.parentNode === d)) return false;
-      return el.offsetParent !== null;
-    };
+    var vis = function (el) { return !!el && el.offsetParent !== null; };
     var eDone = root.querySelector('#plan-prog-done'), eTotal = root.querySelector('#plan-prog-total');
     var gEls = model.groups.map(function (g) {
       var el = root.querySelector('[data-gcount="' + g.key + '"]');
-      var n = el && el.querySelector('.tl-count-n');
+      var n = el && el.querySelector('.rm-count-n');
       return { el: el, n: n, v: vis(n) };
     });
     var vDone = vis(eDone), vTotal = vis(eTotal);
@@ -1454,22 +1406,13 @@
         var pk = prog.querySelector('.plan-prog-k');
         if (pk) swapOrSet(pk, t(allDone ? 'plan.progressAll' : 'plan.progressK'));
       }
-      var bar = prog.querySelector('.plan-prog-bar');
-      if (bar) {
-        bar.setAttribute('aria-valuenow', model.done);
-        bar.setAttribute('aria-valuemax', model.total);
-        bar.setAttribute('aria-valuetext', t('plan.progressOf', { done: model.done, total: model.total }));
-        var f = bar.querySelector('.plan-prog-fill');
-        if (f) f.style.transform = 'scaleX(' + (model.total ? model.done / model.total : 0).toFixed(4) + ')';
-      }
     }
     model.groups.forEach(function (g, gi) {
       var el = gEls[gi].el;
       var li = document.getElementById('tl-' + g.key);
       if (el) {
         rollNum(gEls[gi].n, g.doneN, gEls[gi].v);
-        var of = el.querySelector('.tl-count-of');
-        // writes only what changed: a text node replaced with the same text still restyles the whole page
+        var of = el.querySelector('.rm-count-of');
         if (of && of.textContent !== '/' + g.total) of.textContent = '/' + g.total;
         var al = t('plan.progress') + ' ' + t('plan.progressOf', { done: g.doneN, total: g.total });
         if (el.getAttribute('aria-label') !== al) el.setAttribute('aria-label', al);
@@ -1477,78 +1420,16 @@
       var cmp = g.total > 0 && g.doneN === g.total;
       if (li && li.classList.contains('is-complete') !== cmp) li.classList.toggle('is-complete', cmp);
     });
-    var sum = root.querySelector('.tl-past-left');
-    if (sum) {
-      var pastEnd = model.beyond ? model.groups.length : model.cur;
-      var lf = pastLeft(model, pastEnd);
-      var txt = lf ? t('plan.tl.pastLeft', { n: lf }) : t('plan.tl.pastAll');
-      if (sum.textContent !== txt) { if (m && m.swapText && !rubyOn()) m.swapText(sum, txt); else sum.textContent = txt; }
-      sum.classList.toggle('is-zero', !lf);
-    }
     return model;
   }
 
   /* ------------------------------------------------------------------ 済み */
-  function sortRows(ul) {
-    var rows = Array.prototype.slice.call(ul.children);
-    var want = rows.slice().sort(function (a, b) {
-      return ((a.classList.contains('is-done') ? 1 : 0) - (b.classList.contains('is-done') ? 1 : 0)) || ((+a.getAttribute('data-i') || 0) - (+b.getAttribute('data-i') || 0));
-    });
-    for (var i = 0; i < rows.length; i++) if (rows[i] !== want[i]) return want;
-    return null;
-  }
-  // pre: writes that belong to the same change (undo's row state): run inside the FLIP after its first read, so the
-  // whole change costs one layout read before and one after (a read between writes restyles the page again)
-  function reorder(ul, pre, post) {
-    if (!ul || !ul.isConnected) { if (pre) pre(); if (post) post(); return; }
-    clearTimeout(ul._planT); ul._planT = null;
-    var movers = (ul._planMovers || []).filter(function (x) { return x.parentNode === ul; });
-    ul._planMovers = null;
-    var want = pre ? null : sortRows(ul);
-    if (!want && !pre) return;
-    var put = function () {
-      if (pre) { pre(); want = sortRows(ul); }
-      if (want) want.forEach(function (li) { ul.appendChild(li); });
-      // focus lands after the move (moving a focused row would restyle the page once more)
-      if (post) post();
-    };
-    var m = M();
-    // the rows the user ticked (or un-ticked by undo) hop: out where they were, in at their new place; the others
-    // close the gap. Nothing slides through another row.
-    if (m && m.flip && canAnim()) m.flip(ul, put, { hop: movers }); else if (m && m.keepFocus) m.keepFocus(ul, put); else put();
-  }
-  /* the row moves after the stamp has been seen. A keyboard user ticking down the list keeps their place:
-     the move waits until focus leaves the list. */
-  function scheduleReorder(ul, delay) {
-    // without motion a row that jumps away under the finger is disorienting: it stays put, the next visit sorts it
-    if (!ul || !canAnim()) return;
-    clearTimeout(ul._planT);
-    ul._planT = setTimeout(function () {
-      ul._planT = null;
-      var a = document.activeElement;
-      var kb = a && ul.contains(a) && a.matches && (function () { try { return a.matches(':focus-visible'); } catch (e) { return false; } })();
-      if (kb) {
-        if (ul._planWait) return;
-        ul._planWait = function (ev) {
-          if (ev.relatedTarget && ul.contains(ev.relatedTarget)) return;
-          ul.removeEventListener('focusout', ul._planWait);
-          ul._planWait = null;
-          scheduleReorder(ul, 120);
-        };
-        ul.addEventListener('focusout', ul._planWait);
-        return;
-      }
-      reorder(ul);
-    }, delay == null ? 680 : delay);
-  }
-
   function setRow(li, on, motion) {
     if (!li) return;
     var cb = li.querySelector('.tl-check');
     if (cb && cb.checked !== on) cb.checked = on;
     var m = M();
     var box = li.querySelector('.tl-box');
-    // check() uses the box geometry read on pointerdown and the known fill: the tap only writes (no forced restyle)
     if (on && motion && m && canAnim() && box && m.check) m.check(box, { color: 'var(--on-action-fill, #fff)', fill: 'var(--action-fill)' });
     else if (!on && box && m && m.uncheck) m.uncheck(box, { color: 'var(--action-fill)' });
     li.classList.toggle('is-done', on);
@@ -1561,9 +1442,7 @@
       }
     }
   }
-
-  /* the ticked row answers with its whole body: a green wash sweeps across it and fades (reduced: the fade only),
-     and the text hops 10px toward the box and settles back, so a tick reads as "done" from arm's length */
+  /* the ticked row answers with its whole body: a green wash sweeps it and the text hops toward the box */
   function settleRow(li) {
     var task = li.querySelector('.tl-task');
     if (!task) return;
@@ -1579,12 +1458,19 @@
     var txt = li.querySelector('.tl-item-text');
     if (txt && canAnim()) anim(txt, [{ translate: '0 0' }, { translate: '12px 0', offset: 0.32 }, { translate: '0 0' }], { duration: 520, easing: EASE('standard'), key: 'hop' });
   }
-
+  /* the tip of the line answers a tick: a short green pulse at the station the line is heading for */
+  function pulseNext(gEl) {
+    var m = M();
+    if (!gEl || !m || !canAnim()) return;
+    var nx = gEl.nextElementSibling;
+    var mk = nx && nx.querySelector(':scope > .rm-head > .rm-mk');
+    if (mk && m.pulse) { try { m.pulse(mk); return; } catch (e) { } }
+    if (mk) anim(mk, [{ transform: 'scale(1)' }, { transform: 'scale(1.35)', offset: 0.4 }, { transform: 'scale(1)' }], { duration: 480, easing: EASE('standard'), key: 'pulse' });
+  }
   function completeGroup(gEl) {
     var m = M();
-    var mk = gEl && gEl.querySelector(':scope > .tl-mk');
-    if (mk && m && m.stamp && canAnim()) setTimeout(function () { m.stamp(mk); }, 260);
-    // the current period: its 「ぜんぶできた → つぎ」 line rises in under the last row once the stamp has landed
+    var mk = gEl && gEl.querySelector(':scope > .rm-head > .rm-mk');
+    if (mk && m && m.stamp && canAnim()) setTimeout(function () { m.stamp(mk); }, 420);
     var dn = gEl && gEl.classList.contains('is-current') ? gEl.querySelector('.tl-cur-done') : null;
     if (!dn) return;
     gEl.classList.add('is-complete');
@@ -1592,31 +1478,25 @@
     if (canAnim()) anim(dn, [{ opacity: 0, transform: 'translateY(16px)' }, { opacity: 1, transform: 'none' }], { duration: 440, delay: 360, easing: EASE('enter'), fill: 'backwards', key: 'curdone' });
     else anim(dn, [{ opacity: 0 }, { opacity: 1 }], { duration: 180, easing: 'linear' });
   }
-
   function markDone(key, on, opts) {
     opts = opts || {};
     var root = view();
     var cb = root && document.getElementById(itemId(key));
     var li = cb && cb.closest('.tl-item');
-    var gEl = li && li.closest('.tl-group');
+    var gEl = li && li.closest('.rm-st');
     var wasComplete = gEl && gEl.classList.contains('is-complete');
-    // 1. the row answers the tap (box fill + check draw, next frame) 2. state (cheap, so leaving at once keeps it)
-    // 3. the model (no DOM) for the toast's wording 4. counts / progress / band after the first painted frame
-    // undo (opts.now): the row's state changes inside the reorder's FLIP (its first read comes before any write)
-    // FIX-B (F13): no reorder while the reader is here — a done row moving away under the finger could not be
-    // found again to untick it. itemsHtml() puts done rows last on the next visit.
     setRow(li, on, !opts.quiet);
     setDone(key, on);
     var model = build();
     lastModel = model;
-    var g = gEl ? model.groups.filter(function (x) { return x.key === gEl.getAttribute('data-group'); })[0] : null;
+    var g = gEl ? groupOf(model, gEl.getAttribute('data-group')) : null;
     var nowComplete = !!(g && g.total && g.doneN === g.total);
     refreshSoon();
     if (on && nowComplete && !wasComplete) completeGroup(gEl);
+    else if (on && !opts.quiet && gEl && gEl.classList.contains('is-current')) setTimeout(function () { pulseNext(gEl); }, 200);
     if (opts.focus) focusQuiet(cb);
     return { group: nowComplete && !wasComplete };
   }
-
   SM.on('plan-done', function (el) {
     var key = el.getAttribute('data-key');
     var on = !!el.checked;
@@ -1624,178 +1504,85 @@
     if (!on) return;
     SM.toast(r.group ? t('plan.done.groupToast') : t('plan.done.toast'), {
       action: { label: t('plan.saved.undo'), fn: function () {
-        // the row's box gets focus back once it is in its place (inside the FLIP, before its second read)
         markDone(key, false, { now: true, quiet: true, focus: true });
         SM.toast(t('plan.saved.restored'), 1600);
       } }
     });
   });
 
-  /* ------------------------------------------------------------------ folds (すぎた時期 / later periods) */
-  SM.on('plan-fold', function (el, ev) {
-    var det = el.parentNode;
-    if (!det || det.tagName !== 'DETAILS') return;
-    if (ev && ev.preventDefault) ev.preventDefault();
-    toggleFold(det);
-  });
-  function toggleFold(det) {
-    var open = !det.open;
-    if (det.id === 'tl-past') pastOpen = open; else foldOpen[det.getAttribute('data-fold')] = open;
+  /* ------------------------------------------------------------------ stations: open / close */
+  function setOpen(li, on) {
+    if (!li) return;
+    li.classList.toggle('is-open', on);
+    var h = li.querySelector(':scope > .rm-head');
+    if (h && h.tagName === 'BUTTON') h.setAttribute('aria-expanded', on ? 'true' : 'false');
+    var b = li.querySelector(':scope > .rm-body');
+    if (b) { b.hidden = !on; if (on && M() && M().mount) M().mount(b, { instant: true }); }
+    var tl = li.querySelector('.rm-tog-l');
+    if (tl) tl.textContent = t(on ? 'plan.close' : 'plan.open');
+  }
+  /* o: { toggle, scroll, focus } */
+  function openStation(key, o) {
+    o = o || {};
     var root = view();
-    var ol = root && root.querySelector('.tl-wrap > ol.tl');
-    var body = det.querySelector(':scope > .tl-past-body, :scope > .tl-fold-body');
+    var ol = root && root.querySelector('ol.rm');
+    var li = ol && ol.querySelector(':scope > li.rm-st[data-group="' + key + '"]');
+    if (!li || !li.querySelector(':scope > .rm-body')) return;
+    var W = wide();
+    var was = li.classList.contains('is-open');
+    var want = o.toggle && !W ? !was : true;
     var m = M();
-    var set = function (v) {
-      det.open = v;
-      if (v && body && m && m.mount) m.mount(body, { instant: true });
-    };
-    var rewire = function () { if (root) wireFill(root, { from: true }); };
-    if (!ol || !m || !m.flip || !canAnim()) { set(open); rewire(); return; }
-    if (open) {
-      m.flip(ol, function () { set(true); });
-      if (body) anim(body, [{ opacity: 0, transform: 'translateY(-6px)' }, { opacity: 1, transform: 'none' }], { duration: 260, delay: 60, easing: EASE('enter'), fill: 'backwards', key: 'fold' });
+    var live = !!(m && canAnim());
+    var body = li.querySelector(':scope > .rm-body');
+    if (W) {
+      selKey = key;
+      if (was) { if (o.scroll) scrollToStation(li, o); return; }
+      var others = Array.prototype.filter.call(ol.querySelectorAll(':scope > li.rm-st.is-open'), function (x) { return x !== li; });
+      var swap = function () { others.forEach(function (x) { setOpen(x, false); }); setOpen(li, true); };
+      if (live && others.length) {
+        var ob = others[0].querySelector(':scope > .rm-body');
+        var a = ob ? anim(ob, [{ opacity: 1 }, { opacity: 0 }], { duration: 110, easing: EASE('exit'), fill: 'forwards', key: 'panel' }) : null;
+        finished(a).then(function () {
+          if (a) try { a.cancel(); } catch (e) { }
+          swap();
+          anim(body, [{ opacity: 0, transform: 'translateY(14px)' }, { opacity: 1, transform: 'none' }], { duration: 320, easing: EASE('enter'), fill: 'backwards', key: 'panel' });
+          wireFill(root, { from: true });
+          if (o.focus) focusBody(li);
+        });
+      } else {
+        swap();
+        if (m && !live) anim(body, [{ opacity: 0 }, { opacity: 1 }], { duration: 180, easing: 'linear' });
+        wireFill(root, { from: true });
+        if (o.focus) focusBody(li);
+      }
+      return;
+    }
+    openKeys[key] = want;
+    if (want === was) { if (o.scroll) scrollToStation(li, o); return; }
+    var rewire = function () { wireFill(root, { from: true }); };
+    if (!live || !m.flip) { setOpen(li, want); if (m && body) anim(body, [{ opacity: 0 }, { opacity: 1 }], { duration: 180, easing: 'linear' }); rewire(); if (o.scroll) scrollToStation(li, o); return; }
+    if (want) {
+      m.flip(ol, function () { setOpen(li, true); });
+      anim(body, [{ opacity: 0, transform: 'translateY(-6px)' }, { opacity: 1, transform: 'none' }], { duration: 280, delay: 60, easing: EASE('enter'), fill: 'backwards', key: 'fold' });
       rewire();
+      if (o.scroll) scrollToStation(li, o);
     } else {
-      det.classList.add('is-closing');
-      var a = body ? anim(body, [{ opacity: 1 }, { opacity: 0 }], { duration: 110, easing: EASE('exit'), fill: 'forwards', key: 'fold' }) : null;
-      finished(a).then(function () {
-        det.classList.remove('is-closing');
-        m.flip(ol, function () { set(false); });
-        if (a) try { a.cancel(); } catch (e) { }
+      li.classList.add('is-closing');
+      var fa = anim(body, [{ opacity: 1 }, { opacity: 0 }], { duration: 110, easing: EASE('exit'), fill: 'forwards', key: 'fold' });
+      finished(fa).then(function () {
+        li.classList.remove('is-closing');
+        m.flip(ol, function () { setOpen(li, false); });
+        if (fa) try { fa.cancel(); } catch (e) { }
         rewire();
       });
     }
   }
-
-  /* ------------------------------------------------------------------ track switch */
-  var switchGen = 0;
-  SM.on('plan-track', function (el) {
-    var v = el.getAttribute('data-value');
-    if (v !== 'junior' && v !== 'leaving') return;
-    if (curTrack() === v) return;
-    SM.store.set('plan:track', v);
-    var root = view();
-    if (!root || !root.querySelector('.plan-hero')) { calm = true; SM.render(); return; }
-    flushDeferred();
-    Array.prototype.forEach.call(root.querySelectorAll('.plan-track > button'), function (b) {
-      b.setAttribute('aria-pressed', b.getAttribute('data-value') === v ? 'true' : 'false');
-    });
-    var model = build({ track: v });
-    lastModel = model;
-    var gen = ++switchGen;
-    // the hero changes in place; when its height changes (the note gains or loses a line) the date row, the
-    // progress and the body below glide to their new places (FLIP) instead of jumping, while the body leaves
-    var m = M();
-    var swap = function () { morphHero(root, model); };
-    if (m && m.flip && canAnim()) m.flip(root, swap, { selector: '[data-flip-key^="ph-"]' }); else swap();
-    slideBody(root, model, v === 'leaving' ? 1 : -1, gen);
-    var pp = root.querySelector('.plan-print');
-    if (pp) pp.innerHTML = '';
-  });
-
-  function textOf(el) { return el ? (el._smOdoShown != null ? el._smOdoShown : el.textContent) : ''; }
-  /* a fixed copy of el fades out where el is (call before el leaves the DOM); never blocks input */
-  function ghostOut(el, ms) {
-    if (!el || !canAnim()) return;
-    var r = el.getBoundingClientRect();
-    if (!r.width || r.bottom < 0 || r.top > (window.innerHeight || 800)) return;
-    var g = el.cloneNode(true);
-    g.removeAttribute('id');
-    g.setAttribute('aria-hidden', 'true');
-    g.classList.add('plan-ghost');
-    g.style.cssText += ';position:fixed;left:' + r.left + 'px;top:' + r.top + 'px;width:' + r.width + 'px;height:' + r.height + 'px;margin:0;transform:none;';
-    (el.closest('.v-plan') || document.body).appendChild(g);
-    var a = anim(g, [{ opacity: 1 }, { opacity: 0 }], { duration: ms || 120, easing: EASE('exit'), fill: 'forwards' });
-    finished(a).then(function () { if (g.parentNode) g.parentNode.removeChild(g); });
+  function focusBody(li) {
+    var h = li.querySelector('.rm-body-title') || li.querySelector('.rm-body');
+    if (!h) return;
+    if (!h.hasAttribute('tabindex')) h.setAttribute('tabindex', '-1');
+    focusQuiet(h);
   }
-  function morphHero(root, model) {
-    var old = root.querySelector('.plan-hero');
-    if (!old) return;
-    var tmp = document.createElement('div');
-    tmp.innerHTML = heroHtml(model);
-    var nh = tmp.firstElementChild;
-    var before = {};
-    Array.prototype.forEach.call(old.querySelectorAll('[data-m]'), function (e) { before[e.getAttribute('data-m')] = textOf(e); });
-    var oldBar = old.querySelector('.plan-prog-fill');
-    var oldScale = oldBar ? oldBar.style.transform : '';
-    var m = M();
-    var live = m && canAnim();
-    // what has no counterpart in the new hero (the other track's picture, its note) fades where it stood
-    if (live) {
-      ghostOut(old.querySelector('.plan-hero-il'), 120);
-      var on = old.querySelector('[data-m="note"]');
-      if (on && before.note !== undefined) ghostOut(on, 90);
-    }
-    old.parentNode.replaceChild(nh, old);
-    applyRuby(nh);
-    if (m && m.mount) m.mount(nh, { instant: true });
-    if (m && m.seen) {
-      var nEl = nh.querySelector('#plan-count-n[data-n]');
-      if (nEl) m.seen('plan.days.' + model.track, +nEl.getAttribute('data-n'));
-      m.seen('plan.done.' + model.track, model.done);
-    }
-    if (!live) return;
-    Array.prototype.forEach.call(nh.querySelectorAll('[data-m]'), function (e) {
-      var k = e.getAttribute('data-m');
-      var was = before[k];
-      var now = e.textContent;
-      if (was == null) {
-        anim(e, [{ opacity: 0 }, { opacity: 1 }], { duration: 220, delay: 70, easing: EASE('enter'), fill: 'backwards' });
-        return;
-      }
-      if (was === now) return;
-      if (k === 'n' || k === 'pd' || k === 'pt') {
-        if (/\d/.test(was) && /\d/.test(now) && m.odometer) { m.odometer(e, now, { from: was, duration: 560 }); return; }
-      }
-      if (k === 'note') {
-        anim(e, [{ opacity: 0, transform: 'translateY(4px)' }, { opacity: 1, transform: 'none' }], { duration: 260, delay: 60, easing: EASE('enter'), fill: 'backwards' });
-        return;
-      }
-      if (m.swapText && !e.querySelector('ruby') && !rubyOn()) { e.textContent = was; m.swapText(e, now); }
-    });
-    var fig = nh.querySelector('.plan-hero-il');
-    if (fig && SM.illus && SM.illus.play) SM.illus.play(fig);
-    var nb = nh.querySelector('.plan-prog-fill');
-    if (nb && oldScale && oldScale !== nb.style.transform) {
-      anim(nb, [{ transform: oldScale }, { transform: nb.style.transform }], { spring: 'smooth', maxDuration: 520 });
-    }
-  }
-
-  function bodyNode(model) {
-    var tmp = document.createElement('div');
-    tmp.innerHTML = bodyParts(model, true).html;
-    return tmp.firstElementChild;
-  }
-  function slideBody(root, model, dir, gen) {
-    var old = root.querySelector('.plan-body');
-    if (!old) return;
-    var m = M();
-    var live = m && canAnim();
-    var land = function () {
-      if (gen !== switchGen || !old.isConnected) return;
-      var nb = bodyNode(model);
-      old.parentNode.replaceChild(nb, old);
-      applyRuby(nb);
-      if (m && m.mount) m.mount(nb, { instant: true });
-      wireFill(root);
-      if (live) {
-        anim(nb, [{ opacity: 0 }, { opacity: 1 }], { duration: 260, easing: EASE('enter'), fill: 'backwards', key: 'slideO' });
-        anim(nb, [{ transform: 'translateX(' + (48 * dir) + 'px)' }, { transform: 'none' }], { spring: 'rise', fill: 'backwards', key: 'slide' });
-      }
-    };
-    if (!live) {
-      land();
-      // reduced motion: a short cross-fade instead of nothing
-      var nb0 = root.querySelector('.plan-body');
-      if (nb0 && m) anim(nb0, [{ opacity: 0 }, { opacity: 1 }], { duration: 180, easing: 'linear' });
-      return;
-    }
-    var a = anim(old, [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateX(' + (-40 * dir) + 'px)' }], { duration: 180, easing: EASE('exit'), fill: 'forwards', key: 'slide' });
-    if (!a) { land(); return; }
-    finished(a).then(land);
-  }
-
-  /* ------------------------------------------------------------------ jump to a period */
   function flash(el) {
     if (!el || !canAnim()) return;
     var w = document.createElement('span');
@@ -1805,34 +1592,79 @@
     var a = anim(w, [{ opacity: 0.06 }, { opacity: 0.06, offset: 0.35 }, { opacity: 0 }], { duration: 600, easing: 'linear', fill: 'forwards' });
     finished(a).then(function () { if (w.parentNode) w.parentNode.removeChild(w); });
   }
-  SM.on('plan-jump', function (el) {
-    flushDeferred();
-    var tg = document.getElementById(el.getAttribute('data-target') || '');
-    if (!tg) return;
+  function scrollToStation(li, o) {
     var m = M();
-    if (m && m.revealAll) { try { m.revealAll(tg); } catch (e) { } }
-    var det = tg.querySelector(':scope > .tl-body > details.tl-fold:not([open])');
-    if (det) { foldOpen[det.getAttribute('data-fold')] = true; det.open = true; wireFill(view()); }
+    if (m && m.revealAll) { try { m.revealAll(li); } catch (e) { } }
     var smooth = !reduced();
-    try { tg.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'start' }); } catch (e) { tg.scrollIntoView(); }
-    var h = tg.querySelector('.tl-title, .section-title, h2, h3');
-    if (h) {
-      if (!h.hasAttribute('tabindex')) h.setAttribute('tabindex', '-1');
-      focusQuiet(h);
-    }
-    var body = tg.querySelector(':scope > .tl-body') || tg;
+    var target = wide() ? (li.querySelector(':scope > .rm-body') || li) : (li.querySelector(':scope > .rm-head') || li);
+    try { target.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'start' }); } catch (e) { target.scrollIntoView(); }
+    if (o && o.focus) focusBody(li);
     if (!smooth) return;
+    var body = li.querySelector(':scope > .rm-body > .rm-body-in') || li;
     var fired = false;
     var go = function () { if (fired) return; fired = true; window.removeEventListener('scrollend', go); flash(body); };
     if ('onscrollend' in window) window.addEventListener('scrollend', go, { once: true });
     setTimeout(go, 700);
+  }
+  SM.on('plan-open', function (el) { openStation(el.getAttribute('data-key'), { toggle: true }); });
+  SM.on('plan-jump', function (el) { openStation(el.getAttribute('data-key'), { scroll: true, focus: true }); });
+
+  /* ------------------------------------------------------------------ track switch */
+  var switchGen = 0;
+  SM.on('plan-track', function (el) {
+    var v = el.getAttribute('data-value');
+    if (v !== 'junior' && v !== 'leaving') return;
+    if (curTrack() === v) return;
+    SM.store.set('plan:track', v);
+    selKey = null; openKeys = {};
+    var root = view();
+    if (!root || !root.querySelector('.plan-rm')) { calm = true; SM.render(); return; }
+    Array.prototype.forEach.call(root.querySelectorAll('.plan-track > button'), function (b) {
+      b.setAttribute('aria-pressed', b.getAttribute('data-value') === v ? 'true' : 'false');
+    });
+    var model = build({ track: v });
+    lastModel = model;
+    var gen = ++switchGen;
+    var m = M();
+    var live = !!(m && canAnim());
+    var dir = v === 'leaving' ? 1 : -1;
+    var old = root.querySelector('.plan-rm');
+    var eDone = root.querySelector('#plan-prog-done'), eTotal = root.querySelector('#plan-prog-total');
+    var land = function () {
+      if (gen !== switchGen || !old.isConnected) return;
+      var tmp = document.createElement('div');
+      tmp.innerHTML = bodyHtml2(model);
+      var nb = tmp.firstElementChild;
+      old.parentNode.replaceChild(nb, old);
+      applyRuby(nb);
+      if (m && m.mount) m.mount(nb, { instant: true });
+      if (m && m.seen) {
+        var nEl = nb.querySelector('#plan-count-n[data-n]');
+        if (nEl) m.seen('plan.days.' + model.track, +nEl.getAttribute('data-n'));
+        m.seen('plan.done.' + model.track, model.done);
+      }
+      rollNum(eDone, model.done); rollNum(eTotal, model.total);
+      wireFill(root, { entrance: true });
+      var pp = root.querySelector('.plan-print');
+      if (pp) pp.innerHTML = '';
+      if (live) {
+        anim(nb, [{ opacity: 0 }, { opacity: 1 }], { duration: 260, easing: EASE('enter'), fill: 'backwards', key: 'slideO' });
+        anim(nb, [{ transform: 'translateX(' + (48 * dir) + 'px)' }, { transform: 'none' }], { spring: 'rise', fill: 'backwards', key: 'slide' });
+      } else if (m) anim(nb, [{ opacity: 0 }, { opacity: 1 }], { duration: 180, easing: 'linear' });
+    };
+    if (!live) { land(); return; }
+    var a = anim(old, [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateX(' + (-40 * dir) + 'px)' }], { duration: 180, easing: EASE('exit'), fill: 'forwards', key: 'slide' });
+    if (!a) { land(); return; }
+    finished(a).then(land);
   });
+  function textOf(el) { return el ? (el._smOdoShown != null ? el._smOdoShown : el.textContent) : ''; }
 
   /* ------------------------------------------------------------------ anchor-date sheet (巣立ちの日 or 高校入学) */
   function optRow(label, sub, act, value, selected) {
     if (SM.ui.opt) return SM.ui.opt(label, { hint: sub, act: act, selected: selected, attrs: value ? 'data-value="' + esc(value) + '"' : '' });
     return '<button type="button" class="opt" data-act="' + act + '"' + (value ? ' data-value="' + esc(value) + '"' : '') + ' aria-pressed="' + (selected ? 'true' : 'false') + '"><span class="opt-body"><span class="opt-title">' + esc(label) + '</span><span class="opt-hint">' + esc(sub) + '</span></span></button>';
   }
+
   SM.on('plan-date', function () {
     var jr = curTrack() === 'junior';
     var now = today0();
@@ -1910,6 +1742,8 @@
       if (oldTxt && oldTxt !== to && /\d/.test(oldTxt) && /\d/.test(to) && m.odometer) m.odometer(nEl, to, { from: oldTxt, duration: 640 });
       else if (oldTxt !== to && canAnim()) anim(nEl, [{ opacity: 0, transform: 'translateY(12px)' }, { opacity: 1, transform: 'none' }], { duration: 300, delay: 120, easing: EASE('enter'), fill: 'backwards' });
     }
+    var ln = r2 && r2.querySelector('[data-m="ln"]');
+    if (ln && m && oldTxt && ln.textContent !== oldTxt && /\d/.test(oldTxt) && m.odometer) m.odometer(ln, ln.textContent, { from: oldTxt, duration: 640 });
     var dv = r2 && r2.querySelector('[data-m="dv"]');
     if (dv && oldD && dv.textContent !== oldD && m && m.swapText && !rubyOn()) { var nd = dv.textContent; dv.textContent = oldD; m.swapText(dv, nd); }
     SM.toast(toastMsg);
@@ -1964,14 +1798,6 @@
   });
 
   /* ------------------------------------------------------------------ saved: remove + undo (in place) */
-  function swapOrSet(el, text) {
-    if (!el) return;
-    var m = M();
-    if (m && m.swapText && !rubyOn() && el.offsetParent !== null) m.swapText(el, text); else el.textContent = text;
-  }
-  /* a part that leaves when the list empties / fills (the 件数 line, the empty state) fades out where it was as a
-     fixed ghost (120ms), so the FLIP moves everything else at once. r and cs are read by the caller before any write;
-     cs carries the text styles a clone outside its parent would lose. */
   function fadeGhost(el, r, cs, ms) {
     var v = document.getElementById('view');
     if (!el || !r || !r.width || !v) return;
@@ -1989,17 +1815,17 @@
   function tlRowsOf(root, id) {
     return root.querySelectorAll('.tl-item-prog[data-flip-key="pg:' + (window.CSS && CSS.escape ? CSS.escape(id) : id) + '"]');
   }
-  // onScreen: read by the caller before any write (a list off screen just loses its row: no FLIP, no layout reads)
-  function removeTlRows(root, id, onScreen) {
+  function removeTlRows(root, id) {
     var m = M();
     var rows = tlRowsOf(root, id);
-    Array.prototype.forEach.call(rows, function (li, i) {
+    Array.prototype.forEach.call(rows, function (li) {
       var ul = li.parentNode;
       var go = function () {
         li.parentNode.removeChild(li);
         if (ul && !ul.children.length && ul.parentNode) ul.parentNode.removeChild(ul);
       };
-      if (m && m.flip && canAnim() && ul && (!onScreen || onScreen[i])) m.flip(ul, go); else go();
+      var on = ul && ul.offsetParent !== null;
+      if (m && m.flip && canAnim() && ul && on) m.flip(ul, go); else go();
     });
   }
   function savedHeadSync(root, model, nVis) {
@@ -2026,12 +1852,14 @@
       if (canAnim()) anim(nAct, [{ opacity: 0 }, { opacity: 1 }], { duration: 200, delay: 60, easing: EASE('enter'), fill: 'backwards' });
     }
   }
+  /* the saved list changing height moves what follows it (phone: nothing after it but the note; desktop: the
+     column's own rows); the roadmap's open panel is untouched */
+  var FLOW_FLIP = ':scope > *, #plan-saved .section-rule, #plan-saved .plan-saved-list > *';
   var lastRemoved = null;
   SM.on('plan-remove', function (el) {
     var id = el.getAttribute('data-id');
     var i = (state().saved || []).indexOf(id);
     if (i === -1) return;
-    flushDeferred();
     var p = SM.program(id);
     var name = p ? L(p.name) : id;
     var root = view();
@@ -2046,18 +1874,10 @@
     var m = M();
     var live = !!(m && m.flip && canAnim());
     var empty = !model.saved.length;
-    // the row fades where it is (120ms), then what follows closes the gap by FLIP
     var apply = function () {
       if (!root || !root.isConnected || !isPlanRoute()) return;
-      // reads first (layout is clean here): the count's visibility and which timeline lists are on screen
       var nEl = root.querySelector('#plan-saved .plan-saved-n');
       var nVis = !!nEl && nEl.offsetParent !== null;
-      var vh = window.innerHeight || 800;
-      var tlOn = Array.prototype.map.call(tlRowsOf(root, id), function (li) {
-        var r = li.parentNode.getBoundingClientRect();
-        return r.bottom > -50 && r.top < vh + 50;
-      });
-      // the last one out: the 件数 line leaves as a ghost while the empty state fades in
       var subEl = empty && live ? root.querySelector('#plan-saved .section-sub') : null;
       var subR = subEl ? subEl.getBoundingClientRect() : null, subCs = subEl ? getComputedStyle(subEl) : null;
       var subSt = subCs ? { font: subCs.font, color: subCs.color, letterSpacing: subCs.letterSpacing } : null;
@@ -2065,10 +1885,7 @@
       var actR = actEl ? actEl.getBoundingClientRect() : null, actCs = actEl ? getComputedStyle(actEl) : null;
       var actSt = actCs ? { font: actCs.font, color: actCs.color, letterSpacing: actCs.letterSpacing } : null;
       var change = function () {
-        if (row && row.parentNode) {
-          var rm = function () { if (row.parentNode) row.parentNode.removeChild(row); };
-          if (live && !empty && list && list.isConnected) m.flip(list, rm); else rm();
-        }
+        if (row && row.parentNode) row.parentNode.removeChild(row);
         if (empty) {
           var lst = root.querySelector('.plan-saved-list');
           if (lst) {
@@ -2084,8 +1901,6 @@
         if (subEl && subR) fadeGhost(subEl, subR, subSt, 80);
         if (actEl && actR) fadeGhost(actEl, actR, actSt, 80);
         savedHeadSync(root, lastModel || model, nVis);
-        removeTlRows(root, id, tlOn);
-        // focus moves on inside the FLIP (before its second read), so it costs no extra restyle
         var target = next && next.isConnected ? next.querySelector('.plan-remove') : null;
         if (!target) {
           target = root.querySelector('#plan-saved-h');
@@ -2094,15 +1909,14 @@
         var ae = document.activeElement;
         if (!ae || ae === document.body || !ae.isConnected || (row && row.contains(ae))) focusQuiet(target);
       };
-      var body = root.querySelector('.plan-body');
-      if (body && live) m.flip(body, change, { selector: BODY_FLIP }); else change();
-      // counts, progress and the fill line after the first painted frame of the move
-      afterPaint(function () { if (root.isConnected && isPlanRoute()) { refreshCounts(); wireFill(root); } });
+      var flow = root.querySelector('.plan-flow');
+      if (flow && live) m.flip(flow, change, { selector: FLOW_FLIP }); else change();
+      removeTlRows(root, id);
+      afterPaint(function () { if (root.isConnected && isPlanRoute()) { refreshCounts(); wireFill(root, { from: true }); } });
     };
     if (live && row) {
       row.style.pointerEvents = 'none';
       var fa = anim(row, [{ opacity: 1 }, { opacity: 0 }], { duration: 120, easing: EASE('exit'), fill: 'forwards' });
-      // hidden, not just transparent: flip's ghost clone of this row animates opacity from 1
       finished(fa).then(function () { row.style.opacity = '0'; row.style.visibility = 'hidden'; apply(); });
     } else apply();
     if (SM.updateBadge) SM.updateBadge({ roll: true });
@@ -2111,105 +1925,86 @@
     SM.toast(t('plan.saved.removed', { name: name }), { action: { label: t('plan.saved.undo'), fn: function () { undoRemove(rec); } } });
   });
 
-  /* the blocks that move when the saved list changes height: the sections inside the left column (the calendar /
-     相談シート tools below the list slide instead of jumping), the timeline (below the list on a phone), and the saved
-     header's rule (it slides up as the 件数 line leaves, never cutting through the line's fading ghost) */
-  var BODY_FLIP = ':scope > .plan-flow > *, :scope > :not(.plan-flow), #plan-saved .section-rule';
+  /* the roadmap's stations get their rows back in place (open states kept) */
+  function rebuildRoadmap(root, model) {
+    var ol = root.querySelector('ol.rm');
+    if (!ol) return;
+    var tmp = document.createElement('div');
+    tmp.innerHTML = roadmapHtml(model);
+    var nol = tmp.firstElementChild;
+    applyRuby(nol);
+    ol.parentNode.replaceChild(nol, ol);
+    var m = M();
+    if (m && m.mount) m.mount(nol, { instant: true });
+  }
   function undoRemove(rec) {
     if (!rec) return;
     var saved = state().saved || (state().saved = []);
     if (saved.indexOf(rec.id) === -1) saved.splice(Math.min(rec.index, saved.length), 0, rec.id);
     SM.save();
-    // the badge and the sm:save listeners write to the page: they run after this view's reads and FLIP (below)
     var notify = function () {
       if (SM.updateBadge) SM.updateBadge({ roll: true });
       try { document.dispatchEvent(new CustomEvent('sm:save', { detail: { id: rec.id, saved: true, undo: true } })); } catch (e) { }
     };
     var root = view();
     if (!root) { notify(); SM.toast(t('plan.saved.restored'), 1600); return; }
-    flushDeferred();
     var model = build();
     lastModel = model;
     var m = M();
     var live = m && m.flip && canAnim();
     var sec = root.querySelector('#plan-saved');
-    // reads first: the count's visibility (before any write, so it costs no layout of its own)
     var nEl0 = root.querySelector('#plan-saved .plan-saved-n');
     var nVis = !!nEl0 && nEl0.offsetParent !== null;
-    var row = null;
-    // from empty: the empty state fades out where it is while the row rises in
+    var row = null, back = null;
     var emp0 = live && sec ? sec.querySelector('.plan-saved-empty') : null;
     var empR = emp0 ? emp0.getBoundingClientRect() : null;
-    var back = null;     // the row that comes back (it fades into the room the others make for it)
     var change = function () {
       if (!sec) return;
       var list = sec.querySelector('.plan-saved-list');
-      var rowsHtml = model.saved.map(savedRowHtml).join('');
+      var rowsHtml = model.saved.map(function (p) { return savedRowHtml(p, model); }).join('');
       if (list) {
-        // only the missing row is inserted: the others stay the same elements, so they slide (FLIP) instead of
-        // being rebuilt, and the returning row waits until there is room for it
-        var put = function () {
-          var have = {};
-          Array.prototype.forEach.call(list.children, function (r) { have[r.getAttribute('data-flip-key')] = r; });
-          var p = SM.program(rec.id);
-          if (have[rec.id] || !p || model.saved.length !== list.children.length + 1) {
-            list.innerHTML = rowsHtml; applyRuby(list); if (m && m.mount) m.mount(list, { instant: true });
-            return;
-          }
+        var have = {};
+        Array.prototype.forEach.call(list.children, function (r) { have[r.getAttribute('data-flip-key')] = r; });
+        var p = SM.program(rec.id);
+        if (have[rec.id] || !p || model.saved.length !== list.children.length + 1) {
+          list.innerHTML = rowsHtml; applyRuby(list); if (m && m.mount) m.mount(list, { instant: true });
+        } else {
           var tmp = document.createElement('div');
-          tmp.innerHTML = savedRowHtml(p);
+          tmp.innerHTML = savedRowHtml(p, model);
           back = tmp.firstElementChild;
-          back.classList.add('is-back');
           applyRuby(back);
           var ids = model.saved.map(function (x) { return x.id; });
           var nextId = ids[ids.indexOf(rec.id) + 1];
           list.insertBefore(back, (nextId && have[nextId]) || null);
           if (m && m.mount) m.mount(back, { instant: true });
-        };
-        if (live) m.flip(list, put, { selector: ':scope > .plan-saved-item:not(.is-back)' }); else put();
-        if (back) {
-          back.classList.remove('is-back');
           if (live) anim(back, [{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }], { duration: 280, delay: 180, easing: EASE('enter'), fill: 'backwards' });
         }
       } else {
         var emp = sec.querySelector('.plan-saved-empty');
-        var tmp = document.createElement('div');
-        tmp.innerHTML = '<div class="pcards plan-saved-list">' + rowsHtml + '</div>';
-        var nl = tmp.firstElementChild;
+        var tmp2 = document.createElement('div');
+        tmp2.innerHTML = '<div class="pcards plan-saved-list">' + rowsHtml + '</div>';
+        var nl = tmp2.firstElementChild;
         applyRuby(nl);
         if (emp && empR) fadeGhost(emp, empR, null, 90);
         if (emp) sec.replaceChild(nl, emp); else sec.appendChild(nl);
         if (m && m.mount) m.mount(nl, { instant: true });
         if (live) anim(nl, [{ opacity: 0, transform: 'translateY(12px)' }, { opacity: 1, transform: 'none' }], { duration: 300, delay: 80, easing: EASE('standard'), fill: 'backwards' });
       }
-      // focus goes to the row's 外す inside the FLIP (before its second read): no extra restyle
+      savedHeadSync(root, model, nVis);
       row = root.querySelector('.plan-saved-item[data-flip-key="' + (window.CSS && CSS.escape ? CSS.escape(rec.id) : rec.id) + '"]');
       if (row) focusQuiet(row.querySelector('.plan-remove'));
     };
-    // the timeline gets its rows back (in place, no entrance) one painted frame later: it sits below the saved list,
-    // and rebuilding it is most of this tap's layout on a slow phone; counts and the fill line follow it
-    var tlLater = function () {
+    var flow = root.querySelector('.plan-flow');
+    if (flow && live) m.flip(flow, change, { selector: FLOW_FLIP }); else change();
+    var later = function () {
       if (!root.isConnected || !isPlanRoute()) return;
-      var tl = root.querySelector('#plan-tl');
-      if (tl) {
-        var mdl = build();
-        var tmp2 = document.createElement('div');
-        tmp2.innerHTML = timelineHtml(mdl, tlItems(mdl));
-        var ntl = tmp2.firstElementChild;
-        applyRuby(ntl);
-        tl.parentNode.replaceChild(ntl, tl);
-        if (m && m.mount) m.mount(ntl, { instant: true });
-      }
+      rebuildRoadmap(root, build());
       refreshCounts();
-      wireFill(root);
+      wireFill(root, { from: true });
     };
-    var body = root.querySelector('.plan-body');
-    if (body && live) m.flip(body, function () { change(); savedHeadSync(root, model, nVis); }, { selector: BODY_FLIP }); else { change(); savedHeadSync(root, model, nVis); }
-    if (live) afterPaint(tlLater); else tlLater();
+    if (live) afterPaint(later); else later();
     if (row) {
-      // the category square itself (its column stretches to the card height, so a ring on it would be tall)
       var mark = row.querySelector('.pcard-mark > .cat-icon') || row.querySelector('.pcard-mark');
-      // the mark stamps once the row has arrived (room made 0–400ms, row fades in 180–460ms)
       if (mark && m && m.stamp && canAnim()) setTimeout(function () { if (mark.isConnected) m.stamp(mark); }, back ? 400 : 260);
     }
     notify();

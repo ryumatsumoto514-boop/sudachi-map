@@ -672,7 +672,7 @@ body.is-ruby .v-find .f-top-item .pcard-mark { justify-content: flex-start; }   
 .v-find .f-cat-intro .more-inline > .more-btn { min-height: var(--tap); }
 /* a card's 「ポイント」 tip opens in place under its facts */
 .v-find .pcard .pcard-more { margin-top: 2px; }
-.v-find .pcard .pcard-more > .more-btn { min-height: 36px; font-size: var(--t-meta); }
+.v-find .pcard .pcard-more > .more-btn { min-height: var(--tap); font-size: var(--t-meta); }
 .v-find .f-cat-sec { display: grid; }
 .v-find .f-cat-sec + .f-cat-sec { margin-top: var(--f-gap); }
 .v-find .f-cat-local { margin-top: var(--s-6); }

@@ -257,10 +257,18 @@
     'mn.wage.unitD': { ja: '日', en: 'days' },
     'mn.wage.apply': { ja: 'バイト代に入れる', en: 'Use this' },
     'mn.wage.applied': { ja: 'バイト代に入れました', en: 'Added as part-time pay' },
-    'mn.wage.note': { ja: '東京都の最低賃金 時給{n}（{d}から）。これより低いのは違法。', jr: '東京都の時給は{n}より下げてはいけないきまり（{d}から）。', en: 'Tokyo minimum wage: {n}/h (from {d}). Less is illegal.' },
-    // v7 (Kanto): the number above is Tokyo's; said once for people who live in another prefecture
+    // v8: the wage follows the prefecture chosen in the box (SM.data.sim.minWage; default = the person's answers.area)
+    'mn.wage.pref': { ja: '働く都県', jr: '働く都県', en: 'Prefecture' },
+    'mn.wage.note': { ja: '{p}の最低賃金 時給{n}（{d}から）。これより低いのは違法。', jr: '{p}では、時給を{n}より下げてはいけないきまり（{d}から）。', en: '{p} minimum wage: {n}/h (from {d}). Less is illegal.' },
+    // said once for people who have not answered where they live (the box starts on Tokyo)
     'mn.wage.other': { ja: '最低賃金は都道府県ごとに決まっています。', jr: '時給のきまりは、都道府県ごとに決まっています。', en: 'Each prefecture sets its own minimum wage.' },
-    'mn.preset.other': { ja: 'この例は東京の数字です。家賃は自分の数字に変えてみよう。', en: 'These examples are Tokyo figures. Change the rent to your own.' }
+    // v8: one preset per Kanto prefecture; the exact statistic behind the rounded rent, and the sources under the calculator
+    'mn.preset.stat': { ja: '家賃の平均 {n}（{y}年の統計・6〜12畳）', jr: '家賃のへいきん {n}（{y}年・6〜12畳の部屋）', en: 'Average rent {n} ({y} survey, 6–12 tatami)' },
+    'mn.preset.statDerived': { ja: '家賃の平均 {n}（{y}年の統計から計算・6〜12畳）', jr: '家賃のへいきん {n}（{y}年の統計から計算・6〜12畳の部屋）', en: 'Average rent {n} (worked out from the {y} survey, 6–12 tatami)' },
+    'mn.src': { ja: '出典', en: 'Sources' },
+    'mn.src.rent': { ja: '家賃：{org}「{name}」{y}年。{basis}。', en: 'Rent: {org}, {name} {y}: {basis}.' },
+    'mn.src.living': { ja: '食費・光熱費・通信・交通・そのほか・遊び：{org}「{name}」{y}年。{basis}。', en: 'Food, utilities, phone, transport, other, fun: {org}, {name} {y}: {basis}.' },
+    'mn.src.wage': { ja: '時給：{org}「{name}」。{p}は{d}から。', jr: '時給：{org}「{name}」。{p}は{d}から。', en: 'Hourly wage: {org}, {name}; {p} from {d}.' }
   });
 
   /* ================================================================= shared pieces */
@@ -269,7 +277,7 @@
   function head(o) {
     var art = o.il ? illus(o.il, { size: 'spot', cls: 'tl-il' }) : '';
     return '<header class="tl-head' + (art ? ' has-il' : '') + '">' +
-      (art ? '<div class="tl-art">' + art + '</div>' : '') +
+      (art ? '<div class="tl-art" data-parallax="0.04">' + art + '</div>' : '') +
       '<div class="tl-head-text">' +
         (o.kicker === false ? '' : '<p class="tl-kicker"><a href="#/tools">' + esc(t('tl.kicker')) + '</a></p>') +
         '<h1 class="tl-title" data-reveal="line" data-reveal-delay="80">' + esc(o.title) + '</h1>' +
@@ -1123,26 +1131,47 @@
   }
   function simCfg(mode) { return (mode === 'jr' ? D().simJr : D().sim) || {}; }
   function simKey(mode) { return mode === 'jr' ? 'simJr' : 'sim'; }
-  function wageCfg() {
+  /* v8: 最低賃金 by prefecture (SM.data.sim.minWage, 厚生労働省); Tokyo falls back to the まなぶ fact so both say one number */
+  function minWageOf(pc) {
+    var mw = (D().sim && D().sim.minWage) || {};
+    var w = (pc && mw[pc]) || null;
+    if (!w && (!pc || pc === '13')) { var tk = D().learnFacts && D().learnFacts.minWageTokyo; if (tk && tk.yen) w = { yen: tk.yen, from: tk.from }; }
+    return w || mw['13'] || null;
+  }
+  function wageCfg(pc) {
     var c = simCfg('jr').wage || {};
-    var mw = D().learnFacts && D().learnFacts.minWageTokyo;
-    return { yen: (mw && mw.yen) || c.yen || 1280, from: (mw && mw.from) || c.from || '', hours: c.hours || 4, days: c.days || 8 };
+    pc = pc || myPref() || c.pref || '13';
+    var w = minWageOf(pc);
+    return { pref: pc, yen: (w && w.yen) || c.yen || 1280, from: (w && w.from) || c.from || '', hours: c.hours || 4, days: c.days || 8 };
+  }
+  /* v8: the preset that stands for the person's prefecture (answers.area): Tokyo wards → 東京23区, other Tokyo codes → 多摩;
+     another Kanto prefecture → its preset; no area / outside Kanto → null (the data's default) */
+  function presetForArea(c) {
+    var ps = c.presets || {}, pc = myPref(), a = String(answers().area || '');
+    if (!pc) return null;
+    if (pc === '13') return /^13\d{3}$/.test(a) && a >= '13201' && ps.tama ? 'tama' : (ps.ku23 ? 'ku23' : null);
+    var keys = Object.keys(ps);
+    for (var i = 0; i < keys.length; i++) if (ps[keys[i]] && ps[keys[i]].pref === pc && !ps[keys[i]].tokyo) return keys[i];
+    return null;
   }
   function simDefault(mode) {
     var c = simCfg(mode);
-    var pk = c.defaultPreset || Object.keys(c.presets || {})[0];
+    var pk = (mode !== 'jr' && presetForArea(c)) || c.defaultPreset || Object.keys(c.presets || {})[0];
     var v = { preset: pk };
     var pr = (c.presets || {})[pk] || {};
     (c.expenses || []).concat(c.incomes || []).forEach(function (e) { v[e.k] = pr[e.k] || 0; });
     var d = c.defaults || {};
     Object.keys(d).forEach(function (k) { v[k] = d[k]; });
-    if (mode === 'jr') { var w = wageCfg(); v.wage = w.yen; v.hours = w.hours; v.days = w.days; }
+    if (mode === 'jr') { var w = wageCfg(); v.wagePref = w.pref; v.wage = w.yen; v.hours = w.hours; v.days = w.days; }
     return v;
   }
   function simVals(mode) {
     var v = SM.store.get(simKey(mode), null);
     var d = simDefault(mode);
     if (!v || typeof v !== 'object') return d;
+    if (v.preset && !(simCfg(mode).presets || {})[v.preset]) v.preset = d.preset;   // a preset key from an older version
+    // v8: a saved jr sheet from before the prefecture box: the untouched Tokyo wage follows the person's prefecture
+    if (mode === 'jr' && v.wagePref == null) { var tk = minWageOf('13'); if (tk && +v.wage === tk.yen) v.wage = d.wage; }
     Object.keys(d).forEach(function (k) { if (v[k] == null) v[k] = d[k]; });
     return v;
   }
@@ -1271,14 +1300,25 @@
     '</div>';
   }
   function wageTotal(v) { return Math.round((+v.wage || 0) * (+v.hours || 0) * (+v.days || 0)); }
+  /* v8: the seven Kanto prefectures as <option>s (東京 first, then code order), from SM.matchUtil.prefs() */
+  function prefOpts(sel) {
+    var U = SM.matchUtil, list = (U && U.prefs ? U.prefs() : []).slice();
+    list.sort(function (a, b) { return (a.code === '13' ? -1 : b.code === '13' ? 1 : 0) || (a.code < b.code ? -1 : a.code > b.code ? 1 : 0); });
+    return list.map(function (p) { return '<option value="' + esc(p.code) + '"' + (p.code === sel ? ' selected' : '') + '>' + esc(en() ? (p.en || p.name) : p.name) + '</option>'; }).join('');
+  }
+  function prefLabel(pc) { var U = SM.matchUtil; return U && U.prefName ? U.prefName(pc, en()) : pc; }
+  function wageNote(w) {
+    return t('mn.wage.note', { p: prefLabel(w.pref), n: yen(w.yen), d: w.from ? SM.fmtDate(w.from) : '' }) + (answers().area ? '' : ' ' + t('mn.wage.other'));
+  }
   function wageHtml(v) {
-    var w = wageCfg();
+    var w = wageCfg(v.wagePref);
     var f = function (k, label, unit, pre) {
       return '<label class="mn-w-f" for="mn-w-' + k + '"><span class="mn-w-l">' + esc(label) + '</span><span class="mn-w-in">' + (pre ? '<span class="mn-unit">' + pre + '</span>' : '') +
         '<input class="input mn-num" type="text" inputmode="numeric" id="mn-w-' + k + '" data-act="mn-wage" data-k="' + k + '" value="' + fmt(+v[k] || 0) + '" autocomplete="off">' +
         (unit ? '<span class="mn-unit">' + esc(unit) + '</span>' : '') + '</span></label>';
     };
     return '<details class="disclose mn-wage"' + (v.preset === 'hs' ? ' open' : '') + '><summary><span>' + esc(t('mn.wage')) + '</span></summary>' +
+      '<label class="mn-w-pref" for="mn-w-pref"><span class="mn-w-l">' + esc(t('mn.wage.pref')) + '</span><select class="select" id="mn-w-pref" data-act="mn-wage-pref">' + prefOpts(w.pref) + '</select></label>' +
       '<div class="mn-w-grid">' +
         f('wage', t('mn.wage.yen'), en() ? '' : '円', en() ? '¥' : '') + '<span class="mn-w-x" aria-hidden="true">×</span>' +
         f('hours', t('mn.wage.hours'), t('mn.wage.unitH')) + '<span class="mn-w-x" aria-hidden="true">×</span>' +
@@ -1286,12 +1326,42 @@
       '</div>' +
       '<div class="mn-w-out"><p class="mn-w-sum"><span aria-hidden="true">＝</span>' + (en() ? '<span class="mn-unit">¥</span>' : '') + '<b class="mn-w-total" id="mn-w-total">' + fmt(wageTotal(v)) + '</b>' + (en() ? '' : '<span class="mn-unit">円</span>') + '</p>' +
         '<button type="button" class="btn btn-secondary btn-sm" data-act="mn-wage-apply" data-press>' + esc(t('mn.wage.apply')) + '</button></div>' +
-      '<p class="help">' + esc(t('mn.wage.note', { n: yen(w.yen), d: w.from ? SM.fmtDate(w.from) : '' })) + (tokyoSide() ? '' : ' ' + esc(t('mn.wage.other'))) + '</p>' +
+      '<p class="help" id="mn-w-note">' + esc(wageNote(w)) + '</p>' +
     '</details>';
   }
-  function presetSeg(mode, v) {
-    var presets = simCfg(mode).presets || {};
-    return SM.ui.seg(Object.keys(presets).map(function (k) { return { label: L(presets[k].label), value: k, pressed: v.preset === k }; }), { act: 'mn-preset', label: t(mode === 'jr' ? 'mn.presetJr' : 'mn.preset') });
+  /* v8: up to 4 presets = joined segments; more (the 8 Kanto places) = a native select, which fits a phone and reads as one word */
+  function presetCtl(mode, v) {
+    var presets = simCfg(mode).presets || {}, keys = Object.keys(presets);
+    if (keys.length > 4) {
+      return '<select class="select mn-preset-sel" id="mn-preset-sel" data-act="mn-preset">' + keys.map(function (k) {
+        return '<option value="' + esc(k) + '"' + (v.preset === k ? ' selected' : '') + '>' + esc(L(presets[k].label)) + '</option>';
+      }).join('') + '</select>';
+    }
+    return SM.ui.seg(keys.map(function (k) { return { label: L(presets[k].label), value: k, pressed: v.preset === k }; }), { act: 'mn-preset', label: t(mode === 'jr' ? 'mn.presetJr' : 'mn.preset') });
+  }
+  // the exact statistic behind the rounded rent of the chosen preset ('' when the preset has none)
+  function presetStat(mode, v) {
+    if (mode === 'jr') return '';
+    var c = simCfg(mode), pr = (c.presets || {})[v.preset] || {}, s = c.sources && c.sources.rent;
+    if (!pr.stat || !pr.stat.rent || !s) return '';
+    return t(pr.stat.derived ? 'mn.preset.statDerived' : 'mn.preset.stat', { n: yen(pr.stat.rent), y: s.year });
+  }
+  // 出典 under the calculator: the statistic behind each line (data/tools.js sim.sources), then the data's own note
+  function srcHtml(mode) {
+    var c = simCfg(mode), S = (D().sim || {}).sources || {}, lines = [];
+    var src = function (key, s, extra) {
+      if (!s) return;
+      var vars = { org: L(s.org), name: L(s.name), y: s.year, basis: L(s.basis) };
+      if (extra) Object.keys(extra).forEach(function (k) { vars[k] = extra[k]; });
+      lines.push(t(key, vars));
+    };
+    if (mode === 'jr') {
+      var w = wageCfg(simVals('jr').wagePref);
+      src('mn.src.wage', S.wage, { p: prefLabel(w.pref), d: w.from ? SM.fmtDate(w.from) : '' });
+    } else { src('mn.src.rent', S.rent); src('mn.src.living', S.living); }
+    if (c.note) lines.push(L(c.note));
+    if (!lines.length) return '';
+    return '<div class="mn-src tl-note"><p class="tl-label">' + esc(t('mn.src')) + '</p>' + lines.map(function (s) { return '<p>' + esc(s) + '</p>'; }).join('') + '</div>';
   }
   // everything under the mode tabs (swapped in place when the mode changes)
   function moneyBody(mode, defer) {
@@ -1313,9 +1383,11 @@
     var tips = '<div class="mn-tips" id="mn-tips">' + tipsHtml(v, mode) + '</div>';
     var rest = learnBlock(c.lessons || [], t('mn.learnH')) +
       '<div class="mn-foot">' + '<button type="button" class="tl-reset" data-act="mn-reset">' + esc(t('mn.reset')) + '</button>' + '</div>' +
-      (c.note ? '<p class="tl-note">' + esc(L(c.note)) + '</p>' : '');
-    return '<div class="mn-preset"><p class="tl-label">' + esc(t(mode === 'jr' ? 'mn.presetJr' : 'mn.preset')) + '</p><div id="mn-preset-seg">' + presetSeg(mode, v) + '</div>' +
-      (mode !== 'jr' && !tokyoSide() ? '<p class="help mn-preset-note">' + esc(t('mn.preset.other')) + '</p>' : '') + '</div>' +
+      srcHtml(mode);
+    var manyPresets = Object.keys(c.presets || {}).length > 4;
+    var presetLabel = manyPresets ? '<label class="tl-label" for="mn-preset-sel">' + esc(t('mn.preset')) + '</label>' : '<p class="tl-label">' + esc(t(mode === 'jr' ? 'mn.presetJr' : 'mn.preset')) + '</p>';
+    return '<div class="mn-preset">' + presetLabel + '<div id="mn-preset-seg">' + presetCtl(mode, v) + '</div>' +
+      (mode !== 'jr' ? '<p class="help mn-preset-note" id="mn-preset-stat">' + esc(presetStat(mode, v)) + '</p>' : '') + '</div>' +
       '<div class="tl-split mn-split">' +
         '<div class="tl-side mn-side">' + result + '</div>' +
         '<div class="tl-main mn-main">' + slot('inputs', inputs + tips, defer) + '</div>' +
@@ -1479,6 +1551,21 @@
     saveVals(mode, v);
     roll(document.getElementById('mn-w-total'), wageTotal(v));
   });
+  // v8: another prefecture: its 最低賃金 lands in the 時給 box (stamped), the note and the total follow
+  SM.on('mn-wage-pref', function (el) {
+    var mode = 'jr', pc = el.value, w = wageCfg(pc);
+    var v = simVals(mode);
+    v.wagePref = w.pref;
+    v.wage = w.yen;
+    saveVals(mode, v);
+    var inp = document.getElementById('mn-w-wage');
+    if (inp) { inp.value = fmt(w.yen); stamp(inp.parentNode, { ring: false }); }
+    var note = document.getElementById('mn-w-note');
+    if (note) { note.textContent = wageNote(w); ruby(note); }
+    roll(document.getElementById('mn-w-total'), wageTotal(v));
+    var src = document.querySelector('#view .mn-src');
+    if (src) { src.outerHTML = srcHtml(mode); ruby(document.querySelector('#view .mn-src')); }
+  });
   SM.on('mn-wage-apply', function () {
     var mode = 'jr';
     var v = simVals(mode);
@@ -1514,9 +1601,18 @@
     ['shien', 'yachin'].forEach(function (k) { var s = document.getElementById('mn-' + k); if (s) s.checked = !!v[k]; });
     paintMoney(v, mode);
   }
+  // the statistic line under the preset control follows the chosen place (a short cross-fade)
+  function paintPresetStat(mode, v) {
+    var st = document.getElementById('mn-preset-stat');
+    if (!st) return;
+    var s = presetStat(mode, v);
+    if (st.textContent === s) return;
+    if (M() && M().swapText && !reduced()) { try { M().swapText(st, s); return; } catch (e) { } }
+    st.textContent = s;
+  }
   SM.on('mn-preset', function (el) {
     var mode = curMode(), c = simCfg(mode);
-    var k = el.getAttribute('data-value');
+    var k = el.nodeName === 'SELECT' ? el.value : el.getAttribute('data-value');
     var pr = (c.presets || {})[k];
     if (!pr) return;
     var v = simVals(mode);
@@ -1525,8 +1621,9 @@
     (c.expenses || []).forEach(function (e) { if (pr[e.k] != null) v[e.k] = pr[e.k]; });
     if (mode === 'jr') (c.incomes || []).forEach(function (e) { if (pr[e.k] != null) v[e.k] = pr[e.k]; });
     saveVals(mode, v);
-    var seg = el.parentNode;
+    var seg = el.nodeName === 'SELECT' ? null : el.parentNode;
     if (seg) Array.prototype.forEach.call(seg.children, function (b) { if (b.hasAttribute('aria-pressed')) b.setAttribute('aria-pressed', b === el ? 'true' : 'false'); });
+    paintPresetStat(mode, v);
     applyVals(v, mode);
     var wg = document.querySelector('#view .mn-wage');
     if (wg && mode === 'jr') wg.open = k === 'hs';
@@ -1558,6 +1655,17 @@
     try { SM.store.remove(simKey(mode)); } catch (e) { saveVals(mode, d); }
     var segEl = document.getElementById('mn-preset-seg');
     if (segEl) Array.prototype.forEach.call(segEl.querySelectorAll('[data-value]'), function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-value') === d.preset ? 'true' : 'false'); });
+    var sel = document.getElementById('mn-preset-sel');
+    if (sel) sel.value = d.preset;
+    paintPresetStat(mode, d);
+    if (mode === 'jr') {
+      var wp = document.getElementById('mn-w-pref'), w = wageCfg(d.wagePref);
+      if (wp) wp.value = w.pref;
+      var wi = document.getElementById('mn-w-wage'); if (wi) wi.value = fmt(d.wage);
+      ['hours', 'days'].forEach(function (k) { var i = document.getElementById('mn-w-' + k); if (i) i.value = fmt(d[k]); });
+      var note = document.getElementById('mn-w-note'); if (note) { note.textContent = wageNote(w); ruby(note); }
+      roll(document.getElementById('mn-w-total'), wageTotal(d));
+    }
     if (document.getElementById('mn-res-body')) applyVals(d, mode); else SM.render();
   });
 

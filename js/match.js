@@ -1,4 +1,7 @@
-/* 巣立ちマップ v7 — match.js (FIND)
+/* 巣立ちマップ v8 — match.js (FIND; v8 WARDS)
+   v8 (SPEC-v8 workstream 6): answers.area may also be a WARD of a 政令市 ('14101' 鶴見区: an area entry with
+   parent '14100'). A ward answer matches [] + [pref] + [city] + [ward]; prefOf('14101') = '14', cityOf('14101') =
+   '14100', isKu('14101') = true (Tokyo's 23区 are not isKu), areaFull('14101') = '横浜市 鶴見区' (en 'Tsurumi, Yokohama'). City answers are unchanged.
    v7 (SPEC-v7 data contract): Kanto. answers.area is a 5-digit 区市町村 code (政令市 = the city code), a 2-digit
    prefecture code (that prefecture, city not decided), 'other' (outside Kanto) or null. Records: basis 'national' ·
    'tokyo' (東京都, implicitly areas ['13']) · 'pref' (another prefecture's own program, field pref) · 'local' · 'npo';
@@ -14,7 +17,8 @@
    Helpers also used by the find view (additive, not in SPEC):
    SM.matchUtil = { norm, bands, labels, nowOpen, isFree, nearby, deadlineRank, EFFORT, inTokyo, isWard,
                     audienceOf, urgentIds, isJunior, effPath, jrOk,
-                    isCity, prefOf, prefs, pref, prefName, areaName, recPref, areasOf, scopeOf, usableIn }
+                    isCity, prefOf, prefs, pref, prefName, areaName, recPref, areasOf, scopeOf, usableIn,
+                    isKu, cityOf, areaFull (v8) }
    why lines are {ja, jr?, en} plus an optional kind: 'for' (who the service is for → shown as 「対象」)
    or 'note' (a tip → shown as 「ポイント」); plain lines are reasons (「理由」).
    v3 / SPEC-v3 §3 — 中学生 (stage jhs12/jhs3 or age a12):
@@ -116,6 +120,15 @@
     if (isCity(code)) return code.slice(0, 2);
     return isPrefCode(code) ? code : null;
   }
+  /* v8 (WARDS): a ward of a 政令市 is the only area entry with a parent (data/areas.js). cityOf gives the 区市町村 a
+     code stands for: the ward's city ('14101' → '14100'), a city itself ('14100'), null for a prefecture / 'other' */
+  function isKu(code) { var a = isCity(code) ? areaOf(code) : null; return !!(a && a.parent); }
+  function cityOf(code) {
+    code = code == null ? '' : String(code);
+    if (!isCity(code)) return null;
+    var a = areaOf(code);
+    return a && a.parent ? String(a.parent) : code;
+  }
   // SM.data.prefs (data/areas.js) when it is there; the seven names otherwise (code order 08 … 14)
   var PREF_FALLBACK = [
     { code: '08', name: '茨城県', kana: 'いばらきけん', en: 'Ibaraki' },
@@ -140,6 +153,14 @@
     if (isPrefCode(code)) return prefName(code, en);
     var a = areaOf(code);
     return a ? (en ? (a.en || a.name) : a.name) : '';
+  }
+  // a ward with its city ('横浜市 鶴見区' / 'Tsurumi, Yokohama'): 緑区 alone could be one of four; anything else = areaName
+  function areaFull(code, en) {
+    if (en == null) en = lang() === 'en';
+    var nm = areaName(code, en);
+    if (!isKu(code)) return nm;
+    var c = areaName(cityOf(code), en);
+    return c ? (en ? nm + ', ' + c : c + ' ' + nm) : nm;
   }
   // a record's area list: basis 'tokyo' with none means all of Tokyo
   function areasOf(p) {
@@ -173,15 +194,18 @@
     var areas = areasOf(p);
     var cityOnly = areas.length > 0 && areas.every(isCity);
     if (area === 'other') return !areas.length && !regional(p) ? 'any' : false;
-    var myPref = prefOf(area), myCity = isCity(area) ? area : null;
+    // a ward answer counts as its city too (SPEC-v8: [] + [pref] + [city] + [ward])
+    var myPref = prefOf(area), myWard = isKu(area) ? area : null, myCity = myWard ? cityOf(myWard) : (isCity(area) ? area : null);
     if (!myPref) return !areas.length ? 'any' : cityOnly ? 'later' : 'pref';
     if (regional(p)) { var rp = recPref(p); if (rp && rp !== myPref) return false; }
     // a prefecture's desk for 町村 residents only (townsOnly): not for people who live in one of its 市
     if (p.townsOnly && myCity) { var ma = areaOf(myCity); if (ma && ma.type && !/^(machi|mura|town|village)$/.test(ma.type) && areas.indexOf(myCity) === -1) return false; }
     if (!areas.length) return 'any';
-    if (myCity && areas.indexOf(myCity) !== -1) return 'city';
+    if (myCity && (areas.indexOf(myCity) !== -1 || (myWard && areas.indexOf(myWard) !== -1))) return 'city';
     if (areas.indexOf(myPref) !== -1) return 'pref';
     if (!myCity && cityOnly && areas.some(function (c) { return prefOf(c) === myPref; })) return 'later';
+    // made for one ward of the person's city, the ward not known yet (横浜市 answered, 鶴見区 record): keep, lower
+    if (myCity && !myWard && cityOnly && areas.some(function (c) { return isKu(c) && cityOf(c) === myCity; })) return 'later';
     // a city's scheme decided by where you LEFT care (eligibleBy 'origin'), not where you live: in the same
     // prefecture it stays in the list, lower down (never in あなたに合いそう)
     if (myCity && cityOnly && p.eligibleBy === 'origin' && areas.some(function (c) { return prefOf(c) === myPref; })) return 'later';
@@ -250,7 +274,8 @@
   function nearby(p, area) {
     var locs = p.locations || [];
     if (!locs.length || area === 'other') return false;
-    if (isCity(area)) return locs.some(function (l) { return l && String(l.area) === area; });
+    // a ward: its own offices and its city's; a city: its offices and those placed in one of its wards
+    if (isCity(area)) { var cc = cityOf(area); return locs.some(function (l) { return l && (String(l.area) === area || cityOf(String(l.area || '')) === cc); }); }
     var pc = prefOf(area) || '13', nm = prefName(pc, false);
     return locs.some(function (l) { return l && (prefOf(String(l.area || '')) === pc || (!!nm && String(l.addr || '').indexOf(nm) === 0)); });
   }
@@ -361,7 +386,7 @@
     // --- area rules (SPEC-v7 data contract; see the header)
     var area = o.everywhere ? null : (a.area || null);
     if (area && area !== 'other' && !prefOf(area)) area = null;   // an unknown value counts as unanswered
-    var myPref = prefOf(area), myCity = isCity(area) ? area : null;
+    var myPref = prefOf(area), myWard = isKu(area) ? area : null, myCity = myWard ? cityOf(myWard) : (isCity(area) ? area : null);
     var cityOnly = areas.length > 0 && areas.map(String).every(isCity);
     var twinNote = false;
     if (!o.everywhere) {
@@ -381,10 +406,12 @@
     if (!area && !o.everywhere && (regional(p) || areas.length)) score -= 3;
     if (use === 'city') {
       score += 5;
+      // the place the record names: the ward when it is made for it, else the city (横浜市に住んでいるので)
+      var named0 = myWard && areas.indexOf(myWard) !== -1 ? myWard : myCity;
       why.push({ prio: 0.5, w: {
-        ja: wardName(myCity, false) + (a.stage === 'hs12' || a.stage === 'hs3' ? 'に住む予定なので' : 'に住んでいるので'),
-        jr: wardName(myCity, false) + 'に住んでいるので',
-        en: 'For people living in ' + wardName(myCity, true) } });
+        ja: wardName(named0, false) + (a.stage === 'hs12' || a.stage === 'hs3' ? 'に住む予定なので' : 'に住んでいるので'),
+        jr: wardName(named0, false) + 'に住んでいるので',
+        en: 'For people living in ' + wardName(named0, true) } });
     } else if (use === 'pref') {
       if (myPref) score += 1;
     } else if (use === 'later') {                               // city-only, the person's city is not known: keep, rank lower
@@ -566,7 +593,7 @@
     var al = null;
     if (a.area === 'other') al = en ? 'Outside Kanto' : '関東の外';
     else if (isPrefCode(a.area)) al = prefName(a.area, en) ? prefName(a.area, en) + (en ? ' (city not set)' : '（市はまだ）') : null;
-    else if (isCity(a.area)) al = wardName(a.area, en);
+    else if (isCity(a.area)) al = isKu(a.area) ? areaFull(a.area, en) : wardName(a.area, en);
     rows.push({ key: 'area', q: 3, label: al, set: !!al });
     var cs = (a.concerns || []).map(function (k) { var c = catLabel(k); return en ? c.en : c.ja; });
     if (a.urgent) cs.unshift(en ? 'Nowhere to stay now' : '今いる場所がない');
@@ -612,6 +639,7 @@
     deadlineRank: deadlineRank, EFFORT: EFFORT, inTokyo: inTokyo, isWard: isWard,
     audienceOf: audienceOf, urgentIds: urgentIds, isJunior: isJunior, effPath: effPath, jrOk: jrOk,
     isCity: isCity, isPrefCode: isPrefCode, prefOf: prefOf, prefs: prefs, pref: pref, prefName: prefName, areaName: areaName,
-    recPref: recPref, areasOf: areasOf, scopeOf: scopeOf, usableIn: usableIn
+    recPref: recPref, areasOf: areasOf, scopeOf: scopeOf, usableIn: usableIn,
+    isKu: isKu, cityOf: cityOf, areaFull: areaFull
   };
 })();

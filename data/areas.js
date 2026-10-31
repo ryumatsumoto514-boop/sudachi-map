@@ -1,8 +1,11 @@
-/* 巣立ちマップ v7 — data/areas.js (MAP)
+/* 巣立ちマップ v8 — data/areas.js (MAP, WARDS)
    Every 区市町村 of 関東 (茨城 08・栃木 09・群馬 10・埼玉 11・千葉 12・東京 13・神奈川 14): 316 entries
    (08: 44, 09: 25, 10: 35, 11: 63, 12: 54, 13: 62, 14: 33), in 全国地方公共団体コード order (5 digits, without the
    check digit). 政令指定都市 are ONE entry with the city code (11100 さいたま市, 12100 千葉市, 14100 横浜市, 14130 川崎市,
-   14150 相模原市), not their wards.
+   14150 相模原市); since v8 (WARDS) their 44 wards follow each city as extra entries with `parent` = the city code
+   (横浜市 18: 14101–14118, 川崎市 7: 14131–14137, 相模原市 3: 14151–14153, さいたま市 10: 11101–11110, 千葉市 6: 12101–12106;
+   codes and names from the same 総務省 list, cross-checked with N03 2024 N03_005/N03_007). A ward's type is 'ku', its group and
+   pref are its prefecture's code. 360 entries in all; `!!a.parent` tells a ward from a 区市町村.
    Source: 総務省「全国地方公共団体コード」(令和6年1月1日現在の団体, https://www.soumu.go.jp/denshijiti/code.html,
    main_content/000925835.xlsx) for codes, names and readings (half-width kana → hiragana; the list writes 拗音 with
    full-size kana in a few names, corrected: 中之条 行田 本庄 羽生 九十九里 御宿 鋸南). Cross-checked code by code with
@@ -17,6 +20,8 @@
   var SM = window.SM = window.SM || {};
   SM.data = SM.data || {};
   function a(code, name, kana, en, type, group, pref) { return { code: code, name: name, kana: kana, en: en, type: type, group: group, pref: pref }; }
+  // v8: a ward (区) of a 政令指定都市 — the only kind of entry with a parent (its city's code); type 'ku', group = pref
+  function w(code, name, kana, en, parent) { return { code: code, name: name, kana: kana, en: en, type: 'ku', parent: parent, group: parent.slice(0, 2), pref: parent.slice(0, 2) }; }
   SM.data.prefs = [
     { code: '08', name: '茨城県', short: '茨城', kana: 'いばらきけん', en: 'Ibaraki' },
     { code: '09', name: '栃木県', short: '栃木', kana: 'とちぎけん', en: 'Tochigi' },
@@ -136,6 +141,16 @@
     a('10525', '邑楽町', 'おうらまち', 'Ora', 'machi', '10', '10'),
     /* 埼玉 */
     a('11100', 'さいたま市', 'さいたまし', 'Saitama', 'shi', '11', '11'),
+    w('11101', '西区', 'にしく', 'Nishi', '11100'),
+    w('11102', '北区', 'きたく', 'Kita', '11100'),
+    w('11103', '大宮区', 'おおみやく', 'Omiya', '11100'),
+    w('11104', '見沼区', 'みぬまく', 'Minuma', '11100'),
+    w('11105', '中央区', 'ちゅうおうく', 'Chuo', '11100'),
+    w('11106', '桜区', 'さくらく', 'Sakura', '11100'),
+    w('11107', '浦和区', 'うらわく', 'Urawa', '11100'),
+    w('11108', '南区', 'みなみく', 'Minami', '11100'),
+    w('11109', '緑区', 'みどりく', 'Midori', '11100'),
+    w('11110', '岩槻区', 'いわつきく', 'Iwatsuki', '11100'),
     a('11201', '川越市', 'かわごえし', 'Kawagoe', 'shi', '11', '11'),
     a('11202', '熊谷市', 'くまがやし', 'Kumagaya', 'shi', '11', '11'),
     a('11203', '川口市', 'かわぐちし', 'Kawaguchi', 'shi', '11', '11'),
@@ -200,6 +215,12 @@
     a('11465', '松伏町', 'まつぶしまち', 'Matsubushi', 'machi', '11', '11'),
     /* 千葉 */
     a('12100', '千葉市', 'ちばし', 'Chiba', 'shi', '12', '12'),
+    w('12101', '中央区', 'ちゅうおうく', 'Chuo', '12100'),
+    w('12102', '花見川区', 'はなみがわく', 'Hanamigawa', '12100'),
+    w('12103', '稲毛区', 'いなげく', 'Inage', '12100'),
+    w('12104', '若葉区', 'わかばく', 'Wakaba', '12100'),
+    w('12105', '緑区', 'みどりく', 'Midori', '12100'),
+    w('12106', '美浜区', 'みはまく', 'Mihama', '12100'),
     a('12202', '銚子市', 'ちょうしし', 'Choshi', 'shi', '12', '12'),
     a('12203', '市川市', 'いちかわし', 'Ichikawa', 'shi', '12', '12'),
     a('12204', '船橋市', 'ふなばしし', 'Funabashi', 'shi', '12', '12'),
@@ -318,8 +339,36 @@
     a('13421', '小笠原村', 'おがさわらむら', 'Ogasawara', 'mura', 'islands', '13'),
     /* 神奈川 */
     a('14100', '横浜市', 'よこはまし', 'Yokohama', 'shi', '14', '14'),
+    w('14101', '鶴見区', 'つるみく', 'Tsurumi', '14100'),
+    w('14102', '神奈川区', 'かながわく', 'Kanagawa', '14100'),
+    w('14103', '西区', 'にしく', 'Nishi', '14100'),
+    w('14104', '中区', 'なかく', 'Naka', '14100'),
+    w('14105', '南区', 'みなみく', 'Minami', '14100'),
+    w('14106', '保土ケ谷区', 'ほどがやく', 'Hodogaya', '14100'),
+    w('14107', '磯子区', 'いそごく', 'Isogo', '14100'),
+    w('14108', '金沢区', 'かなざわく', 'Kanazawa', '14100'),
+    w('14109', '港北区', 'こうほくく', 'Kohoku', '14100'),
+    w('14110', '戸塚区', 'とつかく', 'Totsuka', '14100'),
+    w('14111', '港南区', 'こうなんく', 'Konan', '14100'),
+    w('14112', '旭区', 'あさひく', 'Asahi', '14100'),
+    w('14113', '緑区', 'みどりく', 'Midori', '14100'),
+    w('14114', '瀬谷区', 'せやく', 'Seya', '14100'),
+    w('14115', '栄区', 'さかえく', 'Sakae', '14100'),
+    w('14116', '泉区', 'いずみく', 'Izumi', '14100'),
+    w('14117', '青葉区', 'あおばく', 'Aoba', '14100'),
+    w('14118', '都筑区', 'つづきく', 'Tsuzuki', '14100'),
     a('14130', '川崎市', 'かわさきし', 'Kawasaki', 'shi', '14', '14'),
+    w('14131', '川崎区', 'かわさきく', 'Kawasaki', '14130'),
+    w('14132', '幸区', 'さいわいく', 'Saiwai', '14130'),
+    w('14133', '中原区', 'なかはらく', 'Nakahara', '14130'),
+    w('14134', '高津区', 'たかつく', 'Takatsu', '14130'),
+    w('14135', '多摩区', 'たまく', 'Tama', '14130'),
+    w('14136', '宮前区', 'みやまえく', 'Miyamae', '14130'),
+    w('14137', '麻生区', 'あさおく', 'Asao', '14130'),
     a('14150', '相模原市', 'さがみはらし', 'Sagamihara', 'shi', '14', '14'),
+    w('14151', '緑区', 'みどりく', 'Midori', '14150'),
+    w('14152', '中央区', 'ちゅうおうく', 'Chuo', '14150'),
+    w('14153', '南区', 'みなみく', 'Minami', '14150'),
     a('14201', '横須賀市', 'よこすかし', 'Yokosuka', 'shi', '14', '14'),
     a('14203', '平塚市', 'ひらつかし', 'Hiratsuka', 'shi', '14', '14'),
     a('14204', '鎌倉市', 'かまくらし', 'Kamakura', 'shi', '14', '14'),

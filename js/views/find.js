@@ -232,7 +232,13 @@
     'find.area.prefAnyHint': { ja: '{pref}全体の支援', en: 'Programs for all of {pref}' },
     'find.area.g.shi': { ja: '市', en: 'Cities' },
     'find.area.g.town': { ja: '町・村', en: 'Towns & villages' },
-    'find.area.found': { ja: '{n}か所', en: '{n} places' }
+    'find.area.found': { ja: '{n}か所', en: '{n} places' },
+    /* v8 (WARDS): 都県 → 市 → 区 for 横浜・川崎・相模原・さいたま・千葉 */
+    'find.area.g.ku': { ja: '区', en: 'Wards' },
+    'find.area.hasWards': { ja: '区をえらぶ', en: 'Choose a ward' },
+    'find.area.wardAny': { ja: '区はまだ', en: 'Ward not decided' },
+    'find.area.wardAnyHint': { ja: '{city}全体の支援', en: 'Programs for all of {city}' },
+    'find.area.changeCity': { ja: '市を変える', en: 'Change city' }
   });
   function t(k, v) { return SM.t(k, v); }
   function L(o) { return SM.L(o); }
@@ -286,7 +292,7 @@
     return '<template data-later="' + k + '"></template>';
   }
   // a deferred run of rows: each fades in as it scrolls into view (the first screen keeps its stagger)
-  function lazyRows(html) { return lazy(mem.defer ? html.replace(/<article class="pcard/g, '<article data-reveal="fade" class="pcard') : html); }
+  function lazyRows(html) { return lazy(mem.defer ? html.replace(/<article class="pcard/g, '<article data-reveal="up" class="pcard') : html); }
   function flushLater(root) {
     root = root || document.getElementById('view');
     if (!root) return;
@@ -1526,15 +1532,23 @@
     return list.sort(function (x, y) { return rank(x) - rank(y); });
   }
   function prefOfArea(a) { return a.pref ? String(a.pref) : String(a.code).slice(0, 2); }
-  function areasIn(pc) { return (SM.data.areas || []).filter(function (a) { return a && prefOfArea(a) === pc; }); }
+  // the 区市町村 of a prefecture (v8: a 政令市's wards have a parent and come on their own step)
+  function areasIn(pc) { return (SM.data.areas || []).filter(function (a) { return a && prefOfArea(a) === pc && !a.parent; }); }
+  function wardsOf(city) { return (SM.data.areas || []).filter(function (a) { return a && a.parent === city; }); }
+  function hasWards(code) { return !!code && wardsOf(code).length > 0; }
+  function cityOf(code) { return U().cityOf ? U().cityOf(code) : null; }
+  function isKu(code) { return !!(U().isKu && U().isKu(code)); }
   function areaHay(a) {
     var pf = U().pref ? U().pref(prefOfArea(a)) : null;
     return U().norm([a.name, a.kana, a.en, String(a.name).replace(/[区市町村]$/, ''), String(a.kana || '').replace(/(く|し|まち|ちょう|むら|そん)$/, ''),
       pf ? pf.name.replace(/[都県]$/, '') : ''].join(' '));
   }
   function areaBtn(a, cur, sub) {
-    var on = cur === a.code;
-    return '<button type="button" class="f-area-b' + (on ? ' is-selected' : '') + '" role="radio" aria-checked="' + on + '" tabindex="-1" data-act="find-answer" data-key="area" data-value="' + esc(a.code) + '" data-press>' +
+    // v8: in its prefecture's list a 政令市 opens its wards (find-city); chosen = the city or one of its wards
+    var deep = !sub && hasWards(a.code);
+    var on = cur === a.code || (deep && cityOf(cur) === a.code);
+    if (deep && !sub) sub = t('find.area.hasWards');
+    return '<button type="button" class="f-area-b' + (on ? ' is-selected' : '') + '" role="radio" aria-checked="' + on + '" tabindex="-1" data-act="' + (deep ? 'find-city' : 'find-answer') + '" data-key="area" data-value="' + esc(a.code) + '" data-press>' +
       '<span class="f-area-name" data-noruby>' + esc(en() ? (a.en || a.name) : a.name) + '</span>' +
       (sub ? '<span class="f-area-kana" data-noruby>' + esc(sub) + '</span>' : en() ? '' : '<span class="f-area-kana" lang="ja" data-noruby>' + esc(a.kana || '') + '</span>') + '</button>';
   }
@@ -1579,9 +1593,24 @@
         radioOpt(q, { v: pc, label: t('find.area.prefAny'), hint: t('find.area.prefAnyHint', { pref: pname }) }, cur === pc && mem.prefJust !== pc, 'f-opt-special', 2) +
       '</div></div>' + groups + '</div>';
   }
+  /* v8: step 3 — a 政令市's wards, with 「区はまだ」 (= the city code) first and 市を変える */
+  function areaStepWard(q, city, cur) {
+    var ca = SM.area ? SM.area(city) : null;
+    var cname = ca ? (en() ? (ca.en || ca.name) : ca.name) : city;
+    return '<div class="f-area-step" data-step="ward" data-city="' + esc(city) + '">' +
+      '<div class="f-area-cur"><p class="f-area-cur-name" id="f-area-cur" tabindex="-1"' + rv(1) + '>' + esc(cname) + '</p>' +
+        '<button type="button" class="f-area-change" data-act="find-ward-back" data-press' + rv(1) + '>' + arrow('l') + '<span>' + esc(t('find.area.changeCity')) + '</span></button></div>' +
+      '<div class="f-area-special" role="presentation"><div class="opts">' +
+        radioOpt(q, { v: city, label: t('find.area.wardAny'), hint: t('find.area.wardAnyHint', { city: cname }) }, cur === city && mem.cityJust !== city, 'f-opt-special', 2) +
+      '</div></div>' + areaGroup('ku', t('find.area.g.ku'), wardsOf(city), cur) + '</div>';
+  }
   function areaStepHtml(q, cur) {
     var pc = U().prefOf ? U().prefOf(cur) : null;
-    return pc && !mem.areaPick ? areaStepCity(q, pc, cur) : areaStepPref(q, cur);
+    if (!pc || mem.areaPick) return areaStepPref(q, cur);
+    // a ward answer (or a 政令市 just tapped) opens on that city's wards, unless 市を変える was tapped
+    var city = mem.wardPick || (isKu(cur) ? cityOf(cur) : null);
+    if (city && !mem.cityBack && hasWards(city)) return areaStepWard(q, city, cur);
+    return areaStepCity(q, pc, cur);
   }
   // the search: any Kanto city by name, reading or prefecture (the chosen prefecture's first), at most 60
   function areaHits(term, cur) {
@@ -1590,7 +1619,9 @@
     hits.sort(function (x, y) { return (prefOfArea(x) === mine ? 0 : 1) - (prefOfArea(y) === mine ? 0 : 1); });
     var n = hits.length;
     return { n: n, html: n ? '<div class="f-area-grid">' + hits.slice(0, 60).map(function (a) {
-      return areaBtn(a, cur, U().prefName ? U().prefName(prefOfArea(a), en()) : '');
+      // a ward's second line is its city (緑区 is one of four), a 区市町村's its prefecture
+      var pa = a.parent && SM.area ? SM.area(a.parent) : null;
+      return areaBtn(a, cur, pa ? (en() ? (pa.en || pa.name) : pa.name) : (U().prefName ? U().prefName(prefOfArea(a), en()) : '') || ' ');
     }).join('') + '</div>' : '' };
   }
 
@@ -1642,7 +1673,7 @@
   function renderQuestion(nRaw, query) {
     var n = parseInt(nRaw, 10);
     if (!(n >= 1 && n <= TOTAL)) n = 1;
-    if (n !== 3) mem.prefJust = null;
+    if (n !== 3) { mem.prefJust = null; mem.cityJust = null; }
     var q = Q[n - 1];
     var a = answers();
     var ret = query && query.ret === 'results';
@@ -1672,7 +1703,7 @@
       foot = '<div class="q-foot f-q-foot"><button type="button" class="btn btn-primary btn-lg btn-block f-next' + (cs.length || ret || a.urgent ? ' is-ready' : '') + '" id="f-next" data-act="find-next" data-press>' +
         '<span class="f-next-l">' + esc(concernBtnLabel(cs.length, ret, a.urgent)) + '</span>' + arrow('r') + '</button></div>';
     } else if (q.key === 'area') {
-      if (!mem.quiet) mem.areaPick = false;
+      if (!mem.quiet) { mem.areaPick = false; mem.wardPick = null; mem.cityBack = false; }
       body = '<div class="f-area-search"' + rv(k++) + '>' + SM.ui.searchField({ id: 'f-area-q', placeholder: t('find.area.search'), label: t('find.area.search') }) + '</div>' +
         '<div class="f-area" role="radiogroup" aria-labelledby="' + titleId + '">' +
         '<p class="f-area-none" id="f-area-none" role="status" aria-live="polite"></p>' +
@@ -2095,12 +2126,22 @@
     if (!pc) return;
     // the prefecture alone is an answer already (its whole-prefecture support); a city keeps it more precise
     if ((U().prefOf ? U().prefOf(answers().area) : null) !== pc) { SM.setAnswer('area', pc); mem.prefJust = pc; }
-    mem.areaPick = false;
+    mem.areaPick = false; mem.wardPick = null; mem.cityBack = false;
     var ind = el.querySelector('.arrow');
     if (ind) mcall('nudge', ind);
     swapAreaStep(1);
   });
-  SM.on('find-area-back', function () { mem.areaPick = true; swapAreaStep(-1); });
+  SM.on('find-area-back', function () { mem.areaPick = true; mem.wardPick = null; mem.cityBack = false; swapAreaStep(-1); });
+  /* v8: a 政令市 → its wards. The city alone is an answer already (横浜市の支援); a ward keeps it more precise */
+  SM.on('find-city', function (el) {
+    if (mem.leaving) return;
+    var c = el.getAttribute('data-value');
+    if (!c || !hasWards(c)) return;
+    if (cityOf(answers().area) !== c) { SM.setAnswer('area', c); mem.cityJust = c; }
+    mem.wardPick = c; mem.cityBack = false; mem.areaPick = false;
+    swapAreaStep(1);
+  });
+  SM.on('find-ward-back', function () { mem.wardPick = null; mem.cityBack = true; mem.areaPick = false; swapAreaStep(-1); });
   /* ================================================================== RESULTS
      The arrival (MOTION-SPEC §4 Results): the results-arrive strip draws (the protagonist reaches the house under the
      pin), the count stands on the same ground line and rolls from 0 like a station board (the first time for an
@@ -2573,7 +2614,7 @@
         '<div class="f-cat-sign">' + SM.ui.catIcon(key, 'xl', { hero: true }) + '</div>' +
         '<div class="f-cat-name">' + (eyebrow ? '<p class="eyebrow f-cat-eyebrow"' + R('data-reveal="fade"') + '>' + esc(eyebrow) + '</p>' : '') +
           '<h1 class="f-h1 f-cat-h1"' + R('data-reveal="line" data-reveal-delay="40"') + '>' + esc(title) + '</h1></div>' +
-        '<div class="f-cat-art">' + ill('cat-' + key, { size: 'spot' }) + '</div>' +
+        '<div class="f-cat-art" data-parallax="0.04">' + ill('cat-' + key, { size: 'spot' }) + '</div>' +
       '</div>' +
       (n == null ? '' : '<p class="f-cat-count"' + R('data-reveal="fade" data-reveal-delay="80"') + '><span class="num-xl f-cat-n"><span data-f-count="' + n + '" data-f-seen="find.cat.' + key + '">' + esc(fmtN(n)) + '</span></span>' +
         '<span class="f-cat-unit">' + esc(t('find.cat.unit')) + '</span></p>') +

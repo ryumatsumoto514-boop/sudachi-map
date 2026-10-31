@@ -1,162 +1,207 @@
 /* =====================================================================
-   巣立ちマップ v4 — plan.css (PLAN)  #/plan やること
-   VISUAL-SPEC §7.8 · MOTION-SPEC §4.2 Plan. Paper, ink, hairlines; square stations on one rule; the green line
-   is the road already walked. Tokens only (type roles, the four trackings, 4px space grid). Radius 0, no
-   shadows, no gradients. Scoped under .v-plan (the view <main> and the plan's own sheets, which carry
-   "v-plan plan-sheet"); row internals are keyed on the row class (.tl-item / .plan-saved-item) so a FLIP
-   ghost (a clone appended to <body>) keeps its look while it fades.
+   巣立ちマップ v8 — plan.css (PLAN)  #/plan やること — the roadmap
+   SPEC-v8 workstream 2. Time is the brand's line; every period is a station on it. Phone: the line runs down the
+   left, stations are rows, the current one is open. Desktop (≥1100px): one horizontal line across the page,
+   the open period's tasks under it on the left, つぎの駅・見せる・残す・保存した支援 on the right.
+   Paper, ink, hairlines; the one solid green is the line already travelled (and いま). Tokens only (type roles,
+   the four trackings, 4px space grid). Radius 0, no shadows, no gradients (rings are inset box-shadows = borders
+   that do not take space). Scoped under .v-plan (the view <main> and the plan's own sheets "v-plan plan-sheet");
+   row internals are keyed on the row class (.tl-item / .plan-saved-item) so a FLIP ghost keeps its look.
    ===================================================================== */
 
-/* ---------- page rhythm (v7: status strip → timeline (いま first) → 保存した支援 → 見せる・残す) ---------- */
-.view.v-plan > .plan-hero { margin-top: var(--s-5); }
-.view.v-plan > .plan-body { margin-top: var(--s-6); }
+/* ---------- page rhythm ---------- */
+.view.v-plan > .plan-rm { margin-top: var(--s-6); }
 .v-plan .plan-flow { margin-top: var(--sec-gap); }
 .v-plan .plan-flow > * + * { margin-top: var(--sec-gap); }
 
-/* ---------- head: やること + the 高校受験 / 巣立ち switch ---------- */
-.v-plan .plan-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-3) var(--s-5); }
+/* ---------- head: やること · できたこと n / N · the 高校受験 / 巣立ち switch ---------- */
+.v-plan .plan-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--s-3) var(--s-5); }
+.v-plan .plan-head-l { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s-1) var(--s-5); min-width: 0; }
 .v-plan .plan-h1 { flex: none; }
 .v-plan .plan-track { flex: 1 1 240px; max-width: 360px; }
-
-/* ---------- status strip: count · (person) · date · できたこと ----------
-   Phone: [count | できたこと] over [date + 変える]; a 2px ink rule on top, hairlines between, like a station board.
-   Wide (container ≥ 760px): one row, the person walking to the door between the count and the date. */
-.v-plan .plan-hero { container: plan-hero / inline-size; border-top: 2px solid var(--ink); padding-top: var(--s-3); }
-.v-plan .plan-hero-in {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 132px);
-  grid-template-areas: "count prog" "date date";
-  column-gap: var(--s-5);
-  align-items: end;
-}
-.v-plan .plan-count { grid-area: count; min-width: 0; }
-.v-plan .plan-hero-il { display: none; grid-area: il; }
-.v-plan .plan-count-k, .v-plan .plan-prog-k, .v-plan .plan-date-k {
+.v-plan .plan-prog { display: inline-flex; align-items: baseline; gap: 8px; white-space: nowrap; }
+.v-plan .plan-prog-k {
   font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui);
   letter-spacing: var(--ls-label); color: var(--ink-2);
 }
-.v-plan .plan-count-big {
-  display: flex; align-items: baseline; flex-wrap: nowrap;
-  font-size: var(--t-num-xl); line-height: var(--lh-num); color: var(--ink);
-}
-.v-plan .plan-count-num {
-  font-family: var(--font-num); font-weight: 700; font-size: 1em; line-height: var(--lh-num);
-  letter-spacing: var(--ls-num); font-variant-numeric: tabular-nums; white-space: nowrap;
-}
-.v-plan .plan-count-pre, .v-plan .plan-count-unit {
-  flex: none; font-family: var(--font-display); font-weight: 500; font-size: 0.42em; line-height: 1; letter-spacing: var(--ls-0);
-}
-.v-plan .plan-count-pre { margin-right: 0.12em; }
-.v-plan .plan-count-unit { margin-left: 0.12em; }
-.v-plan .plan-count-today { font-family: var(--font-display); font-weight: 700; font-size: 0.8em; line-height: var(--lh-num); letter-spacing: var(--ls-0); }
-.v-plan .plan-count-sub { margin-top: 2px; font-family: var(--font-display); font-weight: 700; font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink); }
-
-/* できたこと: number pair + one bar (no unexplained tick) */
-.v-plan .plan-prog { grid-area: prog; display: grid; gap: 6px; min-width: 0; padding-bottom: 6px; }
-.v-plan .plan-prog-row { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0 var(--s-2); }
-.v-plan .plan-prog-num { white-space: nowrap; color: var(--ink); }
+.v-plan .plan-prog-num { color: var(--ink); }
 .v-plan .plan-prog-num b { font-family: var(--font-num); font-weight: 700; font-size: var(--t-num-l); line-height: 1; letter-spacing: var(--ls-0); }
 .v-plan .plan-prog-of { font-family: var(--font-num); font-weight: 500; font-size: var(--t-meta); line-height: 1; color: var(--ink-3); }
-.v-plan .plan-prog-bar { position: relative; height: 6px; background: var(--paper-3); overflow: hidden; }
-.v-plan .plan-prog-fill { position: absolute; inset: 0; display: block; background: var(--action); transform-origin: left center; }
 .v-plan .plan-prog.is-all .plan-prog-k { color: var(--action-text); font-weight: 700; }
+.v-plan .plan-nostore { flex-basis: 100%; margin: 0; font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--amber-text); }
+.v-plan .plan-nostore-go {
+  display: inline; min-height: 0; padding: 0; border: 0; background: none; font: inherit; font-weight: 700; color: var(--action-text);
+  text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.25em; cursor: pointer; position: relative;
+}
+.v-plan .plan-nostore-go::after { content: ""; position: absolute; inset: -12px -6px; }
 
-/* the day it counts to: label (+ 仮の日付) / date / one plain line · 変える */
-.v-plan .plan-date {
-  grid-area: date;
-  display: flex; align-items: center; gap: var(--s-3);
-  min-height: 64px; margin-top: var(--s-3); padding: var(--s-2) 0;
-  border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule);
+/* ---------- the roadmap (phone: vertical) ----------
+   .rm-rail is the pale track from the first station to the last; .rm-fill the green part already travelled
+   (JS sets both from the station marks; the fill's <i> is what moves). Stations are the <li>; their head is one
+   button (period · title · n/N · 見る), their body the tasks. */
+.v-plan .rm-wrap {
+  --rail: 28px;                                   /* the line's column; marks sit on its centre */
+  --indent: calc(var(--rail) + 14px);             /* text starts here */
+  --ln: 4px;                                      /* line thickness */
+  --mk: 12px;                                     /* a station mark */
+  --c: 24px;                                      /* a mark's centre = the head's first text line */
+  position: relative;
 }
-.v-plan .plan-date-main { flex: 1; min-width: 0; display: grid; gap: 1px; }
-.v-plan .plan-date-k { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; color: var(--ink-3); }
-.v-plan .plan-date-k .tag { letter-spacing: var(--ls-0); }
-.v-plan .plan-date-v {
-  font-family: var(--font-num); font-weight: 700; font-size: var(--fs-base); line-height: var(--lh-ui);
-  letter-spacing: var(--ls-0); font-variant-numeric: tabular-nums; color: var(--ink);
-}
-.v-plan .plan-date-note { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3); }
-.v-plan .plan-date-edit { flex: none; }
+.v-plan .rm-rail, .v-plan .rm-fill { position: absolute; z-index: 0; pointer-events: none; display: block; }
+.v-plan .rm-rail { left: 0; top: 0; width: var(--ln); margin-left: calc(var(--ln) / -2); background: var(--paper-3); }
+.v-plan .rm-fill { z-index: 1; left: 0; top: 0; width: var(--ln); margin-left: calc(var(--ln) / -2); transform-origin: center top; }
+.v-plan .rm-fill > i { display: block; width: 100%; height: 100%; background: var(--action); transform-origin: center top; }
+.v-plan .rm { position: relative; z-index: 2; display: grid; margin: 0; padding: 0; list-style: none; }
+.v-plan .rm-st { position: relative; min-width: 0; }
 
-@container plan-hero (max-width: 339px) {
-  .v-plan .plan-hero-in { grid-template-columns: minmax(0, 1fr); grid-template-areas: "count" "prog" "date"; row-gap: var(--s-3); }
+/* the station head: one full-width button */
+.v-plan .rm-head {
+  position: relative; z-index: 2; display: block; width: 100%; margin: 0; padding: 0; border: 0; background: none;
+  font: inherit; color: inherit; text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent;
+}                                                   /* z 2: the sign's paper sits over the line (desktop: no .rm stacking) */
+.v-plan .rm-head.is-static { cursor: default; }
+.v-plan .rm-head:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.v-plan .rm-head-in {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: "when count tog" "title title title";
+  align-items: center; column-gap: var(--s-3); row-gap: 2px;
+  min-height: 56px; padding: var(--s-3) 0 var(--s-3) var(--indent);
+  border-bottom: 1px solid var(--rule);
 }
-@container plan-hero (min-width: 560px) {
-  .v-plan .plan-hero-in { grid-template-columns: minmax(0, 1fr) minmax(0, 200px); }
-  .v-plan .has-il > .plan-hero-in { grid-template-columns: minmax(0, 1fr) 112px minmax(0, 200px); grid-template-areas: "count il prog" "date date date"; }
-  .v-plan .has-il .plan-hero-il { display: block; justify-self: center; width: 112px; align-self: end; margin-bottom: -4px; }
-}
-@container plan-hero (min-width: 820px) {
-  .v-plan .plan-hero-in, .v-plan .has-il > .plan-hero-in {
-    grid-template-columns: auto 104px minmax(0, 1fr) minmax(180px, 240px);
-    grid-template-areas: "count il date prog";
-    column-gap: var(--s-6);
-  }
-  .v-plan .plan-hero:not(.has-il) > .plan-hero-in { grid-template-columns: auto minmax(0, 1fr) minmax(180px, 240px); grid-template-areas: "count date prog"; }
-  .v-plan .has-il .plan-hero-il { width: 104px; }
-  .v-plan .plan-count-big { font-size: var(--fs-5xl); }
-  .v-plan .plan-date { align-self: end; margin: 0; padding: 0 0 6px var(--s-6); min-height: 0; border: 0; border-left: 1px solid var(--rule); }
-  .v-plan .plan-prog { padding-left: var(--s-6); border-left: 1px solid var(--rule); }
-}
-.v-plan .plan-hero-il .il, .v-plan .plan-hero-il svg { display: block; width: 100%; height: auto; }
+.v-plan .rm-st:last-child > .rm-head > .rm-head-in { border-bottom: 0; }
+.v-plan .rm-st.is-open > .rm-head > .rm-head-in { border-bottom-color: transparent; }
+.v-plan .rm-head-in > .rm-when { grid-area: when; align-self: end; }
+.v-plan .rm-head-in > .rm-title { grid-area: title; align-self: start; }
+.v-plan .rm-short { display: none; }                /* the short station name is for the desktop line only */
+.v-plan .rm-head-in > .rm-count { grid-area: count; }
+.v-plan .rm-head-in > .rm-tog { grid-area: tog; }
+.v-plan .rm-head:active .rm-head-in { background: var(--wash); }
+@media (hover: hover) { .v-plan .rm-head:not(.is-static):hover .rm-title { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.3em; } }
 
-/* ---------- side blocks: 保存した支援 · 見せる・残す ---------- */
-.v-plan .plan-tools-list .list-item { min-height: 72px; }
-.v-plan .plan-tools .list-ic { width: 24px; }
-.v-plan .plan-tools .list-chev { color: var(--ink); }
-
-/* 保存した支援: compact program rows + remove */
-.v-plan .plan-saved { display: grid; }
-.plan-saved-item { position: relative; }
-.plan-saved-item > .pcard { border-bottom: 0; }
-.plan-saved-item + .plan-saved-item > .pcard { border-top: 1px solid var(--rule); }
-.v-plan .plan-saved-item:first-child > .pcard { border-top: 0; }
-.plan-saved-item .pcard-main { padding-right: 40px; }
-.plan-saved-item .plan-remove {
-  position: absolute; top: 8px; right: -10px; z-index: 3;
-  display: grid; place-items: center;
-  width: var(--tap); height: var(--tap);
-  color: var(--ink-3);
-  transition: background-color var(--dur-quick) var(--ease-standard), color var(--dur-quick) var(--ease-standard);
+/* marks on the line */
+.v-plan .rm-mk {
+  position: absolute; z-index: 3;
+  left: calc(var(--rail) / 2 - var(--mk) / 2); top: calc(var(--c) - var(--mk) / 2);
+  width: var(--mk); height: var(--mk);
+  background: var(--paper); box-shadow: inset 0 0 0 1.5px var(--ink);
+  color: var(--action);                            /* the stamp's ring takes this colour */
 }
-.plan-saved-item .plan-remove .icon { width: 20px; height: 20px; }
-@media (hover: hover) { .plan-saved-item .plan-remove:hover { background: var(--paper-3); color: var(--ink); } }
-.plan-saved-item .plan-remove:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
-
-/* nothing saved: an invitation — how saving works, this period's supports, the way to find more */
-.v-plan .plan-saved-empty { display: grid; justify-items: start; gap: var(--s-2); padding-top: var(--s-4); }
-.v-plan .plan-empty-k { font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); line-height: var(--lh-ui); color: var(--ink); }
-.v-plan .plan-empty-line { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-2); }
-.v-plan .plan-empty-relk {
-  margin-top: var(--s-3);
-  font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui); letter-spacing: var(--ls-label); color: var(--ink-3);
+.v-plan .rm-mk::before, .v-plan .rm-mk::after { content: ""; position: absolute; }
+.v-plan .rm-st.is-past > .rm-head > .rm-mk { background: var(--ink); box-shadow: none; }
+.v-plan .rm-st.is-current { --mk: 20px; }
+.v-plan .rm-st.is-current > .rm-head > .rm-mk { background: var(--action-fill); box-shadow: 0 0 0 3px var(--paper); }
+.v-plan .rm-st.is-milestone { --mk: 20px; --c: 32px; }
+.v-plan .rm-st.is-milestone > .rm-head > .rm-mk { background: var(--ink); box-shadow: none; }
+.v-plan .rm-st.is-milestone > .rm-head > .rm-mk::before { inset: 6px; background: var(--paper); }
+.v-plan .rm-st.is-milestone.is-current > .rm-head > .rm-mk { background: var(--action-fill); }
+/* a finished period: filled, with a check */
+.v-plan .rm-st.is-complete > .rm-head > .rm-mk { background: var(--ink); box-shadow: none; }
+.v-plan .rm-st.is-complete.is-current > .rm-head > .rm-mk { background: var(--action-fill); box-shadow: 0 0 0 3px var(--paper); }
+.v-plan .rm-st.is-complete > .rm-head > .rm-mk::before { display: none; }
+.v-plan .rm-st.is-complete > .rm-head > .rm-mk::after {
+  left: 50%; top: 44%; width: 28%; height: 54%;
+  border: solid var(--paper); border-width: 0 1.5px 1.5px 0;
+  transform: translate(-50%, -50%) rotate(45deg);
 }
-.v-plan .plan-empty-rel { width: 100%; border-top: 1px solid var(--rule); }
-.v-plan .plan-empty-rel .list-item { min-height: 56px; }
-.v-plan .plan-empty-go {
-  display: inline-flex; align-items: center; gap: 6px; min-height: var(--tap);
-  font-family: var(--font-display); font-weight: 700; font-size: var(--fs-sm); color: var(--action-text); text-decoration: none;
-}
-.v-plan .plan-empty-go > span:not(.arrow) { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.3em; }
-@media (hover: hover) { .v-plan .plan-empty-go:hover > span:not(.arrow) { text-decoration-thickness: 2px; } }
-.v-plan .plan-empty-go:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.v-plan .rm-st.is-complete.is-current > .rm-head > .rm-mk::after { border-color: var(--on-action-fill); }
 
-/* the いま tag on the timeline */
-.v-plan .tl-now {
+/* when: いま · 6か月前 · 2026年9月 */
+.v-plan .rm-when {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; min-width: 0;
+  font-family: var(--font-display); font-weight: 500; font-size: var(--t-meta); line-height: 1.5; letter-spacing: var(--ls-0);
+}
+.v-plan .rm-rel { font-weight: 700; color: var(--ink-2); }
+.v-plan .rm-date { font-family: var(--font-num); color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.v-plan .rm-now {
   display: inline-flex; align-items: center; min-height: 22px; padding: 0 8px;
   background: var(--action-fill); color: var(--on-action-fill);
   font-family: var(--font-display); font-weight: 700; font-size: var(--t-label); line-height: 1; letter-spacing: var(--ls-label);
   white-space: nowrap;
 }
+.v-plan .rm-title { font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); line-height: var(--lh-title); color: var(--ink-2); text-wrap: pretty; }
+.v-plan .rm-st:is(.is-current, .is-open) .rm-head-in > .rm-title { color: var(--ink); }
+.v-plan .rm-st.is-current > .rm-head > .rm-head-in > .rm-title { font-size: var(--t-h3); line-height: var(--lh-heading); }
+.v-plan .rm-st.is-past:not(.is-open) .rm-title { color: var(--ink-3); }
 
-/* the current period, all ticked: one line + the way to the next period (shown only on .is-complete) */
+/* n/N できた */
+.v-plan .rm-count {
+  display: inline-flex; align-items: baseline; gap: 0; white-space: nowrap;
+  font-family: var(--font-num); font-weight: 500; font-size: var(--t-meta); line-height: 1; color: var(--ink-3); font-variant-numeric: tabular-nums;
+}
+.v-plan .rm-count-n { font-weight: 700; color: var(--ink-2); }   /* 0/2: no gap before the slash (the odometer slot is exactly one digit) */
+.v-plan .rm-count-w { margin-left: 4px; font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); letter-spacing: var(--ls-label); color: var(--ink-3); }
+.v-plan .rm-st.is-complete .rm-count, .v-plan .rm-st.is-complete .rm-count-n, .v-plan .rm-st.is-complete .rm-count-w { color: var(--action-text); }
+.v-plan .rm-st:not(.is-current) .rm-count-w { display: none; }   /* the word once, on the open period; the head says できたこと */
+
+/* 見る / とじる + the arrow that turns */
+.v-plan .rm-tog {
+  display: inline-flex; align-items: center; justify-content: flex-end; gap: 4px; min-width: var(--tap); min-height: var(--tap); margin-right: -4px;
+  font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); letter-spacing: var(--ls-label); color: var(--ink-3);
+}
+.v-plan .rm-tog .arrow { --arrow-s: 18px; color: var(--ink); transition: rotate var(--spring-snappy-dur) var(--spring-snappy); }
+.v-plan .rm-st.is-open:not(.is-closing) .rm-tog .arrow { rotate: 270deg; }
+.v-plan .rm-head:hover .rm-tog .arrow, .v-plan .rm-head:active .rm-tog .arrow { translate: none; }
+
+/* the milestone (巣立ちの日 / 高校入学): a station sign on the line with the countdown inside it */
+.v-plan .rm-box > .rm-head-in {
+  grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "k k" "d d" "n n" "c tog";
+  align-items: start; column-gap: var(--s-4); row-gap: 0;
+  margin: var(--s-2) 0 var(--s-2) var(--indent); padding: var(--s-3) var(--s-4);
+  border: 2px solid var(--ink); background: var(--paper);
+}
+.v-plan .rm-st.is-current > .rm-box > .rm-head-in { border-color: var(--action); }
+.v-plan .rm-st.is-open > .rm-box > .rm-head-in { border-bottom-color: var(--ink); }
+.v-plan .rm-st.is-current.is-open > .rm-box > .rm-head-in { border-bottom-color: var(--action); }
+.v-plan .rm-box-k { grid-area: k; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.v-plan .rm-box-k > .rm-title { color: var(--ink); font-size: var(--t-h3); line-height: var(--lh-heading); }
+.v-plan .rm-box-d { grid-area: d; margin-top: 2px; padding-bottom: 6px; font-family: var(--font-num); font-weight: 500; font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.v-plan .rm-box-n { grid-area: n; display: flex; align-items: baseline; justify-self: start; color: var(--ink); white-space: nowrap; }
+.v-plan .rm-box-pre, .v-plan .rm-box-u { font-family: var(--font-display); font-weight: 700; font-size: var(--t-meta); line-height: 1; letter-spacing: var(--ls-0); }
+.v-plan .rm-box-pre { margin-right: 4px; }
+.v-plan .rm-box-u { margin-left: 3px; }
+.v-plan .rm-box-num { font-family: var(--font-num); font-weight: 700; font-size: var(--t-num-xl); line-height: var(--lh-num); letter-spacing: var(--ls-num); font-variant-numeric: tabular-nums; }
+.v-plan .rm-box-today { font-family: var(--font-display); font-weight: 700; font-size: var(--t-h1); line-height: var(--lh-num); letter-spacing: var(--ls-0); color: var(--action-text); }
+.v-plan .rm-box > .rm-head-in > .rm-box-c { grid-area: c; align-self: center; margin-top: var(--s-2); }
+.v-plan .rm-box > .rm-head-in > .rm-tog { grid-area: tog; justify-self: end; margin: var(--s-2) -8px -10px 0; }
+.v-plan .rm-box > .rm-head-in > .sr-only { position: absolute; }
+.v-plan .rm-assumed { letter-spacing: var(--ls-0); }
+body.lang-en .v-plan .rm-box-u { font-size: var(--t-label); letter-spacing: var(--ls-label); }
+
+/* いま before the first station / after the last: a plain row, no body */
+.v-plan .rm-now-only .rm-head-in { grid-template-columns: minmax(0, 1fr); grid-template-areas: "when" "title"; }
+.v-plan .rm-now-only .rm-title { color: var(--ink); }
+.v-plan .rm-consult { grid-area: auto; justify-self: start; }
+
+/* a period's tasks */
+.v-plan .rm-body { position: relative; padding: 0 0 var(--s-6) var(--indent); }
+.v-plan .rm-body[hidden] { display: none; }
+.v-plan .rm-st.is-open:not(:last-child) > .rm-body { border-bottom: 1px solid var(--rule); }
+.v-plan .rm-body-in { position: relative; display: grid; gap: var(--s-1); min-width: 0; }
+.v-plan .rm-body-title { display: none; }
+.v-plan .rm-body-title:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.v-plan .rm-left { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-1) var(--s-4); min-height: var(--tap); margin: 0; }
+.v-plan .rm-left-t { font-family: var(--font-display); font-weight: 500; font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-2); }
+.v-plan .rm-left-n { font-family: var(--font-num); font-weight: 700; font-size: var(--t-num-inline); line-height: 1; letter-spacing: var(--ls-0); color: var(--ink); font-variant-numeric: tabular-nums; padding: 0 2px; }
+.v-plan .rm-left-box { padding-top: var(--s-1); }
+.v-plan .rm-edit {
+  position: relative; flex: none; display: inline-flex; align-items: center; justify-content: center;
+  min-height: 44px; padding: 0 var(--s-3); border: 0; background: none; box-shadow: inset 0 0 0 1.5px var(--ink); cursor: pointer;
+  font-family: var(--font-display); font-weight: 700; font-size: var(--t-meta); line-height: 1; color: var(--ink);
+}
+.v-plan .rm-edit::after { content: ""; position: absolute; inset: -4px 0; }
+.v-plan .rm-edit:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+@media (hover: hover) { .v-plan .rm-edit:hover { background: var(--paper-2); } }
+.v-plan .rm-edit:active { background: var(--wash); }
+.v-plan .rm-note, .v-plan .rm-empty { margin: 0; font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3); }
+.v-plan .rm-empty { padding: var(--s-2) 0; }
+
+/* the current period, all ticked: one line + the way to the next station (shown only on .is-complete) */
 .v-plan .tl-cur-done { display: none; }
-.v-plan .tl > li.is-current.is-complete .tl-cur-done {
+.v-plan .rm-st.is-current.is-complete .tl-cur-done {
   display: grid; justify-items: start; gap: 2px;
   margin-top: var(--s-3); padding: var(--s-3) var(--s-4);
   background: var(--action-tint);
 }
-.v-plan .tl-cur-done-t { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); line-height: var(--lh-ui); color: var(--action-text); }
+.v-plan .tl-cur-done-t { display: flex; align-items: center; gap: 10px; margin: 0; font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); line-height: var(--lh-ui); color: var(--action-text); }
 .v-plan .tl-cur-done-mk { flex: none; width: 8px; height: 14px; margin: -4px 2px 0; border: solid currentColor; border-width: 0 2px 2px 0; transform: rotate(45deg); }
 .v-plan .tl-cur-go {
   display: inline-flex; align-items: center; gap: 8px; min-height: var(--tap); padding: 0; border: 0; background: none; cursor: pointer; text-align: left;
@@ -164,115 +209,13 @@
 }
 .v-plan .tl-cur-go > span:not(.arrow) { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.3em; }
 .v-plan .tl-cur-go:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
-.v-plan .tl-now-go { margin-top: var(--s-1); }
-.v-plan .tl-now-go .tl-link { display: inline-flex; align-items: center; min-height: var(--tap); color: var(--action-text); font-family: var(--font-display); font-weight: 700; font-size: var(--t-meta); text-decoration: none; }
-.v-plan .tl-now-go .tl-link > span { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.3em; }
-.v-plan .tl-now-go .tl-link .arrow { --arrow-s: 16px; margin-left: 6px; }
-
-/* ---------- 02 timeline: one 1px rule, square stations; the green line is the road walked ----------
-   Each <li> draws the rule from its station down to the next one (li::before). .tl-fill (JS: top/height from
-   the first station to いま) is scaled by scroll on a view() timeline; its <i> draws once on arrival. */
-.v-plan .tl-wrap {
-  --rail: 24px;                                 /* rail column; stations sit on its centre line */
-  --indent: calc(var(--rail) + 12px);           /* text starts here */
-  --c0: calc(var(--fs-sm) * 0.75);              /* a station's centre = middle of the first (.tl-when) line */
-  position: relative;
-  margin-top: var(--s-5);
-}
-.v-plan .tl-fill {
-  position: absolute; z-index: 1; left: calc(var(--rail) / 2 - 2px); top: 0; width: 4px; height: 0;
-  transform-origin: center top; pointer-events: none;
-}
-.v-plan .tl-fill > i { display: block; height: 100%; background: var(--action); transform-origin: center top; }
-/* the road ahead inks in under the reading line (JS: top/height from いま to the last station; motion only) */
-.v-plan .tl-trace {
-  display: none; position: absolute; z-index: 1; left: calc(var(--rail) / 2 - 1px); top: 0; width: 2px; height: 0;
-  background: var(--ink-2); transform-origin: center top; transform: scaleY(0); pointer-events: none;
-}
-.v-plan .tl {
-  --m-rise: 8px;
-  position: relative; display: grid; margin: 0; padding: 0; list-style: none;
-}
-.v-plan .tl > li {
-  --c: var(--c0);
-  --mk: 12px;
-  position: relative;
-  min-width: 0;
-  padding: 0 0 var(--s-7) var(--indent);
-}
-.v-plan .tl > li::before {
-  content: ""; position: absolute; z-index: 0;
-  left: calc(var(--rail) / 2 - 0.5px); width: 1px;
-  top: var(--c); bottom: calc(var(--c0) * -1);
-  background: var(--rule-2);
-}
-.v-plan .tl > li:last-child { padding-bottom: 0; }
-.v-plan .tl > li:last-child::before { display: none; }
-
-/* stations */
-.v-plan .tl-mk {
-  position: absolute; z-index: 2;
-  left: calc(var(--rail) / 2 - var(--mk) / 2); top: calc(var(--c) - var(--mk) / 2);
-  width: var(--mk); height: var(--mk);
-  background: var(--paper); box-shadow: inset 0 0 0 1.5px var(--ink);
-  color: var(--action);               /* the stamp's ink ring takes this colour */
-}
-.v-plan .tl-mk::before, .v-plan .tl-mk::after { content: ""; position: absolute; }
-.v-plan .tl > li.is-past { --mk: 10px; }
-.v-plan .tl > li.is-past > .tl-mk { background: var(--ink); box-shadow: none; }
-.v-plan .tl > li.is-current { --mk: 14px; }
-.v-plan .tl > li.is-current > .tl-mk { background: var(--action-fill); box-shadow: none; }
-.v-plan .tl > li.is-milestone { --mk: 18px; }
-.v-plan .tl > li.is-milestone > .tl-mk { background: var(--ink); box-shadow: none; }
-.v-plan .tl > li.is-milestone > .tl-mk::before { inset: 5px; background: var(--paper); }
-.v-plan .tl > li.is-milestone.is-current > .tl-mk { background: var(--action-fill); }
-/* a finished period: filled, with a check */
-.v-plan .tl > li.is-complete { --mk: 14px; }
-.v-plan .tl > li.is-complete > .tl-mk { background: var(--ink); box-shadow: none; }
-.v-plan .tl > li.is-complete.is-current > .tl-mk { background: var(--action-fill); }
-.v-plan .tl > li.is-complete > .tl-mk::before { display: none; }
-.v-plan .tl > li.is-complete > .tl-mk::after {
-  left: 50%; top: 44%; width: 30%; height: 56%;
-  border: solid var(--paper); border-width: 0 1.5px 1.5px 0;
-  transform: translate(-50%, -50%) rotate(45deg);
-}
-.v-plan .tl > li.is-complete.is-current > .tl-mk::after { border-color: var(--on-action-fill); }
-
-/* a period */
-.v-plan .tl-body { position: relative; min-width: 0; display: grid; gap: var(--s-1); }
-.v-plan .tl-when {
-  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; column-gap: 12px;
-  min-height: calc(var(--fs-sm) * 1.5);
-  font-family: var(--font-display); font-weight: 500; font-size: var(--t-meta); line-height: 1.5; letter-spacing: var(--ls-0);
-}
-.v-plan .tl-when-l { min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 2px 10px; }
-.v-plan .tl-now { min-height: 20px; }
-.v-plan .tl-rel { font-weight: 700; color: var(--ink); }
-.v-plan .tl-date { font-family: var(--font-num); color: var(--ink-3); font-variant-numeric: tabular-nums; }
-.v-plan .tl-count { grid-column: 2; font-family: var(--font-num); font-weight: 500; color: var(--ink-3); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.v-plan .tl-count-n { font-weight: 700; color: var(--ink-2); }
-.v-plan .tl > li.is-complete .tl-count, .v-plan .tl > li.is-complete .tl-count-n { color: var(--action-text); }
-.v-plan .tl-title { font-size: var(--t-h3); line-height: var(--lh-title); }
-.v-plan .tl > li.is-current > .tl-body .tl-title, .v-plan .tl > li.is-milestone > .tl-body .tl-title { font-size: var(--t-h2); line-height: var(--lh-heading); }
-.v-plan .tl > li.is-past .tl-title { color: var(--ink-2); }
-.v-plan .tl-sub { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3); }
-.v-plan .tl-now-text { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-2); }
-
-/* the leaving day / 高校入学: a flat band, the station everything points at */
-.v-plan .tl > li.is-milestone > .tl-body {
-  --tl-bg: var(--paper-2);
-  margin: calc(var(--s-3) * -1) 0 0 calc(var(--s-2) * -1);
-  padding: var(--s-3) var(--s-4) var(--s-4) var(--s-2);
-  background: var(--paper-2);
-}
 
 /* the jump target's 6% ink wash (600ms) */
 .v-plan .plan-wash { position: absolute; inset: calc(var(--s-2) * -1); background: var(--ink); opacity: 0; pointer-events: none; z-index: 3; }
 
 /* tasks: ruled rows with a 24px square; ticking fills it, draws the check and stamps 済 */
-.v-plan .tl-items { margin: var(--s-2) 0 0; padding: 0; list-style: none; display: grid; border-top: 1px solid var(--rule); }
-.v-plan .tl > li.is-current > .tl-body > .tl-items, .v-plan .tl-fold-body > .tl-items { margin-top: var(--s-3); }
-.tl-item { position: relative; border-bottom: 1px solid var(--rule); background: var(--tl-bg, var(--paper)); }
+.v-plan .tl-items { margin: var(--s-1) 0 0; padding: 0; list-style: none; display: grid; border-top: 1px solid var(--rule); }
+.tl-item { position: relative; border-bottom: 1px solid var(--rule); background: var(--paper); }
 .tl-item > :not(.tl-wash) { position: relative; z-index: 1; }
 /* a tick: the green wash sweeps the row and fades (plan.js settleRow) */
 .tl-item > .tl-wash { position: absolute; inset: 0; z-index: 0; background: var(--action-tint); transform-origin: left center; opacity: 0; pointer-events: none; }
@@ -296,9 +239,11 @@
   width: 24px; height: 24px; margin-top: 1px;
   background: var(--field); box-shadow: inset 0 0 0 1.5px var(--ink);
   color: var(--on-action-fill);
+  transition: transform 120ms var(--ease-standard);
 }
 .tl-item .tl-box .icon { width: 24px; height: 24px; stroke-width: 2.75; opacity: 0; }
-@media (hover: hover) { .tl-item .tl-task:hover .tl-box { box-shadow: inset 0 0 0 2px var(--ink); } }
+@media (hover: hover) { .tl-item .tl-task:hover .tl-box { box-shadow: inset 0 0 0 2px var(--ink); transform: scale(1.08); } }
+.tl-item .tl-task:active .tl-box { transform: scale(0.92); }
 .tl-item .tl-check:checked + .tl-box { background: var(--action-fill); box-shadow: none; }
 .tl-item .tl-check:checked + .tl-box .icon { opacity: 1; }
 .tl-item .tl-check:focus-visible + .tl-box { outline: 2px solid var(--focus); outline-offset: 2px; }
@@ -326,16 +271,16 @@ body.lang-en .tl-item .tl-seal { font-size: var(--t-micro); padding: 0 4px; }
   margin-top: calc(var(--s-2) * -1); padding: 0 0 var(--s-1) 36px;
   font-size: var(--t-meta);
 }
-.tl-item .tl-link {
+.tl-item .tl-link, .v-plan .rm-consult {
   display: inline-block; align-content: center;
   min-height: var(--tap);
-  color: var(--action-text); font-family: var(--font-display); font-weight: 700;
+  color: var(--action-text); font-family: var(--font-display); font-weight: 700; font-size: var(--t-meta);
   text-decoration: none;
 }
-.tl-item .tl-link > span { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.3em; }
-.tl-item .tl-link .arrow { --arrow-s: 16px; margin-left: 6px; }
-@media (hover: hover) { .tl-item .tl-link:hover > span { text-decoration-thickness: 2px; } }
-/* a saved support placed in the timeline */
+.tl-item .tl-link > span, .v-plan .rm-consult > span { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.3em; }
+.tl-item .tl-link .arrow, .v-plan .rm-consult .arrow { --arrow-s: 16px; margin-left: 6px; }
+@media (hover: hover) { .tl-item .tl-link:hover > span, .v-plan .rm-consult:hover > span { text-decoration-thickness: 2px; } }
+/* a saved support placed in its period */
 .tl-item-prog .tl-item-text { font-family: var(--font-display); font-weight: 700; }
 .tl-item-prog .tl-saved-k {
   display: block;
@@ -377,45 +322,71 @@ body.lang-en .tl-item .tl-seal { font-size: var(--t-micro); padding: 0 4px; }
 .v-plan .tl-rel-link > span:last-child { min-width: 0; overflow-wrap: anywhere; }
 @media (hover: hover) { .v-plan .tl-rel-link:hover { text-decoration-color: var(--ink); } }
 
-/* folds (later periods, すぎた時期): a drawn ＋ whose bar turns into － */
-.v-plan :is(.tl-fold, .tl-past) > summary {
-  list-style: none; cursor: pointer;
-  display: flex; align-items: flex-start; gap: var(--s-3);
-  min-height: var(--tap);
-}
-.v-plan :is(.tl-fold, .tl-past) > summary::-webkit-details-marker { display: none; }
-.v-plan :is(.tl-fold, .tl-past) > summary:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
-.v-plan .tl-toggle { position: relative; flex: none; width: var(--tap); height: var(--tap); margin: -11px -12px -11px auto; }
-.v-plan .tl-toggle::before, .v-plan .tl-toggle::after {
-  content: ""; position: absolute; left: 50%; top: 50%; width: 14px; height: 1.5px; margin: -0.75px 0 0 -7px;
-  background: var(--ink);
-}
-.v-plan .tl-toggle::after { rotate: 90deg; transition: rotate var(--spring-snappy-dur) var(--spring-snappy); }
-.v-plan details[open]:not(.is-closing) > summary .tl-toggle::after { rotate: 0deg; }
-.v-plan .tl-fold-head { flex: 1; min-width: 0; display: grid; gap: 2px; }
-/* every period header counts in ONE column: [label + date] 1fr | count | the 44px toggle lane. A folded header's
-   count sits right before its ＋; an open period's count keeps the same lane free, so open or folded, the
-   counts line up down the timeline in the same tabular Plex */
-.v-plan .tl-fold-head .tl-count { margin-left: auto; }
-.v-plan .tl-body > .tl-when .tl-count { margin-right: var(--tap); }
-.v-plan .tl-fold:not([open]) .tl-title { font-size: var(--t-ui); color: var(--ink-2); }
-@media (hover: hover) {
-  .v-plan .tl-fold > summary:hover .tl-title,
-  .v-plan .tl-past > summary:hover .tl-past-title { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.3em; }
-}
-.v-plan .tl-fold-body { display: grid; gap: var(--s-1); padding-top: var(--s-1); }
-
-.v-plan .tl > li.tl-past-wrap { --c: calc(var(--tap) / 2); }
-.v-plan .tl-past > summary { align-items: center; }
-.v-plan .tl-past-head { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; }
-.v-plan .tl-past-title { font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); color: var(--ink-2); }
-.v-plan .tl-past-left { font-family: var(--font-display); font-weight: 500; font-size: var(--t-meta); color: var(--amber-text); }
-.v-plan .tl-past-left.is-zero { color: var(--action-text); }
-.v-plan .tl-past-body { padding-top: var(--s-1); }
-.v-plan .tl-past-note { margin: 0 0 var(--s-5); font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3); }
-.v-plan .tl-inner { margin-left: calc(var(--indent) * -1); }
-
 .v-plan .plan-note { margin-top: var(--s-6); padding-top: var(--s-3); border-top: 1px solid var(--rule); font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3); }
+
+/* ---------- beside / under the roadmap: つぎの駅 · 見せる・残す · 保存した支援 ---------- */
+.v-plan .plan-side-k {
+  margin: 0 0 var(--s-2);
+  font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui); letter-spacing: var(--ls-label); color: var(--ink-3);
+}
+.v-plan .plan-next { display: none; }        /* on a phone the next station is right there on the line */
+.v-plan .plan-next-btn {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "t a" "d a"; align-items: center; column-gap: var(--s-3);
+  width: 100%; min-height: 64px; margin: 0; padding: var(--s-3) 0; border: 0; border-top: 2px solid var(--ink); border-bottom: 1px solid var(--rule); background: none;
+  font: inherit; color: var(--ink); text-align: left; cursor: pointer;
+}
+.v-plan .plan-next-btn > .plan-next-t { grid-area: t; font-family: var(--font-display); font-weight: 700; font-size: var(--t-h3); line-height: var(--lh-title); }
+.v-plan .plan-next-btn > .plan-next-d { grid-area: d; font-family: var(--font-num); font-weight: 500; font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.v-plan .plan-next-btn > .arrow { grid-area: a; --arrow-s: 20px; }
+.v-plan .plan-next-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+@media (hover: hover) { .v-plan .plan-next-btn:hover .plan-next-t { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.3em; } }
+.v-plan .plan-next-none { margin: 0; padding-top: var(--s-2); border-top: 2px solid var(--ink); font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3); }
+
+.v-plan .plan-tools-list .list-item { min-height: 72px; }
+.v-plan .plan-tools .list-ic { width: 24px; }
+.v-plan .plan-tools .list-chev { color: var(--ink); }
+
+/* 保存した支援: compact program rows, each naming its station on the line, + remove */
+.v-plan .plan-saved { display: grid; }
+.plan-saved-item { position: relative; }
+.plan-saved-item > .pcard { border-bottom: 0; }
+.plan-saved-item + .plan-saved-item > .pcard { border-top: 1px solid var(--rule); }
+.v-plan .plan-saved-item:first-child > .pcard { border-top: 0; }
+.plan-saved-item .pcard-main { padding-right: 40px; }
+.plan-saved-item .plan-saved-at {
+  position: relative; margin: -6px 0 0; padding: 0 0 var(--s-3) calc(24px + 12px);
+  font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui); letter-spacing: var(--ls-label); color: var(--ink-3);
+}
+.plan-saved-item .plan-saved-at::before { content: ""; position: absolute; left: 8px; top: 0.45em; width: 8px; height: 8px; background: var(--action); }
+.plan-saved-item .plan-saved-at:not([data-key])::before { background: var(--paper); box-shadow: inset 0 0 0 1.5px var(--ink-3); }
+.plan-saved-item .plan-remove {
+  position: absolute; top: 8px; right: -10px; z-index: 3;
+  display: grid; place-items: center;
+  width: var(--tap); height: var(--tap);
+  color: var(--ink-3);
+  transition: background-color var(--dur-quick) var(--ease-standard), color var(--dur-quick) var(--ease-standard);
+}
+.plan-saved-item .plan-remove .icon { width: 20px; height: 20px; }
+@media (hover: hover) { .plan-saved-item .plan-remove:hover { background: var(--paper-3); color: var(--ink); } }
+.plan-saved-item .plan-remove:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+
+/* nothing saved: an invitation — how saving works, this period's supports, the way to find more */
+.v-plan .plan-saved-empty { display: grid; justify-items: start; gap: var(--s-2); padding-top: var(--s-4); }
+.v-plan .plan-empty-k { font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); line-height: var(--lh-ui); color: var(--ink); }
+.v-plan .plan-empty-line { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-2); }
+.v-plan .plan-empty-relk {
+  margin-top: var(--s-3);
+  font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui); letter-spacing: var(--ls-label); color: var(--ink-3);
+}
+.v-plan .plan-empty-rel { width: 100%; border-top: 1px solid var(--rule); }
+.v-plan .plan-empty-rel .list-item { min-height: 56px; }
+.v-plan .plan-empty-go {
+  display: inline-flex; align-items: center; gap: 6px; min-height: var(--tap);
+  font-family: var(--font-display); font-weight: 700; font-size: var(--fs-sm); color: var(--action-text); text-decoration: none;
+}
+.v-plan .plan-empty-go > span:not(.arrow) { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.3em; }
+@media (hover: hover) { .v-plan .plan-empty-go:hover > span:not(.arrow) { text-decoration-thickness: 2px; } }
+.v-plan .plan-empty-go:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 
 /* ---------- sheets (class "v-plan plan-sheet" on the dialog) ---------- */
 .v-plan .plan-date-qlabel, .v-plan .cs-preview-label {
@@ -423,6 +394,9 @@ body.lang-en .tl-item .tl-seal { font-size: var(--t-micro); padding: 0 4px; }
 }
 .v-plan .plan-date-opts .opt { min-height: 60px; }
 .v-plan .plan-date-def { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-2); }
+.v-plan .plan-date-chips .chip, .plan-sheet .plan-date-chips .chip { min-height: 44px; }
+.plan-sheet .plan-date-chips .chip::after { inset: 0; }
+.v-plan .plan-ja { white-space: nowrap; }
 
 .v-plan .ics-lead, .v-plan .cs-lead { font-size: var(--t-ui); line-height: var(--lh-meta); color: var(--ink-2); }
 .v-plan .ics-list { margin: 0; padding: 0; list-style: none; display: grid; border-top: 2px solid var(--ink); border-bottom: 1px solid var(--rule); }
@@ -436,6 +410,9 @@ body.lang-en .tl-item .tl-seal { font-size: var(--t-micro); padding: 0 4px; }
 .v-plan .ics-note { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3); }
 .v-plan #plan-ics-dl { justify-content: center; }
 .v-plan .ics-how .bullets { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-2); padding-bottom: var(--s-3); }
+.plan-sheet .ics-text { display: grid; gap: 2px; min-width: 0; }
+.plan-sheet .ics-file { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3); }
+.plan-sheet .ics-file[hidden] { display: none; }
 
 .v-plan .cs-preview { display: grid; gap: 6px; }
 .v-plan .cs-text {
@@ -449,26 +426,100 @@ body.lang-en .tl-item .tl-seal { font-size: var(--t-micro); padding: 0 4px; }
 .v-plan .cs-actions > .btn { flex: 1 1 140px; }
 @media (min-width: 640px) { .sheet.v-plan.plan-sheet-wide { width: min(600px, calc(100vw - 48px)); } }
 
-/* ---------- wider screens ---------- */
+/* ---------- wider phones / tablets ---------- */
 @media (min-width: 600px) {
-  .v-plan .tl-wrap { --rail: 28px; --indent: calc(var(--rail) + 16px); }
+  .v-plan .rm-wrap { --rail: 32px; --indent: calc(var(--rail) + 16px); }
 }
 
-/* desktop: the status strip spans the page; under it the timeline is the wide column (いま on the first screen) and
-   保存した支援 + 見せる・残す stand beside it, right of one hairline (sticky while they fit in the window) */
+/* ---------- desktop: the line runs across the page ----------
+   .rm-wrap is one grid: --n columns (one per station, two for the milestone sign). Row 1 = the station heads,
+   row 2 = the open period's tasks (--k columns, left) and つぎの駅・見せる・残す・保存した支援 (the rest, right).
+   The <ol> and <li> are display: contents so heads and bodies place themselves on that grid. */
 @media (min-width: 1100px) {
   .view.v-plan { --col: calc(var(--container) + 2 * var(--gutter)); }
-  .view.v-plan > .plan-body { margin-top: var(--s-7); }
-  .v-plan .plan-body:has(> .plan-tl) { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); align-items: start; }
-  .v-plan .plan-body > .plan-tl { padding-right: var(--s-6); }
-  .v-plan .plan-body:has(> .plan-tl) > .plan-flow { margin-top: 0; padding-left: var(--s-6); border-left: 1px solid var(--rule); min-height: 100%; }
-  .v-plan .plan-body.is-stick > .plan-flow { position: sticky; top: var(--sticky-top); min-height: 0; }
-  .v-plan .plan-flow > * + * { margin-top: var(--s-9); }
+  .view.v-plan > .plan-rm { margin-top: var(--s-7); }
+  .v-plan .rm-wrap {
+    --ln: 6px; --mk: 14px;
+    --rail-y: 44px;                               /* the line's distance from the grid's top */
+    --indent: 0px;
+    display: grid; grid-template-columns: repeat(var(--n, 12), minmax(0, 1fr)); grid-auto-rows: auto;
+    column-gap: 4px; row-gap: var(--s-8); align-items: start;
+  }
+  .v-plan .rm-rail, .v-plan .rm-fill { height: var(--ln); width: auto; margin: calc(var(--ln) / -2) 0 0; transform-origin: left center; }
+  .v-plan .rm-fill > i { transform-origin: left center; }
+  .v-plan .rm, .v-plan .rm-st { display: contents; }
+  .v-plan .rm-head { grid-row: 1; align-self: start; min-width: 0; }
+  .v-plan .rm-head.rm-box { grid-column: span 2; }
+  .v-plan .rm-mk { left: 50%; top: calc(var(--rail-y) - var(--mk) / 2); margin-left: calc(var(--mk) / -2); }
+  .v-plan .rm-st.is-current, .v-plan .rm-st.is-milestone { --mk: 22px; }
+  .v-plan .rm-head-in, .v-plan .rm-now-only .rm-head-in {
+    grid-template-columns: minmax(0, 1fr); grid-template-areas: "when" "title" "count";
+    justify-items: center; align-items: start; row-gap: 4px;
+    min-height: 0; padding: calc(var(--rail-y) + var(--mk) / 2 + 10px) 2px 0; border-bottom: 0;
+    text-align: center;
+  }
+  .v-plan .rm-head:active .rm-head-in { background: none; }
+  .v-plan .rm-when { flex-direction: column; align-items: center; gap: 0; }
+  .v-plan .rm-rel { font-size: var(--t-label); line-height: var(--lh-ui); }
+  .v-plan .rm-date { font-size: var(--t-micro); line-height: var(--lh-ui); }
+  /* いま flies over its station */
+  .v-plan .rm-st.is-current .rm-head-in > .rm-when > .rm-now {
+    position: absolute; left: 50%; top: calc(var(--rail-y) - var(--mk) / 2 - 32px); transform: translateX(-50%);
+  }
+  .v-plan .rm-st.is-current .rm-head-in > .rm-when > .rm-now::after {
+    content: ""; position: absolute; left: 50%; bottom: -6px; margin-left: -5px; border: 5px solid transparent; border-top-color: var(--action-fill); border-bottom: 0;
+  }
+  .v-plan .rm-title, .v-plan .rm-st.is-current > .rm-head > .rm-head-in > .rm-title {
+    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden;
+    font-size: var(--t-label); line-height: var(--lh-ui); color: var(--ink-3); text-wrap: balance;
+  }
+  .v-plan .rm-st:is(.is-current, .is-open) .rm-head-in > .rm-title { color: var(--ink); }
+  .v-plan .rm-st.is-open .rm-head-in > .rm-title { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 0.3em; }
+  /* v8: the station name on the line is the short one (≤8 chars, two lines, never clipped); the full title is in the panel */
+  .v-plan .rm-st > .rm-head > .rm-head-in.has-short > .rm-title { display: none; }
+  .v-plan .rm-head-in.has-short > .rm-short {
+    display: block; grid-area: title; font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); line-height: var(--lh-ui); color: var(--ink-3); text-wrap: balance; word-break: keep-all; overflow-wrap: normal;
+  }
+  /* 「巣立ち」 over 「6か月前」: two short lines instead of a break inside the number */
+  .v-plan .rm-rel { display: flex; flex-direction: column; align-items: center; white-space: nowrap; }
+  .v-plan .rm-st:is(.is-current, .is-open) .rm-head-in.has-short > .rm-short { color: var(--ink); }
+  .v-plan .rm-st.is-open .rm-head-in.has-short > .rm-short { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 0.3em; }
+  .v-plan .rm-st.is-open > .rm-head > .rm-mk { outline: 2px solid var(--ink); outline-offset: 3px; }
+  .v-plan .rm-st.is-open.is-current > .rm-head > .rm-mk { outline-color: var(--action); }
+  .v-plan .rm-count { font-size: var(--t-label); }
+  .v-plan .rm-count-w, .v-plan .rm-tog, .v-plan .rm-head-in > .sr-only { display: none; }
+  /* the sign on the line */
+  .v-plan .rm-box > .rm-head-in {
+    grid-template-columns: minmax(0, 1fr); grid-template-areas: "k" "n" "d" "c";
+    justify-items: start; align-items: start; text-align: left; row-gap: 0;
+    margin: calc(var(--rail-y) - 44px) 0 0; padding: var(--s-2) var(--s-2) var(--s-2);
+  }
+  .v-plan .rm-box > .rm-mk { visibility: hidden; }      /* the sign is the station (JS still measures it) */
+  .v-plan .rm-box-k > .rm-title, .v-plan .rm-st.is-open .rm-box-k > .rm-title { display: block; -webkit-line-clamp: unset; font-size: var(--t-ui); color: var(--ink); text-decoration: none; }
+  .v-plan .rm-box-k > .rm-now { position: static; transform: none; }
+  .v-plan .rm-box-num { font-size: var(--fs-2xl); }
+  .v-plan .rm-box-today { font-size: var(--t-h3); }
+  .v-plan .rm-box > .rm-head-in > .rm-box-c { justify-self: start; margin-top: 4px; }
+  .v-plan .rm-box-d { font-size: var(--t-micro); margin: 0; padding: 0; white-space: nowrap; }
+  .v-plan .rm-box-n { justify-self: start; margin-top: 2px; }
+  /* the open period under the line */
+  .v-plan .rm-body { grid-row: 2; grid-column: 1 / span var(--k, 8); padding: 0 var(--s-8) 0 0; border-bottom: 0 !important; }
+  .v-plan .rm-body-title {
+    display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-3); margin: 0; padding-bottom: var(--s-2); border-bottom: 2px solid var(--ink);
+    font-family: var(--font-display); font-weight: 700; font-size: var(--t-h2); line-height: var(--lh-heading); color: var(--ink); text-wrap: balance;
+  }
+  .v-plan .rm-body-title > .rm-now { position: static; transform: none; }
+  .v-plan .rm-body-in { gap: var(--s-2); }
+  .v-plan .rm-left { min-height: 36px; }
+  .v-plan .tl-items { margin-top: var(--s-1); border-top: 0; }
+  .v-plan .rm-wrap > .plan-flow { grid-row: 2; grid-column: calc(var(--k, 8) + 1) / -1; margin-top: 0; padding-left: var(--s-8); border-left: 1px solid var(--rule); min-width: 0; }
+  .v-plan .plan-flow > * + * { margin-top: var(--s-8); }
+  .v-plan .plan-next { display: block; }
 }
 @media (min-width: 1240px) {
-  .v-plan .plan-body:has(> .plan-tl) { grid-template-columns: minmax(0, 7fr) minmax(0, 4fr); }
-  .v-plan .plan-body > .plan-tl { padding-right: var(--s-8); }
-  .v-plan .plan-body:has(> .plan-tl) > .plan-flow { padding-left: var(--s-8); }
+  .v-plan .rm-wrap { column-gap: 8px; }
+  .v-plan .rm-body { padding-right: var(--s-9); }
+  .v-plan .rm-wrap > .plan-flow { padding-left: var(--s-9); }
 }
 
 /* ---------- printable 相談シート (A4). Hidden on screen. ---------- */
@@ -507,26 +558,3 @@ body.lang-en .tl-item .tl-seal { font-size: var(--t-micro); padding: 0 4px; }
   .v-plan .pp-foot { margin-top: 14px; font-size: 8.5pt; color: dimgray; }
 }
 .v-plan ol.pp-progs { list-style: decimal; padding-left: 1.4em; }
-
-/* ---------- FIX-B (v6) ---------- */
-/* F47: the earlier periods' count is neutral; amber only once the reader has ticked something there */
-.v-plan .tl-past-left { color: var(--ink-3); }
-.v-plan .tl-past-left::before { content: "・"; color: var(--ink-4); }
-.v-plan .tl-past-left.is-warn { color: var(--amber-text); }
-.v-plan .tl-past-left.is-zero { color: var(--action-text); }
-/* F12: the quick date chips are full 44px targets */
-.v-plan .plan-date-chips .chip, .plan-sheet .plan-date-chips .chip { min-height: 44px; }
-.plan-sheet .plan-date-chips .chip::after { inset: 0; }
-/* F24: a Japanese gloss inside English text stays one piece */
-.v-plan .plan-ja { white-space: nowrap; }
-/* S9: storage unavailable */
-.v-plan .plan-nostore { margin-top: 6px; font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--amber-text); }
-.v-plan .plan-nostore-go {
-  display: inline; min-height: 0; padding: 0; border: 0; background: none; font: inherit; font-weight: 700; color: var(--action-text);
-  text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.25em; cursor: pointer; position: relative;
-}
-.v-plan .plan-nostore-go::after { content: ""; position: absolute; inset: -12px -6px; }
-/* F39: the real title, and what the calendar file will say under it */
-.plan-sheet .ics-text { display: grid; gap: 2px; min-width: 0; }
-.plan-sheet .ics-file { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3); }
-.plan-sheet .ics-file[hidden] { display: none; }

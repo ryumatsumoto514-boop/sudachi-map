@@ -52,8 +52,33 @@ experimental_bvmap labels z10–z14 (station kana readings). Area codes and name
 (R6.1.1), see `data/areas.js`. The credit line on the map is unchanged: 「地理院ベクトルタイル・国土数値情報を加工して作成」.
 Rebuild: tmp7-MAP/scripts — `k_admin.py` → `k_layers.py water|roads|streams` → `k_rail.py` → `k_names.py` →
 `k_js.py`; `k_geo.py` for geo.js / geo-kanto.js (Python runs as `tmp4-MAP-DATA/venv/bin/python -I`, mapshaper from
-tmp4-MAP-DATA/node_modules). Known limits: no streets, parks or 町名 outside Tokyo; 政令市 are one area each (no
-wards); stations outside Tokyo have no 路線 list.
+tmp4-MAP-DATA/node_modules). Known limits: no streets, parks or 町名 outside Tokyo; stations outside Tokyo have no 路線 list (政令市 wards: see v8 below).
+
+## v8: wards of the 政令市 (WARDS, 2026-10-31)
+
+The 44 wards of 横浜市 (18) · 川崎市 (7) · 相模原市 (3) · さいたま市 (10) · 千葉市 (6), from the same N03 2024 polygons
+(`N03_005` = ward, `N03_007` = its 全国地方公共団体コード, cross-checked with `data/areas.js`, whose ward entries carry
+`parent` = the city code). Baked by `tmp8-WARDS/bake_wards.py` (mapshaper `-dissolve2 code … -simplify interval=25|200
+keep-shapes`, then spliced into the existing files — `k_js.py` / `k_geo.py` were not re-run; running them again would drop
+the ward statements, so re-run `bake_wards.py` after them).
+
+| Where | What |
+|---|---|
+| `kanto.js` | `K.wardLabels` (44 points: `code name kana en parent p area lz` 9.6) and `SM.data.mapKantoMeta.wardBounds` {code: [w,s,e,n]} + `wards` (the code list) — so `SM.mapStyle.areaBounds('14101')` and the camera work before the prefecture file is in |
+| `kanto/11.js`, `kanto/12.js`, `kanto/14.js` | `P.wards` (25 m polygons, `code name kana en parent p`), `P.wardBorders` (the lines BETWEEN two wards of one city, 25 m; the city's own outline is already in `borders`), `P.wardLabels` (+12 / +9 / +39 KB) |
+| `geo-kanto.js` | `SM.data.geoWards` = `g.wards` {code: SVG path} (200 m), for the simple map and the placeholder |
+| `data/geo.js` | `wardBoxes`, `wardLabels` (same units as `boxes` / `labels`) |
+
+Runtime (`style.js`): sources `kWards` (promoteId `code`, feature-state `sel` / `hov` exactly like `areas`), `kWardBorders`,
+`kWardLabels`; layers `ward-sel` (after `area-sel`), `border-ward` (z ≥ 9.4, dashed 2/2, under `border-muni`),
+`ward-sel-line` / `ward-hov-line`, `label-ward` (z ≥ 9.6, Plex 500, sorted by area) and `label-ward-sel` (Plex 700). The five
+cities' own names stop at z 9.6 (`hz` on their `areaLabels` feature; `areaLabelFilter` / `selLabelFilter` read it).
+`SM.mapStyle.select(map, '14101')`, `areaBounds('14101')`, `isWard(code)`, `wardZoom` (9.6). The ward polygons arrive with
+their prefecture's file (`ensureKanto`), right after its 25 m areas. map.js: `#/map/14101` frames the ward (the city's offices
+and the ward's are listed; other wards' offices come under 近く), a tap inside a 政令市 at z ≥ 9.6 (or when that city / one of
+its wards is chosen) picks the ward, the picker goes 都県 → 市 → 区 (「横浜市ぜんぶ」 = the city code), and the overview count
+chips fold ward-coded offices into their city's chip. Simple map: ward lines (`.m-wline`, inline style) and the chosen ward as
+a tinted path; ward names appear when the view is ≈ 110 km across or less. Total `data/map/` ≈ 7.2 MB.
 
 ## Sources, licenses, attribution
 

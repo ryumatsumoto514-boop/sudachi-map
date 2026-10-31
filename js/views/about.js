@@ -439,7 +439,7 @@
         '<h1 class="ab-title" tabindex="-1"><span class="ab-title-l"' + rv('line', 0) + '>' + esc(t('about.h1')) + '</span></h1>' +
         '<p class="ab-lead"' + rv('up', 120) + '>' + esc(t('about.lead')) + '</p>' +
       '</header>' +
-      (art ? '<div class="ab-art">' + art + '</div>' : '');
+      (art ? '<div class="ab-art" data-parallax="0.04">' + art + '</div>' : '');
 
     var list = navList();
     var toc = '<nav class="ab-toc" aria-labelledby="ab-toc-h">' +

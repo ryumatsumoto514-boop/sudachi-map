@@ -1,37 +1,28 @@
-/* 巣立ちマップ v7 — js/views/home.js (HOME)
-   Home (#/), redesigned for SPEC-v7 workstream 1: clear AND beautiful. A transit poster set like a textbook:
-   the green line of the logo is the structure of the page, the kanji marks are its stations.
+/* 巣立ちマップ v8 — js/views/home.js (HOME)
+   Home (#/) as a PATH (SPEC-v8 workstream 1). Within one screen the person sees what this is, the three things
+   they can do, where they are on that path, and the one next step:
 
-   Page, top to bottom (phone; desktop composes the same parts on a 12-column grid):
-     .h-mast    a dateline (関東版 · 支援 N件・ログインなし) on the page's first heavy rule
-     .h-hero    new visitor: kicker + one display headline (marker on 使える支援) + the picture + ONE green CTA +
-                the crisis link (今夜いる場所がない). Desktop 7/5: headline left, picture right on the CTA's baseline.
-                returning: あなたに合いそうな支援 N件 (num-hero) + the answers (／, 変える) + 結果を見る; やること
-                (countdown + saved) beside it (desktop) / under it (phone).
-     .h-ask     きく: a fill-in line (ことばで きく ＿＿＿ 例：家賃がはらえない) → #/ask/<words>. Nothing is sent: the
-                form never submits; it routes in the app.
-     .h-route   困りごと as a 路線図: the six kanji marks are stations on one green line (vertical on the phone,
-                horizontal across the page on desktop), name + count at each stop. Counts follow the person's
-                answers (area in 関東: national + their prefecture + their city).
-     .h-talk    今すぐ話したい as a timetable: name ……… number (the number dials), hours as text, LINE / チャット
-                as a quiet link; 相談先をもっと見る; the red 緊急 line.
-     .h-learn   まなぶ: progress as a line of stations (done = filled), the lesson to read next (続きから when it
-                was left half-read) with its cover, then the next three as rows.
-     .h-tools   three tools · .h-staff band · .h-colo 奥付.
-   中学生 (body.is-junior): the jr picture and copy, counts only for what fits them, まなぶ before 困りごと.
+     .h-mast    関東版 ─────── 支援 N件・ログインなし
+     .h-hero    kicker (施設や里親家庭を出る人へ) · one headline (支援を見つけて、やることに。) · one sub-line
+     .h-path    the route of three stations on the green line — 1 しらべる → 2 見つける → 3 やること.
+                Each station is an ink square with its number (done = green with a check, now = solid ink like the
+                logo's 巣 box, ahead = an outline). The current station carries 「いまここ」, the one fact that
+                matters there and the ONE green CTA; done stations show what was done (the answers, N件・保存 M件,
+                できた d／t・あとN日) and link back. The returning state therefore reads 「ここまで来た、次はこれ」.
+     .h-ask     ことばで きく — a fill-in line that routes to #/ask/<words> (nothing is sent).
+     .h-art     the walk: the picture whose figure walks toward the new home as it scrolls through the viewport
+                (CSS scroll-driven animation; rAF fallback; reduced motion = the final picture).
+     then the stations of the page: 困りごと (6 kanji marks on one line that fills with scroll), 今すぐ話したい
+     (timetable), まなぶ (line of lessons), ツール, 支援者, 奥付.
+   Desktop (≥ 760px of column): headline left / picture right, the path across the whole width, きく under it.
+   中学生 (body.is-junior): jr copy, jr picture, counts only for what fits them, まなぶ before 困りごと.
 
-   Motion (SPEC-v5 Part A scale; transform / opacity only; never hides content if JS fails):
-   - The opening (launch.js) lands its line in the app bar; home picks it up: the masthead rule draws from the
-     left, the headline lines rise from behind their baselines, the marker sweeps, the picture's figures walk in,
-     the CTA springs up, the crisis link slides in (CSS choreography, .h-play, delays from the ENTER table).
-   - Then the train runs: the route's green line draws through the six stations (down on the phone, across on
-     desktop) and each kanji mark stamps in as the line reaches it, its count rolling (SM.motion reveals with
-     per-stop delays). The same on scroll for the timetable (leader dots run out to each number) and the まなぶ
-     line (stations fill up to where the reader is).
-   - Tables: 'launch' (the opening hands off), 'short' (returning beat / first tab visit), 'none' (reduced
-     motion, back, revisits, in-place renders). A tap / key during the hero lands it at once (.h-land).
-   - Render the first screen first: hero + section 01 in render(); the rest one section per idle callback.
-   Fully bilingual via SM.strings; 中学生 copy via the `jr` variant. */
+   Motion: the opening (launch.js) lands its line in the app bar; home picks it up: the masthead rule draws, the
+   headline lines rise, the path line draws down (across on desktop) and the stations stamp in as it reaches them,
+   the CTA springs, the crisis link slides in (CSS choreography under .h-play; delays from ENTER). Below the fold:
+   the route line fills with scroll, counts roll when visible, section heads settle as their rules draw, the
+   timetable dots run, the まなぶ line fills. Reduced motion: short fades, the final state at once. If JS fails,
+   everything stands (nothing is hidden without .h-play / .m-pending). Strings: ja, jr, en. */
 (function () {
   'use strict';
   var SM = window.SM = window.SM || {};
@@ -65,50 +56,58 @@
   SM.strings && SM.strings({
     'home.title': { ja: 'ホーム', en: 'Home' },
 
-    /* masthead: the edition and the facts, set as a dateline */
+    /* masthead */
     'home.ed': { ja: '関東版', en: 'Kanto edition' },
     'home.mast': { ja: 'このサイトについて', en: 'About this site' },
     'home.mastCount': { ja: '支援 {n}件', en: '{n} programs' },
     'home.f.login': { ja: 'ログインなし', en: 'No login' },
-    'home.f.count': { ja: '関東の支援', en: 'programs in Kanto' },
     'home.unit': { ja: '件', en: '' },
 
-    /* hero — first visit */
+    /* hero */
     'home.kicker': { ja: '施設や里親家庭を出る人へ', jr: '施設や里親家庭でくらす中学生へ', en: 'For young people leaving care' },
-    'home.h1pre': { ja: '「', en: '' },
-    'home.h1mark': { ja: '使える支援', en: 'Support you can use,' },
-    'home.h1post': { ja: '」が、', en: '' },
-    'home.h1c': { ja: '3分でわかる。', en: 'found in 3 minutes.' },
-    'home.cta': { ja: '質問に答える', en: 'Answer 6 questions' },
+    'home.h1a': { ja: '支援を見つけて、', jr: '支援を見つけて、', en: 'Find support.' },
+    'home.h1b': { ja: 'やることに。', jr: 'やることに。', en: 'Make it your plan.' },
+    'home.sub': { ja: '名前もログインもいらない。', jr: '名前もログインもいらない。', en: 'No name, no login, nothing sent.' },
+    'home.pathLabel': { ja: 'この先の道のり', en: 'The path' },
     'home.crisis': { ja: '今夜いる場所がない・家にいられない', jr: '家にいられない・帰れないとき', en: 'Nowhere to stay tonight?' },
 
-    /* hero — returning visitor */
-    'home.backA': { ja: 'あなたに合いそうな支援', en: 'Programs that may fit you' },
-    'home.backUnit': { ja: '件', en: '' },
-    'home.backNone': { ja: 'あなたの答えで、支援をまとめています。', en: 'Your results are ready.' },
+    /* the three stations */
+    'home.st1': { ja: 'しらべる', jr: 'しらべる', en: 'Answer' },
+    'home.st2': { ja: '見つける', jr: '見つける', en: 'Find' },
+    'home.st3': { ja: 'やること', jr: 'やること', en: 'Do' },
+    'home.here': { ja: 'いまここ', jr: 'いまここ', en: 'You are here' },
+    'home.doneSr': { ja: 'おわった', en: 'done' },
+    'home.aheadSr': { ja: 'このあと', en: 'ahead' },
+    'home.st1.todo': { ja: '6つの質問・3分', jr: '6つの質問・3分', en: '6 questions · 3 min' },
+    'home.st1.change': { ja: '変える', en: 'Change' },
+    'home.st1.changeSr': { ja: '答えを変える', en: 'Change your answers' },
+    'home.st2.todo': { ja: 'あなたに合う支援が出る', jr: 'きみに合う支援が出る', en: 'See what fits you' },
+    'home.st2.fit': { ja: '合いそうな支援 {n}件', jr: '合いそうな支援 {n}件', en: '{n} may fit you' },
+    'home.st2.fitNone': { ja: '結果ができている', en: 'Your results are ready' },
+    'home.st2.saved': { ja: '保存 {n}件', en: '{n} saved' },
+    'home.st2.go': { ja: '結果', en: 'Results' },
+    'home.st3.todo': { ja: '保存して、順番にやる', jr: '保存して、順番にやる', en: 'Save it, do it in order' },
+    'home.st3.done': { ja: 'できた {d}／{t}', en: '{d} of {t} done' },
+    'home.st3.saved': { ja: '保存 {n}件', en: '{n} saved' },
+    'home.st3.next': { ja: 'つぎ', en: 'Next' },
+    'home.st3.allDone': { ja: 'ぜんぶできた', en: 'All done' },
+    'home.st3.noDate': { ja: '巣立ちの日は、やることで決める', jr: '高校入学の日は、やることで決める', en: 'Set the day in your to-do list' },
+    'home.cta': { ja: '質問に答える', jr: '質問に答える', en: 'Answer 6 questions' },
     'home.seeResults': { ja: '結果を見る', en: 'See results' },
-    'home.changeAnswers': { ja: '変える', en: 'Change' },
-    'home.changeLabel': { ja: '答えを変える', en: 'Change your answers' },
-    'home.yourAnswers': { ja: 'あなたの答え', en: 'Your answers' },
+    'home.planGo': { ja: 'やることをひらく', en: 'Open my to-do list' },
+    'home.daysTo': { ja: '巣立ちまで', jr: '高校入学まで', en: 'Until you leave' },
+    'home.daysToJr': { ja: '高校入学まで', en: 'Until high school' },
+    'home.daysPre': { ja: 'あと', en: '' },
+    'home.daysUnit': { ja: '日', en: 'days' },
+    'home.daysAssumed': { ja: '仮', en: 'est.' },
+    'home.daysToday': { ja: '今日が巣立ちの日。おめでとう。', en: 'Today is your leaving day.' },
+    'home.daysSince': { ja: '巣立って {n}日', en: '{n} days since you left' },
 
     /* きく */
     'home.askK': { ja: 'ことばで きく', en: 'Ask in your own words' },
     'home.askPh': { ja: '例：家賃がはらえない', jr: '例：高校 お金', en: 'e.g. can’t pay rent' },
     'home.askGo': { ja: 'きく', en: 'Ask' },
     'home.askLabel': { ja: '困っていることを、ことばで入力', en: 'Type what is worrying you' },
-
-    /* やること preview */
-    'home.planTitle': { ja: 'やること', en: 'My to-do list' },
-    'home.planOpen': { ja: 'ひらく', en: 'Open' },
-    'home.planSaved': { ja: '保存 {n}件', en: '{n} saved' },
-    'home.planMore': { ja: 'ほか {n}件', en: '+{n} more' },
-    'home.daysTo': { ja: '巣立ちの日まで', en: 'Until you leave' },
-    'home.daysToEntry': { ja: '高校入学まで', en: 'Until high school starts' },
-    'home.daysAssumed': { ja: '仮の日付', en: 'Estimated' },
-    'home.daysPre': { ja: 'あと', en: '' },
-    'home.daysUnit': { ja: '日', en: 'days' },
-    'home.daysToday': { ja: '今日が巣立ちの日。おめでとう。', en: 'Today is your leaving day.' },
-    'home.daysSince': { ja: '巣立って {n}日', en: '{n} days since you left' },
 
     /* 困りごと (the route) */
     'home.catsTitle': { ja: '困りごとから見る', en: 'Browse by need' },
@@ -224,6 +223,11 @@
     var d = new Date();
     return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
   }
+  function isoOf(d) {
+    if (typeof d === 'string') return d;
+    if (!(d instanceof Date) || isNaN(d)) return null;
+    return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+  }
   function dayDiff(iso) {
     var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
     if (!m) return null;
@@ -233,22 +237,18 @@
     return Math.round((a - b) / 86400000);
   }
   function listed() { return SM.ui && SM.ui.listedCount ? SM.ui.listedCount() : programs().length; }
+  function checkSvg() {
+    return '<svg class="h-st-check" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true" focusable="false"><path d="m5 12.5 4.5 4.5 9.5-10"/></svg>';
+  }
 
-  /* ------------------------------------------------------------ area rule (SPEC-v7 data contract)
-     answers.area: a 5-digit Kanto code, a 2-digit prefecture code, 'other' (outside Kanto) or null.
-     A record: for.areas [] = anywhere; ['14'] = all of 神奈川; ['14100'] = 横浜市 only. basis 'tokyo' = ['13'].
-     In prefecture X → [] + [X] + records naming their city. 'other' → only records open to anyone.
-     null → national + every prefecture's own (pref-level) records; city-only records wait for an answer. */
+  /* ------------------------------------------------------------ area rule (SPEC-v7 data contract, via SM.matchUtil) */
   function codeOf(x) { return String(x == null ? '' : x); }
   function U() { return SM.matchUtil || {}; }
   function prefOfCode(c) { try { return (U().prefOf && U().prefOf(c)) || ''; } catch (e) { return ''; } }
-  // can someone living in `area` use this record? (match.js's area rule — the same one さがす uses)
   function usable(p, area) {
     try { if (U().usableIn) return !!U().usableIn(p, U().cleanArea ? U().cleanArea({ area: area }) : area); } catch (e) { /* ignore */ }
     return true;
   }
-  /* the numbers on the six stations: exactly the rows さがす lists for this person when a station is tapped
-     (SM.matchUtil.catCounts is the one rule for both; 中学生: only what is open to them) */
   var countsMemo = null;
   function catCounts() {
     var a = answers();
@@ -267,13 +267,19 @@
     } catch (e) { /* ignore */ }
     return '';
   }
+  function fitCount() {
+    // the same count as the results page and さがす (city-only rows wait in their own group there)
+    try { if (SM.match) return SM.match(answers()).filter(function (r) { return !r.local; }).length; } catch (e) { /* ignore */ }
+    return null;
+  }
+  function savedItems() { return ((SM.state && SM.state.saved) || []).map(prog).filter(Boolean); }
 
   /* ------------------------------------------------------------ entrance choreography
      ms after the entrance starts: the opening's release (first visit) or the mount (returning beat, a tab opened
      for the first time this session). Hero parts are CSS (--d, css .h-play); the rest are SM.motion reveals. */
   var ENTER = {
-    launch: { mast: 0, kicker: 40, l1: 90, l2: 150, mark: 380, art: 120, cta: 300, nudge: 820, crisis: 380, answers: 220, side: 340, ask: 420, head: 460, route: 520, stop: 90 },
-    short: { mast: 0, kicker: 20, l1: 60, l2: 110, mark: 300, art: 80, cta: 220, nudge: 700, crisis: 290, answers: 150, side: 260, ask: 320, head: 340, route: 400, stop: 75 }
+    launch: { mast: 0, kicker: 40, l1: 90, l2: 150, sub: 230, path: 260, stop: 120, cta: 600, crisis: 250, ask: 760, art: 420, head: 800, route: 860, nudge: 1200 },
+    short: { mast: 0, kicker: 20, l1: 60, l2: 110, sub: 170, path: 200, stop: 95, cta: 480, crisis: 190, ask: 600, art: 320, head: 640, route: 700, nudge: 1000 }
   };
   var mode = 'none', T = null;
   function homeShown() {
@@ -288,7 +294,7 @@
     if (de.classList.contains('lx-full') && !(window.__lx && window.__lx.done)) return 'launch';
     return 'short';
   }
-  // one hero part of the CSS choreography: its kind (line | rise | cta | slide | draw | art) and its delay
+  // one hero part of the CSS choreography: its kind (line | rise | cta | slide | draw | art | path | stamp) and delay
   function ha(kind, key, extra) {
     if (!T) return '';
     var d = typeof key === 'number' ? key : T[key];
@@ -297,13 +303,9 @@
   function hline(cls, key, html) {
     return '<span class="' + cls + ' h-ln-o"' + (T ? ' data-h="line"' : '') + '><span class="h-ln-i"' + (T ? ' style="--d:' + T[key] + 'ms"' : '') + '>' + html + '</span></span>';
   }
-  function markInk() {
-    return '<span class="h-mark-ink"' + (T ? ' style="--mark-at:' + T.mark + 'ms"' : '') + ' aria-hidden="true"></span>';
-  }
 
   /* ------------------------------------------------------------ masthead: 関東版 ─────── 支援 N件・ログインなし */
   function mast() {
-    // 中学生: the supports open to them where they live (the same rows さがす lists), not the whole catalogue
     var n = junior() ? (catCounts()._all || listed()) : listed();
     var num = '<b class="num h-mast-n' + rollCls('home.total', n) + '" data-count="' + n + '" data-count-seen="home.total" data-count-dur="900"' +
       (T ? ' data-reveal-delay="' + (T.mast + 120) + '"' : '') + '>' + n + '</b>';
@@ -315,7 +317,47 @@
     '</div>';
   }
 
-  /* ------------------------------------------------------------ hero */
+  /* ------------------------------------------------------------ the person's place on the path */
+  function planModel() {
+    try { if (SM.plan && typeof SM.plan.build === 'function') return SM.plan.build(); } catch (e) { /* ignore */ }
+    return null;
+  }
+  function progress() {
+    var st = SM.state || {};
+    var jr = junior();
+    var saved = savedItems();
+    var answered = !!st.answered;
+    var model = planModel();
+    var leave = jr ? st.hsDate : st.leaveDate;
+    var anchorISO = model && model.anchor ? isoOf(model.anchor) : leave || null;
+    var assumed = !!(model && model.assumed);
+    if (!model && !leave) anchorISO = null;
+    var days = anchorISO ? dayDiff(anchorISO) : null;
+    var next = null, done = 0, total = 0, allDone = false;
+    if (model && model.groups && model.groups.length) {
+      done = model.done || 0; total = model.total || 0;
+      allDone = total > 0 && done === total;
+      var order = [];
+      if (model.cur >= 0) order.push(model.groups[model.cur]);
+      model.groups.forEach(function (g, i) { if (i !== model.cur) order.push(g); });
+      for (var i = 0; i < order.length && !next; i++) {
+        var g = order[i];
+        for (var j = 0; j < (g.all || []).length; j++) if (!g.all[j].done) { next = g.all[j]; break; }
+      }
+    }
+    var cur = !answered ? 1 : saved.length ? 3 : 2;
+    return { jr: jr, answered: answered, saved: saved, savedN: saved.length, fit: answered ? fitCount() : null, model: model, days: days, assumed: assumed, hasDate: !!anchorISO,
+      next: next, done: done, total: total, allDone: allDone, cur: cur };
+  }
+
+  /* ------------------------------------------------------------ hero: kicker · headline · sub-line */
+  function heroCopy() {
+    return '<div class="h-copy"><h1 class="h-title" id="h-title" tabindex="-1">' +
+      hline('h-kicker', 'kicker', esc(t('home.kicker'))) +
+      hline('h-main', 'l1', esc(t('home.h1a'))) +
+      hline('h-main', 'l2', esc(t('home.h1b'))) +
+    '</h1>' + hline('h-sub', 'sub', esc(t('home.sub'))) + '<div class="h-crisis-w">' + crisisLink() + '</div></div>';
+  }
   function cta(label, href) {
     if (SM.ui && SM.ui.button) return SM.ui.button(label, { href: href, variant: 'primary', size: 'lg', block: true, cls: 'h-cta', attrs: 'data-press' });
     return '<a class="btn btn-primary btn-lg btn-block h-cta" href="' + esc(href) + '" data-press><span>' + esc(label) + '</span>' + arrow() + '</a>';
@@ -326,63 +368,94 @@
     return junior() ? '<button type="button" class="btn btn-text h-crisis" data-act="sos" aria-haspopup="dialog" data-press' + ha('slide', 'crisis') + '>' + inner + '</button>' :
       '<a class="btn btn-text h-crisis" href="#/find/cat/housing" data-press' + ha('slide', 'crisis') + '>' + inner + '</a>';
   }
-  function heroNew(jr) {
-    var art = illus(jr ? 'home-jr-hero' : 'home-hero', { size: 'fill', cls: 'h-art-il' });
-    var pre = t('home.h1pre');
-    var title =
-      '<h1 class="h-title" id="h-title" tabindex="-1">' +
-        hline('h-kicker', 'kicker', esc(t('home.kicker'))) +
-        hline('h-main', 'l1', (pre ? '<span class="h-open">' + esc(pre) + '</span>' : '') +
-          '<mark class="h-mark">' + markInk() + '<span class="h-mark-t">' + esc(t('home.h1mark')) + '</span></mark>' + esc(t('home.h1post'))) +
-        hline('h-main', 'l2', esc(t('home.h1c'))) +
-      '</h1>';
-    return '<section class="h-hero is-new wide-layout' + (art ? ' has-art' : '') + '" aria-labelledby="h-title">' +
-      '<div class="h-copy">' + title + '</div>' +
-      (art ? '<div class="h-art"' + ha('art', 'art') + '>' + art + '</div>' : '') +
-      '<div class="h-actions"><div class="h-cta-w"' + ha('cta', 'cta') + '>' + cta(t('home.cta'), '#/find/q/1') + '</div>' + crisisLink() + '</div>' +
-    '</section>';
-  }
 
-  function fitCount() {
-    // the same count as the results page and さがす (city-only rows wait in their own group there)
-    try { if (SM.match) return SM.match(answers()).filter(function (r) { return !r.local; }).length; } catch (e) { /* ignore */ }
-    return null;
-  }
-  function heroBack(side, jr) {
-    var n = fitCount();
-    var summary = '';
+  /* ------------------------------------------------------------ the path: three stations on the green line */
+  function answersSummary() {
     try {
-      if (SM.matchSummary) {
-        summary = SM.matchSummary(answers()).filter(function (r) {
-          return r.set && r.label && (r.key === 'stage' || r.key === 'path' || r.key === 'area');
-        }).map(function (r, i) {
-          return '<span class="h-ans">' + (i ? '<span class="h-ans-sep" aria-hidden="true">' + (en() ? '·' : '／') + '</span>' : '') + esc(r.label) + '</span>';
-        }).join('');
-      }
-    } catch (e) { summary = ''; }
-    var unit = t('home.backUnit');
-    var title = n ?
-      '<h1 class="h-title is-back" id="h-title" tabindex="-1">' +
-        hline('h-kicker', 'kicker', esc(t('home.backA'))) +
-        hline('h-big-row', 'l1', '<mark class="h-mark h-mark-num">' + markInk() + '<span class="h-mark-t"><b class="h-big num' + rollCls('home.fit', n) + '" data-count="' + n + '" data-count-seen="home.fit" data-count-dur="760"' + (T ? ' data-reveal-delay="' + T.l1 + '"' : '') + '>' + n + '</b>' +
-          (unit ? '<span class="h-big-unit">' + esc(unit) + '</span>' : '') + '</span></mark>') +
-      '</h1>' :
-      '<h1 class="h-title is-back is-none" id="h-title" tabindex="-1">' + hline('h-kicker', 'kicker', esc(t('home.backNone'))) + '</h1>';
-    var ans = summary ? '<p class="h-answers"' + ha('rise', 'answers') + '><span class="sr-only">' + esc(t('home.yourAnswers')) + ': </span>' + summary +
-      '<a class="h-change" href="#/find/q/1" aria-label="' + esc(t('home.changeLabel')) + '" data-press>' + esc(t('home.changeAnswers')) + '</a></p>' : '';
-    // the right-hand column on desktop: やること when there is something in it, else the picture
-    // with やること on the right, the picture stays too, smaller, above it (wide screens only)
-    var art = illus(jr ? 'home-jr-hero' : 'home-hero', { size: 'fill', cls: 'h-art-il' });
-    return '<section class="h-hero is-back wide-layout' + (side ? ' has-side' : art ? ' has-art' : '') + '" aria-labelledby="h-title">' +
-      '<div class="h-copy">' + title + ans + '</div>' +
-      (side ? '<div class="h-side"' + ha('rise', 'side') + '>' + (art ? '<div class="h-art is-back-art is-mini" aria-hidden="true">' + art + '</div>' : '') + side + '</div>' : art ? '<div class="h-art is-back-art"' + ha('art', 'art') + '>' + art + '</div>' : '') +
-      '<div class="h-actions"><div class="h-cta-w"' + ha('cta', 'cta') + '>' + cta(t('home.seeResults'), '#/find/results') + '</div>' + crisisLink() + '</div>' +
-    '</section>';
+      if (!SM.matchSummary) return '';
+      return SM.matchSummary(answers()).filter(function (r) {
+        return r.set && r.label && (r.key === 'stage' || r.key === 'path' || r.key === 'area');
+      }).map(function (r) { return r.label; }).join(en() ? ' · ' : '・');
+    } catch (e) { return ''; }
+  }
+  function numHtml(n, key, dur, delay) {
+    return '<b class="num' + rollCls(key, n) + '" data-count="' + n + '" data-count-seen="' + key + '" data-count-dur="' + (dur || 700) + '"' + (T && delay != null ? ' data-reveal-delay="' + delay + '"' : '') + '>' + n + '</b>';
+  }
+  function daysFact(P, delay) {
+    if (!P.hasDate || P.days === null) return '<span class="h-st-f is-quiet">' + esc(t('home.st3.noDate')) + '</span>';
+    if (P.days > 0) {
+      return '<span class="h-st-f h-st-days"><span class="h-st-days-k">' + esc(t(P.jr ? 'home.daysToJr' : 'home.daysTo')) +
+        (P.assumed ? '<span class="h-st-tag">' + esc(t('home.daysAssumed')) + '</span>' : '') + '</span>' +
+        '<span class="h-st-days-v">' + (t('home.daysPre') ? '<span class="h-st-days-pre">' + esc(t('home.daysPre')) + '</span>' : '') +
+        numHtml(P.days, 'home.days', 760, delay) + '<span class="h-st-days-u">' + esc(t('home.daysUnit')) + '</span></span></span>';
+    }
+    if (P.days === 0) return '<span class="h-st-f">' + esc(t('home.daysToday')) + '</span>';
+    return '<span class="h-st-f">' + esc(t('home.daysSince', { n: -P.days })) + '</span>';
+  }
+  /* station 3's facts: progress (できた d／t), the next task, the countdown — from the やること model when its
+     files are in (plan.js is lazy; mount() fetches it and swaps these in place), else from the state alone */
+  function st3Facts(P, delay) {
+    var out = '', first = '';
+    if (P.model && P.total) {
+      first = '<span class="h-st-f"><span class="h-st-prog">' + esc(t('home.st3.done', { d: '\u0000', t: P.total })).split('\u0000').map(function (s, i) {
+        return i === 0 ? esc(s) + numHtml(P.done, 'home.planDone', 600, delay) : esc(s);
+      }).join('') + '</span></span>';
+    } else if (P.savedN) first = '<span class="h-st-f">' + esc(t('home.st3.saved', { n: P.savedN })) + '</span>';
+    // one line: できた d／t · 巣立ちまで あと N日 (the next task is one line below, cut with …; the whole text is on #/plan)
+    out += '<span class="h-st-duo">' + first + daysFact(P, delay) + '</span>';
+    if (P.model && P.total) {
+      if (P.next) out += '<span class="h-st-f h-st-next" title="' + esc(P.next.text) + '"><span class="h-st-next-k">' + esc(t('home.st3.next')) + '</span><span class="h-st-next-t">' + esc(P.next.text) + '</span></span>';
+      else if (P.allDone) out += '<span class="h-st-f">' + esc(t('home.st3.allDone')) + '</span>';
+    }
+    return out;
+  }
+  function station(i, state, o) {
+    var name = t('home.st' + i);
+    var sr = state === 'done' ? t('home.doneSr') : state === 'now' ? t('home.here') : t('home.aheadSr');
+    var d = T ? T.path + 80 + (i - 1) * T.stop : 0;
+    var no = '<span class="h-st-no"' + ha('stamp', d) + ' aria-hidden="true">' + (state === 'done' ? checkSvg() : '<span class="num">' + i + '</span>') + '</span>';
+    var here = state === 'now' ? '<span class="h-st-here" aria-hidden="true">' + esc(t('home.here')) + '</span>' : '';
+    var nameHtml = '<h2 class="h-st-name" id="h-st' + i + '"><span class="sr-only">' + i + '. </span>' + esc(name) + '<span class="sr-only">（' + esc(sr) + '）</span>' + here + '</h2>';
+    var body;
+    if (o.href && state === 'done') {
+      body = '<a class="h-st-a" href="' + esc(o.href) + '" data-press="ink">' +
+        '<span class="h-st-text"' + ha('rise', d, 60) + '>' + nameHtml + '<span class="h-st-facts">' + o.facts + '</span></span>' +
+        '<span class="h-st-go"' + ha('rise', d, 60) + '><span' + (o.goSr ? ' aria-hidden="true"' : '') + '>' + esc(o.go || '') + '</span>' +
+        (o.goSr ? '<span class="sr-only">' + esc(o.goSr) + '</span>' : '') + arrow() + '</span></a>';
+    } else {
+      body = '<div class="h-st-text"' + ha('rise', d, 60) + '>' + nameHtml + '<span class="h-st-facts">' + o.facts + '</span></div>' +
+        (o.cta ? '<div class="h-st-cta"><div class="h-cta-w"' + ha('cta', 'cta') + '>' + cta(o.cta, o.href) + '</div></div>' : '');
+    }
+    return '<li class="h-st is-' + state + '" data-st="' + i + '" style="--i:' + (i - 1) + '">' + no + '<div class="h-st-body">' + body + '</div></li>';
+  }
+  function path(P) {
+    var s1 = P.answered ? 'done' : 'now';
+    var s2 = P.savedN ? 'done' : P.answered ? 'now' : 'ahead';
+    var s3 = P.savedN ? 'now' : 'ahead';
+    var fitDelay = T ? T.path + 80 + T.stop + 60 : null;
+    var ans = P.answered ? answersSummary() : '';
+    var f1 = P.answered ? '<span class="h-st-f">' + esc(ans || t('home.st1.todo')) + '</span>' : '<span class="h-st-f">' + esc(t('home.st1.todo')) + '</span>';
+    var f2;
+    if (!P.answered) f2 = '<span class="h-st-f is-quiet">' + esc(t('home.st2.todo')) + '</span>';
+    else {
+      var fit = P.fit != null && P.fit > 0 ? t('home.st2.fit', { n: '\u0000' }).split('\u0000').map(function (s, i) { return i === 0 ? esc(s) + numHtml(P.fit, 'home.fit', 760, fitDelay) : esc(s); }).join('') : esc(t('home.st2.fitNone'));
+      f2 = '<span class="h-st-f">' + fit + '</span>' + (P.savedN ? '<span class="h-st-f">' + esc(t('home.st2.saved', { n: P.savedN })) + '</span>' : '');
+    }
+    var f3 = s3 === 'now' ? st3Facts(P, T ? T.path + 80 + 2 * T.stop + 60 : null) : '<span class="h-st-f is-quiet">' + esc(t('home.st3.todo')) + '</span>' + (P.hasDate && P.days > 0 ? daysFact(P, null) : '');
+    var stops =
+      station(1, s1, { href: '#/find/q/1', facts: f1, cta: s1 === 'now' ? t('home.cta') : '', go: t('home.st1.change'), goSr: t('home.st1.changeSr') }) +
+      station(2, s2, { href: s2 === 'ahead' ? '' : '#/find/results', facts: f2, cta: s2 === 'now' ? t('home.seeResults') : '', go: t('home.st2.go'), goSr: t('home.seeResults') }) +
+      station(3, s3, { href: '#/plan', facts: f3, cta: s3 === 'now' ? t('home.planGo') : '' });
+    var doneN = s3 === 'now' ? 2 : s2 === 'now' ? 1 : 0;
+    var attr = ha('path', 'path');
+    if (T) attr = attr.replace('style="', 'style="--stop:' + T.stop + 'ms;');
+    return '<ol class="h-path" role="list" aria-label="' + esc(t('home.pathLabel')) + '" data-done="' + doneN + '"' + attr + '>' +
+      '<span class="h-path-ln" aria-hidden="true"><span class="h-path-ln-done"></span></span>' + stops + '</ol>';
   }
 
   /* ------------------------------------------------------------ きく: a fill-in line that routes to #/ask/<words> */
   function ask() {
-    var d = T ? ' data-reveal="up" data-reveal-delay="' + T.ask + '"' : ' data-reveal="up"';
+    var d = T ? ' data-h="rise" style="--d:' + T.ask + 'ms"' : '';
     return '<form class="h-ask" role="search" action="#/ask" data-h-ask' + d + '>' +
       '<label class="h-ask-k" for="h-ask-in"><span class="h-ask-ic">' + ic('search') + '</span><span>' + esc(t('home.askK')) + '</span></label>' +
       '<span class="h-ask-line"><input class="h-ask-in" id="h-ask-in" name="q" type="search" enterkeyhint="search" autocomplete="off" spellcheck="false" maxlength="80"' +
@@ -404,42 +477,43 @@
     goAsk(f);
   }, true);
 
-  /* ------------------------------------------------------------ やること (only when there is something) */
-  function planPreview() {
-    var saved = (SM.state && SM.state.saved) || [];
-    var leave = SM.state && SM.state.leaveDate;
-    var items = saved.map(prog).filter(Boolean);
-    var anc = null;
-    try { if (SM.plan && typeof SM.plan.anchor === 'function') anc = SM.plan.anchor(); } catch (e) { anc = null; }
-    var jrTrack = !!(anc && anc.track === 'junior' && anc.date);
-    if (!items.length && !leave && !(jrTrack && SM.state.hsDate)) return '';
-    var days = '', d = null;
-    if (jrTrack) {
-      var ad = anc.date instanceof Date ? anc.date : new Date(anc.date);
-      if (!isNaN(ad)) d = dayDiff(ad.getFullYear() + '-' + ('0' + (ad.getMonth() + 1)).slice(-2) + '-' + ('0' + ad.getDate()).slice(-2));
-      if (d !== null && d <= 0) d = null;
-    } else if (leave) d = dayDiff(leave);
-    if (d !== null) {
-      if (d > 0) {
-        days = '<p class="h-days"><span class="h-days-k">' + esc(t(jrTrack ? 'home.daysToEntry' : 'home.daysTo')) +
-          (jrTrack && anc.assumed ? ' <span class="tag tag-neutral h-days-tag">' + esc(t('home.daysAssumed')) + '</span>' : '') + '</span>' +
-          '<span class="h-days-v">' + (t('home.daysPre') ? '<span class="h-days-pre">' + esc(t('home.daysPre')) + '</span>' : '') +
-          '<b class="num h-days-n' + rollCls('home.days', d) + '" data-count="' + d + '" data-count-seen="home.days">' + d + '</b><span class="h-days-unit">' + esc(t('home.daysUnit')) + '</span></span></p>';
-      } else if (d === 0) days = '<p class="h-days is-text"><span class="h-days-k">' + esc(t('home.daysToday')) + '</span></p>';
-      else days = '<p class="h-days is-text"><span class="h-days-k">' + esc(t('home.daysSince', { n: -d })) + '</span></p>';
+  /* ------------------------------------------------------------ the walk: the picture, driven by scroll */
+  function walk(jr) {
+    var art = illus(jr ? 'home-jr-hero' : 'home-hero', { size: 'fill', cls: 'h-art-il', animate: false });
+    if (!art) return '';
+    return '<div class="h-art" data-h-walk' + ha('art', 'art') + '>' + art + '</div>';
+  }
+  var hasSDA = false;
+  try { hasSDA = !!(window.CSS && CSS.supports && CSS.supports('animation-timeline', 'view()') && typeof CSS.registerProperty === 'function'); } catch (e) { hasSDA = false; }
+  function wireWalk(root) {
+    var list = root.querySelectorAll('[data-h-walk]');
+    for (var i = 0; i < list.length; i++) wireWalkOne(list[i]);
+  }
+  function wireWalkOne(el) {
+    if (el._hWalk) return;
+    el._hWalk = true;
+    var fig = el.querySelector('.il');
+    if (!fig) return;
+    if (reduced()) { fig.style.setProperty('--walk', '1'); return; }
+    if (hasSDA) { fig.classList.add('h-walk-sda'); return; }
+    // fallback: the figure's place follows the picture's place in the viewport (rAF-throttled, passive)
+    var ticking = false, live = false, ob = null;
+    function paint() {
+      ticking = false;
+      var r = el.getBoundingClientRect(), vh = window.innerHeight || 800;
+      // 0 when the picture's top enters at the bottom; 1 when its middle reaches 55% of the viewport
+      var a = vh, b = vh * 0.55 - r.height / 2;
+      var p = a === b ? 1 : (a - r.top) / (a - b);
+      p = Math.max(0, Math.min(1, p));
+      fig.style.setProperty('--walk', p.toFixed(3));
     }
-    var rows = items.slice(0, 3).map(function (p) {
-      var cat = (p.cat && p.cat[0]) || 'procedures';
-      return '<a class="list-item h-plan-item" href="#/p/' + encodeURIComponent(p.id) + '" data-id="' + esc(p.id) + '" data-press="ink">' + catMark(cat, 'xs', true) +
-        '<span class="list-body"><span class="list-title">' + esc(shortName(p)) + '</span></span>' +
-        '<span class="list-meta">' + arrow() + '</span></a>';
-    }).join('');
-    var more = items.length > 3 ? '<p class="h-plan-more">' + esc(t('home.planMore', { n: items.length - 3 })) + '</p>' : '';
-    return '<section class="h-plan" aria-labelledby="h-plan-h">' +
-      section(t('home.planTitle'), { id: 'h-plan-h', sub: items.length ? t('home.planSaved', { n: items.length }) : '', action: { label: t('home.planOpen'), href: '#/plan' } }) +
-      days +
-      (rows ? '<div class="list h-plan-list" data-reveal-stagger="50">' + rows + '</div>' : '') + more +
-    '</section>';
+    function onScroll() { if (!ticking) { ticking = true; requestAnimationFrame(paint); } }
+    function on() { if (live) return; live = true; window.addEventListener('scroll', onScroll, { passive: true }); window.addEventListener('resize', onScroll, { passive: true }); onScroll(); }
+    function off() { if (!live) return; live = false; window.removeEventListener('scroll', onScroll); window.removeEventListener('resize', onScroll); onScroll(); }
+    if (typeof IntersectionObserver !== 'function') { on(); return; }
+    ob = new IntersectionObserver(function (es) { es.forEach(function (x) { if (x.isIntersecting) on(); else off(); }); }, { rootMargin: '10% 0px' });
+    ob.observe(el);
+    paint();
   }
 
   /* ------------------------------------------------------------ offline: a slim ruled row */
@@ -451,7 +525,8 @@
       '<p><b>' + esc(t('home.offline')) + '</b>' + esc(t('home.offlineBody')) + '</p></aside>';
   }
 
-  /* ------------------------------------------------------------ 困りごと: the 路線図 — six stations on one line */
+  /* ------------------------------------------------------------ 困りごと: the 路線図 — six stations on one line
+     the line is an element (not a pseudo) so it can fill with scroll (data-scroll, SM.motion.scrollLinked) */
   function route(first) {
     var order = SM.CAT_ORDER || ['housing', 'money', 'education', 'work', 'procedures', 'consult'];
     var counts = catCounts();
@@ -478,13 +553,11 @@
     var d = lead ? ' data-reveal-delay="' + base + '"' : '';
     return '<section class="h-sec h-route-sec" id="h-cats" aria-labelledby="h-cats-h" tabindex="-1">' +
       head(t('home.catsTitle'), { id: 'h-cats-h', sub: where ? t('home.catsFor', { area: where }) : '', action: { label: t('home.catsAll'), href: '#/find' } }, first) +
-      '<ol class="h-route" role="list" data-reveal="fade"' + d + '>' + stops + '</ol>' +
+      '<ol class="h-route" role="list" data-reveal="fade"' + d + '><span class="h-route-ln" aria-hidden="true" data-h-fill></span>' + stops + '</ol>' +
     '</section>';
   }
 
   /* ------------------------------------------------------------ 今すぐ話したい: a timetable */
-  /* national lines for everyone, plus ONE line of the person's own prefecture (existing records only; shown when
-     the answer is in that prefecture — Tokyo's also when no area is answered, as before) */
   var TALK = [
     { id: 'yorisoi', sub: 'home.t.yorisoi' },
     { id: 'anata-no-ibasho', sub: 'home.t.ibasho' },
@@ -514,8 +587,6 @@
     var pc = prefOfCode(area);
     return pc ? pc === x.pref : !!(x.unanswered && area !== 'other');
   }
-  /* name ……… number. The number is the biggest thing and dials; its label carries name, number and hours.
-     A chat-only line puts its チャット link where the number would be. LINE / chat beside a number is a quiet link. */
   function talkRow(x, i) {
     var p = prog(x.id);
     if (!p || !p.contact) return '';
@@ -534,7 +605,6 @@
       var link = c.line || c.chat;
       if (link) alt = '<a class="h-tt-alt" href="' + esc(link) + '" target="_blank" rel="noopener"><span>' + esc(t(c.line ? (x.lineLabel || 'home.lineShort') : 'home.chatShort')) + '</span>' + ext + '</a>';
     } else if (c.chat || c.line) {
-      // a chat-only line: the same box as the phone's, and words — never a big word where a number would be
       main = '<a class="h-tt-num is-chat" href="' + esc(c.chat || c.line) + '" target="_blank" rel="noopener">' +
         '<span class="h-tt-ic">' + ic('chat') + '</span><span class="h-tt-chat">' + esc(t(c.chat ? 'home.chatTalk' : 'home.lineTalk')) + '</span>' + ext + '</a>';
     } else return '';
@@ -547,7 +617,6 @@
   }
   function talk(jr) {
     var area = answers().area;
-    /* a line that serves one prefecture (東京都わかもの…) is left out for people elsewhere */
     var rows = (jr ? TALK_JR : TALK).filter(function (x) { return talkFor(x, area); }).slice(0, 5).map(talkRow).join('');
     return '<section class="h-sec h-talk" id="h-talk" aria-labelledby="h-talk-h">' +
       head(t('home.talkTitle'), { id: 'h-talk-h', sub: t('home.talkBody') }) +
@@ -579,7 +648,6 @@
     try { if (SM.isLearned) return SM.isLearned(id); } catch (e) { /* ignore */ }
     return ((SM.state && SM.state.learned) || []).indexOf(id) !== -1;
   }
-  // where a half-read lesson stopped (learn.js keeps it in SM.store 'learnPos': {id: step index})
   function posOf(id) {
     try {
       var p = SM.store && SM.store.get ? SM.store.get('learnPos', {}) : null;
@@ -592,11 +660,9 @@
   function learn(jr, first) {
     var list = lessonsFor(jr);
     if (!list.length) return '';
-    // progress counts every lesson (中学生: only theirs), so the numbers match the まなぶ page
     var every = jr ? list.slice() : list.concat(((SM.data && SM.data.lessons) || []).filter(function (l) { return l && l.id && list.indexOf(l) === -1; }));
     var total = every.length;
     var done = every.filter(function (l) { return isLearned(l.id); }).length;
-    // the lesson to read now: one left half-read, else the first not done, else the first
     var feature = null, resume = false, i;
     for (i = 0; i < list.length; i++) if (!isLearned(list[i].id) && posOf(list[i].id) > 0) { feature = list[i]; resume = true; break; }
     if (!feature) for (i = 0; i < list.length; i++) if (!isLearned(list[i].id)) { feature = list[i]; break; }
@@ -618,7 +684,6 @@
       '<span class="h-lf-body">' + meta + '<span class="h-lf-title">' + esc(L(feature.title)) + '</span>' +
         '<span class="h-lf-go btn btn-secondary" aria-hidden="true"><span>' + esc(goLabel) + '</span>' + arrow() + '</span></span>' +
     '</a>';
-    // the next three after the feature (not done first)
     var rest = list.filter(function (l) { return l !== feature && !isLearned(l.id); }).slice(0, 3);
     var rows = rest.map(function (l) {
       var n = jr ? pad2(list.indexOf(l) + 1) : (l.order != null ? pad2(l.order) : '');
@@ -626,11 +691,9 @@
         '<span class="h-lr-t">' + esc(L(l.title)) + '</span>' +
         '<span class="h-lr-m num">' + (l.minutes ? esc(t('home.learnMin', { n: l.minutes })) : esc(n)) + '</span>' + arrow() + '</a></li>';
     }).join('');
-    // progress: a line of stations, one per lesson; done ones filled, the current one ringed
     var stops = '';
     var cur = allDone ? -1 : done;
     for (var j = 0; j < total; j++) stops += '<i class="h-ls' + (j < done ? ' is-done' : j === cur ? ' is-now' : '') + '" style="--i:' + j + '"></i>';
-    // nothing read yet: what is here (12のレッスン・1つ2〜3分), not a discouraging 「0/12」
     var mins = every.map(function (l) { return +l.minutes || 0; }).filter(Boolean);
     var mn = mins.length ? Math.min.apply(null, mins) : 0, mx = mins.length ? Math.max.apply(null, mins) : 0;
     var range = mn ? (mn === mx ? String(mn) : mn + (en() ? '–' : '〜') + mx) : '';
@@ -696,7 +759,7 @@
     return '<footer class="h-colo" aria-labelledby="h-colo-h">' +
       '<h2 class="sr-only" id="h-colo-h">' + esc(t('home.colo.title')) + '</h2>' +
       '<div class="h-colo-head"><span class="h-colo-mark">' + mark + '</span>' +
-        '<span class="h-colo-ed">' + esc(t('home.colo.ed')) + ' <span class="num">v' + esc(SM.version || '7.0.0') + '</span></span></div>' +
+        '<span class="h-colo-ed">' + esc(t('home.colo.ed')) + ' <span class="num">v' + esc(SM.version || '8.0.0') + '</span></span></div>' +
       '<div class="h-colo-body">' + kv +
         '<p class="h-colo-note">' + esc(t('home.colo.note')) + '</p>' +
         '<a class="btn btn-text h-more" href="#/about"><span>' + esc(t('home.colo.about')) + '</span>' + arrow() + '</a></div>' +
@@ -747,12 +810,13 @@
   }
 
   /* ------------------------------------------------------------ first screen first
-     The hero, きく and section 01 render in render(); the rest is built section by section in idle time into a
-     slot after section 01 — at once when the reader scrolls, presses a key, jumps or prints. */
+     The hero (with the path, きく and the picture) and section 01 render in render(); the rest is built section by
+     section in idle time into a slot after section 01 — at once when the reader scrolls, presses a key or prints. */
   var pending = null;
   function mountNode(n, instant) {
     try { if (SM.applyRuby) SM.applyRuby(n); } catch (e) { /* ignore */ }
     try { if (SM.motion && SM.motion.mount) SM.motion.mount(n, { instant: instant }); } catch (e) { /* ignore */ }
+    wireFills(n);
   }
   function fillLater(all) {
     var p = pending;
@@ -806,8 +870,24 @@
     else go();
   }
 
+  /* ------------------------------------------------------------ scroll-linked fills (the route line)
+     SM.motion.scrollLinked draws with animation-timeline where supported, else IO + rAF. Reduced motion: full. */
+  function wireFills(root) {
+    var list = root.querySelectorAll ? root.querySelectorAll('[data-h-fill]') : [];
+    for (var i = 0; i < list.length; i++) {
+      var el = list[i];
+      if (el._hFill) continue;
+      el._hFill = true;
+      var horizontal = false;
+      try { horizontal = getComputedStyle(el).getPropertyValue('--dir').trim() === 'x'; } catch (e) { horizontal = false; }
+      if (SM.motion && SM.motion.scrollLinked) {
+        el._hFill = SM.motion.scrollLinked(el, { prop: horizontal ? 'scaleX' : 'scaleY', from: 0, to: 1, range: ['entry 20%', 'cover 60%'] });
+      }
+    }
+  }
+
   /* ------------------------------------------------------------ the hero's CSS choreography
-     .h-play starts every part on its --d (× --h-k after a skip). .h-done (≈1.7s) drops the clips and the
+     .h-play starts every part on its --d (× --h-k after a skip). .h-done (≈2s) drops the clips and the
      animations. A tap or key in between lands it (.h-land). */
   var heroTimer = 0, heroEl = null;
   function landHero() {
@@ -816,7 +896,6 @@
     h.classList.add('h-land');
     var m = h.parentNode && h.parentNode.querySelector(':scope > .h-mast');
     if (m) m.classList.add('h-land');
-    try { if (SM.illus && SM.illus.finish) SM.illus.finish(h); } catch (e) { /* ignore */ }
     clearTimeout(heroTimer);
     heroTimer = setTimeout(function () { h.classList.add('h-done'); if (m) m.classList.add('h-done'); }, 40);
     offInput();
@@ -854,7 +933,7 @@
       document.addEventListener('keydown', onInput, true);
       nudge(h, Math.round(table.nudge * k));
       clearTimeout(heroTimer);
-      heroTimer = setTimeout(function () { h.classList.add('h-done'); if (m) m.classList.add('h-done'); offInput(); }, Math.round((table.nudge + 600) * k));
+      heroTimer = setTimeout(function () { h.classList.add('h-done'); if (m) m.classList.add('h-done'); offInput(); }, Math.round((table.nudge + 700) * k));
     };
     if (mode === 'launch' && SM.motion && SM.motion.whenReleased) SM.motion.whenReleased(go);
     else go();
@@ -880,26 +959,53 @@
     toShort(view);
   });
 
+  /* station 3 reads the やること model: its files are lazy, so fetch them once there is something to show and
+     swap the facts in place (a short cross-fade; no re-render, nothing moves) */
+  function needPlan(main) {
+    var st = SM.state || {};
+    var jr = junior();
+    if (SM.plan || !(SM.needView)) return;
+    if (!((st.saved && st.saved.length) || (jr ? st.hsDate : st.leaveDate))) return;
+    SM.needView('plan').then(function () {
+      if (!main.isConnected || !SM.plan) return;
+      var li = main.querySelector('.h-st[data-st="3"]');
+      if (!li) return;
+      var facts = li.querySelector('.h-st-facts');
+      if (!facts) return;
+      var P = progress();
+      var keep = T; T = null;
+      var html = li.classList.contains('is-now') ? st3Facts(P, null) : '<span class="h-st-f is-quiet">' + esc(t('home.st3.todo')) + '</span>' + (P.hasDate && P.days > 0 ? daysFact(P, null) : '');
+      T = keep;
+      if (facts.innerHTML === html) return;
+      var tpl = document.createElement('template');
+      tpl.innerHTML = html;
+      var nodes = Array.prototype.slice.call(tpl.content.children);
+      facts.innerHTML = '';
+      facts.appendChild(tpl.content);
+      facts.classList.add('h-swapped');
+      for (var i = 0; i < nodes.length; i++) mountNode(nodes[i], true);
+    }, function () { /* offline: the state's own facts stay */ });
+  }
+
   SM.views.home = {
     tab: 'home',
     title: { ja: 'ホーム', en: 'Home' },
     render: function () {
       try { if (SM.syncJunior) SM.syncJunior(); } catch (e) { /* ignore */ }
       var jr = junior();
-      var answered = !!(SM.state && SM.state.answered);
       var hasLearn = lessonsFor(jr).length > 0;
       mode = pickMode();
       T = ENTER[mode] || null;
+      var P = progress();
 
-      var plan = planPreview();
-      var out = mast() + (answered ? heroBack(plan, jr) : heroNew(jr) + plan);
+      var out = mast();
+      out += '<section class="h-hero wide-layout is-at-' + P.cur + '" aria-labelledby="h-title">' +
+        heroCopy() + path(P) + ask() + walk(jr) + '</section>';
       out += offline();
-      out += ask();
       // section 01 renders now; 中学生 see まなぶ first, everyone else the route
       out += jr && hasLearn ? learn(true, true) : route(true);
       var parts = [];
       if (jr && hasLearn) parts.push(function () { return route(false); }, function () { return talk(true); });
-      // desktop: the timetable and まなぶ side by side (7 / 5); one column on the phone
       else parts.push(function () { return '<div class="h-duo' + (hasLearn ? '' : ' is-one') + '">' + talk(jr) + (hasLearn ? learn(false, false) : '') + '</div>'; });
       parts.push(tools, function () { return staff() + colophon(); });
 
@@ -920,7 +1026,12 @@
       wrapBanner();
       wireNet();
       startFill();
-      if (main) main.classList.toggle('is-answered', !!(SM.state && SM.state.answered));
+      if (main) {
+        main.classList.toggle('is-answered', !!(SM.state && SM.state.answered));
+        wireWalk(main);
+        wireFills(main);
+        needPlan(main);
+      }
       if (T && main) {
         if (mode === 'launch' && window.__lx && window.__lx.skipped) toShort(main);
         playHero(main, T);
@@ -928,7 +1039,7 @@
           setTimeout(function () {
             var list = main.querySelectorAll('[data-reveal-delay]');
             for (var i = 0; i < list.length; i++) list[i].removeAttribute('data-reveal-delay');
-          }, 1500);
+          }, 1800);
         };
         if (SM.motion && SM.motion.whenReleased) SM.motion.whenReleased(expire); else expire();
       }

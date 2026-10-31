@@ -1,4 +1,4 @@
-/* 巣立ちマップ v3 — data for the three tools (owner: PROGRAM)
+/* 巣立ちマップ v3 — data for the three tools (owner: PROGRAM; v8 money section: MONEY)
  *   SM.data.scripts  : 電話・窓口の台本   (#/tools/script)
  *   SM.data.checks   : 契約チェック       (#/tools/check)
  *   SM.data.sim      : 生活費シミュレーター・ひとり暮らし (#/tools/money)  — also read by learnCalc.budget (keep keys)
@@ -227,39 +227,92 @@
   ];
 
   /* ===================================================================== money simulator: ひとり暮らし
-   * Rough monthly numbers for one person living alone. They are a starting point the user edits,
-   * not official statistics. (data/learn.js learnCalc.budget reads presets + expenses: keep the keys.) */
+   * v8 (SPEC-v8 workstream 5): one preset per Kanto prefecture (東京 is split into 23区 / 多摩). Every number in a
+   * preset comes from an official table (fetched and read 2026-10-31) and is rounded to the nearest 1,000円 for the
+   * sliders; `stat` keeps the exact published figure. The reader edits them; they are a starting point.
+   *
+   * 家賃 (rent) — 総務省統計局 令和5年住宅・土地統計調査 住宅及び世帯に関する基本集計, 第112-1表
+   *   「居住室の畳数(6区分)、住宅の所有の関係(5区分)別住宅の１か月当たり家賃(19区分)別借家(専用住宅)数、住宅の１か月当たり家賃
+   *    及び１か月当たり共益費・管理費－全国、都道府県、21大都市」 (e-Stat statInfId=000040210045, Excel, sheet e112_1)
+   *   Row 住宅の種類「13_民営借家」× 居住室の畳数「2_6.0～11.9畳」(ワンルーム〜1DK相当), column 住宅の家賃の平均「2_家賃０円を含まない」:
+   *     13100_特別区部 76,586円 · 14000_神奈川県 60,890円 · 11000_埼玉県 54,065円 · 12000_千葉県 54,713円
+   *     08000_茨城県 42,015円 · 09000_栃木県 41,558円 · 10000_群馬県 41,657円 · (13000_東京都 72,835円, 00000_全国 54,881円)
+   *   多摩 (東京都の区部以外) is not a row of the table; it is computed from the same two rows:
+   *     (東京都 n×avg − 特別区部 n×avg) ÷ (n差), n = 借家数 − 0円 − 不詳 of that row
+   *     = (1,312,600×72,835 − 1,053,400×76,586) ÷ 259,200 = 57,591円
+   *   共益費・管理費 are not in these figures (the row hint says to add them).
+   * 食費・光熱費・通信・交通・そのほか・遊び — 総務省統計局 家計調査 家計収支編 2025年 単身世帯 詳細結果表 第2表
+   *   「男女，年齢階級別１世帯当たり１か月間の収入と支出」 (e-Stat statInfId=000040409816), column 単身世帯34歳以下 (全国):
+   *     食料 41,992 · 光熱・水道 8,291 · 通信 6,400 · 交通 7,817 (自動車等関係費 6,424 は含めない)
+   *     家具・家事用品 5,895 ＋ 被服及び履物 6,013 ＋ 保健医療 6,735 ＝ 18,643 (→ そのほか)
+   *     教養娯楽 24,242 ＋ 交際費 12,274 ＝ 36,516 (→ 遊び・つきあい)
+   *   These are national figures for one-person households aged 34 or under: the survey has no prefecture split for
+   *   単身世帯, so they are the same in every preset (the source line under the calculator says so).
+   * 最低賃金 (jr mode, 時給) — 厚生労働省「令和8年度地域別最低賃金の全国一覧」
+   *   https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/koyou_roudou/roudoukijun/minimumichiran/ (PDF 001753404.pdf), see minWage.
+   * Estimates that are NOT statistics (labelled 例 in the UI): defaults.income 150,000 (手取り), ins 0 (免除・会社の保険).
+   * data/learn.js learnCalc.budget reads presets + expenses: keep the keys (ku23 stays the lesson's example). */
   SM.data.sim = {
-    presets: {
-      ku23: { label: { ja: '東京23区', en: 'Tokyo 23 wards' }, rent: 70000, food: 38000, util: 12000, phone: 5000, trans: 8000, ins: 0, other: 25000 },
-      tama: { label: { ja: '多摩（市町村）', en: 'Tama area' }, rent: 55000, food: 36000, util: 12000, phone: 5000, trans: 10000, ins: 0, other: 23000 }
+    sources: {
+      rent: { org: { ja: '総務省統計局', en: 'Statistics Bureau of Japan' }, name: { ja: '住宅・土地統計調査', en: 'Housing and Land Survey' }, year: 2023,
+        table: '第112-1表（住宅及び世帯に関する基本集計）', url: 'https://www.e-stat.go.jp/stat-search/file-download?statInfId=000040210045&fileKind=0',
+        basis: { ja: '民営借家・居住室6〜12畳の1か月当たり家賃の平均（家賃0円を除く）', jr: '民間のアパート（6〜12畳）の家賃のへいきん', en: 'average monthly rent of private rentals with 6–12 tatami of living space (excluding ¥0 rents)' } },
+      living: { org: { ja: '総務省統計局', en: 'Statistics Bureau of Japan' }, name: { ja: '家計調査', en: 'Family Income and Expenditure Survey' }, year: 2025,
+        table: '家計収支編 単身世帯 第2表', url: 'https://www.e-stat.go.jp/stat-search/file-download?statInfId=000040409816&fileKind=0',
+        basis: { ja: '単身世帯・34歳以下の全国平均', jr: 'ひとり暮らしの34歳以下の人の全国へいきん', en: 'national average for one-person households aged 34 or under' } },
+      wage: { org: { ja: '厚生労働省', en: 'Ministry of Health, Labour and Welfare' }, name: { ja: '令和8年度 地域別最低賃金の全国一覧', en: 'Regional minimum wages, FY2026' }, year: 2026,
+        url: 'https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/koyou_roudou/roudoukijun/minimumichiran/', checked: '2026-10-31' }
     },
-    defaultPreset: 'ku23',
+    /* 厚生労働省 令和8年度地域別最低賃金 全国一覧 (改定額【円】・発効日; prev = 改定前の額). All seven are in force on 2026-10-31. */
+    minWage: {
+      '08': { yen: 1136, from: '2026-10-18', prev: 1074 },
+      '09': { yen: 1125, from: '2026-10-01', prev: 1068 },
+      '10': { yen: 1120, from: '2026-10-03', prev: 1063 },
+      '11': { yen: 1196, from: '2026-10-01', prev: 1141 },
+      '12': { yen: 1195, from: '2026-10-01', prev: 1140 },
+      '13': { yen: 1280, from: '2026-10-01', prev: 1226 },
+      '14': { yen: 1279, from: '2026-10-01', prev: 1225 }
+    },
+    /* pref = the prefecture the preset stands for (answers.area → SM.matchUtil.prefOf); Tokyo wards (131xx) → ku23, other Tokyo codes → tama.
+       stat.rent = the exact published rent (2023); the other lines are the same national figures in every preset (see above). */
+    presets: {
+      ku23:     { pref: '13', tokyo: 'ku',   label: { ja: '東京23区', en: 'Tokyo 23 wards' },  rent: 77000, food: 42000, util: 8000, phone: 6000, trans: 8000, ins: 0, other: 19000, fun: 37000, stat: { rent: 76586 } },
+      tama:     { pref: '13', tokyo: 'tama', label: { ja: '東京・多摩', en: 'Tokyo (Tama)' },   rent: 58000, food: 42000, util: 8000, phone: 6000, trans: 8000, ins: 0, other: 19000, fun: 37000, stat: { rent: 57591, derived: true } },
+      kanagawa: { pref: '14', label: { ja: '神奈川県', en: 'Kanagawa' }, rent: 61000, food: 42000, util: 8000, phone: 6000, trans: 8000, ins: 0, other: 19000, fun: 37000, stat: { rent: 60890 } },
+      saitama:  { pref: '11', label: { ja: '埼玉県', en: 'Saitama' },    rent: 54000, food: 42000, util: 8000, phone: 6000, trans: 8000, ins: 0, other: 19000, fun: 37000, stat: { rent: 54065 } },
+      chiba:    { pref: '12', label: { ja: '千葉県', en: 'Chiba' },      rent: 55000, food: 42000, util: 8000, phone: 6000, trans: 8000, ins: 0, other: 19000, fun: 37000, stat: { rent: 54713 } },
+      ibaraki:  { pref: '08', label: { ja: '茨城県', en: 'Ibaraki' },    rent: 42000, food: 42000, util: 8000, phone: 6000, trans: 8000, ins: 0, other: 19000, fun: 37000, stat: { rent: 42015 } },
+      tochigi:  { pref: '09', label: { ja: '栃木県', en: 'Tochigi' },    rent: 42000, food: 42000, util: 8000, phone: 6000, trans: 8000, ins: 0, other: 19000, fun: 37000, stat: { rent: 41558 } },
+      gunma:    { pref: '10', label: { ja: '群馬県', en: 'Gunma' },      rent: 42000, food: 42000, util: 8000, phone: 6000, trans: 8000, ins: 0, other: 19000, fun: 37000, stat: { rent: 41657 } }
+    },
+    defaultPreset: 'ku23',   // when the person has no area (the view picks by answers.area first)
     defaults: { income: 150000, scholarship: 0, shien: false, yachin: false },
     expenses: [
-      { k: 'rent', label: { ja: '家賃', en: 'Rent' }, hint: { ja: '管理費こみ。寮なら寮費', en: 'Incl. fees; dorm fee if in a dorm' }, max: 150000, tone: 'housing' },
-      { k: 'food', label: { ja: '食費', en: 'Food' }, max: 80000, tone: 'money' },
-      { k: 'util', label: { ja: '電気・ガス・水道', en: 'Utilities' }, short: { ja: '光熱費', en: 'Utilities' }, max: 40000, tone: 'work' },
-      { k: 'phone', label: { ja: 'スマホ・ネット', en: 'Phone & internet' }, short: { ja: '通信', en: 'Phone' }, max: 20000, tone: 'education' },
-      { k: 'trans', label: { ja: '交通', en: 'Transport' }, max: 40000, tone: 'procedures' },
+      { k: 'rent', label: { ja: '家賃', en: 'Rent' }, hint: { ja: '共益費・管理費は別に足す。寮なら寮費', jr: '管理費があれば足す。寮なら寮費', en: 'Add any building fees; dorm fee if in a dorm' }, max: 150000, tone: 'housing', src: 'rent' },
+      { k: 'food', label: { ja: '食費', en: 'Food' }, max: 80000, tone: 'money', src: 'living' },
+      { k: 'util', label: { ja: '電気・ガス・水道', en: 'Utilities' }, short: { ja: '光熱費', en: 'Utilities' }, max: 40000, tone: 'work', src: 'living' },
+      { k: 'phone', label: { ja: 'スマホ・ネット', en: 'Phone & internet' }, short: { ja: '通信', en: 'Phone' }, max: 20000, tone: 'education', src: 'living' },
+      { k: 'trans', label: { ja: '交通', en: 'Transport' }, hint: { ja: '電車・バス。車は別', jr: '電車・バス。車は別', en: 'Train and bus; a car is extra' }, max: 40000, tone: 'procedures', src: 'living' },
       { k: 'ins', label: { ja: '保険・年金', en: 'Insurance & pension' }, short: { ja: '保険・年金', en: 'Insurance' }, hint: { ja: '国保＋年金。免除なら0に近い', en: 'Health + pension; ~0 if exempt' }, max: 40000, tone: 'consult' },
-      { k: 'other', label: { ja: 'そのほか', en: 'Other' }, hint: { ja: '日用品・服・病院・貯金など', en: 'Goods, clothes, doctor, savings' }, max: 80000, tone: 'neutral' }
+      { k: 'other', label: { ja: 'そのほか', en: 'Other' }, hint: { ja: '日用品・服・病院など', jr: '日用品・服・病院など', en: 'Goods, clothes, doctor' }, max: 80000, tone: 'neutral', src: 'living' },
+      { k: 'fun', label: { ja: '遊び・つきあい', en: 'Fun & friends' }, hint: { ja: '趣味・友だち・推し活など。へらしやすい', jr: '趣味・友だち・推し活など。へらしやすい', en: 'Hobbies, going out, fandom — the easiest to trim' }, max: 80000, tone: 'neutral', src: 'living' }
     ],
     incomes: [
-      { k: 'income', label: { ja: '給料・バイト代（手取り）', en: 'Take-home pay' }, hint: { ja: '税金などを引いたあと', en: 'After tax' }, max: 400000, lesson: 'tedori' },
+      { k: 'income', label: { ja: '給料・バイト代（手取り）', en: 'Take-home pay' }, hint: { ja: '税金などを引いたあと。15万円は例', jr: '税金などを引いたあと。15万円はれい', en: 'After tax. ¥150,000 is an example' }, max: 400000, lesson: 'tedori' },
       { k: 'scholarship', label: { ja: '奨学金・仕送りなど', en: 'Scholarship / other support' }, max: 200000 }
     ],
     /* optional support from 自立支援資金貸付 (see program jiritsu-shikin: 生活費 月5万円 for students, 家賃 up to a local cap) */
     shienAmount: 50000,
     shienId: 'jiritsu-shikin',
     lessons: ['seikatsuhi', 'tedori', 'komattara'],
-    note: { ja: '目安は「ざっくり」の金額です。自分の数字に変えてください。', en: 'Rough numbers. Change them to your own.' }
+    note: { ja: '家賃と生活費は国の統計の平均（千円単位に丸めています）。給料・保険・年金は例。自分の数字に変えてください。', jr: '家賃と生活費は国の統計のへいきん。給料・保険・年金はれい。自分の数字に変えてね。', en: 'Rent and living costs are official averages (rounded to ¥1,000). Pay, insurance and pension are examples. Change them to your own.' }
   };
 
   /* ===================================================================== money simulator: おこづかい・バイト
    * For 中学生 and 高校生. Example numbers only (not statistics) — the reader changes them.
-   * Facts used: 中学生は原則アルバイトできない（労働基準法・年少者）, 東京都の最低賃金 1,280円（2026年10月1日から）
-   * — the same facts and sources as the まなぶ lesson jr-baito-zeikin (SM.data.learnFacts.minWageTokyo). */
+   * Facts used: 中学生は原則アルバイトできない（労働基準法・年少者）; the 最低賃金 of the person's prefecture from SM.data.sim.minWage
+   * (厚生労働省 令和8年度地域別最低賃金; 東京都 1,280円 from 2026-10-01 — the same figure as the まなぶ lesson jr-baito-zeikin /
+   * SM.data.learnFacts.minWageTokyo). `wage` below is the Tokyo fallback plus the example hours. */
   SM.data.simJr = {
     presets: {
       jhs: { label: { ja: '中学生', en: 'Junior high' }, allowance: 2000, gift: 2000, baito: 0, snack: 1500, phone: 0, trans: 0, fun: 1000, school: 500, game: 500 },
@@ -280,15 +333,18 @@
       { k: 'school', label: { ja: '本・学用品', en: 'Books & school things' }, max: 15000, step: 500 },
       { k: 'game', label: { ja: 'ゲーム・課金', en: 'Games & in-app' }, max: 20000, step: 500 }
     ],
-    wage: { yen: 1280, from: '2026-10-01', hours: 4, days: 8 },   // 東京都の最低賃金（厚生労働省）
+    wage: { yen: 1280, from: '2026-10-01', pref: '13', hours: 4, days: 8 },   // 東京都の最低賃金（厚生労働省）; per prefecture: SM.data.sim.minWage
     goal: 30000,
     lessons: ['jr-baito-zeikin', 'jr-koko-okane', 'kyufu-kashitsuke'],
     programs: ['koko-kyufukin', 'tokyo-juken-challenge'],
     note: { ja: '数字は「例」です。自分の数字に変えて使ってください。', jr: '数字は「れい」です。自分の数字に変えてね。', en: 'These are example numbers. Change them to your own.' }
   };
-  /* keep the wage in step with the まなぶ facts when they are loaded later */
+  /* keep the Tokyo wage in step with the まなぶ facts when they are loaded later (both must say the same number) */
   try {
     var mw = SM.data.learnFacts && SM.data.learnFacts.minWageTokyo;
-    if (mw && mw.yen) { SM.data.simJr.wage.yen = mw.yen; SM.data.simJr.wage.from = mw.from || SM.data.simJr.wage.from; }
+    if (mw && mw.yen) {
+      SM.data.simJr.wage.yen = mw.yen; SM.data.simJr.wage.from = mw.from || SM.data.simJr.wage.from;
+      SM.data.sim.minWage['13'] = { yen: mw.yen, from: mw.from || SM.data.sim.minWage['13'].from, prev: mw.prev || SM.data.sim.minWage['13'].prev };
+    }
   } catch (e) { /* ignore */ }
 })();

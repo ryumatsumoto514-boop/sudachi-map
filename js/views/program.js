@@ -307,6 +307,14 @@
         x = ps[i];
         if (isOffice(x) && areasOf(x).indexOf(code) !== -1) return office(x, code);
       }
+      // v8: a ward of a 政令市 (14101) without an office of its own → the city's office (14100), its window for the ward
+      var cityC = SM.matchUtil && SM.matchUtil.cityOf ? SM.matchUtil.cityOf(code) : null;
+      if (cityC && cityC !== code) {
+        for (i = 0; i < ps.length; i++) {
+          x = ps[i];
+          if (isOffice(x) && areasOf(x).indexOf(cityC) !== -1) return office(x, code);
+        }
+      }
     }
     // 2. outside Tokyo, the prefecture's desk record: a window whose 担当 names the place, the desk's number for
     //    町村 residents (as its label says), else the record itself — it lists every city's office
@@ -333,6 +341,9 @@
   function placeName(code) {
     if (!code) return '';
     if (String(code).length === 2) return SM.ui && SM.ui.prefLabel ? SM.ui.prefLabel(code) : '';
+    // v8: a ward of a 政令市 with its city (「横浜市 鶴見区の窓口」; 緑区 alone names four places)
+    var a = SM.area ? SM.area(code) : null;
+    if (a && a.parent && SM.matchUtil && SM.matchUtil.areaFull) return SM.matchUtil.areaFull(code, en());
     return areaName(code);
   }
   function localHtml(p, o) {

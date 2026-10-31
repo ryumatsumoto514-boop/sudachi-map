@@ -27,10 +27,10 @@
       p: 'jukyo-kakuho tokyo-jiritsu-shikin jiritsu-shikin tokyo-sasaeru-jutaku ur-chintai', l: 'yachin seikatsuhi', t: 'money' },
     { id: 'room', q: { ja: '部屋を借りる', en: 'Renting a room' },
       w: '部屋 へや アパート マンション 賃貸 ちんたい 物件 ぶっけん 不動産 ふどうさん 部屋探し 部屋をさがす 部屋を借り 住む所 住むところ 住む場所 すむところ すむばしょ 住まい すまい 住宅 じゅうたく 一人暮らしの部屋 apartment room flat housing landlord',
-      p: 'tokyo-sasaeru-jutaku ur-chintai mimoto-hosho jiritsu-enjo tokyo-jiritsu-start', l: 'yachin keiyaku', t: 'check script', k: 'm-4:erabu m-4:mitsumori' },
+      p: 'tokyo-sasaeru-jutaku ur-chintai mimoto-hosho kanagawa-kyoju-shien-kyogikai kanagawa-kyoju-shien-hojin jiritsu-enjo tokyo-jiritsu-start', l: 'yachin keiyaku', t: 'check script', k: 'm-4:erabu m-4:mitsumori' },
     { id: 'guarantor', q: { ja: '保証人がいない', en: 'No guarantor' },
       w: '保証人 ほしょうにん 保証会社 ほしょうがいしゃ 連帯保証 れんたいほしょう 身元保証 みもとほしょう 保証人がいない 保証人いない 保証人なし guarantor guarantors cosigner co_signer',
-      p: 'mimoto-hosho ur-chintai tokyo-sasaeru-jutaku tokyo-jiritsu-start', l: 'yachin', k: 'm-4:hosho' },
+      p: 'mimoto-hosho ur-chintai tokyo-sasaeru-jutaku kanagawa-kyoju-shien-kyogikai kanagawa-kyoju-shien-hojin tokyo-jiritsu-start', l: 'yachin', k: 'm-4:hosho' },
     { id: 'consent', q: { ja: '親の同意がない', en: 'No parent to sign' },
       w: '親の同意 おやのどうい 親のサイン 同意書 どういしょ 同意なし 同意がない 親なし 親がいない おやがいない 親に頼れない 親を頼れない 親にたよれない 頼れる大人 たよれるおとな 頼れる人がいない 保護者 ほごしゃ 未成年 みせいねん parent_consent parental_consent no_parents',
       p: 'mimoto-hosho b4s-line-soudan sankakusha tokyo-sasaeru-jutaku', l: 'keiyaku', k: 'm-4:hosho' },
@@ -46,8 +46,13 @@
       p: 'sochi-encho jiritsu-enjo yogo-kyoten', k: 'm-12:encho m-12:talk' },
     { id: 'jhome', w: '自立援助ホーム じりつえんじょほーむ 援助ホーム グループホーム ぐるーぷほーむ shelter_home independence_home',
       p: 'jiritsu-enjo sochi-encho' },
-    { id: 'ur', w: 'ur ゆーあーる 公団 こうだん 団地 だんち 公営住宅 こうえいじゅうたく 都営住宅 とえいじゅうたく public_housing',
-      p: 'ur-chintai tokyo-sasaeru-jutaku' },
+    { id: 'ur', w: 'ur ゆーあーる 公団 こうだん 団地 だんち 公営住宅 こうえいじゅうたく 都営住宅 とえいじゅうたく 県営住宅 けんえいじゅうたく 県営 けんえい 市営住宅 しえいじゅうたく 市営 しえい 公営 こうえい public_housing',
+      p: 'kanagawa-kenei-jutaku ur-chintai tokyo-sasaeru-jutaku' },
+    /* v8: 居住支援 outside Tokyo — one prefecture's ids stand for every 都県's version (js/search.js routeIds swaps the
+       prefix: kanagawa-kyoju-shien-kyogikai → saitama-kyoju-shien-kyogikai …; a 都県 without that record drops the line) */
+    { id: 'kyoju-shien', q: { ja: '部屋さがしを手伝ってほしい', en: 'Help finding a room' },
+      w: '居住支援 きょじゅうしえん 居住支援協議会 居住支援法人 住宅セーフティネット セーフティネット住宅 あんしん賃貸 住まいの相談 すまいの相談 住まいサポート すまいサポート 部屋さがし 部屋探しを手伝 手伝ってほしい 大家 おおや 断られ ことわられ 入居を断 審査に落ち housing_support',
+      p: 'kanagawa-kyoju-shien-kyogikai kanagawa-kyoju-shien-hojin tokyo-sasaeru-jutaku mimoto-hosho', l: 'yachin keiyaku', t: 'check' },
 
     /* ------------------------------------------------------------------ お金 */
     { id: 'broke', q: { ja: 'お金がない', en: 'No money' },

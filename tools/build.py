@@ -39,7 +39,34 @@ os.makedirs(os.path.join(DIST, 'js'), exist_ok=True)
 # url() in the stylesheets only point at fonts.gstatic.com, so moving them into one file changes nothing.
 open(os.path.join(DIST, 'css', 'app.css'), 'w', encoding='utf-8').write(bundle(css, '/* ---- %s ---- */\n'))
 # each script ends its own statements; ';' guards against a file ending in an expression.
-open(os.path.join(DIST, 'js', 'app.js'), 'w', encoding='utf-8').write(bundle(js, ';\n/* ---- %s ---- */\n'))
+app_js = bundle(js, ';\n/* ---- %s ---- */\n')
+open(os.path.join(DIST, 'js', 'app.js'), 'w', encoding='utf-8').write(app_js)
+
+# v8: minify the script bundle when terser can be found (node + the terser package, resolved through NODE_PATH or a
+# node_modules next to tools/). Without it the bundle ships as written: same behaviour, ~1.5 MB instead of ~0.9 MB.
+# Only local names are mangled (toplevel off): every file is an IIFE on window.SM, nothing reads function names.
+def minify_js(path):
+    import subprocess, shutil
+    node = shutil.which('node')
+    if not node:
+        print('note: node not found; dist/js/app.js is not minified', file=sys.stderr); return False
+    env = dict(os.environ)
+    extra = [os.path.join(ROOT, 'tools', 'node_modules'), '/opt/node-tools/node_modules']
+    env['NODE_PATH'] = os.pathsep.join([p for p in [env.get('NODE_PATH', '')] + extra if p])
+    script = (
+        "const T=require('terser');const fs=require('fs');const src=fs.readFileSync(process.argv[1],'utf8');"
+        "T.minify(src,{compress:{passes:1,keep_fargs:true},mangle:{toplevel:false},format:{comments:false,ascii_only:false}})"
+        ".then(r=>{if(!r.code)throw new Error('empty');fs.writeFileSync(process.argv[1],r.code);console.log('minified',src.length,'->',r.code.length);})"
+        ".catch(e=>{console.error(String(e));process.exit(2);});")
+    try:
+        r = subprocess.run([node, '-e', script, path], env=env, capture_output=True, text=True, timeout=300)
+    except Exception as e:
+        print('note: minify skipped (%s)' % e, file=sys.stderr); return False
+    if r.returncode != 0:
+        print('note: terser not available or failed (%s); dist/js/app.js is not minified' % r.stderr.strip().splitlines()[-1:] , file=sys.stderr); return False
+    print(r.stdout.strip()); return True
+if os.environ.get('SM_NO_MINIFY') != '1':
+    minify_js(os.path.join(DIST, 'js', 'app.js'))
 
 # Build id: a hash of every file the app can load. index.html's head gate exposes it as window.__smV and every
 # lazy file is requested as file?v=<id>; the bundles get the same query. The host caches files for a year, so a

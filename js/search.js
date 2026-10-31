@@ -273,7 +273,9 @@
     return p.basis === 'local' ? '13' : null;
   }
   // national schemes each 都県 runs as its own program (program.js shows the person's version the same way)
-  var VERSIONED = { 'jiritsu-shikin': 1, 'saposute': 1 };
+  var VERSIONED = { 'jiritsu-shikin': 1, 'saposute': 1,
+    // v8: one record per 都県 (data/programs-housing-kanto.js); routeIds swaps the prefix, a 都県 without one drops the line
+    'kenei-jutaku': 1, 'kyoju-shien-kyogikai': 1, 'kyoju-shien-hojin': 1 };
   var PREF_SLUG = { '08': 'ibaraki', '09': 'tochigi', '10': 'gunma', '11': 'saitama', '12': 'chiba', '13': 'tokyo', '14': 'kanagawa' };
   function kindLabel(k) {
     return ({ grant: '給付 もらえる お金 grant', loan: '貸付 借りる loan', loan_forgivable: '貸付 返さなくていい場合 loan',
@@ -379,10 +381,21 @@
   function areaDocs() {
     var counts = {}, P = SM.data.programs || [];
     P.forEach(function (p) { (p.locations || []).forEach(function (l) { if (l && l.area) counts[l.area] = (counts[l.area] || 0) + 1; }); });
+    // v8: a ward's count is what #/map/<ward> lists — the ward's own offices plus the city-wide ones; a 政令市 counts its
+    // wards' offices too (the map folds them into the city)
+    var cityOf = SM.matchUtil && SM.matchUtil.cityOf ? SM.matchUtil.cityOf : null;
+    var countFor = function (a) {
+      var n = counts[a.code] || 0;
+      if (!cityOf) return n;
+      if (a.parent) n += counts[String(a.parent)] || 0;
+      else Object.keys(counts).forEach(function (c) { if (c !== a.code && cityOf(c) === a.code) n += counts[c]; });
+      return n;
+    };
     return (SM.data.areas || []).map(function (a) {
       return mkDoc('area', a.code, {
-        title: { ja: a.name + 'の窓口', en: a.en + ' — places' }, href: '#/map/' + a.code, cat: null, prior: -2,
-        rec: { area: a, count: counts[a.code] || 0 }, areas: [a.code],
+        title: { ja: (a.parent && SM.matchUtil && SM.matchUtil.areaFull ? SM.matchUtil.areaFull(a.code, false) : a.name) + 'の窓口',
+          en: (a.parent && SM.matchUtil && SM.matchUtil.areaFull ? SM.matchUtil.areaFull(a.code, true) : a.en) + ' — places' }, href: '#/map/' + a.code, cat: null, prior: -2,
+        rec: { area: a, count: countFor(a) }, areas: [a.code],
         ja: [a.name + ' ' + a.kana, '', '窓口 マップ 地図 場所', '', ''],
         en: [a.en + ' ' + (a.type === 'ku' ? 'ward city' : 'city town village'), '', 'map place office', '', '']
       });
@@ -477,7 +490,7 @@
       var en = a.en ? a.en.toLowerCase().replace(/[^a-z]/g, '') : '';
       return { code: a.code, name: norm(a.name), bare: bare.length >= 2 && !amb ? norm(bare) : null,
         kana: kana.length >= 4 ? kana : null, kanaBare: kanaBare.length >= 3 && !amb ? kanaBare : null,
-        en: en && !PEN[en] && !twin ? stem(en) : null };
+        en: en && !PEN[en] && !twin ? stem(en) : null, ward: !!a.parent, city: a.parent ? String(a.parent) : null };
     });
     PREFS.forEach(function (pr) {
       if (!pr) return;
@@ -777,6 +790,12 @@
       if (named[d.id]) s += pureArea ? 50 : 20;
       else s -= 40;
       if (ctx.area === d.id) s += 2;
+      // v8: 「横浜市 緑区」 names the ward of that city, not the other three 緑区; a ward named with its city beats the city
+      var wa = d.rec && d.rec.area;
+      if (wa && wa.parent) {
+        if (named[String(wa.parent)]) s += 12;
+        else if (Object.keys(named).some(function (k) { var ka = SM.area ? SM.area(k) : null; return k !== d.id && isCity(k) && ka && !ka.parent && k !== String(wa.parent); })) s -= 25;
+      }
     }
     return s;
   }
@@ -837,7 +856,18 @@
     var placeWords = [], placeCodes = [];
     hits.forEach(function (h) {
       if (!h.c.a) return;
-      placeCodes = placeCodes.concat(splitWords(h.c.a));
+      var codes = splitWords(h.c.a);
+      // v8: the word is a ward of that city in data/areas.js (鶴見区 → 14101): the ward is named, and its city with it
+      var wards = [];
+      h.words.forEach(function (w) {
+        var nw = norm(w);
+        AREA_NAMES.forEach(function (a) {
+          if (!a.ward || codes.indexOf(a.city) === -1) return;
+          if (nw === a.name || nw === a.bare || nw === a.kana || nw === a.kanaBare) { if (wards.indexOf(a.code) === -1) wards.push(a.code); }
+        });
+      });
+      h.codes = wards.length ? wards : codes;
+      placeCodes = placeCodes.concat(codes).concat(wards);
       placeWords = placeWords.concat(h.words);
     });
     var nPlace = n, chunksPlace = chunks;
@@ -863,13 +893,16 @@
 
     var boost = {};
     var addB = function (key, v) { boost[key] = (boost[key] || 0) + v; };
+    // v8: a named place's map always passes the text gate (a two-character ward name — 緑区, 西区, 北区 — scores
+    // under it once 「の窓口」 follows; the place itself is the answer)
+    Object.keys(named).forEach(function (code) { if (BYKEY['area:' + code]) addB('area:' + code, 1); });
     // v7: a query that names places in ONE prefecture (「横浜 家賃」) is about that prefecture, wherever the person lives
     var anyNamedQ = false, nPrefs = {};
     Object.keys(named).forEach(function (c) { anyNamedQ = true; var pf = prefOf(c); if (pf) nPrefs[pf] = 1; });
     var nPrefList = Object.keys(nPrefs);
     var rctx = nPrefList.length === 1 ? { area: nPrefList[0], junior: ctx.junior, adult: ctx.adult, lang: ctx.lang } : ctx;
     // a lexicon place word (港北区, 大宮) brings up the map of its city like the city's own name does
-    hits.forEach(function (h) { if (h.c.a) splitWords(h.c.a).forEach(function (code) { addB('area:' + code, 40); }); });
+    hits.forEach(function (h) { if (h.c.a) (h.codes || splitWords(h.c.a)).forEach(function (code) { addB('area:' + code, 40); }); });
     hits.forEach(function (h) {
       var c2 = h.c, s = h.s * c2.weight;
       if (c2.young && ctx.adult) s *= 0.4;

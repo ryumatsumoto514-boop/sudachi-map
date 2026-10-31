@@ -274,7 +274,7 @@
     var count = '<span class="ask-count"><span class="ask-count-v" data-g="' + g + '" data-n="' + list.length + '">' + list.length + '</span><span class="unit">' + esc(t('ask.unit')) + '</span></span>';
     return '<section class="ask-group" data-g="' + g + '" aria-labelledby="ask-g-' + g + '">' +
       SM.ui.sectionHeader(t('ask.g.' + g), { level: 2, id: 'ask-g-' + g, action: count, reveal: false, cls: 'ask-gh' }) +
-      '<div class="' + wrap + ' ask-rows">' + rows(shown) + '</div>' +
+      '<div class="' + wrap + ' ask-rows" data-reveal-stagger="40">' + rows(shown) + '</div>' +
       (rest.length ? '<div class="' + wrap + ' ask-rows ask-rest" id="ask-rest-' + g + '"' + (isOpen ? '' : ' hidden') + '>' + rows(rest) + '</div>' +
         '<button type="button" class="ask-more" data-act="ask-more" data-g="' + g + '" aria-controls="ask-rest-' + g + '" aria-expanded="' + (isOpen ? 'true' : 'false') + '">' +
           '<span>' + esc(isOpen ? t('ask.less') : t('ask.more', { n: rest.length })) + '</span>' + SM.ui.arrow(isOpen ? 'up' : 'down') + '</button>' : '') +
@@ -379,6 +379,8 @@
     out.innerHTML = res ? resultsHtml(res) : startHtml();
     out.classList.toggle('is-empty', !res);
     try { SM.applyRuby(out); } catch (e) { }
+    // rows below the fold rise with the scroll (the scroll layer); what is on screen is animateIn's
+    if (res && !o.instant && !o.silent && M() && M().mount) { try { M().mount(out, { scrollOnly: true }); } catch (e) { } }
 
     var shown = {}, groups = {};
     Array.prototype.forEach.call(out.querySelectorAll('.ask-rows > [data-key]'), function (el) { shown[el.getAttribute('data-key')] = 1; });
@@ -414,7 +416,7 @@
     // rows that were not on screen before cascade; rows that stay never move
     var i = 0;
     Array.prototype.forEach.call(out.querySelectorAll('.ask-rows:not([hidden]) > [data-key]'), function (el) {
-      if (p.prevShown[el.getAttribute('data-key')]) return;
+      if (p.prevShown[el.getAttribute('data-key')] || el.classList.contains('m-pending')) return;
       el.classList.add('is-new');
       anim(el, [{ opacity: 0, transform: 'translateY(12px)' }, { opacity: 1, transform: 'none' }],
         { duration: 380, easing: ENTER, delay: 60 + Math.min(i++, 8) * 30, key: 'in' });

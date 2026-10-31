@@ -381,7 +381,7 @@
     var art = cover(l, { vt: true });
     return '<section class="ln-feature band" data-vt-scope data-id="feature:' + esc(l.id) + '" aria-labelledby="ln-feature-h" data-reveal>' +
       '<p class="ln-feature-k">' + esc(key) + '</p>' +
-      (art ? '<a class="ln-feature-art" href="' + esc(lessonHref(l)) + '" tabindex="-1" aria-hidden="true">' + art + '</a>' : '') +
+      (art ? '<a class="ln-feature-art" href="' + esc(lessonHref(l)) + '" tabindex="-1" aria-hidden="true" data-parallax="0.04">' + art + '</a>' : '') +
       '<div class="ln-feature-main">' +
         '<h2 class="ln-feature-h" id="ln-feature-h">' + esc(L(l.title)) + '</h2>' +
         '<p class="ln-meta"><span class="ln-min num">' + esc(t('ln.min', { n: l.minutes || 2 })) + '</span></p>' +
@@ -960,7 +960,12 @@
     var st = calcState(s, idx), r = budgetCalc(st);
     var sim = SM.data.sim || {}, presets = sim.presets || {};
     var pk = Object.keys(presets);
-    var segHtml = pk.length > 1 ? '<div class="ln-field ln-field-seg"><p class="ln-field-l" id="ln-pl' + idx + '">' + esc(t('ln.c.place')) + '</p>' +
+    // v8 (MONEY): SM.data.sim.presets now holds the 8 Kanto places, too many for joined segments → a native select
+    var segHtml = pk.length > 4 ? '<div class="ln-field ln-field-seg"><label class="ln-field-l" for="ln-pl' + idx + '">' + esc(t('ln.c.place')) + '</label>' +
+      '<select class="select" id="ln-pl' + idx + '" data-act="ln-preset" data-idx="' + idx + '">' + pk.map(function (k) {
+        return '<option value="' + esc(k) + '"' + (st.preset === k ? ' selected' : '') + '>' + esc(L(presets[k].label)) + '</option>';
+      }).join('') + '</select></div>' :
+    pk.length > 1 ? '<div class="ln-field ln-field-seg"><p class="ln-field-l" id="ln-pl' + idx + '">' + esc(t('ln.c.place')) + '</p>' +
       SM.ui.seg(pk.map(function (k) { return { label: L(presets[k].label), value: k, pressed: st.preset === k }; }), { act: 'ln-preset' })
         .replace('role="group"', 'role="group" aria-labelledby="ln-pl' + idx + '"').replace(/data-act="ln-preset"/g, 'data-act="ln-preset" data-idx="' + idx + '"') + '</div>' : '';
     var rows = r.items.map(function (x) { return legend('none', L(x.label), yen(x.value), 'k-' + x.k); }).join('');
@@ -1187,11 +1192,11 @@
   SM.on('ln-preset', function (el) {
     var idx = +el.getAttribute('data-idx'), st = S.calc[idx];
     var presets = (SM.data.sim || {}).presets || {};
-    var k = el.getAttribute('data-value');
+    var k = el.nodeName === 'SELECT' ? el.value : el.getAttribute('data-value');   // v8 (MONEY): select or segments
     if (!st || !presets[k]) return;
     st.preset = k;
     st.rent = num(presets[k].rent, st.rent);
-    each(el.parentNode.querySelectorAll('button'), function (b) { b.setAttribute('aria-pressed', b === el ? 'true' : 'false'); });
+    if (el.nodeName !== 'SELECT') each(el.parentNode.querySelectorAll('button'), function (b) { b.setAttribute('aria-pressed', b === el ? 'true' : 'false'); });
     syncField(idx, 'rent', st.rent);
     updateCalc(idx);
   });

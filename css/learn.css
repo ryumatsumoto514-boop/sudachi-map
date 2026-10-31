@@ -387,6 +387,7 @@ body.is-big .v-learn .ln-opts { gap: 16px; }
 .v-learn .ln-field .help { margin-top: -2px; }
 .v-learn .ln-field-seg { gap: 10px; }
 .v-learn .ln-field-seg .seg { max-width: 24rem; }
+.v-learn .ln-field-seg .select { max-width: 24rem; }   /* v8 (MONEY): the 8 Kanto presets as a select */
 .v-learn .ln-slider { position: relative; height: 36px; }
 .v-learn .ln-slider-track { position: absolute; left: 0; right: 0; top: 16px; height: 4px; background: var(--paper-3); overflow: hidden; pointer-events: none; }
 .v-learn .ln-slider-track > i {

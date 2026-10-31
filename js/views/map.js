@@ -56,6 +56,12 @@
     'map.g.tama': { ja: '多摩', en: 'Tama' },
     'map.g.islands': { ja: '島しょ', en: 'Islands' },
     'map.groups': { ja: '地域', en: 'Region' },
+    /* v8 (WARDS): 都県 → 市 → 区 for 横浜・川崎・相模原・さいたま・千葉 */
+    'map.cityAll': { ja: '{name}ぜんぶ', en: 'All of {name}' },
+    'map.cityAllSub': { ja: '区はまだ決めていない', jr: '区はまだ決めていない', en: 'Ward not decided' },
+    'map.cityWards': { ja: '{name}の区', en: 'Wards of {name}' },
+    'map.wardsHint': { ja: '区をえらぶ', en: 'wards' },
+    'map.toCities': { ja: '{name}の市・町・村にもどる', en: 'Back to cities in {name}' },
     'map.noHit': { ja: '見つかりません。ひらがなや、ちがう書き方でためしてね。', en: 'No match. Try another spelling.' },
     'map.catAll': { ja: 'すべて', en: 'All' },
     'map.catJisou': { ja: '児童相談所', en: 'Child guidance centres' },
@@ -75,6 +81,7 @@
     'map.count': { ja: '{n}か所', en: '{n} places' },
     'map.unit': { ja: 'か所', en: 'places' },
     'map.inArea': { ja: '{name}の中', en: 'In {name}' },
+    'map.inWard': { ja: '{ward}と{city}で使える', jr: '{ward}と{city}で使える', en: 'For {ward} and all of {city}' },
     'map.near': { ja: '近くの区市町村', en: 'Nearby areas' },
     'map.nearSub': { ja: '近い順。{name}に住んでいても使えます', en: 'Closest first. You can use these from {name} too' },
     'map.allList': { ja: '関東の場所', en: 'Places in Kanto' },
@@ -177,7 +184,28 @@
   function isCode(c) { return isCity(c) || isPrefCode(c); }
   function prefOfCode(c) { return typeof c === 'string' && /^\d{2}(\d{3})?$/.test(c) ? c.slice(0, 2) : null; }
   /* the name of what a code shows: 練馬区 / 横浜市 / 神奈川県 ('' when unknown) */
-  function placeName(code) { return isPrefCode(code) ? prefName(code) : areaName(areaBy(code)); }
+  function placeName(code) { return isPrefCode(code) ? prefName(code) : isKu(code) ? fullName(code) : areaName(areaBy(code)); }
+  /* v8 (WARDS): a ward of a 政令市 is the only area entry with a parent (data/areas.js); its full name carries the city
+     (横浜市 鶴見区 — 緑区 alone is one of four) */
+  function isKu(code) { var a = areaBy(code); return !!(a && a.parent); }
+  function cityOf(code) { var a = areaBy(code); return a ? (a.parent ? String(a.parent) : a.code) : null; }
+  function wardsOf(city) { return areas().filter(function (a) { return a.parent === city; }); }
+  function hasWards(city) { return !!city && wardsOf(city).length > 0; }
+  function fullName(code) {
+    var a = areaBy(code), c = a && a.parent ? areaBy(a.parent) : null;
+    if (!a) return '';
+    if (!c) return areaName(a);
+    return lang() === 'en' ? areaName(a) + ', ' + areaName(c) : areaName(c) + ' ' + areaName(a);
+  }
+  /* does an office placed in locArea belong to the chosen code? A ward lists its own and its city's offices; a city
+     lists its own and those placed in one of its wards */
+  function inArea(locArea, code) {
+    if (!locArea || !code) return false;
+    if (locArea === code) return true;
+    if (isKu(code)) return locArea === cityOf(code);
+    return isKu(locArea) && cityOf(locArea) === code;
+  }
+  function wardZ() { return (SM.mapStyle && SM.mapStyle.wardZoom) || 9.6; }
   /* the person's prefecture first, then 東京 · 神奈川 · 埼玉 · 千葉 · 茨城 · 栃木 · 群馬 */
   function prefOrder() {
     var m = prefOfCode(mineCode()), out = m ? [m] : [];
@@ -347,7 +375,7 @@
   function pinRecords() { return inScope(S.code).filter(function (r) { return r.hasGeo && catMatch(r); }); }
   function centerOf(code) {
     var g = geo();
-    var l0 = g && ((g.labels && g.labels[code]) || (g.prefLabels && g.prefLabels[code]));
+    var l0 = g && ((g.labels && g.labels[code]) || (g.wardLabels && g.wardLabels[code]) || (g.prefLabels && g.prefLabels[code]));
     if (l0 && g.unproject) { var l = l0; return g.unproject(l[0], l[1]); }
     var a = areaBy(code);
     return a && a.lat ? { lat: a.lat, lng: a.lng } : null;
@@ -442,7 +470,7 @@
     /* v7: one count everywhere — the places INSIDE the chosen area (the list head 「横浜市の中 26か所」 and the
        関東 index row say the same number); a topic with places only nearby keeps its chip, at 0 */
     var isPfC = isPrefCode(S.code);
-    var inside = function (r) { return !S.code || (isPfC ? prefOfCode(r.loc.area) === S.code : r.loc.area === S.code); };
+    var inside = function (r) { return !S.code || (isPfC ? prefOfCode(r.loc.area) === S.code : inArea(r.loc.area, S.code)); };
     var counts = {}, seen = {};
     scope.forEach(function (r) { var k = fcat(r); seen[k] = 1; if (inside(r)) counts[k] = (counts[k] || 0) + 1; });
 
@@ -551,8 +579,27 @@
   /* the map frame. GL ready: an empty slot the live map moves into. Otherwise: the SVG (placeholder while
      MapLibre loads, or the v3 fallback map) + the loading line. Furniture (zoom, scale, credit) is shared. */
   /* the SVG's box of a code: a 区市町村's, or a prefecture's */
-  function boxOf(code) { var g = geo(); return code && g ? ((g.boxes && g.boxes[code]) || (g.prefBoxes && g.prefBoxes[code]) || null) : null; }
-  function selPath(code) { var g = geo(); return code && g ? (g.paths[code] || (g.prefs && g.prefs[code]) || '') : ''; }
+  function boxOf(code) { var g = geo(); return code && g ? ((g.boxes && g.boxes[code]) || (g.wardBoxes && g.wardBoxes[code]) || (g.prefBoxes && g.prefBoxes[code]) || null) : null; }
+  function selPath(code) { var g = geo(); return code && g ? (g.paths[code] || (g.wards && g.wards[code]) || (g.prefs && g.prefs[code]) || '') : ''; }
+  /* v8: the ward lines inside the five 政令市 (geo-kanto.js: g.wards), drawn as thin inner lines that taps go through,
+     and the chosen ward as a tinted path over its city */
+  var WLINE = 'fill:none;stroke:var(--m-border);stroke-width:1px;stroke-dasharray:2 2;stroke-linejoin:round;vector-effect:non-scaling-stroke;pointer-events:none;opacity:.8';
+  function wardLines(vb, m) {
+    var g = geo(), out = ''; if (!g || !g.wards) return '';
+    Object.keys(g.wards).forEach(function (c) {
+      var bx = g.wardBoxes && g.wardBoxes[c];
+      if (vb && bx && (bx[0] > vb[0] + vb[2] + m || bx[0] + bx[2] < vb[0] - m || bx[1] > vb[1] + vb[3] + m || bx[1] + bx[3] < vb[1] - m)) return;
+      out += '<path class="m-wline" data-code="' + c + '" style="' + WLINE + '" d="' + g.wards[c] + '"/>';
+    });
+    return out;
+  }
+  function wardSelPath() { var g = geo(); return g && g.wards && isKu(S.code) && g.wards[S.code] ? '<path class="m-ward is-sel m-ward-k" data-code="' + S.code + '" d="' + g.wards[S.code] + '"/>' : ''; }
+  // the chosen ward's path in a drawn SVG follows S.code (another ward's goes, this one's is added over its city)
+  function svgWardK(sv) {
+    var w = sv && sv.querySelector('.m-wards'); if (!w) return;
+    Array.prototype.forEach.call(w.querySelectorAll('.m-ward-k'), function (p) { if (p.getAttribute('data-code') !== S.code) p.parentNode.removeChild(p); });
+    if (!w.querySelector('.m-ward-k')) { var add = wardSelPath(); if (add) w.insertAdjacentHTML('beforeend', add); }
+  }
   function wardPaths(vb, m) {
     var g = geo(), out = '';
     Object.keys(g.paths).forEach(function (c) {
@@ -586,7 +633,10 @@
     var have = {}; Array.prototype.forEach.call(w.querySelectorAll('.m-ward'), function (p) { have[p.getAttribute('data-code')] = 1; });
     var g = geo(), add = '';
     Object.keys(g.paths).forEach(function (c) { if (!have[c]) add += '<path class="m-ward' + (c === S.code ? ' is-sel' : '') + '" data-code="' + c + '" d="' + g.paths[c] + '"/>'; });
+    if (!w.querySelector('.m-ward-k')) add += wardSelPath();
     if (add) w.insertAdjacentHTML('beforeend', add);
+    var wl = root.querySelector('.m-svg .m-wlines');
+    if (wl && !wl.firstChild) wl.innerHTML = wardLines(null, 0);
     var se = root.querySelector('.m-svg .m-sel'); if (se && S.code) se.setAttribute('d', selPath(S.code));
   }
   function mapShellHtml() {
@@ -602,7 +652,8 @@
       svg = '<div class="m-svgwrap' + (ph ? ' is-ph' : '') + '">' +
         '<svg class="m-svg" viewBox="' + esc(phViewBox()) + '" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">' +
           '<g class="m-prefs">' + prefPaths() + '</g>' +
-          '<g class="m-wards">' + paths + '</g>' +
+          '<g class="m-wards">' + paths + wardSelPath() + '</g>' +
+          '<g class="m-wlines">' + wardLines(vb, m) + '</g>' +
           (ph ? '' : '<path class="m-water" d="' + svgWater(g) + '"/>') +
           '<path class="m-mine" d=""/>' +
           '<path class="m-sel" d="' + selPath(S.code) + '"/>' +
@@ -779,7 +830,7 @@
   function listHtml(roll, first, part) {
     var U = ui();
     var a = S.code ? { name: placeName(S.code) } : null, isPf = isPrefCode(S.code);
-    var inSel = function (r) { return isPf ? prefOfCode(r.loc.area) === S.code : r.loc.area === S.code; };
+    var inSel = function (r) { return isPf ? prefOfCode(r.loc.area) === S.code : inArea(r.loc.area, S.code); };
     var list = inScope(S.code).filter(catMatch);
     var html = '';
     var note = jrOn() ? '<p class="m-jrnote">' + esc(t('map.jrNote')) + '</p>' : '';
@@ -791,13 +842,21 @@
 
     if (a) {
       var inA = list.filter(inSel).sort(byCat);
+      // v8: in a ward, what is really in the ward (its own office, an address or name naming it) comes first
+      var wardA = isKu(S.code) ? areaBy(S.code) : null;
+      if (wardA) {
+        var wn = wardA.name;
+        var own = function (r) { return r.loc.area === S.code || String(r.loc.address || '').indexOf(wn) !== -1 || String(r.loc.name || '').indexOf(wn) !== -1 ? 0 : 1; };
+        inA = inA.map(function (r, i) { return { r: r, i: i }; }).sort(function (x, y) { return (own(x.r) - own(y.r)) || (x.i - y.i); }).map(function (x) { return x.r; });
+      }
+      var inTitle = wardA ? t('map.inWard', { ward: areaName(wardA), city: areaName(areaBy(cityOf(S.code))) }) : t('map.inArea', { name: a.name });
       var c = centerOf(S.code);
       var others = list.filter(function (r) { return !inSel(r); }).map(function (r) {
         return { r: r, d: (c && r.hasLL) ? km(c.lat, c.lng, r.loc.lat, r.loc.lng) : null };
       }).sort(function (x, y) { return (x.d == null ? 1e9 : x.d) - (y.d == null ? 1e9 : y.d); });
       if (part !== 'rest') {
         // the 中学生 note under the count (the sheet's peek shows 「練馬区の中 N か所」 first)
-        html += '<section class="m-group" aria-labelledby="m-g1">' + head('01', t('map.inArea', { name: a.name }), inA.length, null, roll).replace('<h2 class="section-title"', '<h2 class="section-title" id="m-g1"') + note;
+        html += '<section class="m-group" aria-labelledby="m-g1">' + head('01', inTitle, inA.length, null, roll).replace('<h2 class="section-title"', '<h2 class="section-title" id="m-g1"') + note;
         if (inA.length) html += '<div class="m-locs">' + (first ? inA.slice(0, 1) : inA).map(function (r) { return rowHtml(r, null); }).join('') + '</div>';
         else html += U.callout(esc(t('map.noneInArea', { name: a.name })) + ' <a href="#/find/cat/consult">' + esc(t('map.toConsult')) + '</a>', 'info');
         html += '</section>';
@@ -817,7 +876,7 @@
       // once an area is picked
       // a row's number = what opening that area lists under 「〇〇の中」: its places a resident there can use
       var ag = {};
-      list.forEach(function (r) { var k = r.loc.area || 'zz'; if (k !== 'zz' && !eligible(r.p, k)) return; (ag[k] = ag[k] || []).push(r); });
+      list.forEach(function (r) { var k = r.loc.area || 'zz'; if (isKu(k)) k = cityOf(k); if (k !== 'zz' && !eligible(r.p, k)) return; (ag[k] = ag[k] || []).push(r); });
       var picked = S.focus ? list.filter(function (r) { return r.key === S.focus; })[0] : null;
       html += note;
       if (picked) html += '<section class="m-group">' + head('', t('map.picked'), null) + '<div class="m-locs">' + rowHtml(picked, null) + '</div></section>';
@@ -841,7 +900,7 @@
     } else {
       // all of 関東, every place as a row (opt-in): grouped by 区市町村, prefectures in prefOrder(), codes in order
       var groups = {}, order = [], po = prefOrder();
-      list.forEach(function (r) { var k = r.loc.area || 'zz'; if (!groups[k]) { groups[k] = []; order.push(k); } groups[k].push(r); });
+      list.forEach(function (r) { var k = r.loc.area || 'zz'; if (isKu(k)) k = cityOf(k); if (!groups[k]) { groups[k] = []; order.push(k); } groups[k].push(r); });
       var rank = function (k) { var i = po.indexOf(String(k).slice(0, 2)); return (i < 0 ? 9 : i) + ':' + k; };
       order.sort(function (x, y) { return rank(x) < rank(y) ? -1 : rank(x) > rank(y) ? 1 : 0; });
       html += note + '<section class="m-group">' + head('01', t('map.allList'), list.length);
@@ -949,6 +1008,7 @@
   }
   function recArea(r) {
     var P = areaPts(), c = r.loc.area;
+    if (c && isKu(c)) c = cityOf(c);   // v8: an office in 鶴見区 stands under the 横浜市 chip
     if (c && P[c]) return c;
     var best = null, bd = 1e9;
     for (var k in P) { var d = Math.pow(P[k][0] - r.loc.lng, 2) + Math.pow(P[k][1] - r.loc.lat, 2); if (d < bd) { bd = d; best = k; } }
@@ -1470,9 +1530,7 @@
       var asked = wardAskOpen();
       wardAskClose();
       if (map.getZoom() >= 12.5) return;
-      var f = null;
-      try { f = map.queryRenderedFeatures(e.point, { layers: ['area-sel'] })[0]; } catch (x) { f = null; }
-      var code = f && f.properties && f.properties.code;
+      var code = areaAtPoint(map, e.point);
       if (!code || !isCode(code)) return;
       if (code === S.code || code === asked) return;
       /* a finger's tap only asks (a near miss next to a flag must not swap the user's area, the list and the URL):
@@ -1510,9 +1568,7 @@
         if (!ev || map.isMoving() || map.getZoom() >= 12.5) { tip.classList.remove('is-show'); canvas.style.cursor = ''; return; }
         var tg = ev.originalEvent && ev.originalEvent.target;
         if (tg && tg.closest && tg.closest('.m-pin')) { tip.classList.remove('is-show'); return; }
-        var f = null;
-        try { f = map.queryRenderedFeatures(ev.point, { layers: ['area-sel'] })[0]; } catch (x) { f = null; }
-        var a = f && areaBy(f.properties && f.properties.code);
+        var a = areaBy(areaAtPoint(map, ev.point));
         if (!a) { tip.classList.remove('is-show'); canvas.style.cursor = ''; return; }
         tip.textContent = areaName(a);
         tip.style.transform = 'translate(' + Math.round(ev.point.x) + 'px,' + Math.round(ev.point.y - 14) + 'px) translate(-50%,-100%)';
@@ -1526,6 +1582,19 @@
     map.on('style.load', function () { try { SM.mapStyle.select(map, GL.drawCode); } catch (e) { } });
   }
 
+  /* the 区市町村 under a point — v8: inside a 政令市 (the map zoomed to it, or it / one of its wards chosen) the ward */
+  function areaAtPoint(map, pt) {
+    var f = null;
+    try { f = map.queryRenderedFeatures(pt, { layers: ['area-sel'] })[0]; } catch (x) { f = null; }
+    var code = f && f.properties && f.properties.code;
+    if (code && hasWards(code) && map.getLayer('ward-sel') && (map.getZoom() >= wardZ() || cityOf(S.code) === code)) {
+      var wf = null;
+      try { wf = map.queryRenderedFeatures(pt, { layers: ['ward-sel'] })[0]; } catch (x) { wf = null; }
+      var wc = wf && wf.properties && wf.properties.code;
+      if (wc && isKu(wc)) code = wc;
+    }
+    return code || null;
+  }
   /* -------- a tapped area asks before it is chosen (both engines): the area lights up (tint + outline) and an ink
      button 「文京区を見る →」 stands at the tap, its notch on the finger's point. It goes after 4s, on any camera
      move, on the next tap, or when the area changes; only the button chooses (setArea). */
@@ -1534,7 +1603,7 @@
   function wardHov(code, on, svg) {
     if (!code) return;
     if (svg) { var w = V.svg && V.svg.querySelector('.m-ward[data-code="' + code + '"]'); if (w) w.classList.toggle('is-hov', on); return; }
-    if (GL.map) { try { GL.map.setFeatureState({ source: 'areas', id: code }, { hov: on }); } catch (e) { } }
+    if (GL.map) { try { GL.map.setFeatureState({ source: isKu(code) ? 'kWards' : 'areas', id: code }, { hov: on }); } catch (e) { } }
   }
   function wardAskClose() {
     clearTimeout(ASK.t); ASK.t = 0;
@@ -2193,7 +2262,7 @@
     }
   }
   /* a label's point: a 区市町村's, or (zoomed far out) a prefecture's */
-  function labelPt(c) { var g = geo(); return (g.labels && g.labels[c]) || (g.prefLabels && g.prefLabels[c]) || null; }
+  function labelPt(c) { var g = geo(); return (g.labels && g.labels[c]) || (g.wardLabels && g.wardLabels[c]) || (g.prefLabels && g.prefLabels[c]) || null; }
   function svgLabels() {
     var g = geo(); if (!V.labels || !V.vb) return;
     var s = svgBoxSize(), scale = s.w / V.vb[2], placed = [], html = '';
@@ -2209,14 +2278,19 @@
       return;
     }
     var codes = Object.keys(g.labels);
-    codes.sort(function (a, b) { return (b === S.code) - (a === S.code) || (g.boxes[b][2] * g.boxes[b][3]) - (g.boxes[a][2] * g.boxes[a][3]); });
+    // v8: zoomed to a 政令市 (≈ 110 km across or less) its wards are named and its own name steps back
+    var wardsIn = g.wardLabels && V.vb[2] < 140 ? Object.keys(g.wardLabels) : [], hideCity = {};
+    wardsIn.forEach(function (c) { hideCity[cityOf(c)] = 1; });
+    if (wardsIn.length) codes = codes.filter(function (c) { return !hideCity[c] || c === S.code; }).concat(wardsIn);
+    var area2 = function (c) { var b = boxOf(c); return b ? b[2] * b[3] : 0; };
+    codes.sort(function (a, b) { return (b === S.code) - (a === S.code) || area2(b) - area2(a); });
     codes.forEach(function (c) {
-      var ar = areaBy(c); if (!ar) return;
+      var ar = areaBy(c), bx = boxOf(c), lp = labelPt(c); if (!ar || !bx || !lp) return;
       var nm = areaName(ar), sel = c === S.code;
-      var bw = g.boxes[c][2] * scale;
+      var bw = bx[2] * scale;
       var lw = sel ? (lang() === 'en' ? nm.length * 8.5 : nm.length * 14) + 8 : (lang() === 'en' ? nm.length * 6.5 : nm.length * 12) + 6, lh = sel ? 22 : 16;
       if (!sel && bw < lw * 1.1) return;
-      var p = toPx(g.labels[c][0], g.labels[c][1]);
+      var p = toPx(lp[0], lp[1]);
       if (p[0] < -40 || p[1] < -20 || p[0] > s.w + 40 || p[1] > s.h + 20) return;
       var rect = [p[0] - lw / 2, p[1] - lh / 2, lw, lh];
       for (var i = 0; i < placed.length; i++) { var q = placed[i]; if (rect[0] < q[0] + q[2] && rect[0] + rect[2] > q[0] && rect[1] < q[1] + q[3] && rect[1] + rect[3] > q[1]) return; }
@@ -2252,6 +2326,7 @@
   function svgPaint(draw) {
     if (!V.svg) return;
     var g = geo(), mine = mineCode();
+    svgWardK(V.svg);
     Array.prototype.forEach.call(V.svg.querySelectorAll('.m-ward'), function (el) {
       var c = el.getAttribute('data-code');
       el.classList.toggle('is-sel', c === S.code);
@@ -2771,6 +2846,7 @@
       var sv = S.root.querySelector('.m-svgwrap.is-ph .m-svg');
       if (sv) {
         sv.setAttribute('viewBox', phViewBox());
+        svgWardK(sv);
         Array.prototype.forEach.call(sv.querySelectorAll('.m-ward'), function (p) { p.classList.toggle('is-sel', p.getAttribute('data-code') === S.code); });
         var se = sv.querySelector('.m-sel'); if (se) se.setAttribute('d', selPath(S.code));
       }
@@ -2853,6 +2929,9 @@
     var U = ui(), mine = mineCode();
     var g0 = groupOf(S.code) || groupOf(mine) || '23ku';
     var p0 = prefOfCode(S.code) || prefOfCode(mine) || '13';
+    // v8: a chosen ward (or a 政令市) opens on that city's wards
+    var cityPane = function (c) { return isKu(c) ? cityOf(c) : hasWards(c) ? c : null; };
+    var c0 = cityPane(S.code) || (p0 === prefOfCode(mine) ? cityPane(mine) : null) || '';
     function opt(code, title, sub, on) {
       return '<button type="button" class="m-pk-opt" data-act="map-area" data-code="' + esc(code) + '" aria-pressed="' + on + '" data-press>' +
         '<span class="m-pk-text"><b>' + esc(title) + '</b><small>' + esc(sub) + '</small></span>' +
@@ -2868,8 +2947,18 @@
         '<span>' + esc(nm) + '</span>' + (pc === prefOfCode(mine) ? '<small>' + esc(t('map.yoursShort')) + '</small>' : '') + '</button>';
     }).join('') + '</div>';
     var cell = function (a) {
-      return '<button type="button" class="m-pk-cell" data-act="map-area" data-code="' + a.code + '" aria-pressed="' + (a.code === S.code) + '" data-q="' + esc(kanaNorm(a.name + ' ' + a.kana + ' ' + a.en)) + '" data-press>' +
-        '<span>' + esc(areaName(a)) + '</span>' + (a.code === mine ? '<small>' + esc(t('map.yoursShort')) + '</small>' : '') + '</button>';
+      // v8: a 政令市 opens its wards (都県 → 市 → 区); 「横浜市ぜんぶ」 is the first row of that pane
+      var wards = hasWards(a.code), pa = a.parent ? areaBy(a.parent) : null;
+      var q = a.name + ' ' + a.kana + ' ' + a.en + (pa ? ' ' + pa.name + a.name + ' ' + pa.kana + ' ' + pa.en : '');
+      return '<button type="button" class="m-pk-cell" data-act="' + (wards ? 'map-pk-city' : 'map-area') + '" data-' + (wards ? 'value' : 'code') + '="' + a.code + '" aria-pressed="' + (a.code === S.code || (wards && cityOf(S.code) === a.code)) + '" data-q="' + esc(kanaNorm(q)) + '" data-press>' +
+        '<span>' + esc(areaName(a)) + '</span>' + (a.code === mine || (wards && cityOf(mine) === a.code) ? '<small>' + esc(t('map.yoursShort')) + '</small>' : wards ? '<small>' + esc(t('map.wardsHint')) + '</small>' : '') + '</button>';
+    };
+    var wardPane = function (city) {
+      var ca = areaBy(city), nm = areaName(ca), pc = city.slice(0, 2);
+      return '<section class="m-pk-pane m-pk-city" data-city="' + city + '" aria-label="' + esc(t('map.cityWards', { name: nm })) + '">' +
+        '<div class="m-pk-popt">' + opt(city, t('map.cityAll', { name: nm }), t('map.cityAllSub'), S.code === city) +
+          '<button type="button" class="m-pk-opt m-pk-back" data-act="map-pk-city" data-value="" data-press>' + arrow('l') + '<span class="m-pk-text"><b>' + esc(t('map.toCities', { name: prefName(pc) })) + '</b></span></button></div>' +
+        '<section class="m-pk-group" data-group="w' + city + '"><h3 class="m-pk-gtitle">' + esc(t('map.cityWards', { name: nm })) + '</h3><div class="m-pk-grid">' + wardsOf(city).map(cell).join('') + '</div></section></section>';
     };
     var seg = U.seg ? '<div class="m-pk-seg">' + U.seg(['23ku', 'tama', 'islands'].map(function (k) {
       return { label: t('map.g.' + k), value: k, pressed: k === g0 };
@@ -2880,22 +2969,26 @@
         var items = areas().filter(function (a) { return a.code.slice(0, 2) === '13' && a.group === gk; });
         return '<section class="m-pk-group" data-group="' + gk + '"><h3 class="m-pk-gtitle">' + esc(nm + (lang() === 'en' ? ' · ' : ' ') + t('map.g.' + gk)) + '</h3><div class="m-pk-grid">' + items.map(cell).join('') + '</div></section>';
       }).join('') : '<section class="m-pk-group" data-group="' + pc + '"><h3 class="m-pk-gtitle">' + esc(nm) + '</h3><div class="m-pk-grid">' +
-        areas().filter(function (a) { return a.code.slice(0, 2) === pc; }).map(cell).join('') + '</div></section>';
+        areas().filter(function (a) { return a.code.slice(0, 2) === pc && !a.parent; }).map(cell).join('') + '</div></section>';
       return '<section class="m-pk-pane" data-pref="' + pc + '" aria-label="' + esc(t('map.prefPlaces', { name: nm })) + '">' +
         '<div class="m-pk-popt">' + opt(pc, t('map.prefAll', { name: nm }), t('map.prefAllSub', { name: nm }), S.code === pc) + '</div>' +
-        (pc === '13' ? seg : '') + groups + '</section>';
+        (pc === '13' ? seg : '') + groups + '</section>' +
+        areas().filter(function (a) { return a.code.slice(0, 2) === pc && hasWards(a.code); }).map(function (a) { return wardPane(a.code); }).join('');
     }).join('');
-    return '<div class="v-map m-pk" data-group="' + g0 + '" data-pref="' + p0 + '">' +
+    return '<div class="v-map m-pk" data-group="' + g0 + '" data-pref="' + p0 + '" data-city="' + esc(c0) + '">' +
       (U.searchField ? U.searchField({ id: 'm-pk-q', placeholder: t('map.search'), label: t('map.search') }) : '<input id="m-pk-q" type="search">') +
       top + prefs + '<div class="m-pk-body">' + body + '<p class="m-pk-none" hidden>' + esc(t('map.noHit')) + '</p></div></div>';
   }
   /* what the picker shows: the chosen prefecture's pane (Tokyo: its chosen part), or every match of the search */
   function pkSync(pk) {
     var pf = pk.getAttribute('data-pref') || '13', g = pk.getAttribute('data-group') || '23ku', q = pk.classList.contains('is-search');
+    var city = pk.getAttribute('data-city') || '';   // v8: a 政令市's ward pane in place of its prefecture's
     Array.prototype.forEach.call(pk.querySelectorAll('.m-pk-pref'), function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-value') === pf)); });
     Array.prototype.forEach.call(pk.querySelectorAll('.m-pk-seg [data-value]'), function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-value') === g)); });
+    var seg = pk.querySelector('.m-pk-seg'); if (seg && !q) seg.hidden = !!city;
     Array.prototype.forEach.call(pk.querySelectorAll('.m-pk-pane'), function (pane) {
-      var mine = pane.getAttribute('data-pref') === pf, vis = 0;
+      var cc = pane.getAttribute('data-city');
+      var mine = cc ? cc === city : (!city && pane.getAttribute('data-pref') === pf), vis = 0;
       Array.prototype.forEach.call(pane.querySelectorAll('.m-pk-group'), function (s) {
         var on = q ? !!s.querySelector('.m-pk-cell:not([hidden])') : mine && (pf !== '13' || s.getAttribute('data-group') === g);
         s.hidden = !on; if (on) vis++;
@@ -2939,7 +3032,19 @@
     SM.on('map-pk-pref', function (el) {
       var pk = el.closest && el.closest('.m-pk'); if (!pk) return;
       pk.setAttribute('data-pref', el.getAttribute('data-value') || '13');
+      pk.setAttribute('data-city', '');
       pkSync(pk);
+    });
+    // v8: 市 → 区 (a 政令市's pane), '' = back to its prefecture's 区市町村
+    SM.on('map-pk-city', function (el) {
+      var pk = el.closest && el.closest('.m-pk'); if (!pk) return;
+      var c = el.getAttribute('data-value') || '';
+      if (c) pk.setAttribute('data-pref', c.slice(0, 2));
+      pk.setAttribute('data-city', c);
+      pkSync(pk);
+      var pane = pk.querySelector(c ? '.m-pk-pane[data-city="' + c + '"]' : '.m-pk-pane[data-pref="' + pk.getAttribute('data-pref') + '"]');
+      var first = pane && pane.querySelector('.m-pk-opt');
+      if (first) { try { first.focus({ preventScroll: true }); } catch (e) { } }
     });
     SM.on('map-area', function (el) {
       var code = el.getAttribute('data-code');

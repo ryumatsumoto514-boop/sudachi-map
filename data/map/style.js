@@ -32,7 +32,14 @@
      the data, so z16 was a near-empty map).
    - AA contrast for area / town / water / park names; opts.big (設定 › 文字を大きく) scales every label 1.2×.
    - GeoJSON sources carry a maxzoom that matches their data, so the worker cuts fewer tiles in pinches and flights.
-   - station romanizations and the 羽田空港第3ターミナル label fixed at load; 上野恩賜公園 duplicate dropped. */
+   - station romanizations and the 羽田空港第3ターミナル label fixed at load; 上野恩賜公園 duplicate dropped.
+
+   v8 (WARDS): the 44 wards of 横浜・川崎・相模原・さいたま・千葉. kanto.js carries their label points (K.wardLabels) and
+   bounds (meta.wardBounds); a prefecture file carries the 25 m polygons (P.wards), the inner ward lines (P.wardBorders)
+   and the same labels. Sources kWards (promoteId code: feature-state sel / hov like `areas`), kWardBorders, kWardLabels;
+   layers ward-sel, border-ward (z ≥ 9.4, under the 区市町村 lines), ward-sel-line / ward-hov-line, label-ward (z ≥ 9.6,
+   where the five cities' own names step back: `hz`), label-ward-sel. select(map, '14101') and areaBounds('14101') work
+   like a 区市町村's; SM.mapStyle.isWard(code). */
 (function () {
   'use strict';
   var SM = window.SM = window.SM || {};
@@ -186,7 +193,18 @@
     Object.keys(KX.loaded).sort().forEach(function (pc) { if (P[pc] && P[pc].areas) Array.prototype.push.apply(a, P[pc].areas.features); });
     L.areas = fc(a);
     L.areaLabels = fc(KX.base.areaLabels.concat(K.areaLabels.features));
+    // v8: a 政令市's own name steps back where its wards are named (label-ward from WARD_Z)
+    if (K.wardLabels && !K._smHz) {
+      K._smHz = true;
+      var parents = {};
+      K.wardLabels.features.forEach(function (f) { parents[f.properties.parent] = 1; });
+      K.areaLabels.features.forEach(function (f) { if (parents[f.properties.code]) f.properties.hz = WARD_Z; });
+    }
   }
+  var WARD_Z = 9.6;
+  /* v8: a ward of a 政令市 (its bounds are in kanto.js's meta) */
+  function isWardCode(code) { var M = KM(); return !!(code && M && M.wardBounds && M.wardBounds[code]); }
+  function wardsOn() { var K = KD(); return !!(KX.merged && K && K.wardLabels); }
   /* a k-* source: kanto.js's own part + the loaded prefectures' parts (their 25 m prefecture lines replace the 80 m ones) */
   function kData(n) {
     var K = KD(), P = KP(), out = [];
@@ -266,8 +284,11 @@
   var hiddenLabels = [];
   function notHidden(f) { return hiddenLabels.length ? ['all', f, ['!', ['in', ['get', 'code'], ['literal', hiddenLabels]]]] : f; }
   /* lz: the zoom a name starts at (関東: big cities from 7.4, the rest — Tokyo's too — from 8.1) */
-  function areaLabelFilter(sel) { return notHidden(['all', ['!=', ['get', 'code'], sel || ''], ['>=', ['zoom'], ['coalesce', ['get', 'lz'], 8.1]]]); }
-  function selLabelFilter(sel) { return notHidden(['==', ['get', 'code'], sel || '']); }
+  /* hz: the zoom a name stops at (v8: a 政令市's name gives way to its wards' from WARD_Z) */
+  function areaLabelFilter(sel) { return notHidden(['all', ['!=', ['get', 'code'], sel || ''], ['>=', ['zoom'], ['coalesce', ['get', 'lz'], 8.1]], ['<', ['zoom'], ['coalesce', ['get', 'hz'], 99]]]); }
+  function selLabelFilter(sel) { return notHidden(['all', ['==', ['get', 'code'], sel || ''], ['<', ['zoom'], ['coalesce', ['get', 'hz'], 99]]]); }
+  function wardLabelFilter(sel) { return ['all', ['!=', ['get', 'code'], sel || ''], ['>=', ['zoom'], ['coalesce', ['get', 'lz'], WARD_Z]]]; }
+  function wardSelFilter(sel) { return ['==', ['get', 'code'], sel || '']; }
 
   /* 文字を大きく: every text-size × k. A zoom curve must stay the top-level expression, so its stop values are
      scaled one by one (['*', k, curve] would be rejected) */
@@ -288,7 +309,7 @@
     opts = opts || {};
     var P = PAL[opts.theme === 'dark' ? 'dark' : 'light'];
     kMerge();
-    var L = layers(), KON = KX.merged;
+    var L = layers(), KON = KX.merged, WON = wardsOn();
     cleanLabels();
     var en = opts.lang === 'en';
     var name = en ? ['coalesce', ['get', 'en'], ['get', 'name']] : ['get', 'name'];
@@ -348,6 +369,11 @@
           paint: { 'fill-color': P.selFill, 'fill-opacity': ['interpolate', ['linear'], ['zoom'],
             9, selOn(0.7), 11, selOn(0.5), 12.5, selOn(0.28), 15, selOn(0.12)],
             'fill-opacity-transition': { duration: 320 }, 'fill-antialias': false } },
+        /* v8: a chosen ward of a 政令市 (#/map/14101), the same tint */
+        WON ? { id: 'ward-sel', type: 'fill', source: 'kWards',
+          paint: { 'fill-color': P.selFill, 'fill-opacity': ['interpolate', ['linear'], ['zoom'],
+            9, selOn(0.7), 11, selOn(0.5), 12.5, selOn(0.28), 15, selOn(0.12)],
+            'fill-opacity-transition': { duration: 320 }, 'fill-antialias': false } } : null,
         /* a chosen prefecture (#/map/14): a light tint over its land at the overview scales */
         KON ? { id: 'pref-sel', type: 'fill', source: 'kPrefs',
           paint: { 'fill-color': P.selFill, 'fill-opacity': ['interpolate', ['linear'], ['zoom'], 8, selOn(0.6), 10, selOn(0.35), 12, selOn(0.12)],
@@ -420,7 +446,10 @@
             'line-opacity': inT(1, 0.7)
           } },
 
-        /* borders */
+        /* borders (v8: the ward lines inside the five 政令市 first, finer and under the 区市町村 lines) */
+        WON ? { id: 'border-ward', type: 'line', source: 'kWardBorders', minzoom: 9.4,
+          layout: { 'line-join': 'round' },
+          paint: { 'line-color': P.border, 'line-width': z([9.4, 0.5, 14, 1]), 'line-dasharray': [2, 2], 'line-opacity': z([9.4, 0.3, 11, 0.8]) } } : null,
         { id: 'border-muni', type: 'line', source: 'borders', filter: ['==', ['get', 'k'], 'muni'], minzoom: 8.5,
           layout: { 'line-join': 'round' },
           paint: { 'line-color': P.border, 'line-width': z([9, 0.6, 14, 1.2]), 'line-dasharray': [3, 2], 'line-opacity': z([8.5, 0.5, 11, 1]) } },
@@ -431,6 +460,10 @@
           paint: { 'line-color': P.selLine, 'line-width': 2, 'line-opacity': ['case', ['boolean', ['feature-state', 'sel'], false], 1, 0], 'line-opacity-transition': { duration: 320 } } },
         { id: 'area-hov-line', type: 'line', source: 'areas', layout: { 'line-join': 'round' },
           paint: { 'line-color': P.selLine, 'line-width': 1.5, 'line-opacity': ['case', ['boolean', ['feature-state', 'hov'], false], 0.85, 0], 'line-opacity-transition': { duration: 160 } } },
+        WON ? { id: 'ward-sel-line', type: 'line', source: 'kWards', layout: { 'line-join': 'round' },
+          paint: { 'line-color': P.selLine, 'line-width': 2, 'line-opacity': ['case', ['boolean', ['feature-state', 'sel'], false], 1, 0], 'line-opacity-transition': { duration: 320 } } } : null,
+        WON ? { id: 'ward-hov-line', type: 'line', source: 'kWards', layout: { 'line-join': 'round' },
+          paint: { 'line-color': P.selLine, 'line-width': 1.5, 'line-opacity': ['case', ['boolean', ['feature-state', 'hov'], false], 0.85, 0], 'line-opacity-transition': { duration: 160 } } } : null,
 
         /* railways: JR ink with white dashes (Japanese map convention), private lines grey, subways faint dashed */
         { id: 'rail-subway', type: 'line', source: 'rail', minzoom: 12, filter: ['==', ['get', 'cls'], 'subway'],
@@ -504,6 +537,16 @@
           },
           paint: { 'text-color': P.text3, 'text-halo-color': P.halo, 'text-halo-width': 1.6,
                    'text-opacity': ['interpolate', ['linear'], ['zoom'], 13.5, 1, 15, 0.35] } },
+        /* v8: the wards of the five 政令市, from WARD_Z (their city's own name steps back there: hz) */
+        WON ? { id: 'label-ward', type: 'symbol', source: 'kWardLabels', minzoom: WARD_Z,
+          filter: wardLabelFilter(opts.selected),
+          layout: {
+            'text-field': name, 'text-font': MED,
+            'text-size': ['interpolate', ['linear'], ['zoom'], 9.6, 11, 12, 12.5, 14, 14.5],
+            'text-letter-spacing': 0.04, 'text-padding': 2, 'symbol-sort-key': ['-', 0, ['get', 'area']]
+          },
+          paint: { 'text-color': P.text3, 'text-halo-color': P.halo, 'text-halo-width': 1.6,
+                   'text-opacity': ['interpolate', ['linear'], ['zoom'], 13.5, 1, 15, 0.35] } } : null,
         /* the ten anchor stations (新宿, 渋谷, 池袋, 東京, 品川, 上野, 立川, 八王子, 町田, 吉祥寺) outrank area labels */
         { id: 'label-station-top', type: 'symbol', source: 'stations', minzoom: KON ? 8.2 : 7.6, filter: ['<=', ['get', 'minz'], 8],
           layout: STATION_LABEL, paint: STATION_PAINT },
@@ -514,6 +557,11 @@
                     'text-letter-spacing': 0.04, 'text-allow-overlap': false, 'text-ignore-placement': false,
                     'text-variable-anchor': ['center', 'bottom', 'top'], 'text-radial-offset': 0.8, 'text-padding': 4 },
           paint: { 'text-color': P.text, 'text-halo-color': P.halo, 'text-halo-width': 2 } },
+        WON ? { id: 'label-ward-sel', type: 'symbol', source: 'kWardLabels', filter: wardSelFilter(opts.selected),
+          layout: { 'text-field': name, 'text-font': BOLD, 'text-size': ['interpolate', ['linear'], ['zoom'], 8, 12, 12, 14, 14, 16],
+                    'text-letter-spacing': 0.04, 'text-allow-overlap': false, 'text-ignore-placement': false,
+                    'text-variable-anchor': ['center', 'bottom', 'top'], 'text-radial-offset': 0.8, 'text-padding': 4 },
+          paint: { 'text-color': P.text, 'text-halo-color': P.halo, 'text-halo-width': 2 } } : null,
         /* 関東: the seven prefecture names at the overview scales (map.js's count chips stand in for them) */
         KON ? { id: 'label-pref', type: 'symbol', source: 'kPrefLabels', maxzoom: 8.7, filter: notHidden(['has', 'code']),
           layout: { 'text-field': name, 'text-font': BOLD, 'text-size': ['interpolate', ['linear'], ['zoom'], 6.5, 13, 8.5, 15],
@@ -561,6 +609,11 @@
       KSRC.forEach(function (n) { var s0 = sources[n], s1 = {}; for (var k in s0) s1[k] = s0[k]; s1.data = kData(n); sources['k-' + n] = s1; });
       sources.kPrefs = { type: 'geojson', data: KD().prefs, promoteId: 'code', maxzoom: 11, buffer: 64, tolerance: 0.45 };
       sources.kPrefLabels = { type: 'geojson', data: KD().prefLabels, maxzoom: 9 };
+    }
+    if (WON) {
+      sources.kWards = { type: 'geojson', data: kData('wards'), promoteId: 'code', maxzoom: 13, buffer: 64, tolerance: 0.45 };
+      sources.kWardBorders = { type: 'geojson', data: kData('wardBorders'), maxzoom: 14, buffer: 64, tolerance: 0.45 };
+      sources.kWardLabels = { type: 'geojson', data: KD().wardLabels, maxzoom: 12 };
     }
     return {
       version: 8,
@@ -705,6 +758,7 @@
       setTimeout(off, 4000);   // never keep both for long
     }
     function pump() {
+      if (map._removed || !map.style) { queue = null; pumpT = 0; return; }   // the view left
       pumpT = 0;
       if (!queue || !queue.length) return;
       if (busy()) { pumpT = setTimeout(pump, 220); return; }
@@ -731,6 +785,7 @@
     function kPump() {
       kT = 0;
       if (!kq.length) return;
+      if (map._removed || !map.style) { kq.length = 0; return; }   // the view left: nothing to feed
       if (busy()) { kT = setTimeout(kPump, 220); return; }
       var job = kq.shift();
       try { job(); } catch (e) { }
@@ -748,6 +803,11 @@
       KSRC.forEach(function (n) {
         if (!P[n] && !(n === 'borders')) return;
         kq.push(function () { var so = map.getSource('k-' + n); if (so) so.setData(kData(n)); });
+      });
+      // v8: the prefecture's wards (polygons first: a chosen ward's tint, then its inner lines)
+      if (P.wards) kq.push(function () {
+        var sw = map.getSource('kWards'); if (sw) sw.setData(kData('wards'));
+        var sb = map.getSource('kWardBorders'); if (sb) sb.setData(kData('wardBorders'));
       });
       if (cb) kq.push(cb);
       if (!kT) kT = setTimeout(kPump, 0);
@@ -816,13 +876,15 @@
   }
 
   var selected = null;
-  function selSrc(code) { return isPref(code) ? 'kPrefs' : 'areas'; }
+  function selSrc(code) { return isPref(code) ? 'kPrefs' : isWardCode(code) ? 'kWards' : 'areas'; }
   function select(map, code) {
     if (selected && map.getSource(selSrc(selected))) map.setFeatureState({ source: selSrc(selected), id: selected }, { sel: false });
     selected = code || null;
     if (selected && map.getSource(selSrc(selected))) map.setFeatureState({ source: selSrc(selected), id: selected }, { sel: true });
     if (map.getLayer('label-area-sel')) map.setFilter('label-area-sel', selLabelFilter(selected));
     if (map.getLayer('label-area')) map.setFilter('label-area', areaLabelFilter(selected));
+    if (map.getLayer('label-ward-sel')) map.setFilter('label-ward-sel', wardSelFilter(selected));
+    if (map.getLayer('label-ward')) map.setFilter('label-ward', wardLabelFilter(selected));
   }
   /* hide the area labels of these codes (map.js draws count chips in their place); [] shows them all again */
   function hideAreaLabels(map, codes) {
@@ -836,6 +898,7 @@
   /* bbox [w,s,e,n] of an area code from the baked polygons (for fitBounds) */
   function areaBounds(code) {
     if (!code || code === 'all' || isPref(code)) return kBounds(code);
+    if (isWardCode(code)) return KM().wardBounds[code].slice();   // v8: a ward (kanto.js meta, there before its file)
     kMerge();   // a 区市町村 outside Tokyo is in the merged polygons (map.js may ask before the first style is built)
     var A = (SM.data.mapLayers || {}).areas; if (!A) return null;
     var b = [180, 90, -180, -90];
@@ -855,6 +918,7 @@
     layer: layer,
     /* 関東 (v7) */
     kanto: function () { return KX.merged; }, kBounds: kBounds, prefFeatures: prefFeatures, inKanto: inKanto,
+    isWard: isWardCode, wardZoom: WARD_Z,
     kantoLoaded: function () { }, ensureKanto: function (pc, cb) { if (cb) cb(); }, onKanto: null,
     fontFamily: FONT, mapOptions: mapOptions, palettes: PAL, root: '', loadFile: loadFile,
     ensure: function () {}, setTheme: function () {}, start: function () {}

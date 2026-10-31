@@ -7,8 +7,8 @@
   'use strict';
 
   var SM = window.SM = window.SM || {};
-  SM.version = window.__smV || '7.0.0';
-  SM.updated = '2026-10-26';
+  SM.version = window.__smV || '8.0.0';
+  SM.updated = '2026-10-31';
   SM.data = SM.data || {};
   var D = SM.data;
   if (!Array.isArray(D.programs)) D.programs = [];
@@ -1340,6 +1340,10 @@
     else st.setProperty('--tab-ind-o', a ? '1' : '0');
     nav.classList.toggle('has-active', !!a);
     nav.classList.toggle('is-extra', extra);
+    // v8 indicator physics: moving from one tab to another, the bar stretches toward its target while it slides
+    // (motion.css m-ind-*; alternating data-ind-n restarts the keyframes). Attribute writes only.
+    if (a && lastIdx >= 0 && idx !== lastIdx && nav.classList.contains('ind-ready')) nav.setAttribute('data-ind-n', nav.getAttribute('data-ind-n') === '0' ? '1' : '0');
+    lastIdx = idx;
     // geometry only changes with the window: measure in a frame (never inside a view-transition update)
     var mkey = idx + ':' + window.innerWidth;
     if (a && tabMeasured !== mkey) requestAnimationFrame(function () { measureTab(nav, a, mkey); });
@@ -1347,7 +1351,7 @@
       requestAnimationFrame(function () { requestAnimationFrame(function () { nav.classList.add('ind-ready'); }); });
     }
   }
-  var tabMeasured = null;
+  var tabMeasured = null, lastIdx = -1;
   function measureTab(nav, a, mkey) {
     if (!a || !a.isConnected || a.offsetParent === null) return;
     var st = nav.style;

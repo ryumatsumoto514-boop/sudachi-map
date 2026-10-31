@@ -1024,7 +1024,13 @@ body.is-big .v-tools .tl-float-mini { display: none; }
 .v-tools .mn-preset { display: grid; gap: var(--s-2); }
 .v-tools .mn-preset .seg { max-width: 520px; }
 .v-tools .mn-preset .seg > button { padding: 0 6px; }
+.v-tools .mn-preset .select { max-width: 320px; }   /* v8 (MONEY): 8 Kanto places = a native select */
 .v-tools .mn-preset-note { grid-column: 1 / -1; margin: 0; }
+.v-tools .mn-preset-note:empty { display: none; }
+/* v8 (MONEY): 出典 under the calculator — label, one line per statistic, the data's note */
+.v-tools .mn-src { display: grid; gap: 6px; }
+.v-tools .mn-src > p { margin: 0; }
+.v-tools .mn-src > .tl-label { margin-bottom: 2px; }
 
 /* the result: the balance in num-xl (green surplus / amber deficit), in vs out bars, the breakdown */
 .v-tools .mn-result { display: grid; gap: var(--s-5); }
@@ -1130,6 +1136,7 @@ body.is-big .v-tools .tl-float-mini { display: none; }
 /* バイト代 from 時給 × 時間 × 日 */
 .v-tools .mn-wage { margin: var(--s-2) 0 var(--s-2); }
 .v-tools .mn-wage > :not(summary) { margin-bottom: var(--s-3); }
+.v-tools .mn-w-pref { display: grid; gap: 4px; max-width: 260px; }   /* v8 (MONEY): 働く都県 → 最低賃金 */
 .v-tools .mn-w-grid { display: grid; grid-template-columns: minmax(0, 1.3fr) auto minmax(0, 1fr) auto minmax(0, 1fr); align-items: end; gap: var(--s-2); }
 .v-tools .mn-w-f { display: grid; gap: 4px; min-width: 0; }
 .v-tools .mn-w-l {
@@ -1192,7 +1199,7 @@ body.is-big .v-tools .mn-num { width: 6.4em; }
   /* tools.js measures the column at its own height */
   .v-tools .tl-side.is-measure { align-self: start !important; position: static !important; }
   .v-tools .tl-side.is-measure :is(.ck-result, .mn-result) { height: auto !important; }
-  .v-tools .mn-preset { grid-template-columns: auto minmax(0, 520px); align-items: center; column-gap: var(--s-5); }
+  .v-tools .mn-preset { grid-template-columns: max-content minmax(0, 520px); align-items: center; column-gap: var(--s-5); }   /* v8 (MONEY): the label hugs the select */
   .v-tools .mn-big-v { font-size: var(--t-num-xl); }
 }
 

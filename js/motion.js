@@ -659,16 +659,31 @@
      opens with the first reveal batch after a view mounts (or after the launch hold lets go) and closes 600ms
      later. A reveal that starts after that is the user scrolling: it runs at once (no delay, a 160ms fade, a short
      capped stagger), so a block reached by scrolling, a call button above all, is never missing when it arrives. */
-  var winOpen = 0, winArm = 0;
-  function armWindow() { winArm = now(); winOpen = winArm; }
-  function lateReveal() { return now() - winOpen > 900; }
+  var winOpen = 0, winArm = 0, winY = null;
+  function armWindow() { winArm = now(); winOpen = winArm; winY = null; }
+  /* late = reached by scrolling: the window has closed, OR the page has moved more than 60px since it opened (a
+     block that was below the fold when the page arrived scrubs with the scroll even inside the 900ms, so what the
+     finger reaches always follows the finger). winY is read with the first batch, after the scroll restore. */
+  function lateReveal() { return now() - winOpen > 900 || (winY != null && Math.abs((window.scrollY || 0) - winY) > 60); }
 
   function setDelay(el, ms) { if (ms) el.style.setProperty('--m-delay', ms + 'ms'); else el.style.removeProperty('--m-delay'); }
 
-  function revealEl(el, delay, late) {
+  function revealEl(el, delay, late, rect) {
     if (!el.classList.contains('m-pending')) return;
     var red = reduced();
     if (red) { delay = 0; late = true; }
+    /* v8: a block reached by SCROLLING (after the arrival window) does not play a timed fade any more: it is
+       handed to the scroll layer and rises with the finger / wheel (srLate). Marks, rules and underlines keep
+       their timed draw (they are a few px tall), and reduced motion keeps the short fade. */
+    if (late && !red && srLateOk(el) && srLate(el, rect)) {
+      if (el.hasAttribute('data-count')) scheduleCount(el, 0);
+      var inn = el.querySelectorAll ? el.querySelectorAll('[data-count]:not(.m-pending)') : [];
+      for (var q = 0; q < inn.length; q++) if (inn[q]._smWait) { inn[q]._smWait = false; scheduleCount(inn[q], 0); }
+      if (window.SM && SM.illus && typeof SM.illus.play === 'function' && el.classList.contains('il') && el.getAttribute('data-il-anim') === 'enter') {
+        try { SM.illus.play(el); } catch (e) { }
+      }
+      return;
+    }
     if (late) { delay = Math.min(delay || 0, 160); el.classList.add('m-late'); }
     else delay = (delay || 0) + (parseInt(el.getAttribute('data-reveal-delay') || '0', 10) || 0);
     var kind = el.getAttribute('data-reveal');
@@ -711,12 +726,13 @@
     var hit = false;
     for (var e0 = 0; e0 < entries.length; e0++) if (entries[e0].isIntersecting) { hit = true; break; }
     // the first batch after a mount anchors the window (a slow transition can land it a few hundred ms later)
-    if (hit && winArm) { if (now() - winArm < 1500) winOpen = now(); winArm = 0; }
+    if (hit && winArm) { if (now() - winArm < 1500) winOpen = now(); winArm = 0; winY = window.scrollY || 0; }
     var late = lateReveal();
     entries.forEach(function (en) {
       if (!en.isIntersecting) return;
       var el = en.target;
       if (!en._held && io) io.unobserve(el);
+      el._smRect = en.boundingClientRect || null;
       var p = el._smStagger ? el.parentNode : null;
       var key = p ? (p._smId || (p._smId = 'g' + Math.random().toString(36).slice(2))) : '_solo';
       if (!groups[key]) { groups[key] = []; order.push(key); }
@@ -725,11 +741,11 @@
     var cap = late ? 4 : lite() ? 5 : STAGGER_MAX;
     order.forEach(function (k) {
       var list = groups[k];
-      if (k === '_solo') { list.forEach(function (el) { revealEl(el, 0, late); }); return; }
+      if (k === '_solo') { list.forEach(function (el) { revealEl(el, 0, late, el._smRect); el._smRect = null; }); return; }
       list.sort(function (a, b) { return a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1; });
       var step = late ? Math.min(list[0]._smStagger, 40) : list[0]._smStagger;
       // items 9+ arrive with item 8 (cap); a long list reveals as a block after that
-      list.forEach(function (el, i) { revealEl(el, Math.min(i, cap - 1) * step, late); });
+      list.forEach(function (el, i) { revealEl(el, Math.min(i, cap - 1) * step, late, el._smRect); el._smRect = null; });
     });
   }
   function ensureIO() {
@@ -743,6 +759,7 @@
   function syncReady() {
     if (enabled()) docEl.classList.add('motion-ready');
     else { docEl.classList.remove('motion-ready'); revealAll(document); }
+    docEl.classList.toggle('m-sda', hasSDA);
   }
 
   function watchEl(el) {
@@ -768,10 +785,12 @@
       var el = list[i];
       if (!el._smWatched) continue;
       var r = el.getBoundingClientRect();
-      if (r.width + r.height > 0 && r.bottom > 0 && r.top < vh) on.push(el); else off.push(el);
+      if (r.width + r.height > 0 && r.bottom > 0 && r.top < vh) { el._smRect = r; on.push(el); } else off.push(el);
     }
-    on.forEach(function (el, k) { try { io.unobserve(el); } catch (e) { } revealEl(el, Math.min(k, 3) * 40, true); });
+    on.forEach(function (el, k) { try { io.unobserve(el); } catch (e) { } revealEl(el, Math.min(k, 3) * 40, true, el._smRect); el._smRect = null; });
     off.forEach(function (el) { try { io.unobserve(el); io.observe(el); } catch (e) { } });
+    srMeasure(root);
+    readlineCheck();
   }
   function sweepSoon(ms) { clearTimeout(sweepT); sweepT = setTimeout(function () { if (!holds) sweep(); else whenReleased(function () { sweepSoon(300); }); }, ms || 0); }
   /* S17: a jump of more than a screen (End, a scrollbar drag, find-in-page, a screen reader moving on) skips
@@ -799,7 +818,7 @@
   if (typeof window !== 'undefined' && window.addEventListener) {
     window.addEventListener('scroll', function () {
       clearTimeout(jumpT);
-      jumpT = setTimeout(afterJump, 140);
+      jumpT = setTimeout(function () { afterJump(); srSettle(); readlineCheck(); }, 140);
     }, { passive: true });
     // find-in-page on hidden="until-found" content, and printing: everything shows
     document.addEventListener('beforematch', function () { revealAll(document); }, true);
@@ -815,6 +834,8 @@
   function revealAll(root) {
     root = root || document;
     if (!root.querySelectorAll) return;
+    var srs = root.querySelectorAll('.m-sr-host');
+    for (var s0 = 0; s0 < srs.length; s0++) srDone(srs[s0]);
     var els = root.querySelectorAll('.m-pending');
     for (var i = 0; i < els.length; i++) {
       var el = els[i];
@@ -860,6 +881,10 @@
     wrapRender();
     syncReady();
     var instant = !!(opts && opts.instant) || quietDepth > 0;
+    /* scrollOnly (a block the view repaints in place, e.g. きく results): nothing on screen plays an entrance — the
+       view's own motion handles that — but everything below the fold is handed to the scroll layer. One batched
+       rect read at the end (never inside a transition: callers use it after a user action). */
+    var scrollOnly = !!(opts && opts.scrollOnly) && !instant, cands = [];
     var i, list;
     // heading line reveals: the wrapper exists in every mode so layout never differs between modes
     list = root.querySelectorAll('[data-reveal="line"]');
@@ -868,14 +893,17 @@
     // scroll-linked shorthands
     list = root.querySelectorAll('[data-scroll]');
     for (i = 0; i < list.length; i++) wireScroll(list[i]);
+    // v8 scroll layer: scrubbed reveals, parallax, progress bars, sticky compaction, lines that draw with the scroll
+    wireSrAll(root);
     reserveSwaps(root);
     // illustrations
     if (SM.illus && typeof SM.illus.mount === 'function') { try { SM.illus.mount(root, { instant: instant || !enabled() || reduced() }); } catch (e) { } }
     if (!enabled()) return;
     ensureIO();
-    var watch = instant ? claim : watchEl;
+    var watch = instant ? claim : scrollOnly ? function (el) { cands.push(el); } : watchEl;
     // a view (or a block a view swaps in) arriving: its data-reveal-delay choreography plays (see armWindow)
-    if (!instant) armWindow();
+    if (!instant && !scrollOnly) armWindow();
+    if (root.id === 'view') afterTransition(readlineCheck, { keep: true });
     sweepSoon(1100);
 
     list = root.querySelectorAll('[data-reveal-stagger]');
@@ -925,6 +953,13 @@
       var host = n.parentNode && n.parentNode.closest ? n.parentNode.closest('.m-pending') : null;
       if (host) { n._smWatched = true; n._smWait = true; }
       else { n.setAttribute('data-reveal', n.getAttribute('data-reveal') || 'fade'); watch(n); }
+    }
+    if (scrollOnly && cands.length) {
+      var vh0 = window.innerHeight || 800, rs0 = [];
+      for (i = 0; i < cands.length; i++) rs0.push(cands[i].getBoundingClientRect());
+      for (i = 0; i < cands.length; i++) {
+        if (rs0[i].top >= vh0 - 1 && rs0[i].width + rs0[i].height > 0) watchEl(cands[i]); else claim(cands[i]);
+      }
     }
   }
 
@@ -2377,6 +2412,472 @@
     });
   }
 
+  /* ---------------------------------------------------------------- scroll layer (v8, SPEC-v8 ws3)
+     Motion that follows the scroll position instead of a clock: reveals scrubbed by the finger / wheel, section
+     builds on a named view timeline, parallax on illustrations, progress bars, sticky headers that compact, lines
+     that draw as they enter. CSS scroll-driven animations where supported (html.m-sda: inline animation + timeline
+     + range, compositor-only); otherwise one shared rAF driver fed by an IntersectionObserver (reads first, then
+     writes). Every scrubbed element is visible by default; the engine takes over opacity/transform only after
+     it has registered it, and lets go again once the range is behind the reader (srSettle), so the view's own
+     hovers and FLIPs work on a settled page. */
+  var SR_FRAC = 0.26, SR_MIN = 72;            // a scrubbed reveal spans 26% of the viewport of scrolling (≥72px)
+  var SR_NAME = { '': 'm-sr-up', up: 'm-sr-up', fade: 'm-sr-fade', left: 'm-sr-left', slide: 'm-sr-left', right: 'm-sr-right', scale: 'm-sr-scale', rule: 'm-sr-rule', line: 'm-sr-line', mark: 'm-sr-mark' };
+  var SR_LATE = { '': 1, up: 1, fade: 1, slide: 1, line: 1, rule: 1 };   // data-reveal kinds that scrub when reached by scrolling
+  var SR_FRAC_K = { rule: 0.16, line: 0.22 };   // shorter scrubs: a rule draws in 16% of the viewport, a heading line rises in 22%
+  // the keyframes of motion.css mirrored for the rAF fallback: [progress, opacity, x, y, scale]
+  var SR_KF = {
+    'm-sr-up': [[0, 0, 0, RISE, 1], [0.7, 1, 0, -2, 1], [1, 1, 0, 0, 1]],
+    'm-sr-fade': [[0, 0, 0, 0, 1], [1, 1, 0, 0, 1]],
+    'm-sr-left': [[0, 0, -32, 0, 1], [0.7, 1, 1, 0, 1], [1, 1, 0, 0, 1]],
+    'm-sr-right': [[0, 0, 32, 0, 1], [0.7, 1, -1, 0, 1], [1, 1, 0, 0, 1]],
+    'm-sr-scale': [[0, 0, 0, 0, 0.92], [0.7, 1, 0, 0, 1.01], [1, 1, 0, 0, 1]],
+    'm-sr-mark': [[0, 0, 0, 0, 0.6], [0.6, 1, 0, 0, 1.06], [1, 1, 0, 0, 1]]
+  };
+  function srLateOk(el) {
+    var k = el.getAttribute('data-reveal');
+    if (k === null || !SR_LATE[k]) return false;
+    if (el.hasAttribute('data-draw') || el.hasAttribute('data-m-nosr')) return false;
+    if (!hasSDA && lite()) return false;          // lite without compositor scrubbing: the timed fade is cheaper
+    return hasSDA || hasIO;
+  }
+  /* the fixed tab bar covers the bottom of the viewport on phones: a view timeline's end edge is moved up by its
+     height, so a reveal plays where it can be seen. Measured (one rect), cached per viewport size. */
+  var insetMemo = { key: '', v: 0 };
+  function bottomInset() {
+    var key = window.innerWidth + 'x' + window.innerHeight;
+    if (insetMemo.key === key) return insetMemo.v;
+    var v = 0;
+    if (window.innerWidth < 900) {
+      var tb = document.querySelector('.tabbar');
+      if (tb) { var r = tb.getBoundingClientRect(), vh = window.innerHeight || 800; if (r.height && r.top < vh && r.top > vh * 0.6) v = Math.round(vh - r.top); }
+    }
+    insetMemo = { key: key, v: v };
+    return v;
+  }
+  function parseRange2(r) {
+    var m = /^\s*(cover|contain|entry|exit|entry-crossing|exit-crossing)\s+(-?[\d.]+)(%|px)\s*$/.exec(r || '');
+    if (m) return m[3] === '%' ? { name: m[1], p: parseFloat(m[2]) / 100, px: 0 } : { name: m[1], p: 0, px: parseFloat(m[2]) };
+    var n = /^\s*(-?[\d.]+)(px|%)\s*$/.exec(r || '');
+    if (n) return n[2] === '%' ? { name: 'scroll', p: parseFloat(n[1]) / 100, px: 0 } : { name: 'scroll', p: 0, px: parseFloat(n[1]) };
+    return { name: 'cover', p: 0, px: 0 };
+  }
+  // the subject's top (px from the viewport top) at a range point; px offsets run DOWN the timeline (= up the page)
+  function posAt(rp, h, vh) { return (rp.name === 'scroll' ? 0 : topAt(rp, h, vh)) - rp.px; }
+  function srLen(h, bottomDoc, vh, docH, ins, frac) {
+    var want = Math.max(SR_MIN, Math.round(vh * (frac || SR_FRAC)));
+    var room = docH - bottomDoc - ins;         // scroll left once the block has fully entered above the tab bar
+    return Math.round(Math.max(8, Math.min(want, h + room)));
+  }
+  // ---- the shared rAF driver (fallback, and progress bars under reduced motion)
+  var slReg = [], slIO = null, slLive = false, slTick = false;
+  function slNear(ens) { for (var i = 0; i < ens.length; i++) { var l = ens[i].target._smSl || []; for (var j = 0; j < l.length; j++) l[j].near = ens[i].isIntersecting; } slReq(); }
+  function slAdd(e) {
+    slReg.push(e);
+    var w = e.scope || e.el;
+    if (hasIO && e.src !== 'scroll') {
+      if (!slIO) slIO = new IntersectionObserver(slNear, { rootMargin: '40% 0px 40% 0px' });
+      (w._smSl = w._smSl || []).push(e);
+      e.watch = w;
+      try { slIO.observe(w); } catch (x) { e.near = true; }
+    } else e.near = true;
+    slOn();
+  }
+  function slRemove(e) {
+    var i = slReg.indexOf(e);
+    if (i >= 0) slReg.splice(i, 1);
+    if (e.watch && e.watch._smSl) { var l = e.watch._smSl, k = l.indexOf(e); if (k >= 0) l.splice(k, 1); if (!l.length && slIO) try { slIO.unobserve(e.watch); } catch (x) { } }
+    if (!slReg.length) slOff();
+  }
+  function slReq() { if (!slTick && slLive) { slTick = true; raf(slFrame); } }
+  function slOn() { if (slLive) return; slLive = true; window.addEventListener('scroll', slReq, { passive: true }); window.addEventListener('resize', slReq, { passive: true }); slReq(); }
+  function slOff() { if (!slLive) return; slLive = false; window.removeEventListener('scroll', slReq); window.removeEventListener('resize', slReq); }
+  function slProgress(e, r, vh, y, docH) {
+    var a, b;
+    if (e.src === 'scroll') {
+      var max = Math.max(1, docH - vh);
+      a = e.r0.name === 'scroll' ? (e.r0.px || e.r0.p * max) : 0;
+      b = e.r1.name === 'scroll' ? (e.r1.px || e.r1.p * max) : max;
+      return a === b ? 1 : (y - a) / (b - a);
+    }
+    a = posAt(e.r0, r.height, vh); b = posAt(e.r1, r.height, vh);
+    return a === b ? 1 : (a - r.top) / (a - b);
+  }
+  function slFrame() {
+    slTick = false;
+    var vh = (window.innerHeight || 800) - insetMemo.v, y = window.scrollY || 0, docH = docEl.scrollHeight || 1;
+    var i, e, rects = [], live = [];
+    for (i = 0; i < slReg.length; i++) {
+      e = slReg[i];
+      if (!e.el.isConnected) { slRemove(e); i--; continue; }
+      if (!e.near && e.src !== 'scroll') continue;
+      live.push(e);
+      rects.push(e.src === 'scroll' ? null : (e.scope || e.el).getBoundingClientRect());
+    }
+    for (i = 0; i < live.length; i++) {
+      e = live[i];
+      var p = Math.max(0, Math.min(1, slProgress(e, rects[i], vh, y, docH)));
+      if (p !== e.p) { e.p = p; e.apply(p); }
+    }
+  }
+  function lerpKf(kf, p) {
+    var a = kf[0], b = kf[kf.length - 1];
+    for (var i = 1; i < kf.length; i++) if (p <= kf[i][0]) { a = kf[i - 1]; b = kf[i]; break; }
+    var t = b[0] === a[0] ? 1 : (p - a[0]) / (b[0] - a[0]), out = [];
+    for (var j = 1; j < 5; j++) out.push(a[j] + (b[j] - a[j]) * t);
+    return out;
+  }
+  function srApply(el, name, p) {
+    if (name === 'm-sr-rule') { el.style.transform = p >= 1 ? '' : 'scaleX(' + p.toFixed(4) + ')'; return; }
+    if (name === 'm-sr-line') { el.style.transform = p >= 1 ? '' : 'translateY(' + (108 * (1 - p)).toFixed(2) + '%)'; return; }
+    if (name === 'm-dash') { el.style.strokeDashoffset = String(1 - p); return; }
+    var kf = SR_KF[name];
+    if (!kf) return;
+    var v = lerpKf(kf, p), tr = '';
+    if (v[1] || v[2]) tr += 'translate(' + v[1].toFixed(2) + 'px, ' + v[2].toFixed(2) + 'px)';
+    if (Math.abs(v[3] - 1) > 0.0005) tr += (tr ? ' ' : '') + 'scale(' + v[3].toFixed(4) + ')';
+    el.style.opacity = p >= 1 ? '' : String(Math.round(v[0] * 1000) / 1000);
+    el.style.transform = p >= 1 ? '' : tr;
+  }
+  // ---- named timelines (section scopes, progress targets)
+  var tlN = 0, tlNames = [];
+  function scopeName(scope) {
+    if (!scope._smTl) {
+      scope._smTl = '--sm-sc';
+      scope.style.setProperty('view-timeline-name', '--sm-sc');
+      scope.style.setProperty('view-timeline-inset', '0px ' + insetMemo.v + 'px');
+    }
+    return scope._smTl;
+  }
+  function targetName(target) {
+    if (!target._smTl) {
+      target._smTl = '--sm-tl' + (++tlN);
+      target.style.setProperty('view-timeline-name', target._smTl);
+      tlNames.push(target._smTl);
+      document.body.style.setProperty('timeline-scope', tlNames.join(', '));
+    }
+    return target._smTl;
+  }
+  /* scrub(el, {name, range:[a,b], scope, src:'view'|'scroll'|'target', target, apply, p0}) → entry
+     Registers one scroll-driven effect on el. SDA: the CSS animation runs on the compositor. Else: rAF driver. */
+  function scrub(el, o) {
+    if (el._smScrub) unscrub(el);
+    var e = { el: el, name: o.name, scope: o.scope || null, src: o.src || 'view', target: o.target || null, rs: o.range.slice(0),
+      r0: parseRange2(o.range[0]), r1: parseRange2(o.range[1]), p: -1, near: false, sda: false,
+      apply: o.apply || function (p) { srApply(el, o.name, p); }, auto: !!o.auto };
+    el._smScrub = e;
+    if (o.len) e.len = o.len;
+    if (o.frac) e.frac = o.frac;
+    var useSDA = hasSDA && !o.noSDA;
+    if (useSDA) {
+      e.sda = true;
+      var tl = e.src === 'scroll' ? 'scroll(root block)' : e.target ? targetName(e.target) : e.scope ? scopeName(e.scope) : 'view(block 0px ' + insetMemo.v + 'px)';
+      el.style.animation = e.name + ' linear both';
+      el.style.setProperty('animation-timeline', tl);
+      el.style.setProperty('animation-range', e.rs[0] + ' ' + e.rs[1]);
+    } else {
+      if (o.p0 != null) { e.p = Math.max(0, Math.min(1, o.p0)); e.apply(e.p); }
+      slAdd(e);
+    }
+    return e;
+  }
+  function unscrub(el) {
+    var e = el._smScrub;
+    if (!e) return;
+    el._smScrub = null;
+    if (e.sda) { el.style.animation = ''; el.style.removeProperty('animation-timeline'); el.style.removeProperty('animation-range'); }
+    else { slRemove(e); el.style.opacity = ''; el.style.transform = ''; if (e.name === 'm-dash') el.style.strokeDashoffset = ''; }
+  }
+  function srTarget(el, kind) {
+    if (kind !== 'line') return el;
+    wrapLine(el);
+    return el.firstElementChild;
+  }
+  function srHostOf(target) { return target.classList.contains('m-line-in') ? target.parentNode : target; }
+  /* srLate(el, rect): a data-reveal block reached by scrolling → a scrubbed rise over srLen px of scroll */
+  function srLate(el, r) {
+    var kind = el.getAttribute('data-reveal') || '', name = SR_NAME[kind], t = srTarget(el, kind);
+    if (!t) return false;
+    var vh = window.innerHeight || 800, y = window.scrollY || 0, ins = insetMemo.v, docH = docEl.scrollHeight || 1, frac = SR_FRAC_K[kind] || SR_FRAC;
+    var len = r ? srLen(r.height, r.bottom + y, vh, docH, ins, frac) : Math.max(SR_MIN, Math.round(vh * frac));
+    var p0 = r ? ((vh - ins) - r.top) / len : 0;
+    el.classList.remove('m-pending');
+    el.classList.add('m-sr-host');
+    el.setAttribute('data-m-auto', '');
+    if (t !== el) el.classList.add('m-sr-clip');
+    t.classList.add('m-sr');
+    scrub(t, { name: name, range: ['entry 0%', 'entry ' + len + 'px'], len: len, auto: true, p0: p0, frac: frac });
+    return true;
+  }
+  /* srMeasure(root): one batched layout read; every auto-ranged scrub gets the range the page allows (a block near
+     the end of the page cannot travel 26% of the viewport, so its range shrinks to what it can finish) */
+  function srMeasure(root) {
+    root = root && root.querySelectorAll ? root : document;
+    var hosts = root.querySelectorAll('.m-sr-host[data-m-auto]');
+    if (!hosts.length) return;
+    insetMemo.key = '';
+    var ins = bottomInset(), vh = window.innerHeight || 800, y = window.scrollY || 0, docH = docEl.scrollHeight || 1;
+    var i, rs = [];
+    for (i = 0; i < hosts.length; i++) rs.push(hosts[i].getBoundingClientRect());
+    for (i = 0; i < hosts.length; i++) {
+      var h = hosts[i], t = h.classList.contains('m-sr-clip') ? h.firstElementChild : h, e = t && t._smScrub;
+      if (!e) continue;
+      var len = srLen(rs[i].height, rs[i].bottom + y, vh, docH, ins, e.frac);
+      if (len === e.len && e.ins === ins) continue;
+      e.len = len; e.ins = ins;
+      e.rs[1] = 'entry ' + len + 'px'; e.r1 = parseRange2(e.rs[1]);
+      if (e.sda) {
+        if (!e.scope && !e.target && e.src === 'view') t.style.setProperty('animation-timeline', 'view(block 0px ' + ins + 'px)');
+        t.style.setProperty('animation-range', e.rs[0] + ' ' + e.rs[1]);
+      } else slReq();
+    }
+  }
+  /* srSettle(): after a scroll comes to rest, scrubs whose range is behind the reader let go of the element */
+  function srSettle() {
+    var hosts = document.querySelectorAll('.m-sr-host[data-m-auto]');
+    if (!hosts.length) return;
+    var vh = window.innerHeight || 800, fold = vh - insetMemo.v, i, rs = [];
+    for (i = 0; i < hosts.length; i++) rs.push(hosts[i].getBoundingClientRect());
+    for (i = 0; i < hosts.length; i++) {
+      var h = hosts[i], t = h.classList.contains('m-sr-clip') ? h.firstElementChild : h, e = t && t._smScrub;
+      if (!e) { srDone(h); continue; }
+      if (rs[i].top <= fold - (e.len || 0) - 1) srDone(h);
+    }
+  }
+  function srDone(host) {
+    var t = host.classList.contains('m-sr-clip') ? host.firstElementChild : host;
+    if (t && t._smScrub) unscrub(t);
+    if (t) t.classList.remove('m-sr');
+    host.classList.remove('m-sr-host', 'm-sr-clip', 'm-sr');
+    host.removeAttribute('data-m-auto');
+  }
+  // ---- declarative wiring (mount; no layout reads)
+  function wireSrAll(root) {
+    var i, list;
+    list = root.querySelectorAll('[data-sr-stagger]');
+    for (i = 0; i < list.length; i++) srStagger(list[i]);
+    if (root.hasAttribute && root.hasAttribute('data-sr-stagger')) srStagger(root);
+    list = root.querySelectorAll('[data-sr]');
+    for (i = 0; i < list.length; i++) wireSr(list[i]);
+    if (root.hasAttribute && root.hasAttribute('data-sr')) wireSr(root);
+    list = root.querySelectorAll('[data-parallax]');
+    for (i = 0; i < list.length; i++) parallax(list[i]);
+    list = root.querySelectorAll('[data-progress]');
+    for (i = 0; i < list.length; i++) wireProgress(list[i]);
+    list = root.querySelectorAll('[data-draw-sr]');
+    for (i = 0; i < list.length; i++) lineDraw(list[i]);
+    list = root.querySelectorAll('[data-sticky-compact]');
+    for (i = 0; i < list.length; i++) stickyCompact(list[i]);
+    if (hasSDA) srMeasureSoon();
+  }
+  var srMeasureT = 0;
+  function srMeasureSoon() { if (srMeasureT) return; srMeasureT = 1; afterTransition(function () { srMeasureT = 0; srMeasure(document); }, { keep: true }); }
+  function srStagger(par) {
+    var kids = par.children, step = parseFloat(par.getAttribute('data-sr-stagger'));
+    if (!isFinite(step) || step < 0) step = 6;
+    var scoped = par.hasAttribute('data-sr-scope') || !!(par.parentNode && par.parentNode.closest && par.parentNode.closest('[data-sr-scope]'));
+    for (var k = 0; k < kids.length; k++) {
+      var c = kids[k];
+      if (c.hasAttribute('data-sr') || c.hasAttribute('hidden')) continue;
+      c.setAttribute('data-sr', 'up');
+      if (scoped && !c.hasAttribute('data-sr-at')) { var a = Math.min(k, 7) * step; c.setAttribute('data-sr-at', a + ' ' + Math.min(100, a + 50)); }
+    }
+  }
+  function wireSr(el) {
+    if (el._smSrWired) return;
+    el._smSrWired = true;
+    var kind = el.getAttribute('data-sr') || 'up', name = SR_NAME[kind] || 'm-sr-up';
+    // reduced motion, or no scroll-driven support in lite: the time-based reveal (a short fade) takes over
+    if (reduced() || (!hasSDA && lite()) || !(hasSDA || hasIO)) {
+      if (!el.hasAttribute('data-reveal')) el.setAttribute('data-reveal', kind === 'rule' ? 'rule' : kind === 'line' ? 'line' : 'fade');
+      return;
+    }
+    el.setAttribute('data-m-nosr', '');     // never double up with the late path
+    var t = srTarget(el, kind);
+    if (!t) return;
+    var scope = el.parentNode && el.parentNode.closest ? el.parentNode.closest('[data-sr-scope]') : null;
+    var range = null, custom = el.getAttribute('data-sr-range');
+    if (custom) { var parts = custom.split(','); if (parts.length === 2) range = [parts[0].trim(), parts[1].trim()]; }
+    if (!range && scope) {
+      var at = (el.getAttribute('data-sr-at') || '0 60').split(/[\s,]+/);
+      range = ['entry ' + (parseFloat(at[0]) || 0) + '%', 'entry ' + (isFinite(parseFloat(at[1])) ? parseFloat(at[1]) : 60) + '%'];
+    }
+    var auto = !range;
+    if (auto) range = ['entry 0%', 'entry ' + Math.max(SR_MIN, Math.round((window.innerHeight || 800) * SR_FRAC)) + 'px'];
+    el.classList.add('m-sr-host');
+    if (auto) el.setAttribute('data-m-auto', '');
+    if (t !== el) el.classList.add('m-sr-clip');
+    t.classList.add('m-sr');
+    scrub(t, { name: name, range: range, scope: range && scope && !custom ? scope : null, auto: auto, len: auto ? parseFloat(range[1].split(' ')[1]) : 0 });
+    if (!hasSDA) slReq();
+  }
+  /* scrollReveal(target, {kind, range, scope, at, stagger}) — programmatic data-sr */
+  function scrollReveal(target, o) {
+    o = o || {};
+    var list = typeof target === 'string' ? document.querySelectorAll(target) : (target && target.length != null && !target.nodeType) ? target : [target];
+    var out = [];
+    for (var i = 0; i < list.length; i++) {
+      var el = list[i];
+      if (!el || !el.setAttribute) continue;
+      if (o.kind) el.setAttribute('data-sr', o.kind); else if (!el.hasAttribute('data-sr')) el.setAttribute('data-sr', 'up');
+      if (o.range) el.setAttribute('data-sr-range', o.range.join(', '));
+      if (o.at) el.setAttribute('data-sr-at', o.at.join(' '));
+      if (o.scope) o.scope.setAttribute('data-sr-scope', '');
+      if (o.stagger != null) el.setAttribute('data-reveal-delay', String(i * o.stagger));
+      wireSr(el);
+      out.push(el);
+    }
+    srMeasureSoon();
+    return { destroy: function () { out.forEach(function (el) { srDone(el); }); } };
+  }
+  /* parallax(el, {amount:0.06, range}) — translateY ±amount·vh across the element's cover range. Illustrations. */
+  function parallax(el, o) {
+    o = o || {};
+    if (!el || el._smPar) return { destroy: noop };
+    var amt = o.amount != null ? +o.amount : parseFloat(el.getAttribute('data-parallax'));
+    if (!isFinite(amt) || amt <= 0) amt = 0.06;
+    amt = Math.min(0.2, amt);
+    if (reduced() || lite() || !(hasSDA || hasIO)) return { destroy: noop };
+    el._smPar = true;
+    el.setAttribute('data-m-par', '');
+    el.style.setProperty('--m-par', String(Math.round(amt * 100)));
+    var e = scrub(el, { name: 'm-par', range: o.range || ['cover 0%', 'cover 100%'], apply: function (p) {
+      el.style.transform = 'translateY(' + ((0.5 - p) * 2 * amt * (window.innerHeight || 800)).toFixed(1) + 'px)';
+    } });
+    return { destroy: function () { unscrub(el); el._smPar = false; el.removeAttribute('data-m-par'); } };
+  }
+  /* progressOnScroll(bar, {target, axis:'x'|'y', range}) — a bar fills with the page (scroll(root)) or a target */
+  function progressOnScroll(bar, o) {
+    o = o || {};
+    if (!bar) return { destroy: noop };
+    var axis = o.axis === 'y' ? 'y' : 'x';
+    bar.style.transformOrigin = axis === 'y' ? 'center top' : 'left center';
+    bar.setAttribute('data-m-prog', '');
+    var e;
+    if (o.target) {
+      e = scrub(bar, { name: 'm-prog-' + axis, src: 'target', target: o.target, range: o.range || ['cover 10%', 'cover 90%'], noSDA: reduced(),
+        apply: function (p) { bar.style.transform = (axis === 'y' ? 'scaleY(' : 'scaleX(') + p.toFixed(4) + ')'; } });
+      if (!e.sda) { e.scope = o.target; }    // the driver reads the target's rect
+    } else {
+      e = scrub(bar, { name: 'm-prog-' + axis, src: 'scroll', range: o.range || ['0%', '100%'], noSDA: reduced(),
+        apply: function (p) { bar.style.transform = (axis === 'y' ? 'scaleY(' : 'scaleX(') + p.toFixed(4) + ')'; } });
+    }
+    return { destroy: function () { unscrub(bar); bar.removeAttribute('data-m-prog'); } };
+  }
+  function wireProgress(el) {
+    if (el._smProg) return;
+    el._smProg = true;
+    var v = el.getAttribute('data-progress'), target = null;
+    if (v) { try { target = document.querySelector(v); } catch (e) { target = null; } }
+    var r = el.getAttribute('data-sr-range'), range = null;
+    if (r) { var parts = r.split(','); if (parts.length === 2) range = [parts[0].trim(), parts[1].trim()]; }
+    progressOnScroll(el, { target: target, axis: el.getAttribute('data-progress-axis') || 'x', range: range });
+  }
+  /* lineDraw(el, {range, from, to}) — an SVG path / line draws with the scroll (pathLength=1 dash), an HTML rule scales */
+  function lineDraw(el, o) {
+    o = o || {};
+    if (!el || el._smDash) return { destroy: noop };
+    el._smDash = true;
+    var r = o.range || null, attr = el.getAttribute('data-sr-range');
+    if (!r && attr) { var parts = attr.split(','); if (parts.length === 2) r = [parts[0].trim(), parts[1].trim()]; }
+    r = r || ['entry 20%', 'cover 60%'];
+    if (reduced() || !(hasSDA || hasIO)) return { destroy: noop };
+    if (isGeom(el)) {
+      el.setAttribute('pathLength', '1');
+      el.style.strokeDasharray = '1 1';
+      el.setAttribute('data-m-dash', '');
+      scrub(el, { name: 'm-dash', range: r });
+    } else {
+      el.style.transformOrigin = el.style.transformOrigin || 'left center';
+      el.setAttribute('data-m-dash', '');
+      scrub(el, { name: 'm-sr-rule', range: r });
+    }
+    return { destroy: function () { unscrub(el); el._smDash = false; el.removeAttribute('data-m-dash'); } };
+  }
+  /* countOnView(el, value, {from, format, duration, seenKey}) — the number rolls when el first enters the viewport */
+  function countOnView(el, value, o) {
+    o = o || {};
+    if (!el) return { destroy: noop, now: noop };
+    if (value == null) { var ca = countAttrs(el); value = isFinite(ca.to) ? ca.to : parseNum(el.textContent); }
+    var fired = false, ob = null;
+    var fire = function () {
+      if (fired) return; fired = true;
+      if (ob) { try { ob.disconnect(); } catch (e) { } ob = null; }
+      if (o.seenKey) { var prev = seen(o.seenKey, value); if (prev != null && +prev === +value && o.from == null) { el.textContent = fmtNum(value, o.decimals || 0); return; } }
+      count(el, value, { from: o.from, format: o.format, duration: o.duration, decimals: o.decimals });
+    };
+    if (hasIO && !reduced()) {
+      ob = new IntersectionObserver(function (ens) { for (var i = 0; i < ens.length; i++) if (ens[i].isIntersecting) fire(); }, { threshold: 0.4 });
+      ob.observe(el);
+    } else fire();
+    return { destroy: function () { if (ob) { try { ob.disconnect(); } catch (e) { } ob = null; } }, now: fire };
+  }
+  /* stickyCompact(el, {threshold}) — a sticky header gets .is-stuck once it sticks; its [data-compact] children scale
+     down (title) or lift away ([data-compact="hide"]) over the first 120px of scroll past its resting place */
+  function stickyCompact(el, o) {
+    o = o || {};
+    if (!el || el._smStick) return { destroy: noop };
+    el._smStick = true;
+    var ob = null, kids = [], sen = null;
+    raf(function () {
+      if (!el.isConnected) return;
+      var top = parseFloat(getComputedStyle(el).top) || 0;
+      var docTop = 0, n = el;
+      while (n && n.offsetParent) { docTop += n.offsetTop; n = n.offsetParent; }
+      if (hasIO && el.parentNode) {
+        /* a 2px sentinel at the element's static position (absolute, so it takes no room): the element is stuck
+           once the sentinel has scrolled past the sticky edge — and not at scroll 0, where the element itself
+           already touches the edge (observing the element said "stuck" on a page that had not moved) */
+        sen = document.createElement('i');
+        sen.className = 'm-stick-s';
+        sen.setAttribute('aria-hidden', 'true');
+        el.parentNode.insertBefore(sen, el);
+        ob = new IntersectionObserver(function (ens) {
+          var x = ens[ens.length - 1];
+          el.classList.toggle('is-stuck', x.boundingClientRect.top < top);
+        }, { threshold: [0, 1], rootMargin: '-' + Math.round(top) + 'px 0px 0px 0px' });
+        ob.observe(sen);
+      }
+      if (!reduced() && !lite()) {
+        var list = el.querySelectorAll('[data-compact]'), len = o.length || 120;
+        for (var i = 0; i < list.length; i++) {
+          var c = list[i], hide = c.getAttribute('data-compact') === 'hide';
+          kids.push(c);
+          scrub(c, { name: hide ? 'm-compact-hide' : 'm-compact-title', src: 'scroll', range: [Math.round(docTop) + 'px', Math.round(docTop + len) + 'px'],
+            apply: (function (cc, hh) { return function (p) {
+              if (hh) { cc.style.opacity = p >= 1 ? '0' : String(1 - p); cc.style.transform = 'translateY(' + (-6 * p).toFixed(1) + 'px)'; }
+              else cc.style.transform = 'scale(' + (1 - 0.14 * p).toFixed(4) + ')';
+            }; })(c, hide) });
+        }
+      }
+    });
+    return { destroy: function () { if (ob) { try { ob.disconnect(); } catch (e) { } } if (sen && sen.parentNode) sen.parentNode.removeChild(sen); kids.forEach(unscrub); el.classList.remove('is-stuck'); el._smStick = false; } };
+  }
+  // the app bar: its brand settles as the page starts to scroll (every page, every visit)
+  function wireAppbar() {
+    var ab = document.querySelector('.appbar');
+    if (!ab || ab._smStick) return;
+    var b = ab.querySelector('.brand');
+    if (b && !b.hasAttribute('data-compact')) b.setAttribute('data-compact', '');
+    stickyCompact(ab);
+    /* the reading line: the brand's green line draws along the foot of the bar as the page is read (the path motif
+       on every page, at every width). Only on a page that scrolls at least half a screen (readlineCheck), so a
+       short page never shows a bar that jumps to full. */
+    readline = document.createElement('span');
+    readline.className = 'm-readline';
+    readline.setAttribute('aria-hidden', 'true');
+    ab.appendChild(readline);
+    progressOnScroll(readline, { axis: 'x' });
+    readlineCheck();
+  }
+  var readline = null, readOn = null;
+  function readlineCheck() {
+    if (!readline) return;
+    var vh = window.innerHeight || 800, on = (docEl.scrollHeight || 0) - vh > vh * 0.5;
+    if (on !== readOn) { readOn = on; readline.classList.toggle('is-on', on); }
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { setTimeout(wireAppbar, 0); });
+  else setTimeout(wireAppbar, 0);
+
   /* ---------------------------------------------------------------- print */
   window.addEventListener('beforeprint', function () { finishAll(document, { all: true, force: true, instant: true }); revealAll(document); });
 
@@ -2424,6 +2925,14 @@
     inTransition: inTransition,
     afterTransition: afterTransition,
     scrollLinked: scrollLinked,
+    scrollReveal: scrollReveal,
+    lineDraw: lineDraw,
+    countOnView: countOnView,
+    parallax: parallax,
+    stickyCompact: stickyCompact,
+    progressOnScroll: progressOnScroll,
+    scrub: scrub,
+    unscrub: unscrub,
     indicator: indicator,
     mount: mount,
     flip: flip,
