@@ -72,9 +72,10 @@ function makeCtx() {
   return vm.createContext(ctx);
 }
 
-// deliberate exceptions, each checked by hand: the language switch names English in English; the 中学生 line
+// deliberate exceptions, each checked by hand: the language switch names English in English; the calendar
+// phone-type switch names the products (iPhone / Android are written that way in Japanese too); the 中学生 line
 // leaves the interest amount out on purpose
-const ALLOW = { 'ja-english': ['set.lang'], vars: ['ln.c.never'] };
+const ALLOW = { 'ja-english': ['set.lang', 'plan.ics.dev.ios', 'plan.ics.dev.and'], vars: ['ln.c.never'] };
 
 const files = order();
 const ctx = makeCtx();

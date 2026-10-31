@@ -404,7 +404,8 @@
     // one line: できた d／t · 巣立ちまで あと N日 (the next task is one line below, cut with …; the whole text is on #/plan)
     out += '<span class="h-st-duo">' + first + daysFact(P, delay) + '</span>';
     if (P.model && P.total) {
-      if (P.next) out += '<span class="h-st-f h-st-next" title="' + esc(P.next.text) + '"><span class="h-st-next-k">' + esc(t('home.st3.next')) + '</span><span class="h-st-next-t">' + esc(P.next.text) + '</span></span>';
+      // v9 INTEGRATOR: the task's short title (the long line stays as the tooltip and the fallback)
+      if (P.next) out += '<span class="h-st-f h-st-next" title="' + esc(P.next.text) + '"><span class="h-st-next-k">' + esc(t('home.st3.next')) + '</span><span class="h-st-next-t">' + esc(P.next.title || P.next.text) + '</span></span>';
       else if (P.allDone) out += '<span class="h-st-f">' + esc(t('home.st3.allDone')) + '</span>';
     }
     return out;

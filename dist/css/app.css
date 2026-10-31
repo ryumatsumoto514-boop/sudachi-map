@@ -6344,20 +6344,13 @@ body.lang-en .v-tools :is(.tl-title, .tl-hub-t, .scr-label-title) { word-break: 
 .v-plan .plan-flow { margin-top: var(--sec-gap); }
 .v-plan .plan-flow > * + * { margin-top: var(--sec-gap); }
 
-/* ---------- head: やること · できたこと n / N · the 高校受験 / 巣立ち switch ---------- */
+/* ---------- head: やること · the 高校受験 / 巣立ち switch (+ its one-line caption) ---------- */
 .v-plan .plan-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--s-3) var(--s-5); }
 .v-plan .plan-head-l { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s-1) var(--s-5); min-width: 0; }
 .v-plan .plan-h1 { flex: none; }
-.v-plan .plan-track { flex: 1 1 240px; max-width: 360px; }
-.v-plan .plan-prog { display: inline-flex; align-items: baseline; gap: 8px; white-space: nowrap; }
-.v-plan .plan-prog-k {
-  font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui);
-  letter-spacing: var(--ls-label); color: var(--ink-2);
-}
-.v-plan .plan-prog-num { color: var(--ink); }
-.v-plan .plan-prog-num b { font-family: var(--font-num); font-weight: 700; font-size: var(--t-num-l); line-height: 1; letter-spacing: var(--ls-0); }
-.v-plan .plan-prog-of { font-family: var(--font-num); font-weight: 500; font-size: var(--t-meta); line-height: 1; color: var(--ink-3); }
-.v-plan .plan-prog.is-all .plan-prog-k { color: var(--action-text); font-weight: 700; }
+.v-plan .plan-head-r { flex: 1 1 240px; max-width: 360px; display: grid; gap: var(--s-2); }
+.v-plan .plan-track { width: 100%; }
+.v-plan .plan-track-cap { margin: 0; font-size: var(--t-label); line-height: var(--lh-ui); letter-spacing: var(--ls-label); color: var(--ink-3); }
 .v-plan .plan-nostore { flex-basis: 100%; margin: 0; font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--amber-text); }
 .v-plan .plan-nostore-go {
   display: inline; min-height: 0; padding: 0; border: 0; background: none; font: inherit; font-weight: 700; color: var(--action-text);
@@ -6378,7 +6371,7 @@ body.lang-en .v-tools :is(.tl-title, .tl-hub-t, .scr-label-title) { word-break: 
   position: relative;
 }
 .v-plan .rm-rail, .v-plan .rm-fill { position: absolute; z-index: 0; pointer-events: none; display: block; }
-.v-plan .rm-rail { left: 0; top: 0; width: var(--ln); margin-left: calc(var(--ln) / -2); background: var(--paper-3); }
+.v-plan .rm-rail { left: 0; top: 0; width: var(--ln); margin-left: calc(var(--ln) / -2); background: var(--paper-3); transform-origin: center top; }
 .v-plan .rm-fill { z-index: 1; left: 0; top: 0; width: var(--ln); margin-left: calc(var(--ln) / -2); transform-origin: center top; }
 .v-plan .rm-fill > i { display: block; width: 100%; height: 100%; background: var(--action); transform-origin: center top; }
 .v-plan .rm { position: relative; z-index: 2; display: grid; margin: 0; padding: 0; list-style: none; }
@@ -6405,7 +6398,10 @@ body.lang-en .v-tools :is(.tl-title, .tl-hub-t, .scr-label-title) { word-break: 
 .v-plan .rm-head-in > .rm-count { grid-area: count; }
 .v-plan .rm-head-in > .rm-tog { grid-area: tog; }
 .v-plan .rm-head:active .rm-head-in { background: var(--wash); }
-@media (hover: hover) { .v-plan .rm-head:not(.is-static):hover .rm-title { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.3em; } }
+@media (hover: hover) {
+  .v-plan .rm-head:not(.is-static):hover :is(.rm-title, .rm-name, .rm-short) { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.3em; }
+  .v-plan .rm-head:not(.is-static):hover .rm-tog .arrow, .v-plan .rm-head:not(.is-static):hover .rm-tog-l { color: var(--ink); }
+}
 
 /* marks on the line */
 .v-plan .rm-mk {
@@ -6468,7 +6464,7 @@ body.lang-en .v-tools :is(.tl-title, .tl-hub-t, .scr-label-title) { word-break: 
   font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); letter-spacing: var(--ls-label); color: var(--ink-3);
 }
 .v-plan .rm-tog .arrow { --arrow-s: 18px; color: var(--ink); transition: rotate var(--spring-snappy-dur) var(--spring-snappy); }
-.v-plan .rm-st.is-open:not(.is-closing) .rm-tog .arrow { rotate: 270deg; }
+.v-plan .rm-st.is-open:not(.is-closing) .rm-tog .arrow, .v-plan .rm-fold.is-open > .rm-head .rm-tog .arrow { rotate: 270deg; }
 .v-plan .rm-head:hover .rm-tog .arrow, .v-plan .rm-head:active .rm-tog .arrow { translate: none; }
 
 /* the milestone (巣立ちの日 / 高校入学): a station sign on the line with the countdown inside it */
@@ -6653,29 +6649,19 @@ body.lang-en .tl-item .tl-seal { font-size: var(--t-micro); padding: 0 4px; }
 .v-plan .tl-rel-link > span:last-child { min-width: 0; overflow-wrap: anywhere; }
 @media (hover: hover) { .v-plan .tl-rel-link:hover { text-decoration-color: var(--ink); } }
 
-.v-plan .plan-note { margin-top: var(--s-6); padding-top: var(--s-3); border-top: 1px solid var(--rule); font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3); }
+.v-plan .plan-note { margin: var(--s-2) 0 0; font-size: var(--t-label); line-height: var(--lh-ui); letter-spacing: var(--ls-label); color: var(--ink-3); }   /* v9 POLISH: under the top card */
 
 /* ---------- beside / under the roadmap: つぎの駅 · 見せる・残す · 保存した支援 ---------- */
 .v-plan .plan-side-k {
   margin: 0 0 var(--s-2);
   font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui); letter-spacing: var(--ls-label); color: var(--ink-3);
 }
-.v-plan .plan-next { display: none; }        /* on a phone the next station is right there on the line */
-.v-plan .plan-next-btn {
-  display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "t a" "d a"; align-items: center; column-gap: var(--s-3);
-  width: 100%; min-height: 64px; margin: 0; padding: var(--s-3) 0; border: 0; border-top: 2px solid var(--ink); border-bottom: 1px solid var(--rule); background: none;
-  font: inherit; color: var(--ink); text-align: left; cursor: pointer;
-}
-.v-plan .plan-next-btn > .plan-next-t { grid-area: t; font-family: var(--font-display); font-weight: 700; font-size: var(--t-h3); line-height: var(--lh-title); }
-.v-plan .plan-next-btn > .plan-next-d { grid-area: d; font-family: var(--font-num); font-weight: 500; font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3); font-variant-numeric: tabular-nums; }
-.v-plan .plan-next-btn > .arrow { grid-area: a; --arrow-s: 20px; }
-.v-plan .plan-next-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
-@media (hover: hover) { .v-plan .plan-next-btn:hover .plan-next-t { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.3em; } }
-.v-plan .plan-next-none { margin: 0; padding-top: var(--s-2); border-top: 2px solid var(--ink); font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3); }
-
+.v-plan .plan-show { display: none; }        /* on a phone the card's action row carries 職員に見せる · カレンダー */
+.v-plan .plan-show .plan-side-k { padding-bottom: var(--s-2); border-bottom: 2px solid var(--ink); color: var(--ink); font-weight: 700; }
+.v-plan .plan-tools-list { border-top: 0; }
 .v-plan .plan-tools-list .list-item { min-height: 72px; }
-.v-plan .plan-tools .list-ic { width: 24px; }
-.v-plan .plan-tools .list-chev { color: var(--ink); }
+.v-plan .plan-show .list-ic { width: 24px; }
+.v-plan .plan-show .list-chev { color: var(--ink); }
 
 /* 保存した支援: compact program rows, each naming its station on the line, + remove */
 .v-plan .plan-saved { display: grid; }
@@ -6757,6 +6743,220 @@ body.lang-en .tl-item .tl-seal { font-size: var(--t-micro); padding: 0 4px; }
 .v-plan .cs-actions > .btn { flex: 1 1 140px; }
 @media (min-width: 640px) { .sheet.v-plan.plan-sheet-wide { width: min(600px, calc(100vw - 48px)); } }
 
+/* =====================================================================
+   v9 (SPEC-v9 workstream 1): the top card · the first-visit start · the folded phone road · task drawers · states
+   ===================================================================== */
+/* ---------- the top card: a station sign. Heavy rule on top, the countdown, いまの駅 beside the green line, actions. ---------- */
+.view.v-plan > .plan-top { margin-top: var(--s-5); }
+.v-plan .plan-top { border-top: 3px solid var(--ink); border-bottom: 1px solid var(--rule); background: var(--paper); }
+.v-plan .pt-cd { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "l l" "d e"; align-items: center; column-gap: var(--s-4); row-gap: var(--s-1); padding: var(--s-4) 0 var(--s-3); border-bottom: 1px solid var(--rule); }
+.v-plan .pt-cd-l { grid-area: l; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; margin: 0; min-width: 0; }
+.v-plan .pt-cd-k { font-family: var(--font-display); font-weight: 500; font-size: var(--t-meta); line-height: var(--lh-ui); color: var(--ink-2); }
+.v-plan .pt-cd-n { display: inline-flex; align-items: baseline; color: var(--ink); white-space: nowrap; }
+.v-plan .pt-cd-pre, .v-plan .pt-cd-u { font-family: var(--font-display); font-weight: 700; font-size: var(--t-meta); line-height: 1; letter-spacing: var(--ls-0); }
+.v-plan .pt-cd-pre { margin-right: 4px; }
+.v-plan .pt-cd-u { margin-left: 3px; }
+.v-plan .pt-cd-num { font-family: var(--font-num); font-weight: 700; font-size: var(--t-num-xl); line-height: var(--lh-num); letter-spacing: var(--ls-num); font-variant-numeric: tabular-nums; }
+.v-plan .pt-cd-today { font-family: var(--font-display); font-weight: 700; font-size: var(--t-h1); line-height: var(--lh-num); letter-spacing: var(--ls-0); color: var(--action-text); }
+.v-plan .pt-assumed { align-self: center; letter-spacing: var(--ls-0); }
+.v-plan .pt-cd-d { grid-area: d; font-family: var(--font-num); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui); color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.v-plan .pt-edit { grid-area: e; justify-self: end; min-height: var(--tap); }
+body.lang-en .v-plan .pt-cd-u { font-size: var(--t-label); letter-spacing: var(--ls-label); }
+/* いまの駅: the green line runs down its left edge */
+.v-plan .pt-st { position: relative; padding: var(--s-3) 0 var(--s-4) var(--s-5); }
+.v-plan .pt-st::before { content: ""; position: absolute; left: 0; top: var(--s-3); bottom: var(--s-4); width: 6px; background: var(--action); }
+.v-plan .pt-k { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: 0; font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui); letter-spacing: var(--ls-label); color: var(--ink-3); }
+.v-plan .pt-t { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px var(--s-3); margin: var(--s-1) 0 0; }
+.v-plan .pt-t-n {
+  display: inline; margin: -8px 0; padding: 8px 0; border: 0; background: none; cursor: pointer; text-align: left; min-width: 0;   /* a 44px target, the same visual */
+  font-family: var(--font-display); font-weight: 700; font-size: var(--t-h2); line-height: var(--lh-heading); color: var(--ink); text-wrap: pretty;
+}
+.v-plan .pt-t-n > span { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 0.2em; text-decoration-color: var(--rule-2); }
+.v-plan .pt-t-n.is-text { font-size: var(--t-h3); cursor: default; }
+.v-plan .pt-t-n:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+@media (hover: hover) { .v-plan .pt-t-n:not(.is-text):hover > span { text-decoration-color: var(--ink); } }
+.v-plan .pt-c { display: inline-flex; align-items: baseline; white-space: nowrap; font-family: var(--font-num); font-weight: 700; font-size: var(--t-num-l); line-height: 1; letter-spacing: var(--ls-0); color: var(--ink); font-variant-numeric: tabular-nums; }
+.v-plan .pt-c-of { font-weight: 500; font-size: var(--t-meta); color: var(--ink-3); }
+.v-plan .pt-c > small { margin-left: 4px; font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); letter-spacing: var(--ls-label); color: var(--ink-3); }
+.v-plan .pt-c.is-all, .v-plan .pt-c.is-all .pt-c-of, .v-plan .pt-c.is-all > small { color: var(--action-text); }
+.v-plan .pt-why { margin: var(--s-2) 0 0; font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-2); text-wrap: pretty; }
+.v-plan .pt-why:empty { display: none; }
+.v-plan .pt-link { color: var(--action-text); font-family: var(--font-display); font-weight: 700; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.3em; }
+/* the action row: three equal cells divided by hairlines (a sign's bottom strip) */
+.v-plan .pt-acts { display: flex; flex-wrap: wrap; border-top: 1px solid var(--rule); }
+.v-plan .pt-act {
+  position: relative; flex: 1 1 96px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 0; min-height: 48px; margin-top: -1px; padding: 0 4px; border-top: 1px solid var(--rule);
+  border: 0; background: none; cursor: pointer; color: var(--ink);
+  font-family: var(--font-display); font-weight: 700; font-size: var(--t-meta); line-height: 1.2; letter-spacing: var(--ls-0); text-align: center;
+}
+.v-plan .pt-act + .pt-act { border-left: 1px solid var(--rule); }
+.v-plan .pt-act .icon { flex: none; width: 18px; height: 18px; stroke-width: 2; color: var(--ink-2); }
+.v-plan .pt-act > span { min-width: 0; }
+.v-plan .pt-act:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+@media (hover: hover) { .v-plan .pt-act:hover { background: var(--paper-2); } }
+.v-plan .pt-act:active { background: var(--wash); }
+body.lang-en .v-plan .pt-act { font-size: var(--t-label); }
+@media (max-width: 359px) {   /* the narrowest phones (and big text): two cells, then the third on its own row — no mid-word breaks */
+  .v-plan .pt-act { font-size: var(--t-label); gap: 4px; }
+  .v-plan .pt-acts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .v-plan .pt-act:nth-child(3) { grid-column: 1 / -1; border-left: 0; border-top: 1px solid var(--rule); margin-top: 0; }
+}
+body.is-ruby .tl-item .tl-say ruby { white-space: nowrap; }   /* a ruby word stays whole; the gaps between words are the readings' */
+/* the first visit: two questions in the card's place */
+.v-plan .plan-top.is-start { padding: var(--s-4) 0 var(--s-3); }
+.v-plan .pt-q { margin: 0 0 var(--s-3); font-family: var(--font-display); font-weight: 700; font-size: var(--t-h3); line-height: var(--lh-heading); color: var(--ink); }
+.v-plan .pt-cd.is-ask { display: block; padding-bottom: var(--s-4); }
+.v-plan .pt-cd.is-ask .pt-q { margin-bottom: var(--s-2); }
+.v-plan .pt-opts { display: grid; gap: var(--s-2); }
+.v-plan .pt-opt {
+  position: relative; display: flex; align-items: center; justify-content: space-between; gap: var(--s-3);
+  min-height: 56px; padding: 0 var(--s-4); border: 0; box-shadow: inset 0 0 0 1.5px var(--ink); background: var(--paper); cursor: pointer; text-align: left;
+  font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); line-height: var(--lh-ui); color: var(--ink);
+}
+.v-plan .pt-opt.is-quiet { box-shadow: inset 0 0 0 1px var(--rule-2); font-weight: 500; color: var(--ink-2); }
+.v-plan .pt-opt .arrow { --arrow-s: 18px; flex: none; }
+.v-plan .pt-opt:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+@media (hover: hover) { .v-plan .pt-opt:hover { background: var(--paper-2); } }
+.v-plan .pt-opt:active { background: var(--wash); }
+.v-plan .pt-hint { margin: var(--s-3) 0 0; font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3); }
+@media (min-width: 480px) { .v-plan .pt-opts { grid-template-columns: repeat(3, minmax(0, 1fr)); } .v-plan .pt-opts-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* ---------- the phone road: past folded, いま open, つぎ previewed, the rest one line each ---------- */
+.v-plan .rm-fold { position: relative; min-width: 0; }
+.v-plan .rm-fold-list { margin: 0; padding: 0; list-style: none; display: grid; }
+.v-plan .rm-fold-list.is-closed { display: none; }
+.v-plan .rm-fold > .rm-head > .rm-mk { background: var(--ink); box-shadow: none; }
+.v-plan .rm-fold.is-complete > .rm-head > .rm-mk::after {
+  content: ""; position: absolute; left: 50%; top: 44%; width: 28%; height: 54%;
+  border: solid var(--paper); border-width: 0 1.5px 1.5px 0; transform: translate(-50%, -50%) rotate(45deg);
+}
+.v-plan .rm-fold.is-open > .rm-head > .rm-head-in { border-bottom-color: var(--rule); }
+.v-plan .rm-fold.is-complete .rm-count { color: var(--action-text); }
+/* a label between stations (この先 · 巣立ったあと): no mark, text only */
+.v-plan .rm-label { list-style: none; padding: var(--s-4) 0 var(--s-1) var(--indent); font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui); letter-spacing: var(--ls-label); color: var(--ink-3); }
+.v-plan .rm-label > span { position: relative; }
+.v-plan .rm-label > span::after { content: ""; position: absolute; left: 0; right: 0; bottom: -3px; height: 1px; background: var(--ink-4); }
+/* one line: short name + count + chevron; the when is a small prefix (「4か月前」, the anchor word dropped) */
+.v-plan .rm-head-in.is-compact { grid-template-columns: auto minmax(0, 1fr) auto auto; grid-template-areas: "when title count tog"; min-height: 48px; padding-top: var(--s-1); padding-bottom: var(--s-1); column-gap: var(--s-2); }
+.v-plan .rm-head-in.is-compact > .rm-when { align-self: center; }
+.v-plan .rm-head-in.is-compact .rm-rel { font-weight: 500; color: var(--ink-3); }
+.v-plan .rm-head-in.is-compact .rm-rel-anchor, .v-plan .rm-head-in.is-compact .rm-rel-x, .v-plan .rm-head-in.is-compact .rm-date { display: none; }
+.v-plan .rm-head-in.is-compact > .rm-title { display: none; }
+.v-plan .rm-head-in.is-compact > .rm-name { grid-area: title; align-self: center; font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); line-height: var(--lh-ui); color: var(--ink-2); }
+.v-plan .rm-fold-head .rm-head-in.is-compact { grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: "title count tog"; }
+.v-plan .rm-fold-head .rm-head-in.is-compact > .rm-title { display: block; font-size: var(--t-ui); color: var(--ink-2); }
+.v-plan .rm-st.is-open .rm-head-in.is-compact > .rm-name, .v-plan .rm-fold.is-open .rm-head-in.is-compact > .rm-title { color: var(--ink); }
+.v-plan .rm-head-in.is-compact .rm-tog-l { display: none; }
+.v-plan .rm-head-in.is-compact > .rm-tog { min-width: 32px; }
+/* つぎ: flag + the station's one line under its title */
+.v-plan .rm-next {
+  display: inline-flex; align-items: center; min-height: 22px; padding: 0 8px;
+  box-shadow: inset 0 0 0 1.5px var(--ink); color: var(--ink);
+  font-family: var(--font-display); font-weight: 700; font-size: var(--t-label); line-height: 1; letter-spacing: var(--ls-label); white-space: nowrap;
+}
+.v-plan .rm-head.is-next .rm-head-in { grid-template-areas: "when count tog" "title title title" "why why why"; }
+.v-plan .rm-head.is-next .rm-head-in > .rm-title { color: var(--ink); }
+.v-plan .rm-st.is-open .rm-why { display: none; }   /* the open body says it (rm-sub) */
+.v-plan .rm-why { grid-area: why; margin-top: 2px; font-family: var(--font-body); font-weight: 400; font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-body); color: var(--ink-2); text-wrap: pretty; }
+/* every row is a target: the press wash spans the full row; the chevron is the affordance */
+.v-plan .rm-head:not(.is-static):active .rm-head-in { background: var(--wash); box-shadow: 0 0 0 var(--s-2) var(--wash); }
+/* v9 INTEGRATOR: the sign on the phone is one row in the road's own grammar — the square mark, 「巣立ちの日」 bold,
+   the date in label type, count + chevron on the right, a 1px rule. The card above carries the number and 仮. */
+.v-plan .rm-st.is-milestone { --c: 24px; }
+.v-plan .rm-box > .rm-head-in {
+  grid-template-columns: auto minmax(0, 1fr) auto auto; grid-template-areas: "k d c tog"; align-items: center; column-gap: var(--s-3); row-gap: 2px;
+  min-height: 48px; margin: 0; padding: var(--s-1) 0 var(--s-1) var(--indent); border: 0; border-bottom: 1px solid var(--rule); background: none;
+}
+.v-plan .rm-st.is-current > .rm-box > .rm-head-in { border-color: var(--rule); }
+.v-plan .rm-st.is-open > .rm-box > .rm-head-in, .v-plan .rm-st.is-current.is-open > .rm-box > .rm-head-in { border-bottom-color: transparent; }
+.v-plan .rm-box-k > .rm-title { font-size: var(--t-ui); line-height: var(--lh-ui); }
+.v-plan .rm-box-d { margin: 0; padding: 0; align-self: center; font-size: var(--t-label); line-height: var(--lh-ui); }
+.v-plan .rm-box > .rm-head-in > .rm-box-c { margin: 0; }
+.v-plan .rm-box > .rm-head-in > .rm-tog { margin: 0 -4px 0 0; min-width: 32px; }
+.v-plan .rm-box .rm-tog-l { display: none; }
+@media (max-width: 379px) { .v-plan .rm-box > .rm-head-in { grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: "k c tog" "d d d"; } }
+/* counts on the rows that are not いま / つぎ appear once something is done (nine 「0/3」s said nothing to a first-timer) */
+.v-plan .rm-head.is-compact .rm-count[data-done="0"], .v-plan .rm-box .rm-count[data-done="0"], .v-plan .rm-fold-head .rm-count[data-done="0"] { display: none; }
+.v-plan .rm-fold-head .rm-count, .v-plan .rm-fold-head .rm-count-n, .v-plan .rm-fold-head .rm-count-w { color: var(--action-text); }
+.v-plan .rm-fold-head .rm-head-in.is-compact .rm-tog-l { display: inline; }
+/* the phone's いま head: the same short name as the card, the months under it — no second badge, count or とじる
+   (the card, 250px above, already says all three; the body is the content) */
+.v-plan .rm-head.is-cur { pointer-events: none; }
+.v-plan .rm-head.is-cur > .rm-head-in { grid-template-columns: minmax(0, 1fr); grid-template-areas: "name" "when"; row-gap: 0; min-height: 0; padding-top: var(--s-2); padding-bottom: var(--s-1); }
+.v-plan .rm-head.is-cur > .rm-head-in > :is(.rm-title, .rm-count, .rm-tog) { display: none; }
+.v-plan .rm-head.is-cur > .rm-head-in > .rm-when > :is(.rm-now, .rm-rel) { display: none; }
+.v-plan .rm-head.is-cur > .rm-head-in > .rm-when { grid-area: when; align-self: start; }
+.v-plan .rm-head.is-cur > .rm-head-in > .rm-name { display: block; grid-area: name; font-family: var(--font-display); font-weight: 700; font-size: var(--t-h3); line-height: var(--lh-heading); color: var(--ink); text-wrap: pretty; }
+.v-plan .rm-sub { margin: 0 0 var(--s-1); font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-2); text-wrap: pretty; }
+.v-plan .rm-st.is-current > .rm-body .rm-sub { display: none; }   /* the card, right above, says it */
+
+/* ---------- task rows: a 44px check, the title opens the drawer ---------- */
+.tl-item .tl-row { position: relative; display: flex; align-items: flex-start; min-height: 52px; }
+.tl-item .tl-task-box { position: relative; flex: none; display: grid; place-items: center; width: var(--tap); height: var(--tap); margin: 4px 0 0 -10px; padding: 0; min-height: 0; }
+.tl-item .tl-task-box .tl-check { left: 0; top: 0; }
+.tl-item .tl-task-box .tl-box { margin-top: 0; }
+.tl-item .tl-t {
+  position: relative; flex: 1; min-width: 0; display: flex; align-items: flex-start; gap: var(--s-2);
+  margin: 0; padding: var(--s-3) 0 var(--s-3) 2px; border: 0; background: none; cursor: pointer; text-align: left;
+  font: inherit; color: inherit;
+}
+.tl-item .tl-t > .tl-item-text { padding-top: 1px; }
+.tl-item .tl-t > .arrow { --arrow-s: 18px; flex: none; margin: 3px 0 0 auto; color: var(--ink); transition: rotate var(--spring-snappy-dur) var(--spring-snappy); }
+.tl-item .tl-row.is-open .tl-t > .arrow { rotate: 270deg; }
+.tl-item .tl-t:hover > .arrow, .tl-item .tl-t:active > .arrow { translate: none; }
+@media (hover: hover) {
+  .tl-item .tl-t:hover .tl-item-main { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.3em; text-decoration-color: var(--ink-4); }
+  .tl-item.is-done .tl-t:hover .tl-item-main { text-decoration: line-through underline; }
+}
+/* v9 POLISH: what the tick moved, on the row's rule (「あと2つ」 / 「この駅はぜんぶできた」): green label type on paper, a
+   moment after the check draws, then it fades (plan.js echo). It sits over the rule so it never moves the next row. */
+.tl-item .tl-echo {
+  position: absolute; right: 0; bottom: -9px; z-index: 2;
+  padding: 0 6px; background: var(--paper);
+  font-family: var(--font-display); font-weight: 700; font-size: var(--t-label); line-height: 18px; letter-spacing: var(--ls-label); color: var(--action-text);
+  white-space: nowrap; pointer-events: none;
+}
+.tl-item > .tl-task > .tl-echo { right: 0; }
+.tl-item .tl-t:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+.tl-item .tl-moved { margin-left: 6px; vertical-align: 2px; background: var(--paper-2); color: var(--ink-2); }
+/* the drawer: なぜ · だれに · こう聞く · いつまで · links · the other two states */
+.tl-item .tl-drawer { position: relative; z-index: 1; padding: 0 0 var(--s-3) 36px; }
+.tl-item .tl-drawer[hidden] { display: none; }
+.tl-item .tl-drawer-in { display: grid; gap: var(--s-2); }
+.tl-item .tl-dl { display: grid; gap: var(--s-2); margin: 0; }
+.tl-item .tl-dr-row { display: grid; gap: 2px; }
+.tl-item .tl-dr-row > dt { font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui); letter-spacing: var(--ls-label); color: var(--ink-3); }
+.tl-item .tl-dr-row > dd { margin: 0; font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-body); color: var(--ink); text-wrap: pretty; }
+.tl-item .tl-say { padding: var(--s-1) var(--s-3); border-left: 2px solid var(--ink); font-family: var(--font-display); font-weight: 500; }
+.tl-item .tl-who { display: inline-block; padding: 2px 8px; box-shadow: inset 0 0 0 1.5px var(--ink); font-family: var(--font-display); font-weight: 700; font-size: var(--t-label); line-height: 1.5; letter-spacing: var(--ls-label); }
+.tl-item .tl-dr-links { margin: 0; padding: 0; }
+.tl-item .tl-states { display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--s-4); margin: 0; }
+/* a state button anywhere on the plan (the drawer, 関係ないにした…, the own-task forms): a 44px target, text-sized */
+.v-plan .tl-state {
+  position: relative; display: inline-flex; align-items: center; justify-content: center; min-height: var(--tap); min-width: var(--tap); padding: 0; border: 0; background: none; cursor: pointer;
+  font-family: var(--font-display); font-weight: 700; font-size: var(--t-meta); line-height: 1.4; color: var(--ink-2);
+}
+.v-plan .tl-state > span { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.3em; text-decoration-color: var(--rule-2); }
+.v-plan .tl-state:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+@media (hover: hover) { .v-plan .tl-state:hover > span { text-decoration-color: var(--ink); color: var(--ink); } }
+.v-plan .tl-state:active > span, .v-plan .tl-state.m-pressed > span { color: var(--action-text); text-decoration-color: currentColor; }
+.tl-item .tl-moved-k { font-size: var(--t-meta); color: var(--ink-3); }
+/* 関係ないにした… */
+.v-plan .tl-na { display: grid; }
+.v-plan .tl-na-t {
+  display: flex; align-items: center; gap: 6px; width: max-content; max-width: 100%; min-height: var(--tap); padding: 0; border: 0; background: none; cursor: pointer;
+  font-family: var(--font-display); font-weight: 500; font-size: var(--t-meta); line-height: var(--lh-ui); color: var(--ink-3);
+}
+.v-plan .tl-na-t .arrow { --arrow-s: 16px; color: var(--ink-3); transition: rotate var(--spring-snappy-dur) var(--spring-snappy); }
+.v-plan .tl-na-t[aria-expanded="true"] .arrow { rotate: 270deg; }
+.v-plan .tl-na-t:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+@media (hover: hover) { .v-plan .tl-na-t:hover { color: var(--ink); } .v-plan .tl-na-t:hover .arrow { color: var(--ink); } }
+.v-plan .tl-na-t:active { color: var(--ink); }
+.v-plan .tl-na-list { margin: 0; padding: 0; list-style: none; display: grid; border-top: 1px solid var(--rule); }
+.v-plan .tl-na-item { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); min-height: 48px; padding: var(--s-1) 0; border-bottom: 1px solid var(--rule); }
+.v-plan .tl-na-text { min-width: 0; font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3); text-decoration: line-through; text-decoration-color: var(--ink-4); }
+.v-plan .tl-na-item .tl-state { flex: none; }
+
 /* ---------- wider phones / tablets ---------- */
 @media (min-width: 600px) {
   .v-plan .rm-wrap { --rail: 32px; --indent: calc(var(--rail) + 16px); }
@@ -6829,10 +7029,26 @@ body.lang-en .tl-item .tl-seal { font-size: var(--t-micro); padding: 0 4px; }
   .v-plan .rm-count-w, .v-plan .rm-tog, .v-plan .rm-head-in > .sr-only { display: none; }
   /* the sign on the line */
   .v-plan .rm-box > .rm-head-in {
-    grid-template-columns: minmax(0, 1fr); grid-template-areas: "k" "n" "d" "c";
-    justify-items: center; align-items: start; text-align: center; row-gap: 0;
+    grid-template-columns: minmax(0, 1fr); grid-template-areas: "k" "d" "c";
+    justify-items: center; align-items: start; text-align: center; row-gap: 0; min-height: 0;
     margin: calc(var(--rail-y) - 44px) 0 0; padding: var(--s-2) var(--s-2) var(--s-2);
+    border: 2px solid var(--ink); background: var(--paper);
   }
+  .v-plan .rm-st.is-current > .rm-box > .rm-head-in { border-color: var(--action); }
+  .v-plan .rm-st.is-open > .rm-box > .rm-head-in { border-bottom-color: var(--ink); }
+  .v-plan .rm-st.is-current.is-open > .rm-box > .rm-head-in { border-bottom-color: var(--action); }
+  .v-plan .rm-count[data-done="0"], .v-plan .rm-box .rm-count[data-done="0"] { display: inline-flex; }
+  /* the phone's いま head rules undone: on the line the current station is a tab like the others */
+  .v-plan .rm-head.is-cur { pointer-events: auto; }
+  .v-plan .rm-head.is-cur > .rm-head-in { grid-template-columns: minmax(0, 1fr); grid-template-areas: "when" "title" "count"; row-gap: 4px; padding: calc(var(--rail-y) + var(--mk) / 2 + 10px) 2px 0; }
+  .v-plan .rm-head.is-cur > .rm-head-in > .rm-count { display: inline-flex; }
+  .v-plan .rm-head.is-cur > .rm-head-in:not(.has-short) > .rm-title { display: -webkit-box; }
+  .v-plan .rm-head.is-cur > .rm-head-in > .rm-when > .rm-now { display: inline-flex; }
+  .v-plan .rm-head.is-cur > .rm-head-in > .rm-when > .rm-rel { display: flex; }
+  .v-plan .rm-head.is-cur > .rm-head-in > .rm-name { display: none; }
+  /* hover on a station of the line: the name underlines, the mark grows (every other control answers the pointer) */
+  .v-plan .rm-mk { transition: transform 160ms var(--ease-standard); }
+  .v-plan .rm-head:not(.is-static):hover > .rm-mk { transform: scale(1.3); }
   .v-plan .rm-box-k { justify-content: center; }
   .v-plan .rm-box-k > .rm-assumed { display: none; }   /* 仮の日付 is said in the open panel, next to 日にちを決める */
   .v-plan .rm-box > .rm-mk { visibility: hidden; }      /* the sign is the station (JS still measures it) */
@@ -6859,7 +7075,28 @@ body.lang-en .tl-item .tl-seal { font-size: var(--t-micro); padding: 0 4px; }
   .v-plan .tl-items { margin-top: var(--s-1); border-top: 0; }
   .v-plan .rm-wrap > .plan-flow { grid-row: 2; grid-column: calc(var(--k, 8) + 1) / -1; margin-top: 0; padding-left: var(--s-8); border-left: 1px solid var(--rule); min-width: 0; }
   .v-plan .plan-flow > * + * { margin-top: var(--s-8); }
-  .v-plan .plan-next { display: block; }
+  .v-plan .plan-show { display: block; }
+  /* v9 */
+  .view.v-plan > .plan-top { margin-top: var(--s-6); }
+  .v-plan .plan-top { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); border-bottom: 0; }
+  .v-plan .pt-cd { grid-column: 1; align-content: start; padding: var(--s-4) var(--s-6) var(--s-4) 0; border-bottom: 0; border-right: 1px solid var(--rule); }
+  .v-plan .pt-cd { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "l l" "d e"; align-content: start; }
+  .v-plan .pt-st { grid-column: 2; margin-left: var(--s-6); padding-top: var(--s-4); }
+  .v-plan .pt-acts { display: none; }               /* the side column has 職員に見せる · カレンダー; the line is right there */
+  .v-plan .plan-top.is-start { display: block; max-width: var(--read-w); }
+  .v-plan .pt-cd.is-ask { border-right: 0; }
+  .v-plan .rm-fold, .v-plan .rm-fold-list, .v-plan .rm-fold-list.is-closed { display: contents; }
+  .v-plan .rm-fold-head, .v-plan .rm-label, .v-plan .rm-why, .v-plan .rm-next, .v-plan .rm-head-in > .rm-name { display: none; }
+  .v-plan .rm-sub { margin: 0; font-size: var(--t-ui); line-height: var(--lh-meta); }   /* v9 POLISH: every other panel says its period's why; いま's card does */
+  .v-plan .rm-head-in.is-compact { grid-template-columns: minmax(0, 1fr); grid-template-areas: "when" "title" "count"; min-height: 0; padding-top: calc(var(--rail-y) + var(--mk) / 2 + 10px); padding-bottom: 0; }
+  .v-plan .rm-head-in.is-compact > .rm-title, .v-plan .rm-st > .rm-head > .rm-head-in.is-compact.has-short > .rm-title { display: none; }
+  .v-plan .rm-head-in.is-compact.has-short > .rm-short { display: block; }
+  .v-plan .rm-head-in.is-compact:not(.has-short) > .rm-title { display: -webkit-box; }
+  .v-plan .rm-head-in.is-compact .rm-rel { font-weight: 500; color: var(--ink-3); }
+  .v-plan .rm-head.is-next .rm-head-in { grid-template-areas: "when" "title" "count"; }
+  .v-plan .rm-head:not(.is-static):active .rm-head-in { background: none; box-shadow: none; }
+  .v-plan .rm-box > .rm-head-in > .rm-box-c { margin-top: 4px; }
+  .v-plan .rm-box-d { margin-top: 2px; }
 }
 @media (min-width: 1240px) {
   .v-plan .rm-wrap { column-gap: 8px; }
@@ -6904,6 +7141,122 @@ body.lang-en .tl-item .tl-seal { font-size: var(--t-micro); padding: 0 4px; }
   .v-plan .pp-foot { margin-top: 14px; font-size: 8.5pt; color: dimgray; }
 }
 .v-plan ol.pp-progs { list-style: decimal; padding-left: 1.4em; }
+
+/* =====================================================================
+   v9 (SPEC-v9 workstream 3, EXTRAS): own tasks · the already-left fold · the saved list · the sheet image · the calendar steps
+   ===================================================================== */
+/* ---------- 自分のやること: the add row at the end of a station's list, its folded form, the own row's edit drawer ---------- */
+.v-plan .tl-add { display: grid; border-bottom: 1px solid var(--rule); }
+.v-plan .tl-add-t {
+  display: flex; align-items: center; gap: var(--s-3); width: 100%; min-height: 52px; margin: 0; padding: var(--s-2) 0; border: 0; background: none; cursor: pointer; text-align: left;
+  font-family: var(--font-display); font-weight: 700; font-size: var(--t-meta); line-height: 1.4; color: var(--ink-2);
+}
+.v-plan .tl-add-plus { position: relative; flex: none; width: 24px; height: 24px; margin-left: -10px; box-shadow: inset 0 0 0 1.5px var(--ink-3); background: var(--paper); }   /* an empty box with a plus = a row not yet written */
+.v-plan .tl-add-plus::before, .v-plan .tl-add-plus::after { content: ""; position: absolute; left: 50%; top: 50%; background: var(--ink-2); transform: translate(-50%, -50%); transition: transform var(--spring-snappy-dur) var(--spring-snappy); }
+.v-plan .tl-add-plus::before { width: 12px; height: 2px; }
+.v-plan .tl-add-plus::after { width: 2px; height: 12px; }
+.v-plan .tl-add.is-open .tl-add-plus::after { transform: translate(-50%, -50%) rotate(90deg); }
+.v-plan .tl-add.is-open .tl-add-plus::before, .v-plan .tl-add.is-open .tl-add-plus::after { background: var(--ink); }
+.v-plan .tl-add-l { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.3em; text-decoration-color: var(--rule-2); }
+.v-plan .tl-add.is-open .tl-add-t { color: var(--ink); }
+.v-plan .tl-add.is-open .tl-add-l { text-decoration: none; }
+@media (hover: hover) { .v-plan .tl-add-t:hover { color: var(--ink); } .v-plan .tl-add-t:hover .tl-add-l { text-decoration-color: var(--ink); } .v-plan .tl-add-t:hover .tl-add-plus { box-shadow: inset 0 0 0 1.5px var(--ink); } }
+.v-plan .tl-add-t:active .tl-add-plus { transform: scale(0.92); }
+.v-plan .tl-add-t:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+.v-plan .tl-add-f[hidden] { display: none; }
+.v-plan .tl-add-f-in, .tl-item .tl-own-f { display: grid; gap: var(--s-2); padding: 0 0 var(--s-3) 36px; }
+.tl-item .tl-own-f { padding-left: 0; }
+.v-plan .tl-own-in { width: 100%; min-height: var(--tap); }
+.v-plan .tl-own-acts { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-4); }
+.v-plan .tl-own-save { min-width: 72px; }
+.v-plan .tl-own-note { flex-basis: 100%; font-size: var(--t-label); line-height: var(--lh-ui); letter-spacing: var(--ls-label); color: var(--ink-3); }
+.v-plan .tl-own-acts > .tl-state { font-size: var(--t-meta); }
+.tl-item .tl-own-k { box-shadow: inset 0 0 0 1px var(--rule-2); background: none; color: var(--ink-3); }
+.tl-item .tl-drawer-own { padding-left: 36px; }
+/* a station's own tasks are written in the hand font (the body font), the data's titles in the display font */
+.tl-item-own .tl-item-main { font-family: var(--font-body); }
+
+/* ---------- already left: the 「巣立ち前」 fold, the still-useful items in いま and under the end row ---------- */
+.v-plan .rm-fold.is-left > .rm-head > .rm-mk { background: var(--paper); box-shadow: inset 0 0 0 1.5px var(--ink); }
+.v-plan .rm-fold.is-left > .rm-head > .rm-mk::before { content: ""; position: absolute; inset: 3px; background: var(--ink); }   /* the sign's mark, small: the whole road before the day */
+.v-plan .rm-fold.is-left.is-complete > .rm-head > .rm-mk::before { display: none; }
+.v-plan .rm-fold.is-left.is-complete > .rm-head > .rm-mk { background: var(--ink); }
+.v-plan .rm-pulled { position: relative; margin: 0 0 var(--s-1); padding-left: 14px; font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-2); text-wrap: pretty; }
+.v-plan .rm-pulled::before { content: ""; position: absolute; left: 0; top: 0.55em; width: 6px; height: 6px; background: var(--action); }
+.v-plan .rm-now-only > .rm-body-end { padding-top: var(--s-2); padding-bottom: var(--s-2); }
+.v-plan .rm-now-only > .rm-body-end[hidden] { display: none; }
+.v-plan .rm-now-only.is-end > .rm-head:not(.is-static) { cursor: default; }
+.v-plan .rm-now-only > .rm-body-end .tl-items { margin-top: var(--s-2); }
+
+/* ---------- 保存した支援: one list — mark · name · the station · the deadline · ✕ ; the road ahead as a quiet second group ---------- */
+.v-plan .sv-list { margin: 0; padding: 0; list-style: none; display: grid; }
+.v-plan .sv-row { position: relative; display: flex; align-items: flex-start; border-bottom: 1px solid var(--rule); }
+.v-plan .sv-main {
+  display: flex; align-items: flex-start; gap: var(--s-3); flex: 1; min-width: 0; min-height: 60px; padding: var(--s-3) 0;
+  color: inherit; text-decoration: none;
+}
+.v-plan .sv-main > .cat-icon { flex: none; margin-top: 1px; }
+.v-plan .sv-body { display: grid; gap: 3px; flex: 1; min-width: 0; }
+.v-plan .sv-name { font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); line-height: var(--lh-title); color: var(--ink); text-wrap: pretty; }
+.v-plan .sv-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 2px var(--s-3); font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui); letter-spacing: var(--ls-label); color: var(--ink-3); }
+.v-plan .sv-at { position: relative; padding-left: 14px; }
+.v-plan .sv-at::before { content: ""; position: absolute; left: 0; top: 50%; width: 8px; height: 8px; margin-top: -4px; background: var(--action); }
+.v-plan .sv-at.is-any::before { background: var(--paper); box-shadow: inset 0 0 0 1.5px var(--ink-3); }
+.v-plan .sv-dl { font-weight: 700; color: var(--amber-text); }
+.v-plan .sv-dl.is-open { color: var(--action-text); }
+.v-plan .sv-dl .tl-open-now { display: inline-block; margin-left: 6px; padding: 0 6px; background: var(--action-tint); color: var(--action-text); font-size: var(--t-label); line-height: 1.7; letter-spacing: var(--ls-0); }
+.v-plan .sv-row > .plan-remove { position: static; flex: none; margin: 8px -10px 0 0; }
+@media (hover: hover) { .v-plan .sv-main:hover .sv-name { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.3em; } }
+.v-plan .sv-main:active { background: var(--wash); }
+.v-plan .sv-main:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+.v-plan .sv-list.is-empty { border-bottom: 0; }
+.v-plan .sv-empty { padding: var(--s-3) 0 var(--s-2); font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-2); }
+/* the quiet group: a small label, rows in the second ink, an arrow instead of ✕ */
+.v-plan .sv-sug { display: grid; justify-items: start; }
+.v-plan .sv-sug-k { margin: var(--s-4) 0 0; font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui); letter-spacing: var(--ls-label); color: var(--ink-3); }
+.v-plan .sv-sug-list { width: 100%; margin: var(--s-1) 0 0; padding: 0; list-style: none; display: grid; border-top: 1px solid var(--rule); }
+.v-plan .sv-row.is-sug .sv-main { min-height: 52px; padding: var(--s-2) 0; }
+.v-plan .sv-row.is-sug .sv-name { font-weight: 500; font-size: var(--t-meta); color: var(--ink-2); }
+.v-plan .sv-row.is-sug .cat-icon { opacity: 0.75; }
+.v-plan .sv-row.is-sug .sv-main > .arrow { --arrow-s: 18px; flex: none; margin: 8px 0 0 auto; color: var(--ink-3); }
+.v-plan .sv-sug > .plan-empty-go { margin-top: var(--s-2); }
+/* nothing saved: the suggestions behind one line (＋ いまとこの先の駅の支援（3）), opened in place */
+.v-plan .sv-sug-d { width: 100%; margin-top: var(--s-2); }
+.v-plan .sv-sug-d > .sv-sug-list { margin-top: var(--s-1); }
+.v-plan .plan-saved-list + .sv-sug .sv-sug-k { margin-top: var(--s-5); }
+
+/* ---------- 相談シート as an image ---------- */
+.v-plan .cs-img { display: grid; gap: var(--s-3); }
+.v-plan .cs-img[hidden] { display: none; }
+.v-plan .cs-img-pic { display: block; width: 100%; height: auto; max-height: 70vh; object-fit: contain; object-position: top; border: 1px solid var(--rule-2); background: #fff; }
+.v-plan .cs-img-hint { margin: 0; font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3); }
+.v-plan .cs-actions > .btn { flex: 1 1 120px; }
+.v-plan .cs-actions .btn-lg { padding-left: 12px; padding-right: 12px; }
+
+/* ---------- カレンダー: three small pictures of opening the .ics (iPhone / Android) ---------- */
+.v-plan .ics-how { display: grid; gap: var(--s-3); }
+.v-plan .ics-how-k { margin: 0; font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); line-height: var(--lh-ui); color: var(--ink); }
+.v-plan .ics-dev { max-width: 280px; }
+.v-plan .ics-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-3); margin: 0; padding: 0; list-style: none; counter-reset: none; }
+.v-plan .ics-step { position: relative; display: grid; justify-items: center; align-content: start; gap: var(--s-1); min-width: 0; padding: var(--s-2) 0 0; text-align: center; }
+.v-plan .ics-step-il { display: block; width: 72px; height: 72px; color: var(--ink); }
+.v-plan .ics-il { display: block; width: 100%; height: 100%; }
+.v-plan .ics-il .il-g { stroke: var(--action); }
+.v-plan .ics-il .il-fill { fill: var(--action); stroke: none; }
+.v-plan .ics-il .il-paper { fill: var(--paper); }
+.v-plan .ics-il .il-dot { fill: var(--action); stroke: none; }
+.v-plan .ics-step-n {
+  display: grid; place-items: center; width: 22px; height: 22px; background: var(--ink); color: var(--paper);
+  font-family: var(--font-num); font-weight: 700; font-size: var(--t-label); line-height: 1; letter-spacing: var(--ls-0);
+}
+.v-plan .ics-step-t { font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: var(--lh-ui); color: var(--ink-2); text-wrap: pretty; overflow-wrap: anywhere; }
+.v-plan .ics-step-note { grid-column: 1 / -1; margin: 0; font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3); }
+@media (max-width: 359px) { .v-plan .ics-step-il { width: 56px; height: 56px; } }
+
+@media (min-width: 1100px) {
+  .v-plan .rm-now-only > .rm-body-end { padding: 0 var(--s-8) 0 0; }
+  .v-plan .rm-now-only.is-end > .rm-head:not(.is-static) { cursor: pointer; }
+}
 /* ---- css/learn.css ---- */
 /* =====================================================================
    巣立ちマップ v4 — learn.css  (owner: LEARN) — まなぶ  #/learn  #/learn/ID

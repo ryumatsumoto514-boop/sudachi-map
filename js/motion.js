@@ -1149,6 +1149,9 @@
   /* ---------------------------------------------------------------- flip (smooth spring ≤400ms) */
   function flipKey(el) { return el.getAttribute('data-flip-key') || el.getAttribute('data-id') || el.id || null; }
   function items(container, sel) {
+    // v9: a function returns the flat list itself (a view that knows which blocks move as units, e.g. an open
+    // station's rows but the closed stations as wholes), so nested elements are never translated twice
+    if (typeof sel === 'function') { try { return Array.prototype.slice.call(sel(container) || []); } catch (e) { return []; } }
     if (sel) return Array.prototype.slice.call(container.querySelectorAll(sel));
     return Array.prototype.slice.call(container.children);
   }
@@ -1192,7 +1195,9 @@
        slide THROUGH their neighbours (opaque rows passing over each other slice each other's text). The row fades
        out where it was (90ms --ease-exit, a ghost), the others close the gap by FLIP, and the row rises in at its
        new place (8px, 200ms --ease-enter) once the gap has mostly closed: the remove grammar, both ways. */
-    var hops = opts.hop ? (opts.hop.length != null ? Array.prototype.slice.call(opts.hop) : [opts.hop]) : [];
+    // v9: hop may also be a selector string, resolved AFTER fn (the row at its new place exists only then)
+    var hops = typeof opts.hop === 'string' ? Array.prototype.slice.call(container.querySelectorAll(opts.hop)) :
+      opts.hop ? (opts.hop.length != null ? Array.prototype.slice.call(opts.hop) : [opts.hop]) : [];
     // removed items fade out in place (ghost), so the gap they leave closes by FLIP, never by height
     byEl.forEach(function (pair) {
       var el = pair[0], r = pair[1], k = flipKey(el);

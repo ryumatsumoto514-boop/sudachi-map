@@ -36,7 +36,7 @@
     'plan.track.leaving': { ja: '巣立ち', en: 'Leaving care' },
 
     'plan.leave.label': { ja: '巣立ちの日', en: 'Leaving day' },
-    'plan.leave.def': { ja: '巣立ちの日＝施設や里親家庭を出て、自分で暮らしはじめる日。', en: 'Leaving day = the day you move out of care and start living on your own.' },
+    'plan.leave.def': { ja: '巣立ちの日＝施設や里親家庭を出て、自分で暮らしはじめる日。', jr: '巣立ちの日＝施設や里親の家を出て、ひとりで暮らしはじめる日。', en: 'Leaving day = the day you move out of care and start living on your own.' },
     'plan.count.k': { ja: '巣立ちまで', en: 'Until you leave' },
     'plan.count.kAfter': { ja: '巣立ってから', en: 'Since you left' },
     'plan.count.unit': { ja: '日', en: 'days' },
@@ -45,7 +45,7 @@
     'plan.count.todayK': { ja: '巣立ちの日は', en: 'Your leaving day is' },
     'plan.count.todayBig': { ja: '今日', en: 'Today' },
     'plan.count.todaySub': { ja: 'ここからがスタート。', en: 'This is where it starts.' },
-    'plan.assumed': { ja: '仮の日付', en: 'Not set yet' },
+    'plan.assumed': { ja: '仮の日付', en: 'Date not set yet' },
     'plan.assumedNote': { ja: 'まだ決まっていないので、{date}として計算しています。', en: 'Not decided yet, so we use {date} for now.' },
     'plan.change': { ja: '変える', en: 'Change' },
     'plan.changeLabel': { ja: '{what}を変える（いまは{date}）', en: 'Change {what} (now {date})' },
@@ -66,7 +66,7 @@
     'plan.jr.tl.h': { ja: '高校入学までの道のり', jr: '高校に入るまでの道のり', en: 'Road to high school' },
     'plan.jr.nowEarly': { ja: 'まだ先。ゆっくりで大丈夫。', en: 'Plenty of time.' },
     'plan.jr.nowLate': { ja: '就学支援金や給付金は、毎年の申請が必要です。', jr: '申請は毎年あります。わすれずに。', en: 'Tuition support and benefits must be applied for every year.' },
-    'plan.jr.note': { ja: '時期は目安。日にちは学校の案内で確かめてね。', en: 'Timing is a guide. Check dates with your school.' },
+    'plan.jr.note': { ja: '時期は目安。日にちは学校の案内で確かめてね。', jr: '時期はだいたいの目安。日にちは学校の案内でたしかめてね。', en: 'Timing is a guide. Check dates with your school.' },
     'plan.jr.date.title': { ja: '高校入学の日', en: 'When high school starts' },
     'plan.jr.date.field': { ja: '高校に入学する日（入学式の日でもOK）', en: 'The day you start high school (the entrance ceremony is fine)' },
     'plan.jr.date.quick': { ja: 'いまの学年からえらぶ', en: 'Pick by your grade now' },
@@ -77,11 +77,11 @@
     'plan.jr.date.saved': { ja: '高校入学を{date}にしました', en: 'High school start set to {date}' },
 
     'plan.date.title': { ja: '巣立ちの日', en: 'Leaving day' },
-    'plan.date.field': { ja: '施設や家を出る日（予定でOK）', en: 'The day you leave (a planned date is fine)' },
-    'plan.date.help': { ja: 'あとで何度でも変えられます。この日はこのスマホの中だけに保存されます。', en: 'You can change it any time. It is saved only on this phone.' },
+    'plan.date.field': { ja: '施設や家を出る日（予定でOK）', jr: '施設や家を出る日（予定でOK）', en: 'The day you leave (a planned date is fine)' },
+    'plan.date.help': { ja: 'あとで何度でも変えられます。この日はこのスマホの中だけに保存されます。', jr: 'あとで何度でも変えられます。このスマホの中だけに残ります。', en: 'You can change it any time. It is saved only on this phone.' },
     'plan.date.save': { ja: 'この日にする', en: 'Use this date' },
     'plan.date.quick': { ja: 'よくある日', en: 'Common dates' },
-    'plan.date.unknown': { ja: 'まだ決まっていない', en: 'Not decided yet' },
+    'plan.date.unknown': { ja: 'まだ決まっていない', jr: 'まだ決まっていない', en: 'Not decided yet' },
     'plan.date.unknownSub': { ja: '3月31日として計算します', en: 'We will use March 31' },
     'plan.date.invalid': { ja: '日付を選んでください', en: 'Please pick a date' },
     'plan.date.saved': { ja: '巣立ちの日を{date}にしました', en: 'Leaving day set to {date}' },
@@ -101,14 +101,14 @@
     'plan.now.emptyT': { ja: 'この時期のやることはなし', en: 'Nothing due now' },
     'plan.now.emptyB': { ja: '', en: '' },
     'plan.now.lateT': { ja: '巣立ってから、時間がたちました', en: 'A while since you left' },
-    'plan.now.lateB': { ja: '巣立ちから時間がたっていても、使える支援はあります。', en: 'Even long after leaving, there is support you can use.' },
+    'plan.now.lateB': { ja: '巣立ちから時間がたっていても、使える支援はあります。', jr: '巣立ってから時間がたっていても、使える支援はあります。', en: 'Even long after leaving, there is support you can use.' },
     'plan.now.jrLateT': { ja: '高校生活が、はじまっています', en: 'High school is under way' },
     'plan.now.consult': { ja: '相談先を見る', en: 'Get help' },
     'plan.all.t': { ja: 'ぜんぶできました', en: 'All done' },
     'plan.all.b': { ja: 'よくがんばりました。', en: 'Well done.' },
 
     'plan.act.ics': { ja: 'カレンダーに入れる', en: 'Add to calendar' },
-    'plan.act.icsSub': { ja: 'やることの日をスマホのカレンダーへ', en: 'Put your to-do dates in your phone' },
+    'plan.act.icsSub': { ja: 'やることの日をスマホのカレンダーへ', jr: 'やることの日をスマホのカレンダーに入れる', en: 'Put your to-do dates in your phone' },
     'plan.act.sheet': { ja: '相談シートをつくる', en: 'Make a talk sheet' },
     'plan.act.sheetSub': { ja: '職員や先生に見せるメモ', jr: '先生や家の人に見せるメモ', en: 'A note to show staff or a teacher' },
     // v7: the plan's first screen (SPEC-v7 §3)
@@ -159,7 +159,7 @@
     'plan.empty.line': { ja: '☆で保存した支援がここに入ります。', en: 'Supports you save with ☆ appear here.' },
     'plan.ics.fileAs': { ja: 'ファイルでは「{s}」', en: 'In the file: “{s}”' },
     'plan.tl.pastAll': { ja: 'ぜんぶできた', en: 'All done' },
-    'plan.tl.pastNote': { ja: 'すぎていても、やる価値があります。', en: 'Still worth doing, even now.' },
+    'plan.tl.pastNote': { ja: 'すぎていても、やる価値があります。', jr: 'すぎていても、やっておくといいです。', en: 'Still worth doing, even now.' },
     'plan.tl.count': { ja: '{done}/{total}', en: '{done}/{total}' },
     'plan.tl.related': { ja: '関係する支援', en: 'Related' },
     'plan.tl.relatedN': { ja: '関係する支援（{n}）', en: 'Related ({n})' },
@@ -172,12 +172,15 @@
     'plan.tl.tool': { ja: 'ひらく', en: 'Open' },
     'plan.tl.detail': { ja: 'くわしく', en: 'Details' },
     'plan.tl.seal': { ja: '済', en: 'Done' },
-    'plan.tl.note': { ja: '時期は目安。職員や先生と調整してね。', en: 'Timing is a guide. Adjust it with staff.' },
-    'plan.done.toast': { ja: 'できた！', en: 'Done!' },
-    'plan.done.groupToast': { ja: 'この時期、ぜんぶできた！', en: 'Period complete!' },
+    'plan.tl.note': { ja: '時期は目安。職員や先生と調整してね。', jr: '時期はだいたいの目安。先生や職員と相談してね。', en: 'Timing is a guide. Adjust it with staff.' },
+    /* v9 POLISH: what a tick moved, said in the row itself (the toast no longer covers the next task) */
+    'plan.echo.left': { ja: 'あと{n}つ', jr: 'あと{n}つ', en: '{n} left' },
+    'plan.echo.left1': { ja: 'あと1つ', jr: 'あと1つ', en: '1 left' },
+    'plan.echo.all': { ja: 'この駅はぜんぶできた', jr: 'この駅はぜんぶできた', en: 'This stop is done' },
+    'plan.echo.undo': { ja: 'できた：{t}。戻すにはもう一度チェック', en: 'Done: {t}. Tick again to undo' },
 
     'plan.ics.title': { ja: 'カレンダーに入れる', en: 'Add to calendar' },
-    'plan.ics.lead': { ja: 'これからの予定 {n}件を、カレンダー用のファイルにしました。', en: 'We made a calendar file with your {n} upcoming dates.' },
+    'plan.ics.lead': { ja: 'これからの予定 {n}件を、カレンダー用のファイルにしました。', jr: 'これからの予定{n}こを、カレンダーに入れられるファイルにしました。', en: 'We made a calendar file with your {n} upcoming dates.' },
     'plan.ics.none': { ja: 'これから先の予定がありません', en: 'No upcoming dates' },
     'plan.ics.noneBody': { ja: 'ぜんぶチェック済みか、日付がすぎています。日付を変えると予定が変わります。', en: 'Everything is ticked or in the past. Changing the date moves the plan.' },
     'plan.ics.more': { ja: 'ほか {n}件', en: '+{n} more' },
@@ -187,8 +190,8 @@
     'plan.ics.howIOS': { ja: 'iPhone：ボタンを押す →「すべてを追加」。ファイルとして保存されたら、「ファイル」アプリで開きます。', en: 'iPhone: tap the button → “Add All”. If it saves as a file, open it from the Files app.' },
     'plan.ics.howAndroid': { ja: 'Android：保存したファイル（.ics）をタップして、カレンダーアプリを選びます。', en: 'Android: tap the saved .ics file and choose your calendar app.' },
     'plan.ics.howPC': { ja: 'パソコン：Googleカレンダーの「設定 → インポート」からも入れられます。', en: 'Computer: in Google Calendar, use Settings → Import.' },
-    'plan.ics.privacy': { ja: 'ファイルはこのスマホの中でつくっています。どこにも送りません。', en: 'The file is made on this phone. Nothing is sent anywhere.' },
-    'plan.ics.alarm': { ja: '前の日の朝9時に通知が出ます。', en: 'You get a reminder at 9am the day before.' },
+    'plan.ics.privacy': { ja: 'ファイルはこのスマホの中でつくっています。どこにも送りません。', jr: 'ファイルはこのスマホの中でつくります。どこにも送りません。', en: 'The file is made on this phone. Nothing is sent anywhere.' },
+    'plan.ics.alarm': { ja: '前の日の朝9時に通知が出ます。', jr: '前の日の朝9時にお知らせが出ます。', en: 'You get a reminder at 9am the day before.' },
     'plan.ics.calName': { ja: '巣立ちマップ やること', en: 'Sudachi Map plan' },
     'plan.ics.leave': { ja: '巣立ちの日', en: 'Leaving day' },
     'plan.ics.entry': { ja: '高校入学', en: 'High school starts' },
@@ -199,16 +202,16 @@
     'plan.ics.foot': { ja: '巣立ちマップ（Economix JP）でつくった予定です。時期は目安です。', en: 'Made with Sudachi Map (Economix JP). Dates are a guide.' },
     'plan.ics.made': { ja: 'ファイルをつくりました', en: 'File created' },
     'plan.ics.plain': { ja: '目立たない名前にする', en: 'Use plain, private names' },
-    'plan.ics.plainSub': { ja: 'ロック画面や共有のカレンダーで見られても、施設や制度のことがわからない名前にします', en: 'Lock screens and shared calendars won\'t show anything about care or benefits' },
+    'plan.ics.plainSub': { ja: 'ロック画面や共有のカレンダーで見られても、施設や制度のことがわからない名前にします', jr: 'ほかの人に見られても、施設や支援のことがわからない名前にします', en: 'Lock screens and shared calendars won\'t show anything about care or benefits' },
     'plan.ics.plainCal': { ja: '予定', en: 'Plans' },
     'plan.ics.plainLeave': { ja: '準備：大事な日', en: 'Prep: big day' },
     'plan.ics.plainGroup': { ja: '準備：やることを確認', en: 'Prep: check my list' },
     'plan.ics.plainProg': { ja: '準備：手続きの確認', en: 'Prep: paperwork check' },
     'plan.ics.plainDesc': { ja: 'くわしくは、保存したリストを見てください。', en: 'See your saved list for details.' },
-    'plan.ics.cloud': { ja: 'スマホのカレンダーは、GoogleやiCloudに自動で同期されることがあります。家族や職員と共有しているカレンダーには入れないでください。', en: 'Phone calendars may sync to Google or iCloud. Don\'t add this to a calendar you share with family or staff.' },
+    'plan.ics.cloud': { ja: 'スマホのカレンダーは、GoogleやiCloudに自動で同期されることがあります。家族や職員と共有しているカレンダーには入れないでください。', jr: 'スマホのカレンダーは、GoogleやiCloudに自動でコピーされることがあります。家の人や職員といっしょに使っているカレンダーには入れないでください。', en: 'Phone calendars may sync to Google or iCloud. Don\'t add this to a calendar you share with family or staff.' },
 
     'plan.sheet.title': { ja: '相談シート', en: 'Talk sheet' },
-    'plan.sheet.lead': { ja: '職員・先生・窓口の人に見せるためのメモです。名前は入りません。', en: 'A note to show staff, a teacher or a support desk. Your name is not included.' },
+    'plan.sheet.lead': { ja: '職員・先生・窓口の人に見せるためのメモです。名前は入りません。', jr: '先生や職員、窓口の人に見せるメモです。名前は入りません。', en: 'A note to show staff, a teacher or a support desk. Your name is not included.' },
     'plan.sheet.memo': { ja: '自分のメモ（書かなくてOK）', en: 'Your note (optional)' },
     'plan.sheet.memoPh': { ja: '例：4月から専門学校。家賃が心配。電話が苦手なので、いっしょに来てほしい。', jr: '例：高校のお金が心配。塾代の支援のことを聞きたい。', en: 'e.g. Starting college in April. Worried about rent. Phone calls are hard, can someone come with me?' },
     'plan.sheet.memoHelp': { ja: 'このスマホの中だけに保存されます。', en: 'Saved only on this phone.' },
@@ -217,7 +220,7 @@
     'plan.sheet.copiedShort': { ja: 'コピーしました', en: 'Copied' },
     'plan.sheet.copied': { ja: '相談シートをコピーしました。LINEやメールに貼れます', en: 'Copied. You can paste it into LINE or email' },
     'plan.sheet.print': { ja: '印刷する', en: 'Print' },
-    'plan.sheet.emptyHint': { ja: '支援を保存したり、質問に答えたりすると、シートの中身が増えます。', en: 'Save programs or answer the questions to fill the sheet.' },
+    'plan.sheet.emptyHint': { ja: '支援を保存したり、質問に答えたりすると、シートの中身が増えます。', jr: '支援を保存したり、質問に答えたりすると、シートに書くことが増えます。', en: 'Save programs or answer the questions to fill the sheet.' },
     'plan.sheet.findLink': { ja: '質問に答える', en: 'Answer questions' },
 
     'plan.s.head': { ja: '【相談シート】巣立ちマップ', en: '[Talk sheet] Sudachi Map' },
@@ -309,8 +312,26 @@
     try { return Number(n).toLocaleString(en() ? 'en-US' : 'ja-JP'); } catch (e) { return String(n); }
   }
 
-  function isDone(key) { return (state().done || []).indexOf(key) !== -1; }
+  /* v9 EXTRAS: 自分のやること — SM.store 'plan:own' = [{ id, group, text, done }] (this phone only) */
+  function ownList() {
+    var v = SM.store.get('plan:own', null);
+    if (!Array.isArray(v)) return [];
+    return v.filter(function (o) { return o && typeof o === 'object' && typeof o.id === 'string' && typeof o.group === 'string' && typeof o.text === 'string'; });
+  }
+  function setOwnList(list) { SM.store.set('plan:own', list); }
+  function ownOf(id) { return ownList().filter(function (o) { return o.id === id; })[0] || null; }
+  function isOwnKey(key) { return typeof key === 'string' && key.indexOf('own:') === 0; }
+  function isDone(key) {
+    if (isOwnKey(key)) { var o = ownOf(key.slice(4)); return !!(o && o.done); }
+    return (state().done || []).indexOf(key) !== -1;
+  }
   function setDone(key, on) {
+    if (isOwnKey(key)) {
+      var id = key.slice(4), list = ownList();
+      list.forEach(function (o) { if (o.id === id) o.done = !!on; });
+      setOwnList(list);
+      return;
+    }
     var a = state().done || (state().done = []);
     var i = a.indexOf(key);
     if (on && i === -1) a.push(key);
@@ -328,8 +349,11 @@
     var stage = answers().stage;
     var track = pref || (jr ? 'junior' : 'leaving');
     // the switch shows for 中学生, for people who haven't said their stage, for nohs (may go back to high school),
-    // and whenever the junior track is on (so it can always be switched back)
-    var show = jr || !stage || stage === 'nohs' || track === 'junior';
+    // and whenever the junior track is on (so it can always be switched back). v9 INTEGRATOR: someone who just
+    // answered Q1 (高校生 → pref set, stage still null) chose the track there; the switch stays out of their way.
+    // (a 中学生 who just answered Q1 is being asked the grade: the switch waits until that is answered too)
+    var asking = !stage && pref && started();
+    var show = (jr || stage === 'nohs' || track === 'junior' || !stage) && !asking;
     return { track: track, pref: pref, junior: jr, showSwitch: show };
   }
   function curTrack() { return trackInfo().track; }
@@ -347,17 +371,42 @@
      receipts and forgiveness) is left out. Area not answered: the data as written. Keys: done-key prefix + task id
      (the done keys themselves never change). Related-support links drop records the person cannot use. */
   var HIDE = {};
+  /* v9 INTEGRATOR: an override carries its own short contract (title / why / who / say) so the drawer is as full
+     outside Tokyo as inside it; a field left out keeps the data's. `due` is dropped unless the override says 'keep'
+     (Tokyo-only dates never travel). */
   var LOCAL_TASK = {
-    'tl:start': { ja: '住む都県に、ひとり暮らしをはじめるときの支援があるか聞く', en: 'Ask whether your prefecture has support for starting life on your own' },
-    'jr:challenge': { ja: '塾代や受験料が心配なら、区市町村の窓口で使える支援がないか聞く', jr: '塾代や受験料が心配なら、窓口で支援がないか聞く', en: 'Worried about cram school or exam fees? Ask your city office what help there is' },
-    'jr:hikaku': { ja: '公立と私立で、授業料と支援がどうちがうか知る', jr: '公立と私立で、お金がどうちがうか知る', en: 'Learn how tuition and support differ between public and private schools' },
+    'tl:start': { ja: '住む都県に、ひとり暮らしをはじめるときの支援があるか聞く', en: 'Ask whether your prefecture has support for starting life on your own',
+      title: { ja: '引っ越し代の支援を職員に聞く', jr: '引っ越し代の制度を聞く', en: 'Ask staff about moving-cost help' },
+      why: { ja: '住む都県にも、引っ越し代などを借りられる支援があることがあります。', jr: '住む県にも、引っ越し代をかりられる支援があることがあります。', en: 'Your prefecture may also have support that lends moving costs and more.' },
+      who: 'staff',
+      say: { ja: '「住む都県に、引っ越し代を借りられる支援はありますか？」', jr: '「住む県に、引っ越し代をかりられる支援はありますか？」', en: 'Does my prefecture have support that lends moving costs?' } },
+    'jr:challenge': { ja: '塾代や受験料が心配なら、区市町村の窓口で使える支援がないか聞く', jr: '塾代や受験料が心配なら、窓口で支援がないか聞く', en: 'Worried about cram school or exam fees? Ask your city office what help there is',
+      title: { ja: '塾代の支援を窓口で聞く', jr: '塾代の助けを窓口で聞く', en: 'Ask the city about cram-school help' },
+      why: { ja: '塾代や受験料の支援は、住む区市町村によってちがいます。', jr: '塾代や受験料の助けは、住む市や区によってちがいます。', en: 'Help with cram-school and exam fees differs from city to city.' },
+      who: 'city',
+      say: { ja: '「塾代や受験料の支援は、この市にありますか？」', jr: '「塾代や受験料の助けは、この市にありますか？」', en: 'Does this city have help with cram-school or exam fees?' } },
+    'jr:hikaku': { ja: '公立と私立で、授業料と支援がどうちがうか知る', jr: '公立と私立で、お金がどうちがうか知る', en: 'Learn how tuition and support differ between public and private schools',
+      title: { ja: '公立と私立のお金のちがいを知る', jr: '公立と私立のお金をくらべる', en: 'Compare public and private costs' },
+      why: { ja: '公立の授業料は就学支援金で実質0円。私立にも国の支援があります。', jr: '公立の授業料は実質0円。私立にも国の助けがあります。', en: 'Public tuition is effectively ¥0 with tuition support, and private schools get national support too.' },
+      who: 'self' },
     'jr:ryoshusho': HIDE, 'jr:jukenryo': HIDE, 'jr:ryoshusho2': HIDE, 'jr:menjo': HIDE,
-    'jr:nyugaku': { ja: '合格したら入学の手続き。入学料の金額と払う期限を、合格の案内で確かめる', jr: '合格したら、入学の手つづき。入学料の期限をたしかめる', en: 'After passing, enrol. Check the entry fee and when it is due in your acceptance papers' },
-    'jr:shugakushien': { ja: '学校から案内が来たら「就学支援金」を申請する', en: 'When school sends instructions, apply for the tuition support fund' },
-    'jr:souki': { ja: '奨学給付金の「新入生の早めの申請」ができるか、学校に聞く', jr: '奨学給付金を早めにもらえるか、学校に聞く', en: 'Ask school whether you can claim the scholarship benefit early as a new student' },
+    'jr:nyugaku': { ja: '合格したら入学の手続き。入学料の金額と払う期限を、合格の案内で確かめる', jr: '合格したら、入学の手つづき。入学料の期限をたしかめる', en: 'After passing, enrol. Check the entry fee and when it is due in your acceptance papers',
+      title: { ja: '合格したら入学の手続きをする', jr: '合格したら入学の手つづき', en: 'After passing, do the entry paperwork' },
+      why: { ja: '入学料の金額と払う期限は、合格の案内で確かめます。', jr: '入学料と、はらう期限は、合格の案内でたしかめます。', en: 'The entry fee and its deadline are in your acceptance papers.' },
+      who: 'school',
+      say: { ja: '「入学の手続きで、いつまでに何を出して、いくら払いますか？」', jr: '「入学の手つづきで、いつまでに何を出しますか？」', en: 'For enrolment, what do I hand in, by when, and how much do I pay?' } },
+    'jr:shugakushien': { ja: '学校から案内が来たら「就学支援金」を申請する', en: 'When school sends instructions, apply for the tuition support fund', due: 'keep' },
+    'jr:souki': { ja: '奨学給付金の「新入生の早めの申請」ができるか、学校に聞く', jr: '奨学給付金を早めにもらえるか、学校に聞く', en: 'Ask school whether you can claim the scholarship benefit early as a new student',
+      why: { ja: '教科書代などの「奨学給付金」を、新入生だけ早めにもらえる都県があります。', jr: '教科書代などの「奨学給付金」を、1年生だけ早めにもらえる県があります。', en: 'Some prefectures let new students claim part of the scholarship benefit early.' },
+      say: { ja: '「奨学給付金の新入生の早期給付は、ありますか？」', jr: '「奨学給付金を早めにもらう申しこみは、ありますか？」', en: 'Is there an early payment of the scholarship benefit for new students?' } },
     'jr:kyufukin': { ja: '「奨学給付金」を申請する（時期と方法は、学校や都県の案内で確かめる）', jr: '「奨学給付金」を申請する', en: 'Apply for the scholarship benefit (check when and how with your school or prefecture)' },
-    'jr:shiritsu': { ja: '私立高校の人は、住む都県に授業料の独自の支援があるか、学校に聞く', jr: '私立の人は、授業料の支援があるか学校に聞く', en: 'At a private school? Ask whether your prefecture adds its own tuition support' },
-    'jr:maitoshi': { ja: '奨学給付金は毎年の申請が必要。就学支援金も、学校から案内が来たら必ず手続きする', jr: '給付金の申請は毎年。来年の分もカレンダーに入れる', en: 'The scholarship benefit needs a new application every year. For the tuition support fund, always act when school sends instructions' }
+    'jr:shiritsu': { ja: '私立高校の人は、住む都県に授業料の独自の支援があるか、学校に聞く', jr: '私立の人は、授業料の支援があるか学校に聞く', en: 'At a private school? Ask whether your prefecture adds its own tuition support',
+      title: { ja: '私立の授業料の支援を学校に聞く', jr: '私立の授業料の助けを聞く', en: 'Private school? Ask about tuition help' },
+      why: { ja: '私立高校には、国の支援に都県が足す授業料の支援があることがあります。', jr: '私立の授業料には、国の助けに県が足す助けがあることがあります。', en: 'Some prefectures add their own tuition support on top of the national one.' },
+      who: 'school',
+      say: { ja: '「私立の授業料に、住む県の支援はありますか？」', jr: '「私立の授業料に、県の助けはありますか？」', en: 'Does my prefecture add tuition support for private schools?' } },
+    'jr:maitoshi': { ja: '奨学給付金は毎年の申請が必要。就学支援金も、学校から案内が来たら必ず手続きする', jr: '給付金の申請は毎年。来年の分もカレンダーに入れる', en: 'The scholarship benefit needs a new application every year. For the tuition support fund, always act when school sends instructions',
+      why: { ja: '奨学給付金は毎年の申請が必要で、忘れた年はもらえません。', jr: '給付金の申しこみは毎年あって、わすれた年はもらえません。', en: 'The benefit needs a fresh application every year; a missed year is money lost.' } }
   };
   function myArea() { var a = answers().area; return typeof a === 'string' && a ? a : null; }
   function outsideTokyo() {
@@ -402,7 +451,8 @@
     var o = LOCAL_TASK[prefix + tk.id];
     if (o === HIDE) return null;
     if (!o) return tk;
-    return { id: tk.id, ja: o.ja, jr: o.jr || o.ja, en: o.en, p: tk.p, paths: tk.paths, href: tk.href, hrefLabel: tk.hrefLabel };
+    return { id: tk.id, ja: o.ja, jr: o.jr || o.ja, en: o.en, p: tk.p, paths: tk.paths, href: tk.href, hrefLabel: tk.hrefLabel,
+      title: o.title || tk.title, why: o.why || tk.why, who: o.who || tk.who, say: o.say || tk.say, due: o.due === 'keep' ? tk.due : (o.due || null) };
   }
 
   /* The 3/31 we assume when the leaving day is not set. Stage-aware: people who already left get a past 3/31. */
@@ -481,8 +531,99 @@
   function taskFilter(path) {
     return function (tk) { return !tk.paths || !tk.paths.length || !path || path === 'unsure' || tk.paths.indexOf(path) !== -1; };
   }
+  /* v9 task states beyond done: SM.store 'plan:skip' = { doneKey: 'na' | 'later' } (自分には関係ない / あとで) */
+  function skipMap() { var v = SM.store.get('plan:skip', null); return v && typeof v === 'object' && !Array.isArray(v) ? v : {}; }
+  function setSkip(key, val) {
+    var m = skipMap();
+    if (val) m[key] = val; else delete m[key];
+    SM.store.set('plan:skip', m);
+  }
+  function WHO() { return ['staff', 'teacher', 'city', 'jiso', 'school', 'self', 'org']; }
+  /* the task contract (SPEC-v9): title / why / who / say / due are optional; the long line (ja/en) stays the fallback */
   function mkTask(key, tk) {
-    return { key: key, kind: 'task', text: L(tk), href: tk.href || null, hrefLabel: tk.hrefLabel ? L(tk.hrefLabel) : '', p: ownIds(tk.p).filter(usable), done: isDone(key) };
+    var title = tk.title ? L(tk.title) : '';
+    var who = typeof tk.who === 'string' && WHO().indexOf(tk.who) !== -1 ? tk.who : null;
+    return {
+      key: key, kind: 'task', text: L(tk), title: title || L(tk), hasTitle: !!title,
+      why: tk.why ? L(tk.why) : '', who: who, say: tk.say ? L(tk.say) : '', due: tk.due && typeof tk.due === 'object' ? tk.due : null,
+      href: tk.href || null, hrefLabel: tk.hrefLabel ? L(tk.hrefLabel) : '', p: ownIds(tk.p).filter(usable), done: isDone(key),
+      skip: skipMap()[key] || null
+    };
+  }
+  /* いつまで: an offset from the anchor date (巣立ちの日 / 高校入学) or a plain text */
+  function dueText(due, model) {
+    if (!due) return '';
+    if (due.kind === 'text') return L(due);
+    if (due.kind === 'offset' || typeof due.days === 'number' || typeof due.months === 'number') {
+      var d = model.anchor;
+      if (typeof due.months === 'number') d = addMonths(d, due.months);
+      if (typeof due.days === 'number') d = new Date(d.getFullYear(), d.getMonth(), d.getDate() + due.days);
+      var n = daysBetween(d, model.anchor), jr = model.track === 'junior';
+      if (n === 0) return t('plan.due.on', { date: fmtDate(d) });
+      return t(n > 0 ? (jr ? 'plan.due.jrBefore' : 'plan.due.before') : (jr ? 'plan.due.jrAfter' : 'plan.due.after'), { date: fmtDate(d), n: fmtNum(Math.abs(n)) });
+    }
+    return L(due);
+  }
+  /* 自分には関係ない leaves the group (kept in g.na); あとで moves the task to the next station that has tasks */
+  function applySkips(groups) {
+    groups.forEach(function (g) {
+      g.na = g.tasks.filter(function (x) { return x.skip === 'na'; });
+      g.tasks = g.tasks.filter(function (x) { return x.skip !== 'na'; });
+    });
+    var moves = [];
+    groups.forEach(function (g, i) {
+      g.tasks.forEach(function (x) {
+        if (x.skip !== 'later') return;
+        for (var j = i + 1; j < groups.length; j++) {
+          if (groups[j].tasks.length) { moves.push({ x: x, from: g, to: groups[j] }); return; }
+        }
+        x.skip = null;   // the last station with tasks: nowhere later to go
+      });
+    });
+    moves.forEach(function (mv) {
+      mv.from.tasks.splice(mv.from.tasks.indexOf(mv.x), 1);
+      mv.x.moved = { key: mv.from.key, title: mv.from.short || mv.from.title, when: mv.from.when };
+      mv.to.tasks.push(mv.x);
+    });
+  }
+
+  /* an own task as a row (kind 'own'): the text is its title; the drawer is the edit form */
+  function mkOwn(o) {
+    return { key: 'own:' + o.id, id: o.id, kind: 'own', own: true, text: o.text, title: o.text, hasTitle: true, why: '', who: null, say: '', due: null,
+      href: null, hrefLabel: '', p: [], done: !!o.done, skip: null };
+  }
+  function addOwnTasks(groups) {
+    var own = ownList();
+    if (!own.length) return;
+    groups.forEach(function (g) { own.forEach(function (o) { if (o.group === g.key) g.tasks.push(mkOwn(o)); }); });
+  }
+  /* v9 EXTRAS: already left (stage left0/left1, or the leaving day is in the past) */
+  var PULL = ['kokuho', 'nenkin', 'kyoten', 'renraku'];   // still useful after leaving: 国保 · 年金 · 帰る場所 · 連絡先
+  function leftMode(track, anchor, now) {
+    if (track !== 'leaving') return false;
+    var st = answers().stage;
+    return st === 'left0' || st === 'left1' || anchor < now;
+  }
+  /* the still-useful items from the stations before the sign move into いま (or under the end row when long after) */
+  function pullLeft(groups, cur, beyond) {
+    var mi = -1;
+    groups.forEach(function (g, i) { if (g.milestone) mi = i; });
+    if (mi === -1 || cur <= mi) return [];
+    var target = beyond ? null : groups[cur];
+    var pulled = [];
+    for (var j = 0; j <= mi; j++) {
+      var g = groups[j];
+      g.tasks.slice().forEach(function (x) {
+        var id = x.key.split(':')[2];
+        if (x.done || x.own || x.moved || PULL.indexOf(id) === -1) return;
+        g.tasks.splice(g.tasks.indexOf(x), 1);
+        x.pulled = { key: g.key, title: g.name };
+        x.moved = null;
+        pulled.push(x);
+      });
+    }
+    if (target) { target.tasks = target.tasks.concat(pulled); target.pulled = pulled.length; }
+    return pulled;
   }
 
   function leavingGroups(leave) {
@@ -491,10 +632,11 @@
       var date = addMonths(leave, g.m);
       var tasks = (g.tasks || []).filter(taskFilter(path)).map(function (tk) { return localTask('tl:', tk); }).filter(Boolean)
         .map(function (tk) { return mkTask('tl:' + g.m + ':' + tk.id, tk); });
+      var short = g.short ? L(g.short) : '';
       return {
-        m: g.m, key: 'g' + g.m, title: L(g.title), short: g.short ? L(g.short) : '', sub: g.sub ? L(g.sub) : '',
+        m: g.m, key: 'g' + g.m, title: L(g.title), short: short, name: short ? short.replace(/\|/g, '') : L(g.title), sub: g.sub ? L(g.sub) : '',
         when: relLabel(g.m), dateLabel: g.m === 0 ? fmtDateW(date) : fmtMonth(monthStart(date)),
-        date: date, start: g.m === 0 ? date : monthStart(date), milestone: g.m === 0, tasks: tasks, progs: []
+        date: date, start: g.m === 0 ? date : monthStart(date), milestone: g.m === 0, after: g.m > 0, tasks: tasks, progs: []
       };
     });
   }
@@ -522,11 +664,12 @@
       if (g.grade === 'hs1' && milestoneAt === -1) milestoneAt = out.length;
       var tasks = (g.tasks || []).map(function (tk) { return localTask('jr:', tk); }).filter(Boolean)
         .map(function (tk) { return mkTask('jr:' + g.id + ':' + tk.id, tk); });
-      out.push({ id: g.id, key: 'j-' + g.id, title: L(g.title), short: g.short ? L(g.short) : '', sub: g.sub ? L(g.sub) : '', when: L(g.when), dateLabel: dateLabel,
-        date: start, start: start, end: end, milestone: false, tasks: tasks, progs: [] });
+      var short = g.short ? L(g.short) : '';
+      out.push({ id: g.id, key: 'j-' + g.id, title: L(g.title), short: short, name: short ? short.replace(/\|/g, '') : L(g.title), sub: g.sub ? L(g.sub) : '', when: L(g.when), dateLabel: dateLabel,
+        date: start, start: start, end: end, milestone: false, after: g.grade === 'hs1', tasks: tasks, progs: [] });
     });
-    var ms = { id: 'entry', key: 'j-entry', title: t('plan.jr.anchor'), sub: '', when: '', dateLabel: fmtDateW(entry),
-      date: entry, start: entry, end: entry, milestone: true, tasks: [], progs: [] };
+    var ms = { id: 'entry', key: 'j-entry', title: t('plan.jr.anchor'), short: '', name: t('plan.jr.anchor'), sub: '', when: '', dateLabel: fmtDateW(entry),
+      date: entry, start: entry, end: entry, milestone: true, after: false, tasks: [], progs: [] };
     if (milestoneAt === -1) out.push(ms); else out.splice(milestoneAt, 0, ms);
     return out;
   }
@@ -541,19 +684,39 @@
     var groups = jr ? juniorGroups(anchor) : leavingGroups(anchor);
     var saved = (state().saved || []).map(function (id) { return SM.program(id); }).filter(Boolean);
     var base = { track: track, anchor: anchor, assumed: ai.assumed, now: now, saved: saved, leave: jr ? null : anchor, entry: jr ? anchor : null };
-    if (!groups.length) { base.groups = []; base.cur = -1; base.beyond = false; base.total = 0; base.done = 0; base.due = 0; return base; }
+    if (!groups.length) { base.groups = []; base.cur = -1; base.beyond = false; base.total = 0; base.done = 0; base.due = 0; base.naN = 0; base.left = false; base.endPulled = []; return base; }
+    // v9: 自分には関係ない / あとで, before anything is counted (counts use applicable tasks only)
+    applySkips(groups);
+    // v9 EXTRAS: own tasks join their station (after the data's tasks, before the saved supports)
+    addOwnTasks(groups);
 
     // FIX-B (F14): the current period, known before saved programs are placed (a date that has passed goes to いま,
     // so saving never grows the 「前の時期」 pile)
     var cur0 = -1;
     groups.forEach(function (g, i) { if (g.start <= now) cur0 = i; });
-    // saved programs → dated items, placed in the right period
+    // v9 EXTRAS: already left — the still-useful pre-leaving items come to いま
+    var last0 = groups[groups.length - 1];
+    var beyond0 = cur0 === groups.length - 1 && (jr ? daysBetween(last0.end || last0.date, now) > 31 : daysBetween(last0.date, now) > 183);
+    base.left = leftMode(track, anchor, now);
+    base.endPulled = base.left ? pullLeft(groups, cur0, beyond0) : [];
+    if (!beyond0) base.endPulled = [];
+    // saved programs → dated items, placed in the right period. v9 INTEGRATOR: one placement rule everywhere (the
+    // road, the saved list, the suggestions): the station whose task names the program wins; the deadline decides
+    // only when no task does. A referencing station already passed hands the item to いま (never the past pile).
+    var refGroup = function (id) {
+      for (var gi = 0; gi < groups.length; gi++) {
+        if (groups[gi].tasks.some(function (x) { return (x.p || []).indexOf(id) !== -1; })) return gi < cur0 ? groups[cur0] : groups[gi];
+      }
+      return null;
+    };
     saved.forEach(function (p) {
       var d = p.deadline;
-      if (!d) return;
+      var ref = refGroup(p.id);
+      if (!d && !ref) return;
       var item = null;
-      var lmPast = typeof d.leaveMonths === 'number' && d.months && d.months.length && addMonths(anchor, d.leaveMonths) < now;
-      if (typeof d.leaveMonths === 'number' && !jr && !lmPast) {
+      var lmPast = d && typeof d.leaveMonths === 'number' && d.months && d.months.length && addMonths(anchor, d.leaveMonths) < now;
+      if (!d) item = { date: ref.start, open: false, label: '', short: '', target: ref };
+      else if (typeof d.leaveMonths === 'number' && !jr && !lmPast) {
         var n = d.leaveMonths;
         var target = groups[0];
         groups.forEach(function (g) { if (g.m <= n) target = g; });
@@ -568,8 +731,9 @@
         }
       }
       if (!item) return;
+      if (ref) item.target = ref;
       var key = 'pg:' + p.id;
-      item.target.progs.push({ key: key, kind: 'prog', p: p, text: L(p.name), date: item.date, label: item.label, short: item.short, open: item.open, window: !!item.window, deadlineText: L(d), done: isDone(key) });
+      item.target.progs.push({ key: key, kind: 'prog', p: p, text: L(p.name), date: item.date, label: item.label, short: item.short, open: item.open, window: !!item.window, deadlineText: d ? L(d) : '', done: isDone(key) });
     });
     groups.forEach(function (g) {
       g.progs.sort(function (a, b) { return a.date - b.date; });
@@ -588,9 +752,9 @@
     }
     var last = groups[groups.length - 1];
     var beyond = cur === groups.length - 1 && (jr ? daysBetween(last.end || last.date, now) > 31 : daysBetween(last.date, now) > 183);
-    var total = 0, done = 0, dueN = 0;
-    groups.forEach(function (g, i) { total += g.total; done += g.doneN; if (i <= cur) dueN += g.total; });
-    base.groups = groups; base.cur = cur; base.beyond = beyond; base.total = total; base.done = done;
+    var total = 0, done = 0, dueN = 0, naN = 0;
+    groups.forEach(function (g, i) { total += g.total; done += g.doneN; naN += g.na.length; if (i <= cur) dueN += g.total; });
+    base.groups = groups; base.cur = cur; base.beyond = beyond; base.total = total; base.done = done; base.naN = naN;
     base.dueN = dueN; base.due = total ? dueN / total : 0;
     return base;
   }
@@ -667,7 +831,7 @@
       var progsOpen = g.progs.filter(function (x) { return !x.done; });
       if (g.milestone) {
         if (g.date >= now) {
-          var lines0 = open.map(function (x) { return '・' + x.text; });
+          var lines0 = open.map(function (x) { return '・' + (x.title || x.text); });
           evs.push({ type: 'anchor', uid: (jr ? 'hsentry' : 'leave') + lk, date: g.date, summary: t(jr ? 'plan.ics.entry' : 'plan.ics.leave'), description: lines0.concat(lines0.length ? [''] : []).concat([foot]).join('\n') });
         }
       } else if (open.length) {
@@ -675,7 +839,7 @@
         var end = nx ? nx.start : (jr && g.end ? new Date(g.end.getFullYear(), g.end.getMonth(), g.end.getDate() + 1) : null);
         if (!end || end > now) {
           var d = g.start < now ? now : g.start;
-          var lines = open.map(function (x) { return '・' + x.text; });
+          var lines = open.map(function (x) { return '・' + (x.title || x.text); });
           evs.push({ type: 'group', uid: (jr ? 'jr-' + g.id : 'tl' + g.m) + lk, date: d, summary: t('plan.ics.group', { t: g.title }), description: lines.concat(['', foot]).join('\n') });
         }
       }
@@ -727,13 +891,17 @@
   function upcoming(model, max) {
     var out = [];
     var from = Math.max(0, model.cur);
-    model.groups.slice(from).forEach(function (g) {
+    model.groups.slice(from).forEach(function (g, k) {
       g.all.forEach(function (x) {
         if (x.done) return;
-        var when = g.milestone ? fmtDate(g.date) : model.track === 'junior' && g.when ? g.when + (g.dateLabel ? '・' + g.dateLabel : '') : fmtMonth(g.start);
-        out.push({ when: when, text: x.kind === 'prog' ? x.text + '（' + x.label + '）' : x.text });
+        // the current station's items are 「いま」, not the month the period began in (which may have passed)
+        var when = k === 0 && model.cur >= 0 && !model.beyond && !g.milestone ? t('plan.tl.now') :
+          g.milestone ? fmtDate(g.date) : model.track === 'junior' && g.when ? g.when + (g.dateLabel ? '・' + g.dateLabel : '') : fmtMonth(g.start);
+        out.push({ when: when, text: x.kind === 'prog' ? x.text + '（' + x.label + '）' : (x.title || x.text) });
       });
     });
+    // v9 EXTRAS: long after leaving, the still-useful items sit under the end row
+    (model.endPulled || []).forEach(function (x) { if (!x.done) out.push({ when: t('plan.tl.now'), text: x.title || x.text }); });
     return out.slice(0, max || 8);
   }
   function whereOf(p) { return L(p.where) || (p.source && p.source.org) || ''; }
@@ -836,12 +1004,161 @@
     'plan.saved.anytime': { ja: 'いつでも', en: 'Any time' },
     'plan.assumedShort': { ja: '決まるまで3月31日で計算', en: 'Counting to March 31 until set' },
     'plan.jr.assumedShort': { ja: 'いま{g}として計算', en: 'Counting as if in {g}' },
-    'plan.tasksN': { ja: 'やること {n}こ', en: '{n} to-dos' }
+    'plan.tasksN': { ja: 'やること {n}こ', en: '{n} to-dos' },
+
+    /* v9 (SPEC-v9 workstream 1): the top card, the first-visit start, the folded road, task drawers, three states */
+    'plan.top.label': { ja: 'いまの状況', en: 'Where you are' },
+    'plan.top.cur': { ja: 'いまの駅', en: 'Current stop' },
+    'plan.top.curRel': { ja: 'いまの駅・{when}', jr: 'いまの駅・{when}', en: 'Current stop: {when}' },
+    'plan.top.next': { ja: 'つぎの駅：{t}（{from}）', en: 'Next stop: {t} ({from})' },
+    'plan.top.allDone': { ja: 'この駅は、ぜんぶできた', en: 'This stop is done' },
+    'plan.top.show': { ja: '職員に見せる', jr: '先生や家の人に見せる', en: 'Show to staff' },
+    'plan.top.cal': { ja: 'カレンダー', en: 'Calendar' },
+    'plan.top.all': { ja: '前の駅も見る', jr: '前の駅も見る', en: 'Earlier stops' },
+    'plan.top.untilK': { ja: '巣立ちの日まで', en: 'Until leaving day' },
+    'plan.top.sinceK': { ja: '巣立ってから', en: 'Since you left' },
+    'plan.top.todayK': { ja: '巣立ちの日は', en: 'Leaving day is' },
+    'plan.top.jrUntilK': { ja: '高校入学まで', en: 'Until high school' },
+    'plan.top.jrSinceK': { ja: '高校に入ってから', en: 'Since high school started' },
+    'plan.top.jrTodayK': { ja: '高校入学は', en: 'High school starts' },
+    'plan.top.pre': { ja: 'あと', en: '' },
+    'plan.top.unit': { ja: '日', en: 'days' },
+    'plan.top.unit1': { ja: '日', en: 'day' },
+    'plan.top.unitAfter': { ja: '日', en: 'days' },
+    'plan.top.today': { ja: '今日', en: 'today' },
+    'plan.top.assumed': { ja: '仮', en: 'TBD' },
+    'plan.top.assumedLabel': { ja: '仮の日付', en: 'Date not set yet' },
+    'plan.track.cap': { ja: '中学生は「高校受験」、高校生から上は「巣立ち」。', jr: '中学生は「高校受験」、高校生より上は「巣立ち」。', en: 'Junior high: “Starting high school”. High school and after: “Leaving care”.' },
+
+    'plan.start.q1': { ja: 'いまの状況は？', en: 'Where are you now?' },
+    'plan.start.jhs': { ja: '中学生', en: 'Junior high school' },
+    'plan.start.hs': { ja: '高校生', jr: '高校生', en: 'High school' },
+    'plan.start.left': { ja: 'もう出た', jr: 'もう出た', en: 'Already left care' },
+    'plan.start.hint': { ja: '答えると、やることが時期ごとに並びます。このスマホの中だけに残ります。', jr: '答えると、やることが順番にならびます。', en: 'Answer, and your to-dos line up by period. It stays on this phone.' },
+    'plan.start.q2': { ja: '巣立ちの日は？', en: 'Your leaving day?' },
+    'plan.start.jrQ2': { ja: '高校に入る日は？', en: 'When does high school start?' },
+    'plan.start.pick': { ja: '日にちを決める', en: 'Set the date' },
+    'plan.start.unknown': { ja: 'まだ決まっていない', en: 'Not decided yet' },
+    'plan.start.jrUnknown': { ja: 'まだわからない', en: 'Not sure yet' },
+    'plan.start.q2hint': { ja: '決まるまでは、3月31日として計算します。', jr: '決まるまでは、3月31日として数えます。', en: 'Until it is set, we count to March 31.' },
+    'plan.start.jrQ2hint': { ja: '決まるまでは、つぎの4月1日として計算します。', en: 'Until it is set, we count to next April 1.' },
+    /* v9 INTEGRATOR: Q2 for someone who already left (the day is in the past) and for a 中学生 (the grade, not a date) */
+    'plan.start.leftQ2': { ja: '出たのはいつ？', jr: '出たのはいつ？', en: 'When did you leave?' },
+    'plan.start.leftPick': { ja: '日にちを入れる', jr: '日にちを入れる', en: 'Enter the date' },
+    'plan.start.leftUnknown': { ja: 'おぼえていない', jr: 'おぼえていない', en: 'Not sure' },
+    'plan.start.leftQ2hint': { ja: 'わからないときは、前の3月31日として計算します。', jr: 'わからないときは、前の3月31日として数えます。', en: 'If you are not sure, we count from the last March 31.' },
+    'plan.start.gradeQ': { ja: 'いま何年生？', jr: 'いま何年生？', en: 'What year are you in?' },
+    'plan.start.g12': { ja: '中1・中2', jr: '中1・中2', en: '1st or 2nd year' },
+    'plan.start.g3': { ja: '中3', jr: '中3', en: '3rd year' },
+    'plan.start.gradeHint': { ja: '高校入学は、4月1日として計算します。', jr: '高校入学は、4月1日として数えます。', en: 'We count to April 1 as the day high school starts.' },
+    'plan.leftDate': { ja: '出た日を入れる', jr: '出た日を入れる', en: 'Enter the date' },
+    'plan.leftChange': { ja: '出た日を変える', jr: '出た日を変える', en: 'Change the date' },
+    'plan.date.fieldLeft': { ja: '施設や家を出た日', jr: '施設や家を出た日', en: 'The day you left' },
+    'plan.date.unknownSubLeft': { ja: '前の3月31日として計算します', jr: '前の3月31日として数えます', en: 'We will use the last March 31' },
+
+    'plan.fold.past': { ja: 'ここまでの{n}駅', en: '{n} stops so far' },
+    'plan.fold.past1': { ja: 'ここまでの1駅', en: '1 stop so far' },
+    'plan.fold.sinceLeft': { ja: '出てから、ここまでの{n}駅', jr: '出てから、ここまでの{n}駅', en: 'Since leaving: {n} stops' },
+    'plan.fold.sinceLeft1': { ja: '出てから、ここまでの1駅', jr: '出てから、ここまでの1駅', en: 'Since leaving: 1 stop' },
+    'plan.fold.open': { ja: 'ここまでの駅を見る', en: 'Show earlier stops' },
+    'plan.fold.close': { ja: 'ここまでの駅をとじる', en: 'Hide earlier stops' },
+    'plan.label.ahead': { ja: 'この先', en: 'Coming up' },
+    'plan.label.after': { ja: '巣立ったあと', en: 'After leaving' },
+    'plan.label.jrAfter': { ja: '入学したあと', en: 'After you start' },
+    'plan.next.flag': { ja: 'つぎ', en: 'Next' },
+    'plan.row.open': { ja: '{t}を見る', en: 'Open {t}' },
+
+    'plan.dr.why': { ja: 'なぜ', en: 'Why' },
+    'plan.dr.who': { ja: 'だれに', en: 'Who to ask' },
+    'plan.dr.say': { ja: 'こう聞く', en: 'Say this' },
+    'plan.dr.due': { ja: 'いつまで', en: 'By when' },
+    'plan.dr.links': { ja: 'くわしく', jr: 'くわしく', en: 'More' },
+    'plan.dr.open': { ja: '{t}：くわしく見る', jr: '{t}：くわしく見る', en: '{t}: show details' },
+    'plan.dr.check': { ja: '{t}をできたにする', en: 'Mark “{t}” done' },
+    'plan.due.before': { ja: '{date}（巣立ちの{n}日前）', en: '{date} ({n} days before leaving)' },
+    'plan.due.after': { ja: '{date}（巣立ちの{n}日後）', en: '{date} ({n} days after leaving)' },
+    'plan.due.jrBefore': { ja: '{date}（入学の{n}日前）', en: '{date} ({n} days before entry)' },
+    'plan.due.jrAfter': { ja: '{date}（入学の{n}日後）', en: '{date} ({n} days after entry)' },
+    'plan.due.on': { ja: '{date}', en: '{date}' },
+    'plan.who.staff': { ja: '職員', en: 'Care staff' },
+    'plan.who.teacher': { ja: '先生', en: 'Teacher' },
+    'plan.who.city': { ja: '区市町村の窓口', jr: '市や区の窓口', en: 'City office' },
+    'plan.who.jiso': { ja: '児童相談所', jr: '児童相談所（児相）', en: 'Child guidance centre' },
+    'plan.who.school': { ja: '学校', en: 'School' },
+    'plan.who.self': { ja: '自分で', en: 'Yourself' },
+    'plan.who.org': { ja: '相談窓口・支援団体', jr: '相談できる窓口', en: 'Help desk or support group' },
+
+    'plan.skip.na': { ja: '自分には関係ない', jr: '自分には関係ない', en: 'Not for me' },
+    'plan.skip.later': { ja: 'あとで', en: 'Later' },
+    'plan.skip.laterTo': { ja: 'あとで（{t}へ）', en: 'Later (move to {t})' },
+    'plan.skip.back': { ja: '戻す', en: 'Put back' },
+    'plan.skip.backLabel': { ja: '「{t}」を戻す', en: 'Put “{t}” back' },
+    'plan.skip.naLine': { ja: '関係ないにした{n}つ', en: '{n} marked “not for me”' },
+    'plan.skip.naLine1': { ja: '関係ないにした1つ', en: '1 marked “not for me”' },
+    'plan.skip.movedTag': { ja: 'あとで', en: 'Later' },
+    'plan.skip.movedFrom': { ja: '{t}の駅から', en: 'from the {t} stop' },
+    'plan.skip.naToast': { ja: '「関係ない」にしました。数に入れません', jr: '「関係ない」にしました。数に入れません', en: 'Marked “not for me”. It no longer counts' },
+    'plan.skip.laterToast': { ja: '「{t}」へ動かしました', en: 'Moved to “{t}”' },
+    'plan.skip.backToast': { ja: '戻しました', en: 'Put back' },
+
+    /* v9 (SPEC-v9 workstream 3, EXTRAS): own tasks · the already-left fold · the saved list · the sheet image · the calendar steps */
+    'plan.own.add': { ja: '自分のやることを足す', jr: '自分のやることを足す', en: 'Add my own to-do' },
+    'plan.own.field': { ja: '自分のやること', en: 'My own to-do' },
+    'plan.own.ph': { ja: '例：面接の服を用意する', jr: '例：面接の服を用意する', en: 'e.g. Get clothes for the interview' },
+    'plan.own.save': { ja: '足す', en: 'Add' },
+    'plan.own.cancel': { ja: 'やめる', en: 'Cancel' },
+    'plan.own.editSave': { ja: '保存', en: 'Save' },
+    'plan.own.del': { ja: '消す', en: 'Delete' },
+    'plan.own.tag': { ja: '自分の', en: 'Mine' },
+    'plan.own.open': { ja: '「{t}」を書きなおす・消す', en: 'Edit or delete “{t}”' },
+    'plan.own.empty': { ja: 'やることを書いてください', en: 'Write the to-do first' },
+    'plan.own.added': { ja: '足しました', en: 'Added' },
+    'plan.own.saved': { ja: '保存しました', en: 'Saved' },
+    'plan.own.deleted': { ja: '「{t}」を消しました', en: 'Deleted “{t}”' },
+    'plan.own.note': { ja: 'このスマホの中だけに残ります。', jr: 'このスマホの中だけに残ります。', en: 'Stays on this phone only.' },
+
+    'plan.left.fold': { ja: '巣立ち前（{n}駅）', jr: '巣立ち前（{n}駅）', en: 'Before leaving ({n} stops)' },
+    'plan.left.foldOpen': { ja: '巣立ち前の駅を見る', en: 'Show the stops before leaving' },
+    'plan.left.foldClose': { ja: '巣立ち前の駅をとじる', en: 'Hide the stops before leaving' },
+    'plan.left.note': { ja: 'いまでも役に立つことを、巣立ち前の駅から{n}つ持ってきました。', jr: 'いまでも役に立つことを、巣立ち前の駅から{n}つ持ってきました。', en: 'Still useful: {n} items brought here from the stops before leaving.' },
+    'plan.left.note1': { ja: 'いまでも役に立つことを、巣立ち前の駅から1つ持ってきました。', jr: 'いまでも役に立つことを、巣立ち前の駅から1つ持ってきました。', en: 'Still useful: 1 item brought here from the stops before leaving.' },
+    'plan.left.from': { ja: '巣立ち前の「{t}」の駅から', en: 'From the “{t}” stop, before leaving' },
+    'plan.left.tag': { ja: '巣立ち前', en: 'Pre-leaving' },
+
+    'plan.sv.sug': { ja: 'いまとこの先の駅の支援', jr: 'いまとこの先の駅の支援', en: 'Supports at this stop and ahead' },
+    'plan.sv.sugN': { ja: 'いまとこの先の駅の支援（{n}）', jr: 'いまとこの先の駅の支援（{n}）', en: 'Supports at this stop and ahead ({n})' },
+    'plan.sv.sugAt': { ja: '{t}の駅', en: '{t} stop' },
+    'plan.sv.due': { ja: '期限 {v}', en: 'Due {v}' },
+    'plan.sv.apply': { ja: '申込 {v}', en: 'Apply {v}' },
+    'plan.sv.open': { ja: '「{t}」をひらく', en: 'Open “{t}”' },
+
+    'plan.sheet.img': { ja: '画像で保存', jr: '画像で保存', en: 'Save as image' },
+    'plan.sheet.imgMade': { ja: '画像をつくりました', en: 'Image ready' },
+    'plan.sheet.imgDl': { ja: '画像を保存する', en: 'Save the image' },
+    'plan.sheet.imgHint': { ja: '画像を長押ししても保存できます。LINEで送るときにも便利です。', jr: '画像を長押ししても保存できます。LINEで送るときにもべんり。', en: 'Long-press the image to save it too. Handy for sending on LINE.' },
+    'plan.sheet.imgAlt': { ja: '相談シートの画像', en: 'The talk sheet as an image' },
+    'plan.sheet.imgFail': { ja: '画像をつくれませんでした。コピーか印刷を使ってください。', en: 'Could not make the image. Use copy or print instead.' },
+
+    'plan.ics.dev.ios': { ja: 'iPhone', en: 'iPhone' },
+    'plan.ics.dev.and': { ja: 'Android', en: 'Android' },
+    'plan.ics.devLabel': { ja: 'スマホの種類', en: 'Your phone' },
+    'plan.ics.ios1': { ja: '上のボタンを押す', jr: '上のボタンを押す', en: 'Tap the button above' },
+    'plan.ics.ios2': { ja: '「すべてを追加」を押す', jr: '「すべてを追加」を押す', en: 'Tap “Add All”' },
+    'plan.ics.ios3': { ja: 'カレンダーに入る', jr: 'カレンダーに入る', en: 'It is in your calendar' },
+    'plan.ics.iosNote': { ja: 'ファイルとして保存されたときは、「ファイル」アプリで開きます。', jr: 'ファイルとして保存されたときは、「ファイル」アプリでひらきます。', en: 'If it saves as a file, open it from the Files app.' },
+    'plan.ics.and1': { ja: '上のボタンでファイルを保存', jr: '上のボタンでファイルを保存', en: 'Save the file with the button above' },
+    'plan.ics.and2': { ja: '.icsファイルをタップして、カレンダーを選ぶ', jr: '.icsファイルをタップして、カレンダーをえらぶ', en: 'Tap the .ics file and pick your calendar' },
+    'plan.ics.and3': { ja: 'カレンダーに入る', jr: 'カレンダーに入る', en: 'It is in your calendar' },
+    'plan.ics.step': { ja: '手順{n}', en: 'Step {n}' }
   });
 
   /* ------------------------------------------------------------------ render pieces */
   var openKeys = {};         // phone: which stations the reader opened / closed (key → bool)
   var selKey = null;         // desktop: the one open station
+  var drawerOpen = {};       // v9: task drawers the reader opened (task key → bool)
+  var naOpen = {};           // v9: 関係ないにした… lines unfolded (group key → bool)
+  var foldOpen = {};         // v9 phone: the past stations unfolded (fold id → bool; 'fold' = the past, 'fold2' = past stations after leaving)
+  var addOpen = {};          // v9 EXTRAS: the 「自分のやることを足す」 form open (group key → bool)
   var calm = false;          // the next render is an in-place re-render by this view (no first-view motion)
   var lastCalm = false;
   var renderGen = 0;
@@ -872,20 +1189,106 @@
         '<span>' + esc(it[1]) + '</span></button>';
     }).join('') + '</div>';
   }
-  /* できたこと n / N: the one number pair of the page (the line below is its bar) */
-  function progressHtml(model) {
-    var all = model.total > 0 && model.done === model.total;
-    return '<p class="plan-prog' + (all ? ' is-all' : '') + '" id="plan-prog">' +
-      '<span class="plan-prog-k" data-m="pk">' + esc(t(all ? 'plan.progressAll' : 'plan.progressK')) + '</span>' +
-      '<span class="plan-prog-num num"><b id="plan-prog-done" data-m="pd" data-count="' + model.done + '" data-count-seen="plan.done.' + model.track + '">' + model.done + '</b>' +
-      '<span class="plan-prog-of"> / <span id="plan-prog-total" data-m="pt">' + model.total + '</span></span></span></p>';
-  }
   function headHtml(ti, model) {
     var nostore = SM.store && SM.store.available === false ?
       '<p class="plan-nostore" role="note">' + esc(t('plan.nostore')) + ' <button type="button" class="plan-nostore-go" data-act="settings">' + esc(t('plan.nostoreGo')) + '</button></p>' : '';
-    return '<header class="plan-head">' +
-      '<div class="plan-head-l"><h1 class="plan-h1" id="plan-h1" data-reveal="line">' + esc(t('plan.h1')) + '</h1>' + progressHtml(model) + '</div>' +
-      switchHtml(ti) + nostore + '</header>';
+    var sw = switchHtml(ti);
+    return '<header class="plan-head' + (sw ? ' has-switch' : '') + '">' +
+      '<div class="plan-head-l"><h1 class="plan-h1" id="plan-h1" data-reveal="line">' + esc(t('plan.h1')) + '</h1></div>' +
+      (sw ? '<div class="plan-head-r">' + sw + '<p class="plan-track-cap">' + esc(t('plan.track.cap')) + '</p></div>' : '') + nostore +
+      '<p class="sr-only" id="plan-live" role="status" aria-live="polite"></p></header>';
+  }
+
+  /* ---------- v9: the first visit (no answers, no date) and the top card ---------- */
+  function started() { return !!SM.store.get('plan:started', false); }
+  function dateSeen() { return !!SM.store.get('plan:dateSeen', false); }
+  function startMode() {
+    if (started() || trackPref()) return false;
+    return !answers().stage && !state().leaveDate && !state().hsDate;
+  }
+  function startHtml() {
+    var opts = [['jhs', 'plan.start.jhs'], ['hs', 'plan.start.hs'], ['left', 'plan.start.left']];
+    return '<section class="plan-top is-start" id="plan-top" aria-labelledby="plan-top-q">' +
+      '<p class="pt-q" id="plan-top-q">' + esc(t('plan.start.q1')) + '</p>' +
+      '<div class="pt-opts" role="group" aria-labelledby="plan-top-q">' + opts.map(function (o) {
+        return '<button type="button" class="pt-opt" data-act="plan-start" data-value="' + o[0] + '" data-press><span>' + esc(t(o[1])) + '</span>' + arrow() + '</button>';
+      }).join('') + '</div>' +
+      '<p class="pt-hint">' + esc(t('plan.start.hint')) + '</p></section>';
+  }
+  /* the countdown line: 「巣立ちの日まで あと151日 仮 · 2027年3月31日（水）」 + 日にちを決める / 変える */
+  function countLineHtml(model) {
+    var jr = model.track === 'junior';
+    var c = countInfo(model);
+    var k = t(c.today ? (jr ? 'plan.top.jrTodayK' : 'plan.top.todayK') : c.before ? (jr ? 'plan.top.jrUntilK' : 'plan.top.untilK') : (jr ? 'plan.top.jrSinceK' : 'plan.top.sinceK'));
+    var num = c.today ?
+      '<span class="pt-cd-n is-today"><b class="pt-cd-today" id="plan-count-n" data-m="n">' + esc(t('plan.top.today')) + '</b></span>' :
+      '<span class="pt-cd-n">' + (c.before && t('plan.top.pre') ? '<span class="pt-cd-pre">' + esc(t('plan.top.pre')) + '</span>' : '') +
+        '<b class="num pt-cd-num" id="plan-count-n" data-m="n" data-n="' + c.n + '">' + esc(c.text) + '</b>' +
+        '<span class="pt-cd-u">' + esc(t(c.before ? (c.n === 1 ? 'plan.top.unit1' : 'plan.top.unit') : 'plan.top.unitAfter')) + '</span></span>';
+    var tag = model.assumed ? '<span class="tag tag-deadline pt-assumed" title="' + esc(t('plan.top.assumedLabel')) + '"><span aria-hidden="true">' + esc(t('plan.top.assumed')) + '</span><span class="sr-only">' + esc(t('plan.top.assumedLabel')) + '</span></span>' : '';
+    // already left: the day is behind them — 「出た日を入れる / 変える」, never 「決める」
+    var editKey = model.left ? (model.assumed ? 'plan.leftDate' : 'plan.leftChange') : (model.assumed ? 'plan.decideDate' : 'plan.change');
+    var edit = '<button type="button" class="rm-edit pt-edit" data-act="plan-date" aria-label="' + esc(t('plan.changeLabel', { what: t(jr ? 'plan.jr.anchor' : 'plan.leave.label'), date: fmtDate(model.anchor) })) + '"><span>' + esc(t(editKey)) + '</span></button>';
+    return '<div class="pt-cd"><p class="pt-cd-l"><span class="pt-cd-k">' + esc(k) + '</span>' + num + tag + '</p>' +
+      '<span class="pt-cd-d num" data-m="dv" data-noruby>' + esc(fmtDateW(model.anchor)) + '</span>' + edit + '</div>';
+  }
+  /* the second question of the start, asked in the card until the date is set or 「まだ決まっていない」 is tapped */
+  function askDateHtml(model) {
+    var jr = model.track === 'junior';
+    // v9 INTEGRATOR: a 中学生 is asked the grade (the entry date follows from it; 日にちを決める stays in the card);
+    // someone who already left is asked when they left (「おぼえていない」 counts from the last March 31)
+    if (jr) {
+      return '<div class="pt-cd is-ask"><p class="pt-q" id="plan-top-q2">' + esc(t('plan.start.gradeQ')) + '</p>' +
+        '<div class="pt-opts pt-opts-2" role="group" aria-labelledby="plan-top-q2">' +
+          '<button type="button" class="pt-opt" data-act="plan-start-grade" data-value="jhs12" data-press><span>' + esc(t('plan.start.g12')) + '</span>' + arrow() + '</button>' +
+          '<button type="button" class="pt-opt" data-act="plan-start-grade" data-value="jhs3" data-press><span>' + esc(t('plan.start.g3')) + '</span>' + arrow() + '</button>' +
+        '</div><p class="pt-hint">' + esc(t('plan.start.gradeHint')) + '</p></div>';
+    }
+    var left = !!model.left;
+    return '<div class="pt-cd is-ask"><p class="pt-q" id="plan-top-q2">' + esc(t(left ? 'plan.start.leftQ2' : 'plan.start.q2')) + '</p>' +
+      '<div class="pt-opts pt-opts-2" role="group" aria-labelledby="plan-top-q2">' +
+        '<button type="button" class="pt-opt" data-act="plan-date" data-press><span>' + esc(t(left ? 'plan.start.leftPick' : 'plan.start.pick')) + '</span>' + arrow() + '</button>' +
+        '<button type="button" class="pt-opt is-quiet" data-act="plan-start-nodate" data-press><span>' + esc(t(left ? 'plan.start.leftUnknown' : 'plan.start.unknown')) + '</span></button>' +
+      '</div><p class="pt-hint">' + esc(t(left ? 'plan.start.leftQ2hint' : 'plan.start.q2hint')) + '</p></div>';
+  }
+  function curGroup(model) { return model.cur >= 0 && !model.beyond ? model.groups[model.cur] : null; }
+  /* いまの駅：its short name, n/N, and the period's one kind line (the group's `sub`) */
+  function topStationHtml(model) {
+    var jr = model.track === 'junior';
+    var g = curGroup(model);
+    var h = '<div class="pt-st">';
+    if (g) {
+      var all = g.total > 0 && g.doneN === g.total;
+      var nx = nextAfter(model);
+      h += '<p class="pt-k"><span class="rm-now">' + esc(t('plan.tl.now')) + '</span><span class="pt-k-t">' + esc(g.milestone ? t('plan.top.cur') : t('plan.top.curRel', { when: g.when || g.dateLabel })) + '</span></p>' +
+        '<p class="pt-t"><button type="button" class="pt-t-n" data-act="plan-jump" data-key="' + esc(g.key) + '"><span>' + esc(g.milestone ? g.title : g.name) + '</span></button>' +
+        (g.total ? '<span class="pt-c num' + (all ? ' is-all' : '') + '" id="plan-top-count" aria-label="' + esc(t('plan.progress') + ' ' + t('plan.progressOf', { done: g.doneN, total: g.total })) + '"><b id="plan-prog-done">' + g.doneN + '</b><span class="pt-c-of">/<span id="plan-prog-total">' + g.total + '</span></span><small>' + esc(t('plan.doneWord')) + '</small></span>' : '') + '</p>' +
+        '<p class="pt-why" id="plan-top-why">' + esc(all ? (nx ? t('plan.top.next', { t: nx.title, from: fromLabel(nx) }) : t('plan.top.allDone')) : (g.sub || '')) + '</p>';
+    } else if (model.beyond) {
+      h += '<p class="pt-k"><span class="rm-now">' + esc(t('plan.tl.now')) + '</span></p>' +
+        '<p class="pt-t"><span class="pt-t-n is-text">' + esc(t(jr ? 'plan.now.jrLateT' : 'plan.now.lateT')) + '</span></p>' +
+        '<p class="pt-why">' + esc(t(jr ? 'plan.jr.nowLate' : 'plan.tl.nowLate')) + ' <a class="pt-link" href="#/find/cat/consult">' + esc(t('plan.now.consult')) + '</a></p>';
+    } else {
+      var first = nextAfter(model);
+      h += '<p class="pt-k"><span class="rm-now">' + esc(t('plan.tl.now')) + '</span></p>' +
+        '<p class="pt-t"><span class="pt-t-n is-text">' + esc(t(jr ? 'plan.jr.nowEarly' : 'plan.tl.nowEarly')) + '</span></p>' +
+        (first ? '<p class="pt-why">' + esc(t('plan.top.next', { t: first.title, from: fromLabel(first) })) + '</p>' : '');
+    }
+    return h + '</div>';
+  }
+  function topActsHtml() {
+    var b = function (act, icon, key, extra) {
+      return '<button type="button" class="pt-act" data-act="' + act + '"' + (extra || '') + ' data-press="ink">' + ic(icon) + '<span>' + esc(t(key)) + '</span></button>';
+    };
+    return '<div class="pt-acts">' + b('plan-sheet', 'print', 'plan.top.show') + b('plan-ics', 'calendar', 'plan.top.cal') + b('plan-all', 'chevron-down', 'plan.top.all') + '</div>';
+  }
+  function topHtml(model) {
+    // the junior Q2 (the grade) is asked while no stage is known; the leaving Q2 until the date is set or seen
+    var ask = model.track === 'junior' ? (!answers().stage && !state().hsDate && started()) : (model.assumed && !dateSeen() && started());
+    return '<section class="plan-top" id="plan-top" aria-label="' + esc(t('plan.top.label')) + '" data-reveal="">' +
+      (ask ? askDateHtml(model) : countLineHtml(model)) + topStationHtml(model) + topActsHtml() + '</section>' +
+      // v9 POLISH: 「時期は目安」 sits under the card in small type (it was the page's last line)
+      '<p class="plan-note plan-top-note" data-reveal="">' + esc(t(model.track === 'junior' ? 'plan.jr.note' : 'plan.tl.note')) + '</p>';
   }
 
   /* the period after `cur` that has something in it (or the milestone) */
@@ -910,32 +1313,118 @@
     return h.replace(/\(?[　-ヿ㐀-鿿＀-￯]+\)?/g, function (w) { return '<span class="plan-ja" lang="ja">' + w + '</span>'; });
   }
   function itemId(key) { return 'pt-' + key.replace(/[^A-Za-z0-9-]/g, '_'); }
-  function itemHtml(x, i) {
+  function rowSel(key) { return '.tl-item[data-flip-key="' + String(key).replace(/["\\]/g, '') + '"]'; }
+  function progLink(id) {
+    var p = SM.program(id);
+    if (!p) return '';
+    var nm = L(p.name).replace(/[（(].*$/, '');
+    return '<a class="tl-link" href="#/p/' + encodeURIComponent(id) + '"><span>' + esc(nm) + '</span>' + arrow() + '</a>';
+  }
+  /* the drawer under a task: なぜ · だれに · こう聞く · いつまで · links · the two other states */
+  function drawerHtml(x, id, model) {
+    var rows = '';
+    if (x.why) rows += '<div class="tl-dr-row"><dt>' + esc(t('plan.dr.why')) + '</dt><dd>' + esc(x.why) + '</dd></div>';
+    if (x.who) rows += '<div class="tl-dr-row"><dt>' + esc(t('plan.dr.who')) + '</dt><dd><span class="tl-who">' + esc(t('plan.who.' + x.who)) + '</span></dd></div>';
+    if (x.say) rows += '<div class="tl-dr-row"><dt>' + esc(t('plan.dr.say')) + '</dt><dd class="tl-say">' + esc(x.say) + '</dd></div>';
+    var due = x.due ? dueText(x.due, model) : '';
+    if (due) rows += '<div class="tl-dr-row"><dt>' + esc(t('plan.dr.due')) + '</dt><dd class="num">' + esc(due) + '</dd></div>';
+    var links = (x.href ? '<a class="tl-link" href="' + esc(x.href) + '"><span>' + esc(x.hrefLabel || t('plan.tl.tool')) + '</span>' + arrow() + '</a>' : '') +
+      (x.p || []).slice(0, 2).map(progLink).join('');
+    var nx = x.moved || x.pulled ? null : nextWithTasks(model, x.key);
+    var states = '<p class="tl-states">' +
+      (x.pulled ?
+        '<span class="tl-moved-k">' + esc(t('plan.left.from', { t: x.pulled.title })) + '</span>' +
+        '<button type="button" class="tl-state" data-act="plan-skip" data-key="' + esc(x.key) + '" data-value="na"><span>' + esc(t('plan.skip.na')) + '</span></button>' :
+      x.moved ?
+        '<span class="tl-moved-k">' + esc(t('plan.skip.movedFrom', { t: x.moved.title })) + '</span>' +
+        '<button type="button" class="tl-state" data-act="plan-unskip" data-key="' + esc(x.key) + '"><span>' + esc(t('plan.skip.back')) + '</span></button>' :
+        '<button type="button" class="tl-state" data-act="plan-skip" data-key="' + esc(x.key) + '" data-value="na"><span>' + esc(t('plan.skip.na')) + '</span></button>' +
+        (nx ? '<button type="button" class="tl-state" data-act="plan-skip" data-key="' + esc(x.key) + '" data-value="later"><span>' + esc(t('plan.skip.laterTo', { t: nx.name })) + '</span></button>' : '')) +
+      '</p>';
+    return '<div class="tl-drawer" id="' + id + '-dr" hidden><div class="tl-drawer-in">' +
+      (rows ? '<dl class="tl-dl">' + rows + '</dl>' : '') +
+      (links ? '<p class="tl-item-meta tl-dr-links">' + links + '</p>' : '') + states + '</div></div>';
+  }
+  /* the next station after the one holding `key` that has tasks (あとで goes there) */
+  function nextWithTasks(model, key) {
+    var i = -1;
+    model.groups.forEach(function (g, gi) { if (g.tasks.some(function (x) { return x.key === key; })) i = gi; });
+    if (i === -1) return null;
+    for (var j = i + 1; j < model.groups.length; j++) if (model.groups[j].tasks.length) return model.groups[j];
+    return null;
+  }
+  function itemHtml(x, i, model) {
     var id = itemId(x.key);
     var check = '<input type="checkbox" class="tl-check" id="' + id + '" data-act="plan-done" data-key="' + esc(x.key) + '"' + (x.done ? ' checked' : '') +
       (x.kind === 'prog' ? ' aria-describedby="' + id + '-d"' : '') + '>' +
       '<span class="tl-box" aria-hidden="true">' + ic('check') + '</span>';
     var seal = '<span class="tl-seal" aria-hidden="true">' + esc(t('plan.tl.seal')) + '</span>';
-    var open = '<li class="tl-item' + (x.kind === 'prog' ? ' tl-item-prog' : '') + (x.done ? ' is-done' : '') + '" data-flip-key="' + esc(x.key) + '" data-i="' + i + '">';
+    var open = '<li class="tl-item' + (x.kind === 'prog' ? ' tl-item-prog' : '') + (x.done ? ' is-done' : '') + (x.moved ? ' is-moved' : '') + '" data-flip-key="' + esc(x.key) + '" data-i="' + i + '">';
     if (x.kind === 'prog') {
       return open +
         '<label class="tl-task" for="' + id + '">' + check +
           '<span class="tl-item-text">' + seal + '<span class="tl-saved-k">' + esc(t('plan.tl.saved')) + '</span>' + esc(x.text) + '</span></label>' +
         '<p class="tl-item-meta" id="' + id + '-d">' +
-          '<span class="tl-fact' + (x.open ? ' is-open' : '') + '"><span class="tl-fact-k">' + esc(x.window ? t('plan.tl.applyK') : t('plan.tl.untilK')) + '</span>' +
-          '<span class="tl-fact-v">' + esc(x.window ? x.short : x.label) + (x.open ? '<b class="tl-open-now">' + esc(t('plan.tl.openNow')) + '</b>' : '') + '</span></span>' +
+          (x.label ? '<span class="tl-fact' + (x.open ? ' is-open' : '') + '"><span class="tl-fact-k">' + esc(x.window ? t('plan.tl.applyK') : t('plan.tl.untilK')) + '</span>' +
+          '<span class="tl-fact-v">' + esc(x.window ? x.short : x.label) + (x.open ? '<b class="tl-open-now">' + esc(t('plan.tl.openNow')) + '</b>' : '') + '</span></span>' : '') +
           '<a class="tl-link" href="#/p/' + encodeURIComponent(x.p.id) + '"><span>' + esc(t('plan.tl.detail')) + '</span>' + arrow() + '</a></p>' +
         '</li>';
     }
-    return open +
-      '<label class="tl-task" for="' + id + '">' + check + '<span class="tl-item-text">' + seal + taskText(x.text) + '</span></label>' +
-      (x.href ? '<p class="tl-item-meta"><a class="tl-link" href="' + esc(x.href) + '"><span>' + esc(x.hrefLabel || t('plan.tl.tool')) + '</span>' + arrow() + '</a></p>' : '') +
-      '</li>';
+    // v9: a short title + a drawer. The 44px check is its own label; the title is the drawer's button.
+    var moved = x.moved ? '<span class="tag tl-moved" aria-hidden="true">' + esc(t('plan.skip.movedTag')) + '</span>' :
+      x.pulled ? '<span class="tag tl-moved" aria-hidden="true">' + esc(t('plan.left.tag')) + '</span>' :
+      x.own ? '<span class="tag tl-moved tl-own-k" aria-hidden="true">' + esc(t('plan.own.tag')) + '</span>' : '';
+    var text = x.hasTitle ? '<span class="tl-item-main">' + jaRuns(x.title) + '</span>' : taskText(x.text);
+    var isOpen = !!drawerOpen[x.key];
+    var label = x.own ? t('plan.own.open', { t: x.title }) : t('plan.dr.open', { t: x.title });
+    return open.replace('class="tl-item', 'class="tl-item' + (x.own ? ' tl-item-own' : '') + (x.pulled ? ' tl-item-pulled' : '')) +
+      '<div class="tl-row' + (isOpen ? ' is-open' : '') + '">' +
+        '<label class="tl-task tl-task-box" for="' + id + '">' + check + '<span class="sr-only">' + esc(t('plan.dr.check', { t: x.title })) + '</span></label>' +
+        '<button type="button" class="tl-t" data-act="plan-drawer" data-key="' + esc(x.key) + '" aria-expanded="' + (isOpen ? 'true' : 'false') + '" aria-controls="' + id + '-dr" title="' + esc(label) + '" data-press="ink">' +
+          '<span class="tl-item-text">' + seal + text + moved + '</span>' + arrow('down') + '</button>' +
+      '</div>' + (x.own ? ownDrawerHtml(x, id) : drawerHtml(x, id, model)) + '</li>';
   }
-  function itemsHtml(all) {
+  /* v9 EXTRAS: an own task's drawer = the edit form (書きなおす · 保存 · 消す) */
+  function ownDrawerHtml(x, id) {
+    return '<div class="tl-drawer tl-drawer-own" id="' + id + '-dr" hidden><div class="tl-drawer-in">' +
+      '<div class="tl-own-f"><label class="sr-only" for="' + id + '-in">' + esc(t('plan.own.field')) + '</label>' +
+        '<input type="text" class="input tl-own-in" id="' + id + '-in" value="' + esc(x.text) + '" maxlength="80" enterkeyhint="done" autocomplete="off" data-own-id="' + esc(x.id) + '">' +
+        '<div class="tl-own-acts"><button type="button" class="rm-edit tl-own-save" data-act="plan-own-save" data-id="' + esc(x.id) + '"><span>' + esc(t('plan.own.editSave')) + '</span></button>' +
+        '<button type="button" class="tl-state" data-act="plan-own-del" data-id="' + esc(x.id) + '"><span>' + esc(t('plan.own.del')) + '</span></button></div></div>' +
+      '</div></div>';
+  }
+  /* v9 EXTRAS: the 「＋ 自分のやることを足す」 row at the end of a station's list, with its folded form */
+  function addRowHtml(g) {
+    var k = g.key.replace(/[^A-Za-z0-9-]/g, '_');
+    var open = !!addOpen[g.key];
+    return '<div class="tl-add' + (open ? ' is-open' : '') + '" data-group="' + esc(g.key) + '" data-flip-key="add:' + esc(g.key) + '">' +
+      '<button type="button" class="tl-add-t" data-act="plan-own-add" data-key="' + esc(g.key) + '" aria-expanded="' + (open ? 'true' : 'false') + '" aria-controls="tl-add-f-' + k + '">' +
+        '<span class="tl-add-plus" aria-hidden="true"></span><span class="tl-add-l">' + esc(t('plan.own.add')) + '</span></button>' +
+      '<div class="tl-add-f" id="tl-add-f-' + k + '"' + (open ? '' : ' hidden') + '><div class="tl-add-f-in">' +
+        '<label class="sr-only" for="tl-add-in-' + k + '">' + esc(t('plan.own.field')) + '</label>' +
+        '<input type="text" class="input tl-own-in" id="tl-add-in-' + k + '" maxlength="80" placeholder="' + esc(t('plan.own.ph')) + '" enterkeyhint="done" autocomplete="off" data-own-group="' + esc(g.key) + '">' +
+        '<div class="tl-own-acts"><button type="button" class="rm-edit tl-own-save" data-act="plan-own-save" data-key="' + esc(g.key) + '"><span>' + esc(t('plan.own.save')) + '</span></button>' +
+        '<button type="button" class="tl-state" data-act="plan-own-cancel" data-key="' + esc(g.key) + '"><span>' + esc(t('plan.own.cancel')) + '</span></button>' +
+        '<span class="tl-own-note">' + esc(t('plan.own.note')) + '</span></div>' +
+      '</div></div></div>';
+  }
+  function itemsHtml(all, model) {
     var rows = all.map(function (x, i) { return { x: x, i: i }; });
     rows.sort(function (a, b) { return ((a.x.done ? 1 : 0) - (b.x.done ? 1 : 0)) || (a.i - b.i); });
-    return rows.map(function (r) { return itemHtml(r.x, r.i); }).join('');
+    return rows.map(function (r) { return itemHtml(r.x, r.i, model); }).join('');
+  }
+  /* 自分には関係ない: the rows hidden behind one line, each with 戻す */
+  function naHtml(g) {
+    if (!g.na || !g.na.length) return '';
+    var n = g.na.length;
+    var open = !!naOpen[g.key];
+    return '<div class="tl-na" data-flip-key="na:' + esc(g.key) + '">' +
+      '<button type="button" class="tl-na-t" data-act="plan-na" data-key="' + esc(g.key) + '" aria-expanded="' + (open ? 'true' : 'false') + '" aria-controls="tl-na-' + esc(g.key) + '">' +
+        '<span>' + esc(t(n === 1 ? 'plan.skip.naLine1' : 'plan.skip.naLine', { n: n })) + '</span>' + arrow('down') + '</button>' +
+      '<ul class="tl-na-list" id="tl-na-' + esc(g.key) + '"' + (open ? '' : ' hidden') + '>' + g.na.map(function (x) {
+        return '<li class="tl-na-item"><span class="tl-na-text">' + esc(x.title) + '</span>' +
+          '<button type="button" class="tl-state" data-act="plan-unskip" data-key="' + esc(x.key) + '" aria-label="' + esc(t('plan.skip.backLabel', { t: x.title })) + '"><span>' + esc(t('plan.skip.back')) + '</span></button></li>';
+      }).join('') + '</ul></div>';
   }
   function relatedHtml(g) {
     var ids = [];
@@ -948,7 +1437,7 @@
       seenNames[nm] = true; return true;
     }).slice(0, 4);
     if (!ids.length) return '';
-    return '<details class="tl-related"><summary class="tl-related-k">' + esc(t('plan.tl.relatedN', { n: ids.length })) + '</summary><ul class="tl-related-links">' +
+    return '<details class="tl-related" data-flip-key="rel:' + esc(g.key) + '"><summary class="tl-related-k">' + esc(t('plan.tl.relatedN', { n: ids.length })) + '</summary><ul class="tl-related-links">' +
       ids.map(function (id) {
         var p = SM.program(id);
         var nm = L(p.name).replace(/[（(].*$/, '');
@@ -958,27 +1447,24 @@
   }
   function countHtml(g, cls) {
     if (!g.total) return '';
-    return '<span class="rm-count num' + (cls ? ' ' + cls : '') + '" data-gcount="' + g.key + '" aria-label="' + esc(t('plan.progress') + ' ' + t('plan.progressOf', { done: g.doneN, total: g.total })) + '">' +
+    return '<span class="rm-count num' + (cls ? ' ' + cls : '') + '" data-gcount="' + g.key + '" data-done="' + g.doneN + '" aria-label="' + esc(t('plan.progress') + ' ' + t('plan.progressOf', { done: g.doneN, total: g.total })) + '">' +
       '<b class="rm-count-n">' + g.doneN + '</b><span class="rm-count-of">/' + g.total + '</span><small class="rm-count-w">' + esc(t('plan.doneWord')) + '</small></span>';
   }
-  function curDoneHtml(nx) {
-    return '<div class="tl-cur-done"><p class="tl-cur-done-t"><span class="tl-cur-done-mk" aria-hidden="true"></span>' + esc(t('plan.cur.done')) + '</p>' +
+  function curDoneHtml(nx, g) {
+    return '<div class="tl-cur-done" data-flip-key="cd:' + esc(g.key) + '"><p class="tl-cur-done-t"><span class="tl-cur-done-mk" aria-hidden="true"></span>' + esc(t('plan.cur.done')) + '</p>' +
       (nx ? '<button type="button" class="tl-cur-go" data-act="plan-jump" data-key="' + esc(nx.key) + '"><span>' + esc(t('plan.cur.next', { t: nx.title, from: fromLabel(nx) })) + '</span>' + arrow('down') + '</button>' : '') +
     '</div>';
   }
 
   /* ---------- the roadmap: one station per period ---------- */
   function isOpenKey(model, key, i) {
-    if (wide()) return (selKey && groupOf(model, selKey)) ? key === selKey : i === Math.max(0, model.cur);
+    if (wide()) {
+      if (selKey && groupOf(model, selKey)) return key === selKey;
+      if (selKey === 'end' || (model.endPulled && model.endPulled.length)) return false;   // long after leaving: the end row's list is the open panel
+      return i === Math.max(0, model.cur);
+    }
     if (Object.prototype.hasOwnProperty.call(openKeys, key)) return !!openKeys[key];
     return i === Math.max(0, model.cur);   // before the first station: its tasks are what comes first
-  }
-  /* the one line under the current period: how long is left (and 変える) */
-  function leftLineHtml(model) {
-    var c = countInfo(model);
-    var html = esc(c.line).replace(esc(c.text), '<b class="num rm-left-n" data-m="ln">' + esc(c.text) + '</b>');
-    return '<p class="rm-left"><span class="rm-left-t">' + html + (model.assumed ? ' <span class="tag tag-deadline rm-assumed">' + esc(t('plan.assumed')) + '</span>' : '') + '</span>' +
-      '<button type="button" class="rm-edit" data-act="plan-date" aria-label="' + esc(t('plan.changeLabel', { what: t(model.track === 'junior' ? 'plan.jr.anchor' : 'plan.leave.label'), date: fmtDate(model.anchor) })) + '"><span>' + esc(t(model.assumed ? 'plan.decideDate' : 'plan.change')) + '</span></button></p>';
   }
   function relHtml(when) {
     // 「巣立ち6か月前」 / 「中3の春（4〜6月）」: the anchor word (巣立ち / 中3の) and the distance are two spans so the desktop
@@ -1011,73 +1497,159 @@
     var jr = model.track === 'junior';
     var c = countInfo(model);
     var what = jr ? t('plan.jr.anchor') : t('plan.leave.label');
-    var num = c.today ?
-      '<span class="rm-box-n is-today"><b class="rm-box-today" id="plan-count-n" data-m="n">' + esc(c.big) + '</b></span>' :
-      '<span class="rm-box-n">' + (c.pre ? '<span class="rm-box-pre">' + esc(c.pre) + '</span>' : '') +
-        '<b class="num rm-box-num" id="plan-count-n" data-m="n" data-n="' + c.n + '">' + esc(c.text) + '</b><span class="rm-box-u">' + esc(c.unit) + '</span></span>';
-    return '<button type="button" class="rm-head rm-box" data-act="plan-open" data-key="' + esc(g.key) + '" aria-expanded="' + (open ? 'true' : 'false') + '" aria-controls="rm-b-' + esc(g.key) + '">' +
+    // v9 INTEGRATOR: the sign says the day and its date only — the card above carries the big number and the 仮 tag
+    // (one countdown, one 仮 per screen; the card's #plan-count-n is the only one, so the odometer has one target)
+    var sr = model.assumed ? '<span class="sr-only">' + esc(t('plan.assumed')) + '</span>' : '';
+    return '<button type="button" class="rm-head rm-box" data-flip-key="head:' + esc(g.key) + '" data-act="plan-open" data-key="' + esc(g.key) + '" aria-expanded="' + (open ? 'true' : 'false') + '" aria-controls="rm-b-' + esc(g.key) + '" title="' + esc(t('plan.stationOpen')) + '">' +
       '<span class="rm-mk" aria-hidden="true" data-reveal="mark"' + (delay ? ' data-reveal-delay="' + delay + '"' : '') + '></span>' +
       '<span class="rm-head-in" data-reveal=""' + (delay ? ' data-reveal-delay="' + (delay + 40) + '"' : '') + '>' +
-        '<span class="rm-box-k">' + (isCur ? '<span class="rm-now">' + esc(t('plan.tl.now')) + '</span>' : '') + '<span class="rm-title" id="rm-t-' + esc(g.key) + '">' + esc(what) + '</span>' +
-          (model.assumed ? '<span class="tag tag-deadline rm-assumed">' + esc(t('plan.assumed')) + '</span>' : '') + '</span>' +
-        '<span class="rm-box-d num" data-m="dv">' + esc(fmtDateW(model.anchor)) + '</span>' + num +
+        '<span class="rm-box-k">' + (isCur ? '<span class="rm-now">' + esc(t('plan.tl.now')) + '</span>' : '') + '<span class="rm-title" id="rm-t-' + esc(g.key) + '">' + esc(what) + '</span>' + sr + '</span>' +
+        '<span class="rm-box-d num" data-m="dv">' + esc(fmtDateW(model.anchor)) + '</span>' +
         countHtml(g, 'rm-box-c') + togHtml(open) + '</span></button>';
   }
-  function stationHeadHtml(g, isCur, open, delay) {
+  /* role (phone): 'cur' the open block · 'next' title + why preview · 'compact' one line (short name + count) · 'past'
+     (inside the fold, the v8 two-line row). The desktop line ignores the role (CSS) and looks as it did in v8.1. */
+  function stationHeadHtml(g, isCur, open, delay, role) {
     var label = t('plan.station', { when: g.when || g.dateLabel, title: g.title, done: g.doneN, total: g.total });
-    return '<button type="button" class="rm-head" data-act="plan-open" data-key="' + esc(g.key) + '" aria-expanded="' + (open ? 'true' : 'false') + '" aria-controls="rm-b-' + esc(g.key) + '" title="' + esc(t('plan.stationOpen')) + '">' +
+    var compact = role === 'compact';
+    var nextFlag = role === 'next' ? '<span class="rm-next">' + esc(t('plan.next.flag')) + '</span>' : '';
+    return '<button type="button" class="rm-head' + (role ? ' is-' + role : '') + '" data-flip-key="head:' + esc(g.key) + '" data-act="plan-open" data-key="' + esc(g.key) + '" aria-expanded="' + (open ? 'true' : 'false') + '" aria-controls="rm-b-' + esc(g.key) + '" title="' + esc(t('plan.stationOpen')) + '">' +
       '<span class="rm-mk" aria-hidden="true" data-reveal="mark"' + (delay ? ' data-reveal-delay="' + delay + '"' : '') + '></span>' +
-      '<span class="rm-head-in' + (g.short ? ' has-short' : '') + '" data-reveal=""' + (delay ? ' data-reveal-delay="' + (delay + 40) + '"' : '') + '>' +
-        whenHtml(g, isCur) +
+      '<span class="rm-head-in' + (g.short ? ' has-short' : '') + (compact ? ' is-compact' : '') + '" data-reveal=""' + (delay ? ' data-reveal-delay="' + (delay + 40) + '"' : '') + '>' +
+        (nextFlag ? '<span class="rm-when" data-noruby>' + nextFlag + (g.when ? '<span class="rm-rel">' + relHtml(g.when) + '</span>' : '') + '<span class="rm-date">' + esc(g.dateLabel) + '</span></span>' : whenHtml(g, isCur)) +
         '<span class="rm-title" id="rm-t-' + esc(g.key) + '">' + esc(g.title) + '</span>' +
         (g.short ? '<span class="rm-short" aria-hidden="true">' + esc(g.short).replace(/\|/g, '<wbr>') + '</span>' : '') +
+        // the short name: compact rows, and the phone's いま head (the same name as the card, see .is-cur in plan.css)
+        (compact || role === 'cur' ? '<span class="rm-name" aria-hidden="true">' + esc(g.name) + '</span>' : '') +
+        (role === 'next' && g.sub ? '<span class="rm-why" aria-hidden="true">' + esc(g.sub) + '</span>' : '') +
         countHtml(g) + togHtml(open) + '<span class="sr-only">' + esc(label) + '</span></span></button>';
   }
+  var bodySrc = {}, bodyPend = {};   // v9 POLISH: the HTML each station body was built from (committed / being built)
   function bodyHtml(g, model, i, open) {
+    var h = bodyHtml0(g, model, i, open);
+    bodyPend[g.key] = h;
+    return h;
+  }
+  function bodyHtml0(g, model, i, open) {
     var isCur = i === model.cur && !model.beyond;   // long after leaving, いま is the row after the last station
     var nx = isCur ? nextAfter(model) : null;
     var jr = model.track === 'junior';
     var note = g.milestone && model.assumed ? '<p class="rm-note">' + esc(jr ? t('plan.jr.assumedShort', { g: gradeFor(model.anchor, model.now) }) : t('plan.assumedShort')) + '</p>' : '';
     var edit = g.milestone ? '<p class="rm-left rm-left-box"><span class="rm-left-t">' + esc(t('plan.changeLabel', { what: jr ? t('plan.jr.anchor') : t('plan.leave.label'), date: fmtDate(model.anchor) })) + '</span>' +
       '<button type="button" class="rm-edit" data-act="plan-date"><span>' + esc(t('plan.change')) + '</span></button></p>' : '';
+    var fk = function (pre) { return ' data-flip-key="' + pre + ':' + esc(g.key) + '"'; };
     return '<div class="rm-body" id="rm-b-' + esc(g.key) + '" role="region" aria-labelledby="rm-t-' + esc(g.key) + '"' + (open ? '' : ' hidden') + '>' +
       '<div class="rm-body-in">' +
-        '<p class="rm-body-title" aria-hidden="true">' + (isCur && !g.milestone ? '<span class="rm-now">' + esc(t('plan.tl.now')) + '</span>' : '') + esc(g.title) +
+        '<p class="rm-body-title" aria-hidden="true"' + fk('bt') + '>' + (isCur && !g.milestone ? '<span class="rm-now">' + esc(t('plan.tl.now')) + '</span>' : '') + esc(g.title) +
           (g.milestone ? '' : '<span class="rm-body-when num" data-noruby>' + esc((g.when ? g.when + '・' : '') + g.dateLabel) + '</span>') + '</p>' +
-        (isCur ? leftLineHtml(model) : '') + note + edit +
-        (g.all.length ? '<ul class="tl-items" data-reveal-stagger="50">' + itemsHtml(g.all) + '</ul>' : '<p class="rm-empty">' + esc(t('plan.now.emptyT')) + '</p>') +
-        (isCur && g.total ? curDoneHtml(nx) : '') + relatedHtml(g) +
+        // v9 POLISH: the period's why in every panel (the phone hides it on いま, where the card just said it)
+        (g.sub ? '<p class="rm-sub"' + fk('sub') + '>' + esc(g.sub) + '</p>' : '') + note.replace('<p ', '<p' + fk('note') + ' ') + edit.replace('<p ', '<p' + fk('edit') + ' ') +
+        (g.pulled ? '<p class="rm-pulled"' + fk('pulled') + '>' + esc(t(g.pulled === 1 ? 'plan.left.note1' : 'plan.left.note', { n: g.pulled })) + '</p>' : '') +
+        (g.all.length ? '<ul class="tl-items" data-reveal-stagger="50">' + itemsHtml(g.all, model) + '</ul>' : '<p class="rm-empty"' + fk('empty') + '>' + esc(t('plan.now.emptyT')) + '</p>') +
+        addRowHtml(g) +
+        naHtml(g) +
+        (isCur && g.total ? curDoneHtml(nx, g) : '') + relatedHtml(g) +
       '</div></div>';
   }
-  function stationHtml(g, i, model, k) {
+  function stationHtml(g, i, model, k, role) {
     var isCur = i === model.cur && !model.beyond;
-    var cls = i < model.cur ? 'is-past' : isCur ? 'is-current' : 'is-future';
+    var cls = i < model.cur || (model.beyond && i === model.cur) ? 'is-past' : isCur ? 'is-current' : 'is-future';
     var open = isOpenKey(model, g.key, i);
     var allDone = g.total > 0 && g.doneN === g.total;
     var delay = Math.min(k, 6) * 50;
-    var head = g.milestone ? boxHtml(g, model, isCur, open, delay) : stationHeadHtml(g, isCur, open, delay);
-    return '<li class="rm-st ' + cls + (g.milestone ? ' is-milestone' : '') + (allDone ? ' is-complete' : '') + (open ? ' is-open' : '') + '" id="tl-' + esc(g.key) + '" data-group="' + esc(g.key) + '">' +
+    var head = g.milestone ? boxHtml(g, model, isCur, open, delay) : stationHeadHtml(g, isCur, open, delay, role);
+    return '<li class="rm-st ' + cls + (g.milestone ? ' is-milestone' : '') + (allDone ? ' is-complete' : '') + (open ? ' is-open' : '') + (role ? ' is-' + role : '') + '" id="tl-' + esc(g.key) + '" data-group="' + esc(g.key) + '">' +
       head + bodyHtml(g, model, i, open) + '</li>';
+  }
+  /* phone: the stations already passed fold into one row (「ここまでの3駅」 + one combined count); desktop: display: contents */
+  /* fid: 'fold' (the past · or, already left, the stations before the sign = 「巣立ち前」) · 'fold2' (past stations after leaving) */
+  function foldHtml(items, groups, k, fid, left) {
+    fid = fid || 'fold';
+    var n = groups.length, done = 0, total = 0;
+    groups.forEach(function (g) { done += g.doneN; total += g.total; });
+    var delay = Math.min(k, 6) * 50;
+    var allDone = total > 0 && done === total;
+    var open = !!foldOpen[fid];
+    // 「ここまでの3駅」 · already left: 「巣立ち前（9駅）」 then 「出てから、ここまでの2駅」 (the two folds read as a sequence)
+    var title = left ? t('plan.left.fold', { n: n }) : fid === 'fold2' ? t(n === 1 ? 'plan.fold.sinceLeft1' : 'plan.fold.sinceLeft', { n: n }) : t(n === 1 ? 'plan.fold.past1' : 'plan.fold.past', { n: n });
+    // v9 INTEGRATOR: the fold's count is the number done (green), shown only once something is (0/5 read as failure)
+    return '<li class="rm-fold' + (open ? ' is-open' : '') + (allDone ? ' is-complete' : '') + (left ? ' is-left' : '') + '" data-group="' + fid + '" data-flip-key="' + fid + '">' +
+      '<button type="button" class="rm-head rm-fold-head" data-act="plan-fold" data-flip-key="head:' + fid + '" aria-expanded="' + (open ? 'true' : 'false') + '" aria-controls="rm-fold-list-' + fid + '" title="' + esc(foldTitle(open, left)) + '">' +
+        '<span class="rm-mk" aria-hidden="true" data-reveal="mark"' + (delay ? ' data-reveal-delay="' + delay + '"' : '') + '></span>' +
+        '<span class="rm-head-in is-compact" data-reveal=""' + (delay ? ' data-reveal-delay="' + (delay + 40) + '"' : '') + '>' +
+          '<span class="rm-title">' + esc(title) + '</span>' +
+          (total ? '<span class="rm-count num" data-gcount="' + fid + '" data-done="' + done + '" aria-label="' + esc(t('plan.progress') + ' ' + t('plan.progressOf', { done: done, total: total })) + '"><b class="rm-count-n">' + done + '</b><span class="rm-count-of">/' + total + '</span><small class="rm-count-w">' + esc(t('plan.doneWord')) + '</small></span>' : '') +
+          togHtml(open) + '</span></button>' +
+      '<ol class="rm-fold-list' + (open ? '' : ' is-closed') + '" id="rm-fold-list-' + fid + '">' + items.join('') + '</ol></li>';
+  }
+  function foldTitle(open, left) { return t(left ? (open ? 'plan.left.foldClose' : 'plan.left.foldOpen') : (open ? 'plan.fold.close' : 'plan.fold.open')); }
+  /* v9 EXTRAS: long after leaving, the end row carries the still-useful items (国保 · 年金 · 帰る場所 · 連絡先) */
+  function endBodyHtml(model, open) {
+    var h = endBodyHtml0(model, open);
+    if (h) bodyPend.end = h;
+    return h;
+  }
+  function endBodyHtml0(model, open) {
+    var xs = model.endPulled || [];
+    if (!xs.length) return '';
+    return '<div class="rm-body rm-body-end" id="rm-b-end" role="region" aria-label="' + esc(t('plan.tl.now')) + '"' + (open ? '' : ' hidden') + '>' + '<div class="rm-body-in">' +
+      '<p class="rm-body-title" aria-hidden="true" data-flip-key="bt:end"><span class="rm-now">' + esc(t('plan.tl.now')) + '</span>' + esc(t('plan.now.lateT')) + '</p>' +
+      '<p class="rm-pulled" data-flip-key="pulled:end">' + esc(t(xs.length === 1 ? 'plan.left.note1' : 'plan.left.note', { n: xs.length })) + '</p>' +
+      '<ul class="tl-items" data-reveal-stagger="50">' + itemsHtml(xs, model) + '</ul></div></div>';
+  }
+  function labelHtml(key) {
+    return '<li class="rm-label" data-group="label" data-flip-key="label:' + esc(key) + '"><span>' + esc(t(key)) + '</span></li>';
   }
   /* いま before the first station (plenty of time) / after the last one (long after leaving) */
   function nowOnlyHtml(model, end, k) {
     var jr = model.track === 'junior';
     var delay = Math.min(k, 6) * 50;
-    return '<li class="rm-st rm-now-only is-current' + (end ? ' is-end' : '') + '" data-group="' + (end ? 'end' : 'now') + '">' +
-      '<div class="rm-head is-static"><span class="rm-mk" aria-hidden="true" data-reveal="mark"' + (delay ? ' data-reveal-delay="' + delay + '"' : '') + '></span>' +
+    var hasBody = end && model.endPulled && model.endPulled.length;
+    var openEnd = hasBody && (!wide() || !(selKey && groupOf(model, selKey)));
+    // with a list under it, the end row is a station too: on the desktop line it opens its list as the panel (phone: always open)
+    var head = hasBody ? '<button type="button" class="rm-head" data-flip-key="head:end" data-act="plan-open-end" aria-expanded="' + (openEnd ? 'true' : 'false') + '" aria-controls="rm-b-end">' : '<div class="rm-head is-static" data-flip-key="head:now">';
+    return '<li class="rm-st rm-now-only is-current' + (end ? ' is-end' : '') + (openEnd ? ' is-open' : '') + '" data-group="' + (end ? 'end' : 'now') + '" data-flip-key="' + (end ? 'end' : 'now') + '">' +
+      head + '<span class="rm-mk" aria-hidden="true" data-reveal="mark"' + (delay ? ' data-reveal-delay="' + delay + '"' : '') + '></span>' +
       '<span class="rm-head-in" data-reveal=""' + (delay ? ' data-reveal-delay="' + (delay + 40) + '"' : '') + '>' +
         '<span class="rm-when" data-noruby><span class="rm-now">' + esc(t('plan.tl.now')) + '</span><span class="rm-date">' + esc(fmtDate(model.now)) + '</span></span>' +
         '<span class="rm-title">' + esc(t(end ? (jr ? 'plan.jr.nowLate' : 'plan.tl.nowLate') : (jr ? 'plan.jr.nowEarly' : 'plan.tl.nowEarly'))) + '</span>' +
         (end ? '<a class="tl-link rm-consult" href="#/find/cat/consult"><span>' + esc(t('plan.now.consult')) + '</span>' + arrow() + '</a>' : '') +
-      '</span></div></li>';
+      '</span>' + (hasBody ? '</button>' : '</div>') + (hasBody ? endBodyHtml(model, openEnd) : '') + '</li>';
   }
+  /* v9 phone order: [fold of the past] · いま (open) · つぎ (preview) · この先 · compact rows · the sign · 巣立ったあと ·
+     compact rows. Desktop: the same <li>s on one row (fold and labels are display: contents / none there). */
   function roadmapHtml(model) {
     var g = model.groups;
     if (!g.length) return '';
-    var out = [], k = 0, cols = 0;
-    if (model.cur === -1) { out.push(nowOnlyHtml(model, false, k++)); cols++; }
-    g.forEach(function (x, i) { out.push(stationHtml(x, i, model, k++)); cols += x.milestone ? 2 : 1; });
-    if (model.beyond) { out.push(nowOnlyHtml(model, true, k++)); cols++; }
+    var jr = model.track === 'junior';
+    var out = [], past = [], pastG = [], k = 0;
+    var lastPast = model.beyond ? model.cur : model.cur - 1;
+    if (model.cur === -1) out.push(nowOnlyHtml(model, false, k++));
+    var ahead = false, after = false, nextSeen = false;
+    // already left: the stations up to the sign fold into 「巣立ち前」; past stations after it into 「ここまでの n駅」
+    var left = !!model.left && !jr;
+    var pre = [], preG = [];
+    var flushPast = function () {
+      if (pre.length) { out.push(foldHtml(pre, preG, k++, 'fold', true)); pre = []; preG = []; }
+      if (past.length) { out.push(foldHtml(past, pastG, k++, left ? 'fold2' : 'fold', false)); past = []; pastG = []; }
+    };
+    g.forEach(function (x, i) {
+      if (i <= lastPast) {
+        if (left && x.m <= 0) { pre.push(stationHtml(x, i, model, k++, 'past')); preG.push(x); }
+        else { past.push(stationHtml(x, i, model, k++, 'past')); pastG.push(x); }
+        return;
+      }
+      flushPast();
+      var isCur = i === model.cur && !model.beyond;
+      var role = isCur ? 'cur' : !nextSeen && !x.milestone ? 'next' : 'compact';
+      if (role === 'next') nextSeen = true;
+      if (x.after && !after) { after = true; out.push(labelHtml(jr ? 'plan.label.jrAfter' : 'plan.label.after')); }
+      // この先 only over a plain compact row (the sign speaks for itself; a label with nothing under it is noise)
+      else if (!isCur && role === 'compact' && !x.milestone && !ahead && !after) { ahead = true; out.push(labelHtml('plan.label.ahead')); }
+      out.push(stationHtml(x, i, model, k++, role));
+    });
+    flushPast();
+    if (model.beyond) out.push(nowOnlyHtml(model, true, k++));
     return '<ol class="rm" data-track="' + model.track + '">' + out.join('') + '</ol>';
   }
   function colsOf(model) {
@@ -1088,24 +1660,15 @@
     return n;
   }
 
-  /* ---------- beside / below the roadmap: つぎの駅 · 見せる・残す · 保存した支援 ---------- */
-  function nextHtml(model) {
-    var nx = nextAfter(model);
-    var body = nx ?
-      '<button type="button" class="plan-next-btn" data-act="plan-jump" data-key="' + esc(nx.key) + '">' +
-        '<span class="plan-next-t">' + esc(nx.title) + '</span><span class="plan-next-d num">' + esc(fromLabel(nx)) + '</span>' + arrow() + '</button>' :
-      '<p class="plan-next-none">' + esc(t('plan.next.none')) + '</p>';
-    return '<section class="plan-next" id="plan-next" aria-labelledby="plan-next-h"><p class="plan-side-k" id="plan-next-h">' + esc(t('plan.next.k')) + '</p>' + body + '</section>';
-  }
-  function toolsHtml() {
+  /* ---------- beside the roadmap (desktop): 職員に見せる · 保存した支援. On a phone the card's action row has these. ---------- */
+  function showHtml() {
     var row = function (act, icon, title, sub) {
       return SM.ui.listItem({ title: title, sub: sub, icon: icon, act: act, attrs: 'data-press="ink"' });
     };
-    return '<section class="plan-tools" id="plan-tools" aria-labelledby="plan-tools-h">' +
-      SM.ui.sectionHeader(t('plan.tools.h'), { id: 'plan-tools-h', level: 2, cls: 'plan-side-head' }) +
+    return '<section class="plan-show" id="plan-show" aria-labelledby="plan-show-h"><p class="plan-side-k" id="plan-show-h">' + esc(t('plan.top.show')) + '</p>' +
       '<div class="list plan-tools-list">' +
-      row('plan-ics', 'calendar', t('plan.act.ics'), t('plan.act.icsSub')) +
       row('plan-sheet', 'print', t('plan.act.sheet'), t('plan.act.sheetSub')) +
+      row('plan-ics', 'calendar', t('plan.act.ics'), t('plan.act.icsSub')) +
       '</div></section>';
   }
   /* where a saved support sits on the road (the station whose period holds its deadline) */
@@ -1117,40 +1680,77 @@
     }
     return null;
   }
+  /* v9 EXTRAS: one list. A saved support = kanji mark · name · the station it sits on · its deadline / window · ✕.
+     The suggested supports (the road ahead) are a quiet second group in the same list; nothing saved = one line. */
+  function progItemOf(model, id) {
+    var key = 'pg:' + id;
+    for (var i = 0; i < model.groups.length; i++) {
+      var g = model.groups[i];
+      for (var j = 0; j < g.progs.length; j++) if (g.progs[j].key === key) return { g: g, x: g.progs[j] };
+    }
+    return null;
+  }
+  function stationLabel(g) { return t('plan.saved.at', { when: g.milestone ? g.title : (g.when || g.dateLabel) }); }
+  function svMainHtml(p, g, x, sug) {
+    var name = L(p.name);
+    var cat = (p.cat && p.cat[0]) || 'procedures';
+    var at = g ? stationLabel(g) : t('plan.saved.anytime');
+    var dl = x && x.label ? (x.window ? t('plan.sv.apply', { v: x.short }) : t('plan.sv.due', { v: x.label })) : (!sug && !x && p.deadline ? L(p.deadline) : '');
+    return '<a class="sv-main" href="#/p/' + encodeURIComponent(p.id) + '" aria-label="' + esc(t('plan.sv.open', { t: name })) + '">' + SM.ui.catIcon(cat, 'sm') +
+      '<span class="sv-body"><span class="sv-name">' + esc(name) + '</span>' +
+      '<span class="sv-meta"><span class="sv-at' + (g ? '' : ' is-any') + '"' + (g ? ' data-key="' + esc(g.key) + '"' : '') + '>' + esc(at) + '</span>' +
+      (dl ? '<span class="sv-dl' + (x && x.open ? ' is-open' : '') + '">' + esc(dl) + (x && x.open ? '<b class="tl-open-now">' + esc(t('plan.tl.openNow')) + '</b>' : '') + '</span>' : '') + '</span></span>' +
+      (sug ? arrow() : '') + '</a>';
+  }
   function savedRowHtml(p, model) {
     var name = L(p.name);
-    var g = stationOf(model || lastModel || build(), p.id);
-    var at = g ? t('plan.saved.at', { when: g.milestone ? g.title : (g.when || g.dateLabel) }) : t('plan.saved.anytime');
-    return '<div class="plan-saved-item" data-flip-key="' + esc(p.id) + '">' + SM.ui.programCard(p, { compact: true, showSave: false }) +
-      '<p class="plan-saved-at"' + (g ? ' data-key="' + esc(g.key) + '"' : '') + '>' + esc(at) + '</p>' +
-      '<button type="button" class="plan-remove" data-act="plan-remove" data-id="' + esc(p.id) + '" aria-label="' + esc(t('plan.saved.removeLabel', { name: name })) + '" title="' + esc(t('plan.saved.remove')) + '">' + ic('close') + '</button></div>';
+    var m = model || lastModel || build();
+    var hit = progItemOf(m, p.id);
+    return '<li class="plan-saved-item sv-row" data-flip-key="' + esc(p.id) + '">' + svMainHtml(p, hit && hit.g, hit && hit.x, false) +
+      '<button type="button" class="plan-remove" data-act="plan-remove" data-id="' + esc(p.id) + '" aria-label="' + esc(t('plan.saved.removeLabel', { name: name })) + '" title="' + esc(t('plan.saved.remove')) + '">' + ic('close') + '</button></li>';
   }
-  function nowRelated(model, max) {
-    var g = model.groups;
+  /* supports the road ahead links to (from いま on), not yet saved: [{ p, g }] */
+  function sugList(model, max) {
+    var g = model.groups, out = [], seen = {}, savedIds = (state().saved || []);
     var from = model.cur >= 0 ? model.cur : 0;
-    var ids = [];
-    for (var i = from; i < g.length && ids.length < 8; i++) {
-      g[i].tasks.forEach(function (x) { x.p.forEach(function (id) { if (ids.indexOf(id) === -1 && SM.program(id)) ids.push(id); }); });
-      if (ids.length) break;
+    for (var i = from; i < g.length && out.length < (max || 3); i++) {
+      g[i].tasks.forEach(function (x) {
+        (x.p || []).forEach(function (id) {
+          if (out.length >= (max || 3)) return;
+          var p = SM.program(id);
+          if (!p || savedIds.indexOf(id) !== -1) return;
+          var nm = L(p.name).replace(/[（(].*$/, '');
+          if (seen[nm]) return;
+          seen[nm] = true;
+          out.push({ p: p, g: g[i] });
+        });
+      });
     }
-    var seen = {};
-    return ids.filter(function (id) {
-      var nm = L(SM.program(id).name).replace(/[（(].*$/, '');
-      if (seen[nm]) return false;
-      seen[nm] = true; return true;
-    }).slice(0, max || 3).map(function (id) { return SM.program(id); });
+    return out;
+  }
+  function sugHtml(model) {
+    var rel = sugList(model, 3);
+    var answered = state().answered;
+    var go = '<a class="plan-empty-go" href="' + (answered ? '#/find/results' : '#/find') + '"><span>' + esc(answered ? t('plan.empty.results') : t('plan.empty.find')) + '</span>' + arrow() + '</a>';
+    var list = '<ul class="sv-sug-list">' + rel.map(function (r) { return '<li class="sv-row is-sug">' + svMainHtml(r.p, r.g, null, true) + '</li>'; }).join('') + '</ul>';
+    // v9 INTEGRATOR: nothing saved → the suggestions fold into one line (the page's length is the road's, not this block's)
+    var body = !rel.length ? '' : model.saved.length ? '<p class="sv-sug-k">' + esc(t('plan.sv.sug')) + '</p>' + list :
+      '<details class="sv-sug-d"><summary class="tl-related-k sv-sug-s">' + esc(t('plan.sv.sugN', { n: rel.length })) + '</summary>' + list + '</details>';
+    return '<div class="sv-sug" id="plan-sv-sug">' + body + go + '</div>';
   }
   function savedEmptyHtml() {
-    var answered = state().answered;
-    var model = lastModel || build();
-    var rel = nowRelated(model, 3);
-    var go = '<a class="plan-empty-go" href="' + (answered ? '#/find/results' : '#/find') + '"><span>' + esc(answered ? t('plan.empty.results') : t('plan.empty.find')) + '</span>' + arrow() + '</a>';
-    return '<div class="plan-saved-empty">' +
-      '<p class="plan-empty-k">' + esc(t('plan.empty.k')) + '</p>' +
-      '<p class="plan-empty-line">' + esc(t('plan.empty.how')) + '</p>' +
-      (rel.length ? '<p class="plan-empty-relk">' + esc(t('plan.empty.rel')) + '</p><div class="list plan-empty-rel">' + rel.map(function (p) {
-        return SM.ui.listItem({ title: L(p.name).replace(/[（(].*$/, ''), cat: (p.cat && p.cat[0]) || 'procedures', href: '#/p/' + encodeURIComponent(p.id) });
-      }).join('') + '</div>' : '') + go + '</div>';
+    return '<ul class="plan-saved-list sv-list is-empty"><li class="sv-empty">' + esc(t('plan.empty.line')) + '</li></ul>';
+  }
+  function syncSug(root, model) {
+    var old = root.querySelector('#plan-sv-sug');
+    if (!old) return;
+    var tmp = document.createElement('div');
+    tmp.innerHTML = sugHtml(model);
+    var nw = tmp.firstElementChild;
+    if (nw.innerHTML === old.innerHTML) return;
+    applyRuby(nw);
+    old.parentNode.replaceChild(nw, old);
+    if (M() && M().mount) M().mount(nw, { instant: true });
   }
   function savedHeadHtml(model) {
     var n = model.saved.length;
@@ -1162,9 +1762,9 @@
   }
   function savedHtml(model) {
     var body = model.saved.length ?
-      '<div class="pcards plan-saved-list" data-reveal-stagger="40">' + model.saved.map(function (p) { return savedRowHtml(p, model); }).join('') + '</div>' :
+      '<ul class="plan-saved-list sv-list" data-reveal-stagger="40">' + model.saved.map(function (p) { return savedRowHtml(p, model); }).join('') + '</ul>' :
       savedEmptyHtml();
-    return '<section class="plan-saved" id="plan-saved" aria-labelledby="plan-saved-h">' + savedHeadHtml(model) + body + '</section>';
+    return '<section class="plan-saved" id="plan-saved" aria-labelledby="plan-saved-h">' + savedHeadHtml(model) + body + sugHtml(model) + '</section>';
   }
 
   /* the page body: the roadmap (stations + the open period) and, beside it on desktop / under it on a phone,
@@ -1177,14 +1777,14 @@
       '<div class="plan-body rm-wrap" data-flip-key="ph-body" style="--n:' + n + ';--k:' + k + '">' +
         '<span class="rm-rail" aria-hidden="true"></span><span class="rm-fill" aria-hidden="true"><i></i></span>' +
         roadmapHtml(model) +
-        '<div class="plan-flow">' + nextHtml(model) + toolsHtml() + savedHtml(model) + '</div>' +
-      '</div>' +
-      '<p class="plan-note">' + esc(t(jr ? 'plan.jr.note' : 'plan.tl.note')) + '</p></section>';
+        '<div class="plan-flow">' + showHtml() + savedHtml(model) + '</div>' +
+      '</div></section>';
   }
 
   /* ------------------------------------------------------------------ view */
   function render() {
     renderGen++;
+    bodyPend = {};
     var ti = trackInfo();
     var model = build({ track: ti.track });
     lastModel = model;
@@ -1192,7 +1792,9 @@
     var inPlace = !!(main && main.classList.contains('v-plan') && main.querySelector('.plan-rm'));
     lastCalm = calm || inPlace;
     calm = false;
-    return headHtml(ti, model) + bodyHtml2(model) + '<div class="plan-print" aria-hidden="true"></div>';
+    // first visit, nothing known: the two-question start; the road comes after the first tap
+    if (startMode()) return headHtml({ track: ti.track, showSwitch: false }, model) + startHtml() + '<div class="plan-print" aria-hidden="true"></div>';
+    return headHtml(ti, model) + topHtml(model) + bodyHtml2(model) + '<div class="plan-print" aria-hidden="true"></div>';
   }
   function flushDeferred() { }
 
@@ -1201,6 +1803,7 @@
 
   function mount(root) {
     var model = lastModel || build();
+    bodySrc = bodyPend; bodyPend = {};
     var gen = renderGen;
     var route = SM.route || {};
     var m = M();
@@ -1237,7 +1840,7 @@
           var row = root.querySelector('.plan-saved-item[data-flip-key="' + (window.CSS && CSS.escape ? CSS.escape(id) : id) + '"]');
           if (!row) return;
           anim(row, [{ opacity: 0, transform: 'translateY(-14px)' }, { opacity: 1, transform: 'none' }], { spring: 'rise', delay: 120 + i * 60, fill: 'backwards', key: 'saved-in' });
-          var mark = row.querySelector('.pcard-mark > .cat-icon') || row.querySelector('.pcard-mark');
+          var mark = row.querySelector('.cat-icon');
           if (mark && m.stamp) setTimeout(function () { if (mark.isConnected) m.stamp(mark); }, 380 + i * 60);
         });
       }
@@ -1260,6 +1863,8 @@
      viewport as the reader scrolls (scrollLinked on a view() timeline); desktop (horizontal strip): it draws once
      on arrival. Reduced motion / lite: the end state. */
   var fillCtl = null;
+  function merge(a, b) { var o = {}, k; for (k in a) o[k] = a[k]; for (k in b) o[k] = b[k]; return o; }
+  var EXP_EASE = 'cubic-bezier(0.2, 0, 0, 1)', EXP_OPEN = 380, EXP_CLOSE = 300;   // motion.js expand()'s timing
   var SDA = typeof CSS !== 'undefined' && CSS.supports && CSS.supports('animation-timeline', 'view()');
   function readRange(H) {
     var vh = window.innerHeight || 800, pad = 0;
@@ -1268,14 +1873,16 @@
     var A = 0.35 * vh / span * 100, B = (0.35 * vh + H) / span * 100;
     return ['cover ' + A.toFixed(3) + '%', 'cover ' + Math.min(100, B).toFixed(3) + '%'];
   }
+  /* every mark on the line, in order: stations (also those inside the fold, when it is open) and the fold's own row */
   function markCenters(wrap) {
     var wr = wrap.getBoundingClientRect();
-    var lis = wrap.querySelectorAll(':scope > ol.rm > li.rm-st');
+    var lis = wrap.querySelectorAll(':scope > ol.rm li.rm-st, :scope > ol.rm > li.rm-fold');
     var out = [];
     for (var i = 0; i < lis.length; i++) {
       var mk = lis[i].querySelector(':scope > .rm-head > .rm-mk');
-      if (!mk) { out.push(null); continue; }
+      if (!mk || mk.offsetParent === null) { out.push(null); continue; }
       var r = mk.getBoundingClientRect();
+      if (!r.width && !r.height) { out.push(null); continue; }
       out.push({ li: lis[i], x: r.left + r.width / 2 - wr.left, y: r.top + r.height / 2 - wr.top, cur: lis[i].classList.contains('is-current') });
     }
     return out;
@@ -1296,6 +1903,17 @@
     if (cs[ci + 1]) L += frac * (pos(cs[ci + 1]) - pos(cs[ci]));
     return { horiz: horiz, start: pos(cs[0]), end: pos(cs[cs.length - 1]), L: L, cross: horiz ? cs[0].y : cs[0].x };
   }
+  /* the geometry the line would have in another state (a fold or drawer about to close): apply, read, undo */
+  function peekGeom(root, apply, undo) {
+    var wrap = root && root.querySelector('.rm-wrap');
+    if (!wrap) return null;
+    apply();
+    var gm = fillGeom(wrap, lastModel || build());
+    undo();
+    return gm;
+  }
+  /* o: { from: the line glides from its old length · geom: a measured target instead of the DOM's state now ·
+         dur / ease: run on this timing (a fold or drawer: the same curve as the rows) · entrance: draw on arrival } */
   function wireFill(root, o) {
     o = o || {};
     root = root || view();
@@ -1306,20 +1924,21 @@
     if (fillCtl) { try { fillCtl.destroy(); } catch (e) { } fillCtl = null; }
     if (!fill || !rail) return;
     var model = lastModel || build();
-    var gm = fillGeom(wrap, model);
-    if (!gm) { fill.style.display = 'none'; rail.style.display = 'none'; fill._L = 0; return; }
+    var gm = o.geom || fillGeom(wrap, model);
+    if (!gm) { fill.style.display = 'none'; rail.style.display = 'none'; fill._L = 0; fill._R = 0; return; }
     var inner = fill.firstElementChild;
-    var oldL = fill._L || 0, oldH = fill._horiz;
+    var oldL = fill._L || 0, oldH = fill._horiz, oldR = fill._R || 0;
+    var R = gm.end - gm.start;
     rail.style.display = '';
     fill.style.display = gm.L > 1 ? '' : 'none';
-    fill._L = gm.L; fill._horiz = gm.horiz;
+    fill._L = gm.L; fill._horiz = gm.horiz; fill._R = R;
     if (gm.horiz) {
-      rail.style.cssText = 'left:' + gm.start + 'px;width:' + (gm.end - gm.start) + 'px;top:' + gm.cross + 'px';
+      rail.style.cssText = 'left:' + gm.start + 'px;width:' + R + 'px;top:' + gm.cross + 'px;transform-origin:left center';
       fill.style.left = gm.start + 'px'; fill.style.top = gm.cross + 'px'; fill.style.width = gm.L + 'px'; fill.style.height = '';
       fill.style.transformOrigin = 'left center';
       if (inner) inner.style.transformOrigin = 'left center';
     } else {
-      rail.style.cssText = 'top:' + gm.start + 'px;height:' + (gm.end - gm.start) + 'px;left:' + gm.cross + 'px';
+      rail.style.cssText = 'top:' + gm.start + 'px;height:' + R + 'px;left:' + gm.cross + 'px;transform-origin:center top';
       fill.style.top = gm.start + 'px'; fill.style.left = gm.cross + 'px'; fill.style.height = gm.L + 'px'; fill.style.width = '';
       fill.style.transformOrigin = 'center top';
       if (inner) inner.style.transformOrigin = 'center top';
@@ -1330,10 +1949,15 @@
     if (gm.horiz) fill.style.transform = 'none';
     else fillCtl = m.scrollLinked(fill, { prop: 'scaleY', from: 0, to: 1, range: readRange(gm.L) });
     if (!inner || !canAnim()) return;
-    if (o.from != null && oldL && oldH === gm.horiz && Math.abs(oldL - gm.L) > 1) {
-      // a station opened/closed, or a tick moved the tip: the line glides from where it was to where it is
-      inner.style.transform = 'none';
-      anim(inner, [{ transform: prop + '(' + (oldL / gm.L) + ')' }, { transform: 'none' }], { spring: 'smooth', maxDuration: 520, key: 'tlfill' });
+    var timing = o.dur ? { duration: o.dur, easing: o.ease || EXP_EASE } : { spring: 'smooth', maxDuration: 520 };
+    if (o.from != null && oldH === gm.horiz) {
+      // a station, fold or drawer opened/closed, or a tick moved the tip: the line (and the pale rail under it)
+      // glides from where it was to where it is, on the rows' own curve, never ahead of the marks
+      if (oldL && Math.abs(oldL - gm.L) > 1) {
+        inner.style.transform = 'none';
+        anim(inner, [{ transform: prop + '(' + (oldL / gm.L) + ')' }, { transform: 'none' }], merge({ key: 'tlfill' }, timing));
+      }
+      if (oldR && R > 1 && Math.abs(oldR - R) > 1) anim(rail, [{ transform: prop + '(' + (oldR / R) + ')' }, { transform: 'none' }], merge({ key: 'tlrail' }, timing));
     } else if (o.entrance) {
       var r = wrap.getBoundingClientRect(), vh = window.innerHeight || 800;
       if (gm.horiz || (r.top + gm.start + gm.L < vh * 0.65 && r.top + gm.start > -vh)) {
@@ -1407,22 +2031,46 @@
       return { el: el, n: n, v: vis(n) };
     });
     var vDone = vis(eDone), vTotal = vis(eTotal);
+    var folds = Array.prototype.map.call(root.querySelectorAll('ol.rm > li.rm-fold'), function (fli) {
+      var fc = fli.querySelector('[data-gcount]');
+      return { li: fli, fc: fc, v: vis(fc) };
+    });
     if (m && m.seen) m.seen('plan.done.' + model.track, model.done);
-    rollNum(eDone, model.done, vDone);
-    rollNum(eTotal, model.total, vTotal);
-    var prog = root.querySelector('#plan-prog');
-    if (prog) {
-      var allDone = model.total > 0 && model.done === model.total;
-      if (prog.classList.contains('is-all') !== allDone) {
-        prog.classList.toggle('is-all', allDone);
-        var pk = prog.querySelector('.plan-prog-k');
-        if (pk) swapOrSet(pk, t(allDone ? 'plan.progressAll' : 'plan.progressK'));
+    // v9: the card counts the current station (applicable tasks only); its why line turns into つぎの駅 when all are done
+    var cg = curGroup(model);
+    if (cg && cg.total) {
+      rollNum(eDone, cg.doneN, vDone);
+      rollNum(eTotal, cg.total, vTotal);
+      var pc = root.querySelector('#plan-top-count');
+      var allDone = cg.doneN === cg.total;
+      if (pc) {
+        pc.setAttribute('aria-label', t('plan.progress') + ' ' + t('plan.progressOf', { done: cg.doneN, total: cg.total }));
+        if (pc.classList.contains('is-all') !== allDone) {
+          pc.classList.toggle('is-all', allDone);
+          var why = root.querySelector('#plan-top-why');
+          var nx = nextAfter(model);
+          if (why) swapOrSet(why, allDone ? (nx ? t('plan.top.next', { t: nx.title, from: fromLabel(nx) }) : t('plan.top.allDone')) : (cg.sub || ''));
+        }
       }
-    }
+    } else if (root.querySelector('#plan-top')) refreshTop(root, model);
+    // each fold's combined count (the past; already left: 巣立ち前 and the past stations after it)
+    folds.forEach(function (fo2) {
+      var fli = fo2.li, fc = fo2.fc;
+      if (!fc) return;
+      var fd = 0, ft = 0;
+      var lis = fli.querySelectorAll(':scope > ol.rm-fold-list > li.rm-st[data-group]');
+      Array.prototype.forEach.call(lis, function (li) { var g = groupOf(model, li.getAttribute('data-group')); if (g) { fd += g.doneN; ft += g.total; } });
+      if (fc.getAttribute('data-done') !== String(fd)) fc.setAttribute('data-done', fd);
+      rollNum(fc.querySelector('.rm-count-n'), fd, fo2.v);
+      var fo = fc.querySelector('.rm-count-of');
+      if (fo && fo.textContent !== '/' + ft) fo.textContent = '/' + ft;
+      fli.classList.toggle('is-complete', ft > 0 && fd === ft);
+    });
     model.groups.forEach(function (g, gi) {
       var el = gEls[gi].el;
       var li = document.getElementById('tl-' + g.key);
       if (el) {
+        if (el.getAttribute('data-done') !== String(g.doneN)) el.setAttribute('data-done', g.doneN);
         rollNum(gEls[gi].n, g.doneN, gEls[gi].v);
         var of = el.querySelector('.rm-count-of');
         if (of && of.textContent !== '/' + g.total) of.textContent = '/' + g.total;
@@ -1445,15 +2093,18 @@
     if (on && motion && m && canAnim() && box && m.check) m.check(box, { color: 'var(--on-action-fill, #fff)', fill: 'var(--action-fill)' });
     else if (!on && box && m && m.uncheck) m.uncheck(box, { color: 'var(--action-fill)' });
     li.classList.toggle('is-done', on);
-    if (on && motion && m) settleRow(li);
+    // a cheap phone (≤4 cores) runs the check, the wash and the stamp one after another, not all in the first frame
+    var slow = lowEnd();
+    if (on && motion && m && !slow) settleRow(li);
     if (on && motion && m && canAnim()) {
       var seal = li.querySelector('.tl-seal');
       if (seal && m.stamp) {
         seal.style.opacity = '0';
-        setTimeout(function () { seal.style.opacity = ''; if (li.classList.contains('is-done')) m.stamp(seal); }, 150);
+        setTimeout(function () { seal.style.opacity = ''; if (li.classList.contains('is-done')) m.stamp(seal); }, slow ? 420 : 150);
       }
     }
   }
+  function lowEnd() { try { return (navigator.hardwareConcurrency || 8) <= 4; } catch (e) { return false; } }
   /* the ticked row answers with its whole body: a green wash sweeps it and the text hops toward the box */
   function settleRow(li) {
     var task = li.querySelector('.tl-task');
@@ -1475,6 +2126,7 @@
     var m = M();
     if (!gEl || !m || !canAnim()) return;
     var nx = gEl.nextElementSibling;
+    while (nx && !nx.classList.contains('rm-st')) nx = nx.nextElementSibling;   // v9: a label row may sit between
     var mk = nx && nx.querySelector(':scope > .rm-head > .rm-mk');
     if (mk && m.pulse) { try { m.pulse(mk); return; } catch (e) { } }
     if (mk) anim(mk, [{ transform: 'scale(1)' }, { transform: 'scale(1.35)', offset: 0.4 }, { transform: 'scale(1)' }], { duration: 480, easing: EASE('standard'), key: 'pulse' });
@@ -1489,6 +2141,41 @@
     if (!m) return;
     if (canAnim()) anim(dn, [{ opacity: 0, transform: 'translateY(16px)' }, { opacity: 1, transform: 'none' }], { duration: 440, delay: 360, easing: EASE('enter'), fill: 'backwards', key: 'curdone' });
     else anim(dn, [{ opacity: 0 }, { opacity: 1 }], { duration: 180, easing: 'linear' });
+  }
+  /* v9 POLISH: what the tick moved, said on the row's own rule (「あと2つ」 / 「この駅はぜんぶできた」) — a small cue
+     that rises after the check has drawn, holds, and fades; the live region says it for screen readers. The box
+     itself is the undo (tick again), so no toast comes up over the next task. */
+  function announce(text) {
+    var el = document.getElementById('plan-live');
+    if (!el) return;
+    el.textContent = '';
+    setTimeout(function () { el.textContent = text; }, 40);
+  }
+  /* one cue at a time: a new tick drops every echo still showing (only the latest 「あと n つ」 is true) */
+  function dropEcho(scope) {
+    var list = scope ? scope.querySelectorAll('.tl-echo') : [];
+    Array.prototype.forEach.call(list, function (e) { clearTimeout(e._smT); if (e.parentNode) e.parentNode.removeChild(e); });
+  }
+  function echo(li, text) {
+    var row = li && (li.querySelector(':scope > .tl-row') || li.querySelector(':scope > .tl-task'));
+    if (!row) return;
+    dropEcho(view() || li);
+    var e = document.createElement('span');
+    e.className = 'tl-echo';
+    e.setAttribute('aria-hidden', 'true');
+    e.textContent = text;
+    row.appendChild(e);
+    var m = M();
+    var live = canAnim();
+    var gone = function () { clearTimeout(e._smT); if (e.parentNode) e.parentNode.removeChild(e); };
+    if (live) anim(e, [{ opacity: 0, translate: '0 6px' }, { opacity: 1, translate: '0 0' }], { duration: 240, delay: 260, easing: EASE('enter'), fill: 'backwards', key: 'echo' });
+    else if (m) anim(e, [{ opacity: 0 }, { opacity: 1 }], { duration: 160, delay: 120, easing: 'linear', fill: 'backwards', key: 'echo' });
+    e._smT = setTimeout(function () {
+      if (!e.parentNode) return;
+      var a = anim(e, [{ opacity: 1 }, { opacity: 0 }], { duration: live ? 200 : 140, easing: EASE('exit'), fill: 'forwards', key: 'echo' });
+      finished(a).then(gone);
+      e._smT = setTimeout(gone, 400);
+    }, live ? 2400 : 2000);
   }
   function markDone(key, on, opts) {
     opts = opts || {};
@@ -1506,20 +2193,21 @@
     refreshSoon();
     if (on && nowComplete && !wasComplete) completeGroup(gEl);
     else if (on && !opts.quiet && gEl && gEl.classList.contains('is-current')) setTimeout(function () { pulseNext(gEl); }, 200);
+    if (li) {
+      if (on && !opts.quiet && g) {
+        var left = Math.max(0, g.total - g.doneN);
+        // the current station, all done: its own green line (「この時期は、ぜんぶできた」 + the way on) rises instead
+        if (nowComplete && gEl.classList.contains('is-current')) dropEcho(view() || li);
+        else echo(li, nowComplete ? t('plan.echo.all') : t(left === 1 ? 'plan.echo.left1' : 'plan.echo.left', { n: left }));
+        var tt = li.querySelector('.tl-item-main');
+        announce(t('plan.echo.undo', { t: tt ? tt.textContent.trim() : '' }));
+      } else if (!on) dropEcho(li);
+    }
     if (opts.focus) focusQuiet(cb);
     return { group: nowComplete && !wasComplete };
   }
   SM.on('plan-done', function (el) {
-    var key = el.getAttribute('data-key');
-    var on = !!el.checked;
-    var r = markDone(key, on);
-    if (!on) return;
-    SM.toast(r.group ? t('plan.done.groupToast') : t('plan.done.toast'), {
-      action: { label: t('plan.saved.undo'), fn: function () {
-        markDone(key, false, { now: true, quiet: true, focus: true });
-        SM.toast(t('plan.saved.restored'), 1600);
-      } }
-    });
+    markDone(el.getAttribute('data-key'), !!el.checked);
   });
 
   /* ------------------------------------------------------------------ stations: open / close */
@@ -1619,7 +2307,374 @@
     setTimeout(go, 700);
   }
   SM.on('plan-open', function (el) { openStation(el.getAttribute('data-key'), { toggle: true }); });
+  /* the end row (long after leaving) with its still-useful list: a panel on the desktop line; on the phone it is always open */
+  SM.on('plan-open-end', function () { if (wide()) openStation('end', {}); });
   SM.on('plan-jump', function (el) { openStation(el.getAttribute('data-key'), { scroll: true, focus: true }); });
+
+  /* ------------------------------------------------------------------ v9: the start, the fold, drawers, states */
+  /* Q1: 中学生 → the 高校受験 track (and 中3 as the stage when none is known); 高校生 → 巣立ち; もう出た → left0 */
+  SM.on('plan-start', function (el) {
+    var v = el.getAttribute('data-value');
+    var a = state().answers || (state().answers = {});
+    if (v === 'jhs') { SM.store.set('plan:track', 'junior'); }   // the grade is Q2 (plan-start-grade); nothing is guessed
+    else if (v === 'hs') { SM.store.set('plan:track', 'leaving'); }
+    else if (v === 'left') { if (!a.stage) a.stage = 'left0'; SM.store.set('plan:track', 'leaving'); }
+    else return;
+    SM.store.set('plan:started', true);
+    SM.save();
+    if (SM.syncJunior) try { SM.syncJunior(); } catch (e) { }
+    selKey = null; openKeys = {};
+    var m = M();
+    var root = view();
+    var card = root && root.querySelector('#plan-top');
+    var go = function () { calm = true; SM.render(); };
+    if (card && m && canAnim()) {
+      var a1 = anim(card, [{ opacity: 1 }, { opacity: 0 }], { duration: 120, easing: EASE('exit'), fill: 'forwards' });
+      finished(a1).then(go);
+    } else go();
+  });
+  /* Q2 for a 中学生: the grade (中1・中2 → jhs12, 中3 → jhs3); the entry date is the April that follows */
+  SM.on('plan-start-grade', function (el) {
+    var v = el.getAttribute('data-value');
+    if (v !== 'jhs12' && v !== 'jhs3') return;
+    var a = state().answers || (state().answers = {});
+    a.stage = v;
+    SM.save();
+    if (SM.syncJunior) try { SM.syncJunior(); } catch (e) { }
+    selKey = null; openKeys = {};
+    calm = true;
+    SM.render();
+  });
+  /* Q2 「まだ決まっていない」: the countdown shows with 仮 (the date dialog is the other answer) */
+  SM.on('plan-start-nodate', function () {
+    SM.store.set('plan:dateSeen', true);
+    calm = true;
+    SM.render();
+  });
+  /* v9 POLISH: a block opening / closing in place on the road (motion.js expand: clip + the rows below slide on one
+     curve). The green line and its rail follow on the same curve: opening, they glide to the new geometry at once;
+     closing, the closed geometry is peeked first (o.peek(v): the cheapest toggle that gives the closed layout), so
+     the line never lags the rows. Reduced motion / no engine: the state flips and the body fades in. Returns a promise. */
+  function expandLine(container, on, o) {
+    var root = view(), m = M();
+    var rewire = function () { if (root && root.isConnected) wireFill(root, { from: true }); };
+    if (!(m && m.expand && canAnim()) || !root) {
+      o.setOpen(on);
+      if (m && on && o.body) { var bs = o.body.length != null ? Array.prototype.slice.call(o.body) : [o.body]; bs.forEach(function (b) { anim(b, [{ opacity: 0 }, { opacity: 1 }], { duration: 180, easing: 'linear', key: 'expand' }); }); }
+      rewire();
+      return Promise.resolve();
+    }
+    if (on) {
+      var p1 = m.expand(container, true, { setOpen: o.setOpen, body: o.body });
+      wireFill(root, { from: true, dur: EXP_OPEN, ease: EXP_EASE });
+      return p1.then(rewire);
+    }
+    var peek = o.peek || o.setOpen, hc = null, gm = null;
+    peek(false); hc = container.getBoundingClientRect().height; gm = fillGeom(root.querySelector('.rm-wrap'), lastModel || build()); peek(true);
+    var p2 = m.expand(container, false, { setOpen: o.setOpen, body: o.body, closedHeight: hc });
+    if (gm) wireFill(root, { from: true, geom: gm, dur: EXP_CLOSE, ease: EXP_EASE });
+    return p2.then(rewire);
+  }
+  /* the past stations unfold / fold */
+  function setFold(li, on) {
+    foldOpen[li.getAttribute('data-group') || 'fold'] = on;
+    li.classList.toggle('is-open', on);
+    var h = li.querySelector(':scope > .rm-fold-head');
+    if (h) { h.setAttribute('aria-expanded', on ? 'true' : 'false'); h.setAttribute('title', foldTitle(on, li.classList.contains('is-left'))); }
+    var list = li.querySelector(':scope > .rm-fold-list');
+    if (list) { list.classList.toggle('is-closed', !on); if (on && M() && M().mount) M().mount(list, { instant: true }); }
+    var tl = li.querySelector('.rm-tog-l');
+    if (tl) tl.textContent = t(on ? 'plan.close' : 'plan.open');
+  }
+  /* want: true/false/null (toggle) · li: one fold row, or every fold on the road when left out */
+  function toggleFold(want, li) {
+    var root = view();
+    if (!li) {
+      var all = root ? root.querySelectorAll('ol.rm > li.rm-fold') : [];
+      if (!all.length) return false;
+      Array.prototype.forEach.call(all, function (x) { toggleFold(want, x); });
+      return true;
+    }
+    var was = li.classList.contains('is-open');
+    var on = want == null ? !was : !!want;
+    if (on === was) return true;
+    var list = li.querySelector(':scope > .rm-fold-list');
+    expandLine(li, on, { setOpen: function (v) { setFold(li, v); }, body: list ? list.children : null,
+      peek: function (v) { if (list) list.classList.toggle('is-closed', !v); } });
+    return true;
+  }
+  SM.on('plan-fold', function (el) { toggleFold(null, el.closest('.rm-fold')); });
+  /* 全部の駅: the road unfolds and scrolls into view */
+  SM.on('plan-all', function () {
+    var root = view();
+    var sec = root && root.querySelector('#plan-tl');
+    if (!sec) return;
+    toggleFold(true);
+    var target = sec.querySelector('ol.rm') || sec;
+    try { target.scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', block: 'start' }); } catch (e) { target.scrollIntoView(); }
+    var first = sec.querySelector('ol.rm .rm-head');
+    if (first) focusQuiet(first);
+  });
+  /* a task's drawer */
+  function setDrawer(li, on) {
+    var btn = li.querySelector('.tl-t');
+    var dr = li.querySelector(':scope > .tl-drawer');
+    var row = li.querySelector(':scope > .tl-row');
+    if (btn) btn.setAttribute('aria-expanded', on ? 'true' : 'false');
+    if (row) row.classList.toggle('is-open', on);
+    if (dr) { dr.hidden = !on; if (on && M() && M().mount) M().mount(dr, { instant: true }); }
+    li.classList.toggle('is-drawer-open', on);
+  }
+  SM.on('plan-drawer', function (el) {
+    var key = el.getAttribute('data-key');
+    var li = el.closest('.tl-item');
+    if (!li || !li.querySelector(':scope > .tl-drawer')) return;
+    var on = !li.classList.contains('is-drawer-open');
+    drawerOpen[key] = on;
+    var dr = li.querySelector(':scope > .tl-drawer');
+    expandLine(li, on, { setOpen: function (v) { setDrawer(li, v); }, body: dr ? dr.firstElementChild : null,
+      peek: function (v) { if (dr) dr.hidden = !v; } });
+  });
+  /* 関係ないにした… line */
+  SM.on('plan-na', function (el) {
+    var key = el.getAttribute('data-key');
+    var box = el.closest('.tl-na');
+    var list = box && box.querySelector('.tl-na-list');
+    if (!list) return;
+    var on = list.hidden;
+    naOpen[key] = on;
+    var set = function (v) { list.hidden = !v; el.setAttribute('aria-expanded', v ? 'true' : 'false'); };
+    expandLine(box, on, { setOpen: set, body: list.children, peek: function (v) { list.hidden = !v; } });
+  });
+  /* v9 POLISH: the blocks of the road that move as units when something in it changes — closed stations, folds and
+     labels as wholes; an open station's head and each block of its body (every task row, the add row, 関係ないにした…,
+     the done line, 関係する支援); then the column under the road. Nothing nested twice, so a FLIP translates each once. */
+  function flatUnits(wrap) {
+    var out = [];
+    var body = function (li) {
+      var b = li.querySelector(':scope > .rm-body');
+      if (!b || b.hidden) return;
+      var inn = b.querySelector(':scope > .rm-body-in');
+      Array.prototype.forEach.call(inn ? inn.children : b.children, function (c) {
+        if (c.classList.contains('tl-items')) Array.prototype.forEach.call(c.children, function (r) { out.push(r); });
+        else out.push(c);
+      });
+    };
+    var walk = function (ol) {
+      Array.prototype.forEach.call(ol.children, function (li) {
+        if (li.classList.contains('rm-fold')) {
+          if (!li.classList.contains('is-open')) { out.push(li); return; }
+          out.push(li.querySelector(':scope > .rm-head'));
+          var l2 = li.querySelector(':scope > .rm-fold-list');
+          if (l2) walk(l2);
+          return;
+        }
+        if (!li.classList.contains('is-open') || !li.querySelector(':scope > .rm-body')) { out.push(li); return; }
+        out.push(li.querySelector(':scope > .rm-head'));
+        body(li);
+      });
+    };
+    var ol = wrap.querySelector(':scope > ol.rm');
+    if (ol) walk(ol);
+    var flow = wrap.querySelector(':scope > .plan-flow');
+    if (flow) Array.prototype.forEach.call(flow.children, function (c) { out.push(c); });
+    return out.filter(Boolean);
+  }
+  /* the three states, own tasks: a change is stored, the road is rebuilt in place (open stations and drawers kept)
+     and the rows glide to their new places; a removed row fades where it was, a new one rises in. o.hop: a selector
+     for a row that changes station (it fades out and rises in at its new place instead of sliding through others).
+     Reduced motion / no engine: the state flips, a new row fades in. */
+  function reflow(root, focusSel, o) {
+    o = o || {};
+    var model = build();
+    lastModel = model;
+    var m = M();
+    var wrap = root.querySelector('.rm-wrap');
+    var change = function () { rebuildRoadmap(root, model); };
+    if (wrap && m && m.flip && canAnim()) m.flip(wrap, change, { selector: flatUnits, hop: o.hop || null, duration: 420 });
+    else change();
+    refreshTop(root, model);
+    if (focusSel) { var f = root.querySelector(focusSel); if (f) focusQuiet(f); }
+    // the counts and the line follow one frame later: the rows' first frame paints without another forced layout
+    afterPaint(function () {
+      if (!root.isConnected || !isPlanRoute()) return;
+      refreshCounts(model);
+      wireFill(root, { from: true, dur: 400, ease: EXP_EASE });
+      if (SM.updateBadge) try { SM.updateBadge({ roll: true }); } catch (e) { }
+    });
+  }
+  /* a row about to leave: in reduced motion it fades first (the FLIP ghosts it otherwise); the row stops taking taps */
+  function fadeRowThen(li, fn) {
+    var m = M();
+    if (li) li.style.pointerEvents = 'none';
+    if (!li || !m || canAnim()) { fn(); return; }
+    var a = anim(li, [{ opacity: 1 }, { opacity: 0 }], { duration: 140, easing: 'linear', fill: 'forwards', key: 'skip' });
+    finished(a).then(fn);
+    setTimeout(fn, 400);
+  }
+  SM.on('plan-skip', function (el) {
+    var key = el.getAttribute('data-key'), v = el.getAttribute('data-value');
+    if (v !== 'na' && v !== 'later') return;
+    var root = view();
+    var li = el.closest('.tl-item');
+    var model = lastModel || build();
+    var nx = v === 'later' ? nextWithTasks(model, key) : null;
+    if (v === 'later' && !nx) return;
+    setSkip(key, v);
+    drawerOpen[key] = false;
+    var did = false;
+    var go = function () {
+      if (did) return; did = true;
+      if (!root || !root.isConnected || !isPlanRoute()) return;
+      reflow(root, v === 'na' ? '.tl-na-t' : null, { hop: v === 'later' ? rowSel(key) : null });
+      if (v === 'later' && nx && !wide()) { var li2 = root.querySelector('#tl-' + nx.key); if (li2 && !li2.classList.contains('is-open')) openStation(nx.key, {}); }
+    };
+    fadeRowThen(li, go);
+    // the toast lands one frame after the rows start moving (its layout would otherwise sit in the first frame)
+    afterPaint(function () {
+      SM.toast(v === 'na' ? t('plan.skip.naToast') : t('plan.skip.laterToast', { t: nx.name }), {
+        action: { label: t('plan.saved.undo'), fn: function () {
+          setSkip(key, null);
+          var r = view();
+          if (r) reflow(r, '#' + itemId(key), { hop: v === 'later' ? rowSel(key) : null });
+          SM.toast(t('plan.skip.backToast'), 1600);
+        } }
+      });
+    });
+  });
+  SM.on('plan-unskip', function (el) {
+    var key = el.getAttribute('data-key');
+    var root = view();
+    var li = el.closest('.tl-item, .tl-na-item');
+    setSkip(key, null);
+    var did = false;
+    var go = function () {
+      if (did) return; did = true;
+      if (!root || !root.isConnected || !isPlanRoute()) return;
+      reflow(root, '#' + itemId(key), { hop: li && li.classList.contains('is-moved') ? rowSel(key) : null });
+      SM.toast(t('plan.skip.backToast'), 1600);
+    };
+    fadeRowThen(li, go);
+  });
+  /* ------------------------------------------------------------------ v9 EXTRAS: 自分のやること (add · edit · delete) */
+  function ownId() { return 'o' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+  function setAddOpen(box, on) {
+    var key = box.getAttribute('data-group');
+    addOpen[key] = on;
+    box.classList.toggle('is-open', on);
+    var b = box.querySelector(':scope > .tl-add-t');
+    if (b) b.setAttribute('aria-expanded', on ? 'true' : 'false');
+    var f = box.querySelector(':scope > .tl-add-f');
+    if (f) { f.hidden = !on; if (on && M() && M().mount) M().mount(f, { instant: true }); }
+  }
+  function toggleAdd(box, on) {
+    if (!box) return;
+    var was = box.classList.contains('is-open');
+    if (on == null) on = !was;
+    if (on === was) { if (on) focusQuiet(box.querySelector('.tl-own-in')); return; }
+    var f = box.querySelector(':scope > .tl-add-f');
+    expandLine(box, on, { setOpen: function (v) { setAddOpen(box, v); }, body: f ? f.firstElementChild : null, peek: function (v) { if (f) f.hidden = !v; } });
+    if (on) focusQuiet(box.querySelector('.tl-own-in'));
+  }
+  SM.on('plan-own-add', function (el) { toggleAdd(el.closest('.tl-add')); });
+  SM.on('plan-own-cancel', function (el) {
+    var box = el.closest('.tl-add');
+    var inp = box && box.querySelector('.tl-own-in');
+    if (inp) inp.value = '';
+    toggleAdd(box, false);
+    if (box) focusQuiet(box.querySelector('.tl-add-t'));
+  });
+  /* 足す (data-key = the station) or 保存 (data-id = the own task) */
+  SM.on('plan-own-save', function (el) {
+    var key = el.getAttribute('data-key'), id = el.getAttribute('data-id');
+    var wrap = el.closest(key ? '.tl-add' : '.tl-item');
+    var inp = wrap && wrap.querySelector('.tl-own-in');
+    var text = inp ? inp.value.replace(/\s+/g, ' ').trim().slice(0, 80) : '';
+    var m = M();
+    if (!text) { if (inp) { focusQuiet(inp); if (m && m.nudge) m.nudge(inp); } SM.toast(t('plan.own.empty'), 1600); return; }
+    var root = view();
+    var list = ownList();
+    var newKey = null;
+    if (key) {
+      var rec = { id: ownId(), group: key, text: text, done: false };
+      list.push(rec);
+      newKey = 'own:' + rec.id;
+      addOpen[key] = false;
+      if (inp) inp.value = '';
+    } else if (id) {
+      var hit = false;
+      list.forEach(function (o) { if (o.id === id) { o.text = text; hit = true; } });
+      if (!hit) return;
+      drawerOpen['own:' + id] = false;
+    } else return;
+    setOwnList(list);
+    if (!root || !root.isConnected || !isPlanRoute()) return;
+    reflow(root, null);
+    var li = newKey ? root.querySelector('#' + itemId(newKey)) : root.querySelector('#' + itemId('own:' + id));
+    var row = li && li.closest('.tl-item');
+    if (row && m && !canAnim()) anim(row, [{ opacity: 0 }, { opacity: 1 }], { duration: 180, easing: 'linear' });
+    if (newKey) {
+      // the add row again, so another can follow; the new row is announced by the toast
+      var box = root.querySelector('.tl-add[data-group="' + (window.CSS && CSS.escape ? CSS.escape(key) : key) + '"] > .tl-add-t');
+      focusQuiet(box);
+      try { if (box) box.scrollIntoView({ block: 'nearest', behavior: reduced() ? 'auto' : 'smooth' }); } catch (e) { }
+    } else if (row) focusQuiet(row.querySelector('.tl-t'));
+    SM.toast(t(newKey ? 'plan.own.added' : 'plan.own.saved'), 1600);
+  });
+  SM.on('plan-own-del', function (el) {
+    var id = el.getAttribute('data-id');
+    var list = ownList();
+    var i = -1;
+    list.forEach(function (o, k) { if (o.id === id) i = k; });
+    if (i === -1) return;
+    var rec = list[i];
+    list.splice(i, 1);
+    setOwnList(list);
+    drawerOpen['own:' + id] = false;
+    var root = view();
+    var li = el.closest('.tl-item');
+    var did = false;
+    var go = function () {
+      if (did) return; did = true;
+      if (!root || !root.isConnected || !isPlanRoute()) return;
+      reflow(root, '.tl-add[data-group="' + (window.CSS && CSS.escape ? CSS.escape(rec.group) : rec.group) + '"] > .tl-add-t');
+    };
+    fadeRowThen(li, go);
+    SM.toast(t('plan.own.deleted', { t: rec.text }), {
+      action: { label: t('plan.saved.undo'), fn: function () {
+        var l2 = ownList();
+        if (!l2.some(function (o) { return o.id === rec.id; })) l2.splice(Math.min(i, l2.length), 0, rec);
+        setOwnList(l2);
+        var r = view();
+        if (r) reflow(r, '#' + itemId('own:' + rec.id));
+        SM.toast(t('plan.saved.restored'), 1600);
+      } }
+    });
+  });
+  /* Enter in an own-task field = its 足す / 保存 button */
+  document.addEventListener('keydown', function (ev) {
+    if (ev.key !== 'Enter' || ev.isComposing || ev.keyCode === 229) return;
+    var inp = ev.target;
+    if (!inp || !inp.classList || !inp.classList.contains('tl-own-in')) return;
+    var wrap = inp.closest('.tl-add-f-in, .tl-own-f');
+    var b = wrap && wrap.querySelector('.tl-own-save');
+    if (!b) return;
+    ev.preventDefault();
+    b.click();
+  });
+
+  /* the card's いまの駅 block follows the counts (the countdown row stays as it is) */
+  function refreshTop(root, model) {
+    var top = root.querySelector('#plan-top');
+    var st = top && top.querySelector(':scope > .pt-st');
+    if (!st) return;
+    var tmp = document.createElement('div');
+    tmp.innerHTML = topStationHtml(model);
+    var ns = tmp.firstElementChild;
+    if (ns.innerHTML === st.innerHTML) return;
+    applyRuby(ns);
+    st.parentNode.replaceChild(ns, st);
+  }
 
   /* ------------------------------------------------------------------ track switch */
   var switchGen = 0;
@@ -1645,7 +2700,9 @@
     var land = function () {
       if (gen !== switchGen || !old.isConnected) return;
       var tmp = document.createElement('div');
+      bodyPend = {};
       tmp.innerHTML = bodyHtml2(model);
+      bodySrc = bodyPend; bodyPend = {};
       var nb = tmp.firstElementChild;
       old.parentNode.replaceChild(nb, old);
       applyRuby(nb);
@@ -1706,7 +2763,9 @@
     var li = leaveInfo();
     var y1 = assumedLeave(now, null).getFullYear();
     var onChip = false;
-    var quick = [y1, y1 + 1].map(function (y) {
+    // already left: the common dates are the March 31s behind them
+    var left = leftMode('leaving', li.date, now);
+    var quick = (left ? [y1 - 1, y1 - 2] : [y1, y1 + 1]).map(function (y) {
       var v = y + '-03-31';
       var on = !li.assumed && state().leaveDate === v; if (on) onChip = true;
       return SM.ui.chip(t('plan.date.fy', { y: y }), { act: 'plan-date-quick', pressed: on, attrs: 'data-value="' + v + '"' });
@@ -1715,12 +2774,12 @@
     var own = !li.assumed && !onChip;
     // what 巣立ちの日 means lives here, next to where it is set (it was a 「くわしく」 on the page)
     html = '<div class="plan-date-sheet stack">' + '<p class="plan-date-def">' + esc(t('plan.leave.def')) + '</p>' +
-      '<div class="field"><label for="plan-date-input">' + esc(t('plan.date.field')) + '</label>' +
+      '<div class="field"><label for="plan-date-input">' + esc(t(left ? 'plan.date.fieldLeft' : 'plan.date.field')) + '</label>' +
       '<input type="date" class="input" id="plan-date-input" min="2000-01-01" max="2100-12-31" value="' + (own ? esc(iso(li.date)) : '') + '">' +
       '<p class="help">' + esc(t('plan.date.help')) + '</p></div>' +
       '<div class="stack-sm"><p class="plan-date-qlabel">' + esc(t('plan.date.quick')) + '</p><div class="chips plan-date-chips">' + quick + '</div></div>' +
       SM.ui.button(t('plan.date.save'), { act: 'plan-date-save', variant: 'primary', size: 'lg', block: true, arrow: true }) +
-      '<div class="opts">' + optRow(t('plan.date.unknown'), t('plan.date.unknownSub'), 'plan-date-unknown', '', li.assumed) + '</div>' +
+      '<div class="opts">' + optRow(t(left ? 'plan.start.leftUnknown' : 'plan.date.unknown'), t(left ? 'plan.date.unknownSubLeft' : 'plan.date.unknownSub'), 'plan-date-unknown', '', li.assumed) + '</div>' +
       '</div>';
     // FIX-B (F15): no autofocus on the date field (it opened the picker / keyboard over the sheet on phones)
     SM.sheet(html, { title: t('plan.date.title'), cls: 'v-plan plan-sheet', mount: dateSheetWire });
@@ -1913,6 +2972,7 @@
         if (subEl && subR) fadeGhost(subEl, subR, subSt, 80);
         if (actEl && actR) fadeGhost(actEl, actR, actSt, 80);
         savedHeadSync(root, lastModel || model, nVis);
+        syncSug(root, lastModel || model);
         var target = next && next.isConnected ? next.querySelector('.plan-remove') : null;
         if (!target) {
           target = root.querySelector('#plan-saved-h');
@@ -1937,17 +2997,56 @@
     SM.toast(t('plan.saved.removed', { name: name }), { action: { label: t('plan.saved.undo'), fn: function () { undoRemove(rec); } } });
   });
 
-  /* the roadmap's stations get their rows back in place (open states kept) */
+  /* the roadmap's stations get their rows back in place (open states kept). v9 POLISH: only the station BODIES are
+     swapped (the heads, folds and labels stay the same elements), so a skip or an own task re-lays out one open
+     block instead of the whole road (a full road swap cost ~150ms at 4x on a phone, a frozen frame before any
+     motion). The whole <ol> is replaced only when the set of stations differs. */
   function rebuildRoadmap(root, model) {
     var ol = root.querySelector('ol.rm');
     if (!ol) return;
-    var tmp = document.createElement('div');
-    tmp.innerHTML = roadmapHtml(model);
-    var nol = tmp.firstElementChild;
-    applyRuby(nol);
-    ol.parentNode.replaceChild(nol, ol);
     var m = M();
-    if (m && m.mount) m.mount(nol, { instant: true });
+    var tmp = document.createElement('div');
+    // the same stations as on the page? (a skip or an own task never changes the set; a date or track change re-renders)
+    var live = Array.prototype.map.call(ol.querySelectorAll('li.rm-st[data-group]'), function (li) { return li.getAttribute('data-group'); });
+    var want = model.groups.map(function (g) { return g.key; });
+    if (model.cur === -1) want.unshift('now');
+    if (model.beyond) want.push('end');
+    var same = live.length === want.length;
+    for (var i = 0; same && i < live.length; i++) if (live[i] !== want[i]) same = false;
+    if (!same) {
+      bodyPend = {};
+      tmp.innerHTML = roadmapHtml(model);
+      bodySrc = bodyPend; bodyPend = {};
+      var nol = tmp.firstElementChild;
+      applyRuby(nol);
+      ol.parentNode.replaceChild(nol, ol);
+      if (m && m.mount) m.mount(nol, { instant: true });
+      return;
+    }
+    // only the bodies whose source changed are parsed and swapped
+    var swap = function (key, html) {
+      var ob = ol.querySelector('li[data-group="' + key + '"] > .rm-body');
+      if (!ob) return;
+      tmp.innerHTML = html;
+      var nb = tmp.firstElementChild;
+      if (!nb) return;
+      applyRuby(nb);
+      ob.parentNode.replaceChild(nb, ob);
+      if (!nb.hidden && m && m.mount) m.mount(nb, { instant: true });
+    };
+    var next = {};
+    model.groups.forEach(function (g, gi) {
+      var h = bodyHtml0(g, model, gi, isOpenKey(model, g.key, gi));
+      next[g.key] = h;
+      if (h !== bodySrc[g.key]) swap(g.key, h);
+    });
+    if (model.beyond && model.endPulled && model.endPulled.length) {
+      var openEnd = !wide() || !(selKey && groupOf(model, selKey));
+      var he = endBodyHtml0(model, openEnd);
+      next.end = he;
+      if (he !== bodySrc.end) swap('end', he);
+    }
+    bodySrc = next;
   }
   function undoRemove(rec) {
     if (!rec) return;
@@ -1978,8 +3077,10 @@
         var have = {};
         Array.prototype.forEach.call(list.children, function (r) { have[r.getAttribute('data-flip-key')] = r; });
         var p = SM.program(rec.id);
-        if (have[rec.id] || !p || model.saved.length !== list.children.length + 1) {
+        if (have[rec.id] || !p || list.classList.contains('is-empty') || model.saved.length !== list.children.length + 1) {
+          list.classList.remove('is-empty');
           list.innerHTML = rowsHtml; applyRuby(list); if (m && m.mount) m.mount(list, { instant: true });
+          if (live) { var nr = list.querySelector('.plan-saved-item[data-flip-key="' + (window.CSS && CSS.escape ? CSS.escape(rec.id) : rec.id) + '"]'); if (nr) anim(nr, [{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }], { duration: 280, delay: 120, easing: EASE('enter'), fill: 'backwards' }); }
         } else {
           var tmp = document.createElement('div');
           tmp.innerHTML = savedRowHtml(p, model);
@@ -1994,7 +3095,7 @@
       } else {
         var emp = sec.querySelector('.plan-saved-empty');
         var tmp2 = document.createElement('div');
-        tmp2.innerHTML = '<div class="pcards plan-saved-list">' + rowsHtml + '</div>';
+        tmp2.innerHTML = '<ul class="plan-saved-list sv-list">' + rowsHtml + '</ul>';
         var nl = tmp2.firstElementChild;
         applyRuby(nl);
         if (emp && empR) fadeGhost(emp, empR, null, 90);
@@ -2003,6 +3104,7 @@
         if (live) anim(nl, [{ opacity: 0, transform: 'translateY(12px)' }, { opacity: 1, transform: 'none' }], { duration: 300, delay: 80, easing: EASE('standard'), fill: 'backwards' });
       }
       savedHeadSync(root, model, nVis);
+      syncSug(root, model);
       row = root.querySelector('.plan-saved-item[data-flip-key="' + (window.CSS && CSS.escape ? CSS.escape(rec.id) : rec.id) + '"]');
       if (row) focusQuiet(row.querySelector('.plan-remove'));
     };
@@ -2016,7 +3118,7 @@
     };
     if (live) afterPaint(later); else later();
     if (row) {
-      var mark = row.querySelector('.pcard-mark > .cat-icon') || row.querySelector('.pcard-mark');
+      var mark = row.querySelector('.cat-icon');
       if (mark && m && m.stamp && canAnim()) setTimeout(function () { if (mark.isConnected) m.stamp(mark); }, back ? 400 : 260);
     }
     notify();
@@ -2058,9 +3160,7 @@
         '<input type="checkbox" role="switch" class="switch" id="plan-ics-plain" data-act="plan-ics-plain" aria-describedby="plan-ics-plain-d"' + (icsPlain() ? ' checked' : '') + '></label>' +
       '<a class="btn btn-primary btn-lg btn-block" id="plan-ics-dl" data-act="plan-ics-dl" href="' + esc(href) + '"' + (ios ? '' : ' download="' + esc(fname) + '"') + '>' + ic('download') + '<span class="ics-dl-l">' + esc(ios ? t('plan.ics.saveIOS') : t('plan.ics.save')) + '</span></a>' +
       '<p class="ics-note">' + esc(t('plan.ics.alarm')) + '</p>' +
-      '<details class="disclose ics-how"><summary>' + esc(t('plan.ics.how')) + '</summary><ul class="bullets">' +
-        (ios ? '<li>' + esc(t('plan.ics.howIOS')) + '</li><li>' + esc(t('plan.ics.howAndroid')) + '</li>' : '<li>' + esc(t('plan.ics.howAndroid')) + '</li><li>' + esc(t('plan.ics.howIOS')) + '</li>') +
-        '<li>' + esc(t('plan.ics.howPC')) + '</li></ul></details>' +
+      icsHowHtml(ios ? 'ios' : 'and') +
       '<p class="ics-note">' + esc(t('plan.ics.privacy')) + '</p>' +
       '<p class="ics-note">' + esc(t('plan.ics.cloud')) + '</p>' +
       '</div>';
@@ -2076,6 +3176,58 @@
       },
       onClose: function () { var u = blobUrl; blobUrl = null; if (u) setTimeout(function () { try { URL.revokeObjectURL(u); } catch (e) { } }, 4000); }
     });
+  });
+  /* ---------- v9 EXTRAS: how the .ics opens, in three small pictures (iPhone / Android), drawn in the brand's line ---------- */
+  var ICS_IL = {
+    // a phone, its button pressed (the green bar) — 上のボタンを押す
+    phone: '<rect x="22" y="6" width="28" height="60"/><path d="M32 10h8"/><path d="M27 20h18M27 27h12M27 34h18M27 41h8"/><rect class="il-g" x="27" y="50" width="18" height="8"/><circle class="il-dot" cx="36" cy="54" r="2.5"/>',
+    // a sheet over the phone with a list and the one row to press — 「すべてを追加」
+    sheet: '<rect x="22" y="6" width="28" height="60"/><path d="M32 10h8"/><rect class="il-paper" x="14" y="22" width="44" height="44"/><path d="M20 32h18M20 40h26M20 48h22"/><rect class="il-g" x="20" y="54" width="32" height="7"/>',
+    // a calendar with the day marked — カレンダーに入る
+    cal: '<rect x="14" y="14" width="44" height="44"/><path d="M14 24h44"/><path d="M24 10v8M48 10v8"/><path d="M14 36h44M14 47h44M29 24v34M43 24v34"/><rect class="il-fill" x="30" y="37" width="12" height="9"/>',
+    // the file arrives in the phone's tray — ファイルを保存
+    down: '<rect x="22" y="6" width="28" height="60"/><path d="M32 10h8"/><path class="il-g" d="M36 20v22M28 34l8 8 8-8"/><path d="M27 52h18"/>',
+    // the .ics file, then the calendar — ファイルをタップして、カレンダーを選ぶ
+    file: '<path d="M10 14h16l6 6v30H10z"/><path d="M26 14v6h6"/><path d="M15 30h12M15 36h12M15 42h8"/><path class="il-g" d="M36 36h10M43 32l4 4-4 4"/><rect x="48" y="28" width="16" height="16"/><path d="M48 32h16"/><rect class="il-fill" x="54" y="36" width="4" height="4"/>'
+  };
+  function icsIl(name) {
+    return '<svg class="ics-il" viewBox="0 0 72 72" width="72" height="72" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true" focusable="false">' + (ICS_IL[name] || '') + '</svg>';
+  }
+  function icsStepsHtml(dev) {
+    var ios = dev === 'ios';
+    var steps = ios ? [['phone', 'plan.ics.ios1'], ['sheet', 'plan.ics.ios2'], ['cal', 'plan.ics.ios3']] : [['down', 'plan.ics.and1'], ['file', 'plan.ics.and2'], ['cal', 'plan.ics.and3']];
+    return steps.map(function (s, i) {
+      return '<li class="ics-step"><span class="ics-step-il">' + icsIl(s[0]) + '</span><span class="ics-step-n num" aria-hidden="true">' + (i + 1) + '</span>' +
+        '<span class="sr-only">' + esc(t('plan.ics.step', { n: i + 1 })) + '</span><span class="ics-step-t">' + esc(t(s[1])) + '</span></li>';
+    }).join('') + (ios ? '<li class="ics-step-note">' + esc(t('plan.ics.iosNote')) + '</li>' : '');
+  }
+  function icsHowHtml(dev) {
+    var segs = [['ios', 'plan.ics.dev.ios'], ['and', 'plan.ics.dev.and']];
+    return '<div class="ics-how"><p class="ics-how-k" id="plan-ics-how-k">' + esc(t('plan.ics.how')) + '</p>' +
+      '<div class="seg ics-dev" role="group" aria-label="' + esc(t('plan.ics.devLabel')) + '">' + segs.map(function (s) {
+        return '<button type="button" aria-pressed="' + (dev === s[0] ? 'true' : 'false') + '" data-act="plan-ics-dev" data-value="' + s[0] + '"><span>' + esc(t(s[1])) + '</span></button>';
+      }).join('') + '</div>' +
+      '<ol class="ics-steps" id="plan-ics-steps" data-dev="' + dev + '" aria-labelledby="plan-ics-how-k">' + icsStepsHtml(dev) + '</ol>' +
+      '<p class="ics-note">' + esc(t('plan.ics.howPC')) + '</p></div>';
+  }
+  SM.on('plan-ics-dev', function (el) {
+    var v = el.getAttribute('data-value');
+    var ol = document.getElementById('plan-ics-steps');
+    if (!ol || (v !== 'ios' && v !== 'and') || ol.getAttribute('data-dev') === v) return;
+    Array.prototype.forEach.call(el.parentNode.querySelectorAll('button'), function (b) { b.setAttribute('aria-pressed', b === el ? 'true' : 'false'); });
+    var m = M();
+    var swap = function () {
+      ol.setAttribute('data-dev', v);
+      ol.innerHTML = icsStepsHtml(v);
+      applyRuby(ol);
+      if (!m) return;
+      if (canAnim()) Array.prototype.forEach.call(ol.querySelectorAll('.ics-step'), function (li, i) {
+        anim(li, [{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }], { duration: 240, delay: i * 50, easing: EASE('enter'), fill: 'backwards' });
+      });
+      else anim(ol, [{ opacity: 0 }, { opacity: 1 }], { duration: 180, easing: 'linear' });
+    };
+    if (canAnim()) { var a = anim(ol, [{ opacity: 1 }, { opacity: 0 }], { duration: 100, easing: EASE('exit'), fill: 'forwards' }); finished(a).then(function () { if (a) try { a.cancel(); } catch (e) { } swap(); }); }
+    else swap();
   });
   /* plain names: the titles swap in place, the file is rebuilt (the sheet does not re-render) */
   SM.on('plan-ics-plain', function (el) {
@@ -2117,9 +3269,187 @@
       '<pre class="cs-text" id="plan-sheet-text" tabindex="0" data-noruby>' + esc(sheetText(model)) + '</pre></div>' +
       '<div class="btn-row cs-actions">' +
         SM.ui.button(t('plan.sheet.copy'), { act: 'plan-sheet-copy', variant: 'primary', icon: 'copy', size: 'lg' }) +
+        SM.ui.button(t('plan.sheet.img'), { act: 'plan-sheet-img', variant: 'secondary', icon: 'download', size: 'lg' }) +
         SM.ui.button(t('plan.sheet.print'), { act: 'plan-print', variant: 'secondary', icon: 'print', size: 'lg' }) +
-      '</div></div>';
-    SM.sheet(html, { title: t('plan.sheet.title'), cls: 'v-plan plan-sheet plan-sheet-wide' });
+      '</div>' +
+      '<div class="cs-img" id="plan-sheet-img" hidden></div></div>';
+    SM.sheet(html, { title: t('plan.sheet.title'), cls: 'v-plan plan-sheet plan-sheet-wide', onClose: function () { dropImgUrl(4000); } });
+  });
+
+  /* ---------- v9 EXTRAS: the sheet as an image, drawn on this device (canvas), shown inline + offered as a PNG ---------- */
+  var imgUrl = null;
+  function dropImgUrl(ms) { var u = imgUrl; imgUrl = null; if (u) setTimeout(function () { try { URL.revokeObjectURL(u); } catch (e) { } }, ms || 0); }
+  function cssVar(name, fb) { try { var v = getComputedStyle(document.documentElement).getPropertyValue(name).trim(); return v || fb; } catch (e) { return fb; } }
+  /* wrap one line to `max` px: Japanese breaks between any two characters (not before 、。」）), English at spaces */
+  function wrapLine(ctx, text, max) {
+    if (!text) return [''];
+    var out = [], cur = '';
+    var noStart = '、。，．」』）】〕〉》!?！？:;：；…ー';
+    var tokens = en() ? text.split(/(\s+)/) : Array.from(text);
+    tokens.forEach(function (tk) {
+      if (!tk) return;
+      var next = cur + tk;
+      if (ctx.measureText(next).width <= max || !cur) { cur = next; return; }
+      if (!en() && noStart.indexOf(tk) !== -1) { cur = next; return; }
+      out.push(cur.replace(/\s+$/, ''));
+      cur = /^\s+$/.test(tk) ? '' : tk;
+    });
+    out.push(cur.replace(/\s+$/, ''));
+    return out;
+  }
+  function drawLockup(ctx, x, y, h, color) {
+    var B = SM.brand && SM.brand.data;
+    if (!B || typeof Path2D === 'undefined') { ctx.fillStyle = color; ctx.font = '700 ' + Math.round(h * 0.9) + 'px ' + cssVar('--font-display', 'sans-serif'); ctx.fillText(en() ? 'Sudachi Map' : '巣立ちマップ', x, y + h * 0.85); return h * 6; }
+    var W = en() ? B.en : B.ja, s = h / 20;
+    ctx.save();
+    ctx.translate(x, y); ctx.scale(s, s);
+    ctx.fillStyle = color;
+    ctx.fill(new Path2D(B.box), 'evenodd');
+    W.g.forEach(function (d) { ctx.fill(new Path2D(d)); });
+    ctx.restore();
+    return W.w * s;
+  }
+  /* the sheet text → a tall PNG. Paper white, ink, the one green: a line at the top, the brand, the title, the date,
+     the sections (■ = a heading with a rule, □ = a box to tick), the footnote. Nothing leaves the device. */
+  function sheetImage(model) {
+    var cv = document.createElement('canvas');
+    var ctx = cv.getContext('2d');
+    if (!ctx) return null;
+    var W = 1080, pad = 72, inner = W - pad * 2;
+    var INK = '#1b1b19', INK2 = '#4a4945', INK3 = '#6c6a64', GREEN = '#0b6e44', RULE = '#d9d7d0', PAPER = '#ffffff';
+    var fb = cssVar('--font-body', 'sans-serif'), fd = cssVar('--font-display', 'sans-serif');
+    var F = { body: '400 30px ' + fb, bold: '700 30px ' + fb, head: '700 34px ' + fd, title: '700 56px ' + fd, meta: '500 26px ' + fd, foot: '400 24px ' + fb };
+    var LH = { body: 50, head: 56, meta: 40, foot: 38 };
+    var lines = sheetText(model).split('\n');
+    var title = t('plan.sheet.title'), made = t('plan.s.made') + '：' + fmtDate(today0());
+    var foot = t('plan.s.foot');
+    if (lines[0] === t('plan.s.head')) lines.shift();
+    if (lines[0] && lines[0].indexOf(t('plan.s.made')) === 0) lines.shift();
+    if (lines[lines.length - 1] === foot) lines.pop();
+    while (lines.length && !lines[0]) lines.shift();
+    while (lines.length && !lines[lines.length - 1]) lines.pop();
+    // pass 1: layout
+    cv.width = W; cv.height = 200;
+    var ops = [], y = 0;
+    var put = function (op) { ops.push(op); };
+    y += 10;                                        // the green line at the top (drawn in pass 2)
+    y += 44;
+    put({ k: 'brand', y: y }); y += 40;
+    y += 36;
+    put({ k: 'text', f: 'title', c: INK, x: pad, y: y + 50, s: title }); y += 72;
+    put({ k: 'text', f: 'meta', c: INK3, x: pad, y: y + 26, s: made }); y += 40;
+    y += 22; put({ k: 'rule', y: y, w: 3, c: INK }); y += 3;
+    y += 28;
+    // the label column of 「巣立ちの日：…」 rows: as wide as the widest label (so 住む（予定の）区市町村 never runs into its value)
+    var kwMin = 200;
+    ctx.font = F.meta;
+    lines.forEach(function (ln) { var km = /^([^：:]{1,14})[：:]/.exec(ln); if (km && ln.charAt(0) !== ' ') kwMin = Math.max(kwMin, Math.ceil(ctx.measureText(km[1]).width) + 40); });
+    var lastBlank = false;
+    lines.forEach(function (ln) {
+      if (!ln) { if (!lastBlank) y += 18; lastBlank = true; return; }
+      lastBlank = false;
+      var m;
+      if (ln.indexOf('■ ') === 0) {
+        y += 18;
+        ctx.font = F.head;
+        wrapLine(ctx, ln.slice(2), inner).forEach(function (s) { put({ k: 'text', f: 'head', c: INK, x: pad, y: y + 36, s: s }); y += LH.head; });
+        put({ k: 'rule', y: y - 6, w: 2, c: INK }); y += 14;
+      } else if (ln.indexOf('□ ') === 0) {
+        ctx.font = F.body;
+        var ws = wrapLine(ctx, ln.slice(2), inner - 52);
+        put({ k: 'box', x: pad, y: y + 11 });
+        ws.forEach(function (s) { put({ k: 'text', f: 'body', c: INK, x: pad + 52, y: y + 36, s: s }); y += LH.body; });
+      } else if ((m = /^(\s+)(・?)(.*)$/.exec(ln))) {
+        var ind = m[2] ? 40 : 32;
+        ctx.font = F.body;
+        var sub = m[3];
+        var kv = /^([^：:]{1,8})[：:](.*)$/.exec(sub);
+        if (kv && !m[2]) {
+          put({ k: 'text', f: 'meta', c: INK3, x: pad + ind, y: y + 34, s: kv[1] });
+          var kw = 120;
+          wrapLine(ctx, kv[2].trim(), inner - ind - kw).forEach(function (s) { put({ k: 'text', f: 'body', c: INK, x: pad + ind + kw, y: y + 36, s: s }); y += LH.body; });
+        } else {
+          if (m[2]) put({ k: 'text', f: 'body', c: INK2, x: pad + ind - 30, y: y + 36, s: '・' });
+          wrapLine(ctx, sub, inner - ind).forEach(function (s) { put({ k: 'text', f: 'body', c: INK, x: pad + ind, y: y + 36, s: s }); y += LH.body; });
+        }
+      } else if ((m = /^(\d+)\. (.*)$/.exec(ln))) {
+        y += 8;
+        ctx.font = F.bold;
+        put({ k: 'text', f: 'bold', c: INK, x: pad, y: y + 36, s: m[1] + '.' });
+        wrapLine(ctx, m[2], inner - 44).forEach(function (s) { put({ k: 'text', f: 'bold', c: INK, x: pad + 44, y: y + 36, s: s }); y += LH.body; });
+      } else if ((m = /^([^：:]{1,14})[：:](.*)$/.exec(ln))) {
+        ctx.font = F.meta;
+        var lw = Math.max(kwMin, Math.ceil(ctx.measureText(m[1]).width) + 40);
+        ctx.font = F.body;
+        put({ k: 'text', f: 'meta', c: INK3, x: pad, y: y + 34, s: m[1] });
+        wrapLine(ctx, m[2].trim(), inner - lw).forEach(function (s) { put({ k: 'text', f: 'body', c: INK, x: pad + lw, y: y + 36, s: s }); y += LH.body; });
+      } else {
+        ctx.font = F.body;
+        wrapLine(ctx, ln, inner).forEach(function (s) { put({ k: 'text', f: 'body', c: INK, x: pad, y: y + 36, s: s }); y += LH.body; });
+      }
+    });
+    y += 40; put({ k: 'rule', y: y, w: 1, c: RULE }); y += 24;
+    ctx.font = F.foot;
+    wrapLine(ctx, foot, inner).forEach(function (s) { put({ k: 'text', f: 'foot', c: INK3, x: pad, y: y + 26, s: s }); y += LH.foot; });
+    y += 48;
+    var H = Math.min(Math.round(y) + 10, 16000);
+    // pass 2: draw
+    cv.height = H;
+    ctx = cv.getContext('2d');
+    ctx.fillStyle = PAPER; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = GREEN; ctx.fillRect(0, 0, W, 10); ctx.fillRect(0, H - 10, W, 10);
+    ctx.textBaseline = 'alphabetic';
+    ops.forEach(function (op) {
+      if (op.k === 'brand') { drawLockup(ctx, pad, op.y, 40, INK); return; }
+      if (op.k === 'rule') { ctx.fillStyle = op.c; ctx.fillRect(pad, op.y, inner, op.w); return; }
+      if (op.k === 'box') { ctx.strokeStyle = INK; ctx.lineWidth = 2.5; ctx.strokeRect(op.x + 1, op.y + 1, 28, 28); return; }
+      ctx.font = F[op.f]; ctx.fillStyle = op.c; ctx.fillText(op.s, op.x, op.y);
+    });
+    return cv;
+  }
+  SM.on('plan-sheet-img', function (el) {
+    var box = document.getElementById('plan-sheet-img');
+    if (!box) return;
+    var lab = el.querySelector(':scope > span:not(.arrow):not(.sr-only)');
+    var m = M();
+    var render = function () {
+      var cv = null;
+      try { cv = sheetImage(build()); } catch (e) { cv = null; }
+      if (!cv) { SM.toast(t('plan.sheet.imgFail')); return; }
+      var fname = 'sudachi-map-sheet-' + iso(today0()) + '.png';
+      var show = function (url) {
+        dropImgUrl(2000);
+        imgUrl = url;
+        box.hidden = false;
+        box.innerHTML = '<img class="cs-img-pic" src="' + esc(url) + '" alt="' + esc(t('plan.sheet.imgAlt')) + '" width="' + cv.width + '" height="' + cv.height + '">' +
+          '<a class="btn btn-ink btn-lg btn-block cs-img-dl" id="plan-sheet-img-dl" href="' + esc(url) + '" download="' + esc(fname) + '">' + ic('download') + '<span>' + esc(t('plan.sheet.imgDl')) + '</span></a>' +
+          '<p class="cs-img-hint">' + esc(t('plan.sheet.imgHint')) + '</p>';
+        if (m && m.mount) m.mount(box, { instant: true });
+        if (canAnim()) anim(box, [{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }], { duration: 320, easing: EASE('enter'), fill: 'backwards' });
+        else if (m) anim(box, [{ opacity: 0 }, { opacity: 1 }], { duration: 180, easing: 'linear' });
+        try { box.scrollIntoView({ block: 'nearest', behavior: reduced() ? 'auto' : 'smooth' }); } catch (e) { }
+        if (lab && m && m.swapText) {
+          var orig = el._planL || (el._planL = lab.textContent);
+          m.swapText(lab, t('plan.sheet.imgMade'));
+          clearTimeout(el._planT);
+          el._planT = setTimeout(function () { if (lab.isConnected) m.swapText(lab, orig); }, 2000);
+        }
+        // the file goes to the phone at once (iOS: Safari's download sheet); the image stays for a long-press save
+        var dl = document.getElementById('plan-sheet-img-dl');
+        if (dl) setTimeout(function () { try { dl.click(); } catch (e) { } }, 80);
+      };
+      var fallback = function () { try { show(cv.toDataURL('image/png')); } catch (e) { SM.toast(t('plan.sheet.imgFail')); } };
+      try {
+        if (cv.toBlob && window.URL && URL.createObjectURL) {
+          cv.toBlob(function (blob) { if (!blob) { fallback(); return; } try { show(URL.createObjectURL(blob)); } catch (e) { fallback(); } }, 'image/png');
+        } else fallback();
+      } catch (e) { fallback(); }
+    };
+    // the web fonts first, so the picture matches the page (never more than a moment)
+    var started = false;
+    var go = function () { if (started) return; started = true; render(); };
+    try { if (document.fonts && document.fonts.ready) document.fonts.ready.then(go, go); } catch (e) { }
+    setTimeout(go, 900);
   });
   var memoTimer = null;
   SM.on('plan-memo', function (el) {
