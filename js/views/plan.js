@@ -981,10 +981,21 @@
       '<button type="button" class="rm-edit" data-act="plan-date" aria-label="' + esc(t('plan.changeLabel', { what: t(model.track === 'junior' ? 'plan.jr.anchor' : 'plan.leave.label'), date: fmtDate(model.anchor) })) + '"><span>' + esc(t(model.assumed ? 'plan.decideDate' : 'plan.change')) + '</span></button></p>';
   }
   function relHtml(when) {
-    // 「巣立ち6か月前」: the anchor word and the distance are two spans so the desktop line can stack them
+    // 「巣立ち6か月前」 / 「中3の春（4〜6月）」: the anchor word (巣立ち / 中3の) and the distance are two spans so the desktop
+    // line can drop or stack the anchor; a trailing bracket (（4〜6月）) is a third span the desktop line leaves out
     var a = t('plan.tl.anchorWord');
-    if (a && when.indexOf(a) === 0 && when.length > a.length) return '<span class="rm-rel-a">' + esc(a) + '</span><span class="rm-rel-n">' + esc(when.slice(a.length)) + '</span>';
-    return esc(when);
+    var head = '', rest = when, tail = '';
+    var anchored = a && when.indexOf(a) === 0 && when.length > a.length;
+    if (anchored) { head = a; rest = when.slice(a.length); }
+    else {
+      var m = /^([^（(]{1,4}の)(.+)$/.exec(when);
+      if (m) { head = m[1]; rest = m[2]; }
+    }
+    var b = /^(.*?)([（(].*[）)])$/.exec(rest);
+    if (b && b[1]) { rest = b[1]; tail = b[2]; }
+    if (!head && !tail) return esc(when);
+    return (head ? '<span class="rm-rel-a' + (anchored ? ' rm-rel-anchor' : '') + '">' + esc(head) + '</span>' : '') + '<span class="rm-rel-n">' + esc(rest) + '</span>' +
+      (tail ? '<span class="rm-rel-x">' + esc(tail) + '</span>' : '');
   }
   function whenHtml(g, isCur) {
     return '<span class="rm-when" data-noruby>' +
@@ -1031,7 +1042,8 @@
       '<button type="button" class="rm-edit" data-act="plan-date"><span>' + esc(t('plan.change')) + '</span></button></p>' : '';
     return '<div class="rm-body" id="rm-b-' + esc(g.key) + '" role="region" aria-labelledby="rm-t-' + esc(g.key) + '"' + (open ? '' : ' hidden') + '>' +
       '<div class="rm-body-in">' +
-        '<p class="rm-body-title" aria-hidden="true">' + (isCur && !g.milestone ? '<span class="rm-now">' + esc(t('plan.tl.now')) + '</span>' : '') + esc(g.title) + '</p>' +
+        '<p class="rm-body-title" aria-hidden="true">' + (isCur && !g.milestone ? '<span class="rm-now">' + esc(t('plan.tl.now')) + '</span>' : '') + esc(g.title) +
+          (g.milestone ? '' : '<span class="rm-body-when num" data-noruby>' + esc((g.when ? g.when + '・' : '') + g.dateLabel) + '</span>') + '</p>' +
         (isCur ? leftLineHtml(model) : '') + note + edit +
         (g.all.length ? '<ul class="tl-items" data-reveal-stagger="50">' + itemsHtml(g.all) + '</ul>' : '<p class="rm-empty">' + esc(t('plan.now.emptyT')) + '</p>') +
         (isCur && g.total ? curDoneHtml(nx) : '') + relatedHtml(g) +

@@ -177,6 +177,7 @@ body.lang-en .v-plan .rm-box-u { font-size: var(--t-label); letter-spacing: var(
 .v-plan .rm-st.is-open:not(:last-child) > .rm-body { border-bottom: 1px solid var(--rule); }
 .v-plan .rm-body-in { position: relative; display: grid; gap: var(--s-1); min-width: 0; }
 .v-plan .rm-body-title { display: none; }
+.v-plan .rm-body-when { display: none; }           /* the period's dates, desktop panel only (the phone head already says them) */
 .v-plan .rm-body-title:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .v-plan .rm-left { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-1) var(--s-4); min-height: var(--tap); margin: 0; }
 .v-plan .rm-left-t { font-family: var(--font-display); font-weight: 500; font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-2); }
@@ -460,7 +461,12 @@ body.lang-en .tl-item .tl-seal { font-size: var(--t-micro); padding: 0 4px; }
   }
   .v-plan .rm-head:active .rm-head-in { background: none; }
   .v-plan .rm-when { flex-direction: column; align-items: center; gap: 0; }
-  .v-plan .rm-rel { font-size: var(--t-label); line-height: var(--lh-ui); }
+  /* v8.1 (Ryu: "messy"): one short label per station. 「巣立ち」 is said once, by the sign, so the stations read
+     1年前 · 10か月前 · …; the month lives in the open panel's title line; 「中3の」 stacks over 「4〜6月」 and the bracket goes */
+  .v-plan .rm-rel { font-size: var(--t-label); line-height: var(--lh-ui); font-weight: 500; color: var(--ink-3); }
+  .v-plan .rm-st:is(.is-current, .is-open) .rm-rel { color: var(--ink-2); }
+  .v-plan .rm-rel-anchor, .v-plan .rm-rel-x { display: none; }
+  .v-plan .rm-st:not(.rm-now-only) .rm-date { display: none; }
   .v-plan .rm-date { font-size: var(--t-micro); line-height: var(--lh-ui); }
   /* いま flies over its station */
   .v-plan .rm-st.is-current .rm-head-in > .rm-when > .rm-now {
@@ -478,30 +484,35 @@ body.lang-en .tl-item .tl-seal { font-size: var(--t-micro); padding: 0 4px; }
   /* v8: the station name on the line is the short one (≤8 chars, two lines, never clipped); the full title is in the panel */
   .v-plan .rm-st > .rm-head > .rm-head-in.has-short > .rm-title { display: none; }
   .v-plan .rm-head-in.has-short > .rm-short {
-    display: block; grid-area: title; font-family: var(--font-display); font-weight: 700; font-size: var(--t-ui); line-height: var(--lh-ui); color: var(--ink-3); text-wrap: balance; word-break: keep-all; overflow-wrap: normal;
-  }
+    display: block; grid-area: title; font-family: var(--font-display); font-weight: 700; font-size: var(--t-label); line-height: var(--lh-ui); color: var(--ink-3); text-wrap: balance; word-break: keep-all; overflow-wrap: break-word;
+  }   /* 13 narrow columns at 1100: a label-size name; a word only breaks inside when it would otherwise overlap the next station */
   /* 「巣立ち」 over 「6か月前」: two short lines instead of a break inside the number */
-  .v-plan .rm-rel { display: flex; flex-direction: column; align-items: center; white-space: nowrap; }
+  .v-plan .rm-rel { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; white-space: nowrap; }
+  body.lang-en .v-plan .rm-rel, body.lang-en .v-plan .rm-rel-n { white-space: normal; text-wrap: balance; }   /* "1 year" over "before", never into the next station */   /* 中3の春 on one line, 中3の／4〜6月 on two when the column is narrow */
   .v-plan .rm-st:is(.is-current, .is-open) .rm-head-in.has-short > .rm-short { color: var(--ink); }
   .v-plan .rm-st.is-open .rm-head-in.has-short > .rm-short { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 0.3em; }
   .v-plan .rm-st.is-open > .rm-head > .rm-mk { outline: 2px solid var(--ink); outline-offset: 3px; }
   .v-plan .rm-st.is-open.is-current > .rm-head > .rm-mk { outline-color: var(--action); }
-  .v-plan .rm-count { font-size: var(--t-label); }
+  .v-plan .rm-count { font-size: var(--t-label); color: var(--ink-3); }
+  .v-plan .rm-count-n { color: inherit; }
+  .v-plan .rm-st.is-complete .rm-count { color: var(--action-text); }
   .v-plan .rm-count-w, .v-plan .rm-tog, .v-plan .rm-head-in > .sr-only { display: none; }
   /* the sign on the line */
   .v-plan .rm-box > .rm-head-in {
     grid-template-columns: minmax(0, 1fr); grid-template-areas: "k" "n" "d" "c";
-    justify-items: start; align-items: start; text-align: left; row-gap: 0;
+    justify-items: center; align-items: start; text-align: center; row-gap: 0;
     margin: calc(var(--rail-y) - 44px) 0 0; padding: var(--s-2) var(--s-2) var(--s-2);
   }
+  .v-plan .rm-box-k { justify-content: center; }
+  .v-plan .rm-box-k > .rm-assumed { display: none; }   /* 仮の日付 is said in the open panel, next to 日にちを決める */
   .v-plan .rm-box > .rm-mk { visibility: hidden; }      /* the sign is the station (JS still measures it) */
   .v-plan .rm-box-k > .rm-title, .v-plan .rm-st.is-open .rm-box-k > .rm-title { display: block; -webkit-line-clamp: unset; font-size: var(--t-ui); color: var(--ink); text-decoration: none; }
   .v-plan .rm-box-k > .rm-now { position: static; transform: none; }
-  .v-plan .rm-box-num { font-size: var(--fs-2xl); }
+  .v-plan .rm-box-num { font-size: var(--t-h2); }
   .v-plan .rm-box-today { font-size: var(--t-h3); }
-  .v-plan .rm-box > .rm-head-in > .rm-box-c { justify-self: start; margin-top: 4px; }
+  .v-plan .rm-box > .rm-head-in > .rm-box-c { justify-self: center; margin-top: 4px; }
   .v-plan .rm-box-d { font-size: var(--t-micro); margin: 0; padding: 0; white-space: nowrap; }
-  .v-plan .rm-box-n { justify-self: start; margin-top: 2px; }
+  .v-plan .rm-box-n { justify-self: center; margin-top: 2px; }
   /* the open period under the line */
   .v-plan .rm-body { grid-row: 2; grid-column: 1 / span var(--k, 8); padding: 0 var(--s-8) 0 0; border-bottom: 0 !important; }
   .v-plan .rm-body-title {
@@ -509,6 +520,10 @@ body.lang-en .tl-item .tl-seal { font-size: var(--t-micro); padding: 0 4px; }
     font-family: var(--font-display); font-weight: 700; font-size: var(--t-h2); line-height: var(--lh-heading); color: var(--ink); text-wrap: balance;
   }
   .v-plan .rm-body-title > .rm-now { position: static; transform: none; }
+  .v-plan .rm-body-when {
+    display: block; margin-left: auto; align-self: baseline;
+    font-family: var(--font-num); font-weight: 500; font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-0); color: var(--ink-3); font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
   .v-plan .rm-body-in { gap: var(--s-2); }
   .v-plan .rm-left { min-height: 36px; }
   .v-plan .tl-items { margin-top: var(--s-1); border-top: 0; }
@@ -518,6 +533,7 @@ body.lang-en .tl-item .tl-seal { font-size: var(--t-micro); padding: 0 4px; }
 }
 @media (min-width: 1240px) {
   .v-plan .rm-wrap { column-gap: 8px; }
+  .v-plan .rm-head-in.has-short > .rm-short { font-size: var(--t-ui); }
   .v-plan .rm-body { padding-right: var(--s-9); }
   .v-plan .rm-wrap > .plan-flow { padding-left: var(--s-9); }
 }
