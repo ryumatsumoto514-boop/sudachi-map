@@ -67,9 +67,11 @@
     'map.catJisou': { ja: '児童相談所', en: 'Child guidance centres' },
     'map.filter': { ja: '種類でしぼる', en: 'Filter by type' },
     'map.jrLabel': { ja: '見る場所', en: 'Which places' },
-    'map.jrOnly': { ja: '中学生向け', en: 'For junior high' },
+    'map.jrOnly': { ja: '中学生向け', en: 'Junior high' },
+    'map.hsOnly': { ja: '高校生向け', en: 'High school' },
     'map.jrAll': { ja: 'すべての場所', en: 'All places' },
     'map.jrNote': { ja: '中学生が相談できる場所だけを出しています。', en: 'Showing only places junior-high students can use.' },
+    'map.hsNote': { ja: '高校生が相談できる場所だけを出しています。', en: 'Showing only places high-school students can use.' },
     'map.mapLabel': { ja: '関東の地図。{name}', en: 'Map of Kanto. {name}' },
     'map.canvas': { ja: '関東の地図（矢印キーで動かせます。＋と−で拡大・縮小）', en: 'Map of Kanto (arrow keys move it, + and − zoom)' },
     'map.zoomIn': { ja: '拡大', en: 'Zoom in' },
@@ -304,6 +306,16 @@
     if (st.length) return false;
     return aMin == null || aMin <= 14;
   }
+  // can a 高校生 (15–18) use this place? stages first, then the age range
+  function hsOk(p) {
+    var f = (p && p.for) || {}, st = f.stages || [], ag = f.age || null;
+    if (st.indexOf('hs12') !== -1 || st.indexOf('hs3') !== -1) return true;
+    if (st.length) return false;
+    var aMin = ag && ag.min != null ? ag.min : null, aMax = ag && ag.max != null ? ag.max : null;
+    if (aMin != null && aMin > 18) return false;
+    if (aMax != null && aMax < 15) return false;
+    return true;
+  }
   // short "who is it for" text for a row (only when the age limit matters)
   function audOf(r) {
     if (isJunior() && !r.jr) return { text: t('map.aud.notJr'), off: true };
@@ -317,7 +329,7 @@
   var S = {
     code: null,      // selected area code or null (= all Tokyo)
     cat: null,       // category filter or null
-    jr: null,        // 中学生向け switch: null/true = on (when junior), false = off
+    aud: null,       // 中学生向け 'jr' | 高校生向け 'hs' | すべての場所 'all'; null = the default for this person (Ryu, 2026-11-01: three for everyone)
     focus: null,     // focused location key
     showAll: false,
     engine: null,    // 'gl' | 'svg' | null (not decided yet)
@@ -327,9 +339,13 @@
   };
   var savedCat = store('mapCat');
   if (savedCat && ((SM.CATS && SM.CATS[savedCat]) || savedCat === 'jisou')) S.cat = savedCat;
-  if (store('mapJr') === false) S.jr = false;
-  function jrOn() { return isJunior() && S.jr !== false; }
-  function passJr(r) { return !jrOn() || r.jr; }
+  var savedAud = store('mapAud');
+  if (savedAud === 'jr' || savedAud === 'hs' || savedAud === 'all') S.aud = savedAud;
+  function hsUser() { var a = SM.state && SM.state.answers || {}; return a.stage === 'hs12' || a.stage === 'hs3'; }
+  function aud() { return S.aud || (isJunior() ? 'jr' : hsUser() ? 'hs' : 'all'); }
+  function jrOn() { return aud() === 'jr'; }
+  function hsOn() { return aud() === 'hs'; }
+  function passJr(r) { var a = aud(); return a === 'jr' ? r.jr : a === 'hs' ? r.hs : true; }
   // 中学生: 児童相談所 counts as an ordinary place in すべて (it is where a 中学生 can go for help)
   function inAll(r) { return !r.sub || isJunior(); }
   function catMatch(r) { return (S.cat ? fcat(r) === S.cat : inAll(r)) && passJr(r); }
@@ -358,11 +374,11 @@
     var out = [];
     progs.forEach(function (p) {
       if (!p) return;
-      var jr = jrOk(p);
+      var jr = jrOk(p), hs = hsOk(p);
       (p.locations || []).forEach(function (loc, i) {
         if (!loc) return;
         var ll = typeof loc.lat === 'number' && typeof loc.lng === 'number' && isFinite(loc.lat) && isFinite(loc.lng);
-        var r = { key: p.id + '~' + i, p: p, loc: loc, cat: catOf(p), sub: SUB[p.id] || null, hasLL: ll, hasGeo: !!(ll && onMap(loc.lat, loc.lng)), jr: jr };
+        var r = { key: p.id + '~' + i, p: p, loc: loc, cat: catOf(p), sub: SUB[p.id] || null, hasLL: ll, hasGeo: !!(ll && onMap(loc.lat, loc.lng)), jr: jr, hs: hs };
         if (r.hasGeo && g && g.project) { var xy = g.project(loc.lat, loc.lng); r.x = xy[0]; r.y = xy[1]; }
         out.push(r);
       });
@@ -391,7 +407,7 @@
   // make a focused place visible even if a filter would hide it
   function unhide(r) {
     if (!r) return;
-    if (!passJr(r)) S.jr = false;
+    if (!passJr(r)) S.aud = 'all';
     if (!catMatch(r)) S.cat = r.sub || null;
   }
 
@@ -483,10 +499,12 @@
     if (mineName && !isMine) back = '<button type="button" class="m-back-mine" data-act="map-area" data-code="' + esc(mine) + '">' + arrow('l') + '<span>' + esc(t('map.backYours', { name: mineName })) + '</span></button>';
 
     var jr = '';
-    if (isJunior() && U.seg) {
+    if (U.seg) {
+      var au = aud();
       jr = '<div class="m-jr">' + U.seg([
-        { label: t('map.jrOnly'), value: 'jr', pressed: jrOn() },
-        { label: t('map.jrAll'), value: 'all', pressed: !jrOn() }
+        { label: t('map.jrOnly'), value: 'jr', pressed: au === 'jr' },
+        { label: t('map.hsOnly'), value: 'hs', pressed: au === 'hs' },
+        { label: t('map.jrAll'), value: 'all', pressed: au === 'all' }
       ], { act: 'map-jr', label: t('map.jrLabel') }) + '</div>';
     }
 
@@ -833,7 +851,7 @@
     var inSel = function (r) { return isPf ? prefOfCode(r.loc.area) === S.code : inArea(r.loc.area, S.code); };
     var list = inScope(S.code).filter(catMatch);
     var html = '';
-    var note = jrOn() ? '<p class="m-jrnote">' + esc(t('map.jrNote')) + '</p>' : '';
+    var note = jrOn() ? '<p class="m-jrnote">' + esc(t('map.jrNote')) + '</p>' : hsOn() ? '<p class="m-jrnote">' + esc(t('map.hsNote')) + '</p>' : '';
     if (!list.length) {
       return note + (U.empty ? U.empty(t('map.none'), t('map.noneBody'), S.cat ? U.button(t('map.resetCat'), { act: 'map-cat', variant: 'secondary', attrs: 'data-cat=""' }) : '', { illus: 'map-empty' }) : '');
     }
@@ -3103,8 +3121,9 @@
     });
     SM.on('map-jr', function (el) {
       var v = el.getAttribute('data-value');
-      S.jr = v === 'all' ? false : null;
-      store('mapJr', S.jr === false ? false : null);
+      if (v !== 'jr' && v !== 'hs' && v !== 'all') return;
+      S.aud = v;
+      store('mapAud', v);
       if (S.focus) { var fr = byKey(S.focus); if (!fr || !catMatch(fr)) peekClose(); }
       refresh({ drop: true });
       var btn = S.root && S.root.querySelector('.m-jr [data-value="' + v + '"]');

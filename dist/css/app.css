@@ -6169,7 +6169,7 @@ body.lang-en .v-tools :is(.tl-title, .tl-hub-t, .scr-label-title) { word-break: 
   .v-map .m-picker-go .icon { width: 18px; height: 18px; }
   @media (hover: hover) { .v-map .m-picker:hover { background: var(--paper-2); } }
   .v-map .m-picker:active { background: var(--paper-3); }
-  .v-map .m-jr { order: 2; flex: 1 1 200px; min-width: 0; max-width: 280px; margin-left: auto; }
+  .v-map .m-jr { order: 2; flex: 1 1 280px; min-width: 0; max-width: 380px; margin-left: auto; }
   .v-map .m-jr .seg > button { padding: 0 8px; }
   /* "← 練馬区にもどる" shares the picker's row when it fits (a row of its own pushed the sheet's peek under the tab
      bar); next to the 中学生 switch it wraps, and the map gives that row back (--m-above) */
