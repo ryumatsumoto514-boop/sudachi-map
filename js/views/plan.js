@@ -1037,10 +1037,6 @@
     'plan.start.hint': { ja: '答えはこのスマホの中だけに残ります。', jr: '答えはこのスマホの中だけにのこります。', en: 'Your answer stays on this phone.' },
     'plan.intro.line': { ja: '巣立ちまでのやることが、駅のように並びます。', jr: '巣立ちまでのやることが、駅のようにならびます。', en: 'Your to-dos up to leaving day line up like stations, in order.' },
     'plan.intro.sign': { ja: '巣立ちの日', jr: '巣立ちの日', en: 'Leaving day' },
-    'plan.intro.s1': { ja: '話し|はじめる', jr: '話し|はじめる', en: 'Start|talking' },
-    'plan.intro.s2': { ja: 'お金の|計画', jr: 'お金の|計画', en: 'Money|plan' },
-    'plan.intro.s3': { ja: '住まい|探し', jr: '住まい|さがし', en: 'Find a|home' },
-    'plan.intro.s5': { ja: '最初の|1か月', jr: 'さいしょの|1か月', en: 'First|month' },
     'plan.start.q2': { ja: '巣立ちの日は？', en: 'Your leaving day?' },
     'plan.start.jrQ2': { ja: '高校に入る日は？', en: 'When does high school start?' },
     'plan.start.pick': { ja: '日にちを決める', en: 'Set the date' },
@@ -1222,24 +1218,24 @@
       '<button type="button" class="pt-back" data-act="plan-start-back" data-press>' + arrowBack() + '<span>' + esc(t('plan.start.back')) + '</span></button></section>';
   }
   function arrowBack() { return '<span class="pt-back-a" aria-hidden="true">\u2190</span>'; }
-  /* Ryu (2026-11-01): before the first question, a hint of what the tab is — a small road with five stations
-     (two done, いま, the 巣立ちの日 sign, one after) and one line. Drawn in the app's own marks; CSS animates it. */
+  /* Ryu (2026-11-01): before the first question, a hint of what the tab is — a bare 路線図: the green line travelled so
+     far, two stations passed, いま with its flag, the 巣立ちの日 sign on the line, one station after, the line fading on.
+     No example labels (Ryu). CSS draws the fill and stamps the marks in order (.pt-intro-svg, plan.css). */
   function introSvg() {
-    var lab = function (x, key, i) {
-      var parts = String(t(key)).split('|');
-      return '<text class="pi-t pi-lab" style="--i:' + i + '" x="' + x + '" y="66" text-anchor="middle">' +
-        parts.map(function (w, j) { return '<tspan x="' + x + '"' + (j ? ' dy="12"' : '') + '>' + esc(w) + '</tspan>'; }).join('') + '</text>';
-    };
-    var sq = function (x, cls, i) { return '<rect class="pi-st ' + cls + '" style="--i:' + i + '" x="' + (x - 7) + '" y="29" width="14" height="14"/>'; };
-    var chk = function (x, i) { return '<polyline class="pi-chk" style="--i:' + i + '" points="' + (x - 3.5) + ',36 ' + (x - 0.5) + ',39 ' + (x + 4) + ',33"/>'; };
-    return '<svg class="pt-intro-svg" viewBox="0 0 360 82" aria-hidden="true" focusable="false">' +
-      '<line class="pi-rail" x1="28" y1="36" x2="332" y2="36"/>' +
-      '<line class="pi-fill" x1="28" y1="36" x2="176" y2="36" pathLength="1"/>' +
-      sq(40, 'is-done', 0) + chk(40, 0) + sq(108, 'is-done', 1) + chk(108, 1) + sq(176, 'is-now', 2) +
-      '<g class="pi-now pi-st" style="--i:2"><rect x="158" y="6" width="36" height="17"/><text class="pi-t is-now" x="176" y="18" text-anchor="middle">' + esc(t('plan.tl.now')) + '</text></g>' +
-      '<g class="pi-sign pi-st" style="--i:3"><rect x="212" y="23" width="64" height="26"/><text class="pi-t is-sign" x="244" y="40" text-anchor="middle">' + esc(t('plan.intro.sign')) + '</text></g>' +
-      sq(312, 'is-later', 4) +
-      lab(40, 'plan.intro.s1', 0) + lab(108, 'plan.intro.s2', 1) + lab(176, 'plan.intro.s3', 2) + lab(312, 'plan.intro.s5', 4) +
+    var st = function (x, y, cls, d) { return '<rect class="pi-st ' + cls + '" style="--d:' + d + 'ms" x="' + (x - 8) + '" y="' + (y - 8) + '" width="16" height="16"/>'; };
+    // the line steps up after the 巣立ちの日 sign, as on the 駅名標 logo
+    return '<svg class="pt-intro-svg" viewBox="0 0 320 76" aria-hidden="true" focusable="false">' +
+      '<defs><linearGradient id="pi-fade" x1="0" y1="0" x2="1" y2="0"><stop offset="0" class="pi-fade-a"/><stop offset="1" class="pi-fade-b"/></linearGradient></defs>' +
+      '<path class="pi-rail" d="M20 56 H232 L256 32 H288"/>' +
+      '<line class="pi-rail is-end" x1="288" y1="32" x2="320" y2="32" stroke="url(#pi-fade)"/>' +
+      '<path class="pi-fill" d="M20 56 H132" pathLength="1"/>' +
+      st(28, 56, 'is-past', 40) + st(80, 56, 'is-past', 320) +
+      '<rect class="pi-st is-now" style="--d:640ms" x="121" y="45" width="22" height="22"/>' +
+      '<g class="pi-flag" style="--d:760ms"><rect x="111" y="10" width="42" height="20"/><polygon points="128,30 136,30 132,35"/>' +
+        '<text class="pi-t is-flag" x="132" y="24.5" text-anchor="middle">' + esc(t('plan.tl.now')) + '</text></g>' +
+      '<g class="pi-sign" style="--d:860ms"><rect x="164" y="41" width="72" height="30"/>' +
+        '<text class="pi-t is-sign" x="200" y="60.5" text-anchor="middle">' + esc(t('plan.intro.sign')) + '</text></g>' +
+      st(276, 32, 'is-later', 960) +
     '</svg>';
   }
   function startHtml() {

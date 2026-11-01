@@ -472,29 +472,33 @@ body.lang-en .v-plan .pt-act { font-size: var(--t-label); }
   .v-plan .pt-act:nth-child(3) { grid-column: 1 / -1; border-left: 0; border-top: 1px solid var(--rule); margin-top: 0; }
 }
 body.is-ruby .tl-item .tl-say ruby { white-space: nowrap; }   /* a ruby word stays whole; the gaps between words are the readings' */
-/* the first visit: a hint of the tab (a small road, one line), then two questions in the card's place */
-.v-plan .pt-intro { margin: 0 0 var(--s-5); }
-.v-plan .pt-intro-svg { display: block; width: 100%; max-width: 460px; height: auto; margin: 0 0 var(--s-3) -8px; overflow: visible; }
+/* the first visit: a hint of the tab (a bare road, one line), then two questions in the card's place */
+.v-plan .pt-intro { margin: var(--s-2) 0 var(--s-6); }
+.v-plan .pt-intro-svg { display: block; width: 100%; max-width: 480px; height: auto; margin: 0 0 var(--s-4); overflow: visible; }
 .v-plan .pt-intro-l { margin: 0; font-size: var(--t-ui); line-height: var(--lh-ui); color: var(--ink); text-wrap: balance; }
-.v-plan .pi-rail { stroke: var(--paper-3); stroke-width: 4; }
-.v-plan .pi-fill { stroke: var(--action); stroke-width: 4; stroke-dasharray: 1; stroke-dashoffset: 1; animation: pi-draw 640ms var(--ease-draw) 120ms both; }
-.v-plan .pi-st { transform-box: fill-box; transform-origin: center; animation: pi-pop 360ms var(--ease-enter) calc(120ms + var(--i, 0) * 110ms) both; }
-.v-plan rect.pi-st.is-done { fill: var(--ink); }
-.v-plan rect.pi-st.is-now { fill: var(--action); }
-.v-plan rect.pi-st.is-later { fill: var(--paper); stroke: var(--ink); stroke-width: 1.5; }
-.v-plan .pi-chk { fill: none; stroke: var(--paper); stroke-width: 1.8; stroke-linecap: square; stroke-linejoin: miter; animation: pi-fade 240ms var(--ease-enter) calc(300ms + var(--i, 0) * 110ms) both; }
-.v-plan .pi-now rect { fill: var(--action); }
-.v-plan .pi-sign rect { fill: var(--paper); stroke: var(--ink); stroke-width: 1.5; }
-.v-plan .pi-t { font-family: var(--font-display); font-weight: 500; font-size: 10.5px; fill: var(--ink-2); }
-.v-plan .pi-t.is-now { font-weight: 700; fill: #fff; }
-.v-plan .pi-t.is-sign { font-weight: 700; fill: var(--ink); }
-.v-plan .pi-lab { animation: pi-fade 300ms var(--ease-enter) calc(260ms + var(--i, 0) * 110ms) both; }
-body.lang-en .v-plan .pi-t { font-size: 9.5px; }
+.v-plan .pi-rail { fill: none; stroke: var(--paper-3); stroke-width: 6; stroke-linejoin: round; }
+.v-plan .pi-fade-a { stop-color: var(--paper-3); }
+.v-plan .pi-fade-b { stop-color: var(--paper-3); stop-opacity: 0; }
+.v-plan .pi-fill { fill: none; stroke: var(--action); stroke-width: 6; stroke-dasharray: 1; stroke-dashoffset: 1; animation: pi-draw 720ms var(--ease-draw) 80ms both; }
+.v-plan .pi-st, .v-plan .pi-flag, .v-plan .pi-sign { transform-box: fill-box; transform-origin: center; animation: pi-pop 360ms var(--ease-enter) var(--d, 0ms) both; }
+.v-plan .pi-flag { transform-origin: center bottom; animation-name: pi-drop; }
+.v-plan .pi-sign { animation-name: pi-fade; animation-duration: 300ms; }
+.v-plan .pi-st.is-past { fill: var(--ink); }
+.v-plan .pi-st.is-now { fill: var(--action); }
+.v-plan .pi-st.is-later { fill: var(--paper); stroke: var(--ink); stroke-width: 2; }
+.v-plan .pi-flag rect, .v-plan .pi-flag polygon { fill: var(--action); }
+.v-plan .pi-sign rect { fill: var(--paper); stroke: var(--ink); stroke-width: 2; }
+.v-plan .pi-t { font-family: var(--font-display); font-weight: 700; font-size: 12px; letter-spacing: 0.02em; }
+.v-plan .pi-t.is-flag { fill: #fff; }
+.v-plan .pi-t.is-sign { fill: var(--ink); }
+body.lang-en .v-plan .pi-t.is-sign { font-size: 11px; }
 @keyframes pi-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
-@keyframes pi-pop { from { opacity: 0; transform: scale(0.5); } 60% { opacity: 1; } to { opacity: 1; transform: none; } }
+@keyframes pi-pop { from { opacity: 0; transform: scale(0.4); } 60% { opacity: 1; } to { opacity: 1; transform: none; } }
+@keyframes pi-drop { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
 @keyframes pi-fade { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) {
-  .v-plan .pi-fill, .v-plan .pi-st, .v-plan .pi-chk, .v-plan .pi-lab { animation: pi-fade 300ms ease both; stroke-dashoffset: 0; }
+  .v-plan .pi-fill, .v-plan .pi-st, .v-plan .pi-flag, .v-plan .pi-sign { animation: pi-fade 300ms ease both; stroke-dashoffset: 0; }
+}
 }
 .v-plan .plan-top.is-start { padding: var(--s-4) 0 var(--s-3); }
 .v-plan .pt-q { margin: 0 0 var(--s-3); font-family: var(--font-display); font-weight: 700; font-size: var(--t-h3); line-height: var(--lh-heading); color: var(--ink); }
