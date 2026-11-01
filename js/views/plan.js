@@ -1050,6 +1050,7 @@
     'plan.start.gradeQ': { ja: 'いま何年生？', jr: 'いま何年生？', en: 'What year are you in?' },
     'plan.start.g12': { ja: '中1・中2', jr: '中1・中2', en: '1st or 2nd year' },
     'plan.start.g3': { ja: '中3', jr: '中3', en: '3rd year' },
+    'plan.start.back': { ja: 'もどる', jr: 'もどる', en: 'Back' },
     'plan.start.gradeHint': { ja: '高校入学は、4月1日として計算します。', jr: '高校入学は、4月1日として数えます。', en: 'We count to April 1 as the day high school starts.' },
     'plan.leftDate': { ja: '出た日を入れる', jr: '出た日を入れる', en: 'Enter the date' },
     'plan.leftChange': { ja: '出た日を変える', jr: '出た日を変える', en: 'Change the date' },
@@ -1202,10 +1203,19 @@
   /* ---------- v9: the first visit (no answers, no date) and the top card ---------- */
   function started() { return !!SM.store.get('plan:started', false); }
   function dateSeen() { return !!SM.store.get('plan:dateSeen', false); }
-  function startMode() {
-    if (started() || trackPref()) return false;
-    return !answers().stage && !state().leaveDate && !state().hsDate;
+  /* Ryu (2026-11-01): the road appears only after the person answers here — never from さがす answers or an old
+     track switch alone, and never with a guessed 仮 date before Q2 is answered */
+  function startMode() { return !started(); }
+  /* Q2 still open: the leaving date neither set nor seen (まだ決まっていない); a 中学生's grade not known */
+  function askPending(model) {
+    if (!started()) return false;
+    return model.track === 'junior' ? (!answers().stage && !state().hsDate) : (!!model.assumed && !dateSeen());
   }
+  function askHtml(model) {
+    return '<section class="plan-top is-start is-start-2" id="plan-top" aria-labelledby="plan-top-q2">' + askDateHtml(model) +
+      '<button type="button" class="pt-back" data-act="plan-start-back" data-press>' + arrowBack() + '<span>' + esc(t('plan.start.back')) + '</span></button></section>';
+  }
+  function arrowBack() { return '<span class="pt-back-a" aria-hidden="true">\u2190</span>'; }
   function startHtml() {
     var opts = [['jhs', 'plan.start.jhs'], ['hs', 'plan.start.hs'], ['left', 'plan.start.left']];
     return '<section class="plan-top is-start" id="plan-top" aria-labelledby="plan-top-q">' +
@@ -1284,7 +1294,7 @@
   }
   function topHtml(model) {
     // the junior Q2 (the grade) is asked while no stage is known; the leaving Q2 until the date is set or seen
-    var ask = model.track === 'junior' ? (!answers().stage && !state().hsDate && started()) : (model.assumed && !dateSeen() && started());
+    var ask = askPending(model);
     return '<section class="plan-top" id="plan-top" aria-label="' + esc(t('plan.top.label')) + '" data-reveal="">' +
       (ask ? askDateHtml(model) : countLineHtml(model)) + topStationHtml(model) + topActsHtml() + '</section>' +
       // v9 POLISH: 「時期は目安」 sits under the card in small type (it was the page's last line)
@@ -1794,6 +1804,8 @@
     calm = false;
     // first visit, nothing known: the two-question start; the road comes after the first tap
     if (startMode()) return headHtml({ track: ti.track, showSwitch: false }, model) + startHtml() + '<div class="plan-print" aria-hidden="true"></div>';
+    // Q2 (the date / the grade) on its own, still without the road
+    if (askPending(model)) return headHtml({ track: ti.track, showSwitch: false }, model) + askHtml(model) + '<div class="plan-print" aria-hidden="true"></div>';
     return headHtml(ti, model) + topHtml(model) + bodyHtml2(model) + '<div class="plan-print" aria-hidden="true"></div>';
   }
   function flushDeferred() { }
@@ -2316,9 +2328,11 @@
   SM.on('plan-start', function (el) {
     var v = el.getAttribute('data-value');
     var a = state().answers || (state().answers = {});
-    if (v === 'jhs') { SM.store.set('plan:track', 'junior'); }   // the grade is Q2 (plan-start-grade); nothing is guessed
-    else if (v === 'hs') { SM.store.set('plan:track', 'leaving'); }
-    else if (v === 'left') { if (!a.stage) a.stage = 'left0'; SM.store.set('plan:track', 'leaving'); }
+    // a stage from さがす (or an earlier tap here) that contradicts the answer is dropped: the answer here wins
+    var isJ = /^jhs/.test(a.stage || ''), isL = /^left/.test(a.stage || '');
+    if (v === 'jhs') { if (!isJ) a.stage = null; SM.store.set('plan:track', 'junior'); }   // the grade is Q2 (plan-start-grade); nothing is guessed
+    else if (v === 'hs') { if (isJ || isL) a.stage = null; SM.store.set('plan:track', 'leaving'); }
+    else if (v === 'left') { if (!isL) a.stage = 'left0'; SM.store.set('plan:track', 'leaving'); }
     else return;
     SM.store.set('plan:started', true);
     SM.save();
@@ -2346,6 +2360,13 @@
     SM.render();
   });
   /* Q2 「まだ決まっていない」: the countdown shows with 仮 (the date dialog is the other answer) */
+  /* もどる on Q2: back to Q1 (the answer here is forgotten; the stage from さがす, if any, stays) */
+  SM.on('plan-start-back', function () {
+    SM.store.remove('plan:started');
+    SM.store.remove('plan:dateSeen');
+    calm = true;
+    SM.render();
+  });
   SM.on('plan-start-nodate', function () {
     SM.store.set('plan:dateSeen', true);
     calm = true;

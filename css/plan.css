@@ -490,6 +490,14 @@ body.is-ruby .tl-item .tl-say ruby { white-space: nowrap; }   /* a ruby word sta
 .v-plan .pt-opt:active { background: var(--wash); }
 .v-plan .pt-hint { margin: var(--s-3) 0 0; font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3); }
 @media (min-width: 480px) { .v-plan .pt-opts { grid-template-columns: repeat(3, minmax(0, 1fr)); } .v-plan .pt-opts-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.v-plan .plan-top.is-start-2 .pt-cd.is-ask { padding: 0; border: 0; }
+.v-plan .pt-back {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 44px; margin: var(--s-2) 0 0 -4px; padding: 0 4px; border: 0; background: none; cursor: pointer;
+  font-family: var(--font-display); font-weight: 700; font-size: var(--t-meta); letter-spacing: var(--ls-0); color: var(--ink-2);
+}
+.v-plan .pt-back-a { font-family: var(--font-num); font-weight: 500; }
+.v-plan .pt-back:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+@media (hover: hover) { .v-plan .pt-back:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 0.3em; } }
 
 /* ---------- the phone road: past folded, いま open, つぎ previewed, the rest one line each ---------- */
 .v-plan .rm-fold { position: relative; min-width: 0; }

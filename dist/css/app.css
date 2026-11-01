@@ -2410,23 +2410,6 @@ html.motion-ready:not(.m-reduce) :is(.v-home, .v-about) .x-rolls.m-in:not(:has(.
 
 /* ================================================================ masthead: 関東版 ──────── 支援 N件 ｜ ログインなし
    the page's first heavy rule (it draws from the left as the opening's line lands in the bar) */
-.v-home .h-mast {
-  position: relative; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px var(--s-4);
-  padding-bottom: var(--s-2);
-  font-family: var(--font-display); font-weight: 500; font-size: var(--t-label); line-height: 1.5; letter-spacing: var(--ls-label); color: var(--ink-3);
-}
-.v-home .h-mast::after {
-  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--rule-heavy);
-  transform-origin: left center; pointer-events: none;
-}
-.v-home .h-mast p { margin: 0; }
-.v-home .h-mast-ed { font-weight: 700; color: var(--ink); }
-.v-home .h-mast-facts { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 0 var(--s-3); }
-.v-home .h-mast-facts > span { display: inline-flex; align-items: baseline; gap: 3px; white-space: nowrap; }
-.v-home .h-mast-n { font-family: var(--font-num); font-weight: 700; font-size: var(--t-ui); letter-spacing: var(--ls-0); color: var(--ink); font-variant-numeric: tabular-nums; }
-.v-home .h-mast-sep { align-self: center; width: 1px; height: 0.9em; background: var(--rule-2); }
-body.lang-en .v-home .h-mast { text-transform: uppercase; }
-
 /* ================================================================ hero: kicker · headline · sub-line */
 .v-home .h-hero { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; }
 .v-home .h-copy { min-width: 0; }
@@ -2565,10 +2548,7 @@ body.is-ruby .v-home .h-st-name { line-height: 1.6; }
 .v-home .h-play:not(.h-done) [data-h="slide"] { animation: h-slide 480ms var(--h-rise) calc(var(--d, 0ms) * var(--h-k, 1)) both; }
 .v-home .h-play:not(.h-done) [data-h="stamp"] { animation: h-stamp 380ms var(--h-spring) calc(var(--d, 0ms) * var(--h-k, 1)) both; }
 .v-home .h-play:not(.h-done) [data-h="path"] .h-st::before { animation: h-seg-y 460ms var(--ease-draw) calc((var(--d, 0ms) + var(--i, 0) * var(--stop) + 120ms) * var(--h-k, 1)) both; }
-.v-home .h-mast.h-play:not(.h-done)::after { animation: h-draw 560ms var(--ease-draw) calc(var(--d, 0ms) * var(--h-k, 1)) both; }
-.v-home .h-mast.h-play:not(.h-done) > * { animation: h-fade 360ms var(--ease-enter) calc((var(--d, 0ms) + 160ms) * var(--h-k, 1)) both; }
-.v-home .h-play.h-land :is([data-h], .h-ln-i, .h-st::before),
-.v-home .h-mast.h-land, .v-home .h-mast.h-land::after, .v-home .h-mast.h-land > * { animation: none !important; clip-path: none !important; }
+.v-home .h-play.h-land :is([data-h], .h-ln-i, .h-st::before) { animation: none !important; clip-path: none !important; }
 @keyframes h-line { from { opacity: 0; transform: translateY(0.42em); } 55% { opacity: 1; } to { opacity: 1; transform: none; } }
 @keyframes h-rise { from { opacity: 0; transform: translateY(24px); } 40% { opacity: 1; } to { opacity: 1; transform: none; } }
 @keyframes h-art { from { opacity: 0; transform: translateY(16px); } 45% { opacity: 1; } to { opacity: 1; transform: none; } }
@@ -2958,7 +2938,6 @@ body.lang-en .v-home .h-colo-ed { text-transform: uppercase; }
   .v-home .h-main { font-size: min(var(--fs-5xl), 6.2cqi); line-height: 1.14; }
   body.lang-en .v-home .h-main { font-size: min(var(--fs-5xl), 7.2cqi); }
   .v-home .h-sub { font-size: var(--t-kicker); margin-top: var(--s-4); }
-  .v-home .h-mast { font-size: var(--t-meta); }
 
   /* the path across the page */
   .v-home .h-path {
@@ -6820,6 +6799,14 @@ body.is-ruby .tl-item .tl-say ruby { white-space: nowrap; }   /* a ruby word sta
 .v-plan .pt-opt:active { background: var(--wash); }
 .v-plan .pt-hint { margin: var(--s-3) 0 0; font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-3); }
 @media (min-width: 480px) { .v-plan .pt-opts { grid-template-columns: repeat(3, minmax(0, 1fr)); } .v-plan .pt-opts-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.v-plan .plan-top.is-start-2 .pt-cd.is-ask { padding: 0; border: 0; }
+.v-plan .pt-back {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 44px; margin: var(--s-2) 0 0 -4px; padding: 0 4px; border: 0; background: none; cursor: pointer;
+  font-family: var(--font-display); font-weight: 700; font-size: var(--t-meta); letter-spacing: var(--ls-0); color: var(--ink-2);
+}
+.v-plan .pt-back-a { font-family: var(--font-num); font-weight: 500; }
+.v-plan .pt-back:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+@media (hover: hover) { .v-plan .pt-back:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 0.3em; } }
 
 /* ---------- the phone road: past folded, いま open, つぎ previewed, the rest one line each ---------- */
 .v-plan .rm-fold { position: relative; min-width: 0; }

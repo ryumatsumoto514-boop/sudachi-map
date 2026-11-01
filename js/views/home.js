@@ -2,7 +2,6 @@
    Home (#/) as a PATH (SPEC-v8 workstream 1). Within one screen the person sees what this is, the three things
    they can do, where they are on that path, and the one next step:
 
-     .h-mast    関東版 ─────── 支援 N件・ログインなし
      .h-hero    kicker (施設や里親家庭を出る人へ) · one headline (支援を見つけて、やることに。) · one sub-line
      .h-path    the route of three stations on the green line — 1 しらべる → 2 見つける → 3 やること.
                 Each station is an ink square with its number (done = green with a check, now = solid ink like the
@@ -304,18 +303,7 @@
     return '<span class="' + cls + ' h-ln-o"' + (T ? ' data-h="line"' : '') + '><span class="h-ln-i"' + (T ? ' style="--d:' + T[key] + 'ms"' : '') + '>' + html + '</span></span>';
   }
 
-  /* ------------------------------------------------------------ masthead: 関東版 ─────── 支援 N件・ログインなし */
-  function mast() {
-    var n = junior() ? (catCounts()._all || listed()) : listed();
-    var num = '<b class="num h-mast-n' + rollCls('home.total', n) + '" data-count="' + n + '" data-count-seen="home.total" data-count-dur="900"' +
-      (T ? ' data-reveal-delay="' + (T.mast + 120) + '"' : '') + '>' + n + '</b>';
-    var count = t('home.mastCount', { n: '\u0000' }).split('\u0000');
-    return '<div class="h-mast"' + ha('draw', 'mast') + '>' +
-      '<p class="h-mast-ed">' + esc(t('home.ed')) + '</p>' +
-      '<p class="h-mast-facts" aria-label="' + esc(t('home.mast')) + '"><span>' + esc(count[0] || '') + num + esc(count[1] || '') + '</span>' +
-        '<span class="h-mast-sep" aria-hidden="true"></span><span>' + esc(t('home.f.login')) + '</span></p>' +
-    '</div>';
-  }
+  /* the masthead (関東版 ─── 支援 N件・ログインなし) left the page (Ryu, 2026-11-01) */
 
   /* ------------------------------------------------------------ the person's place on the path */
   function planModel() {
@@ -327,7 +315,8 @@
     var jr = junior();
     var saved = savedItems();
     var answered = !!st.answered;
-    var model = planModel();
+    // やること has to be started there (Q1/Q2 answered) before home counts its road or its 仮 date (Ryu, 2026-11-01)
+    var model = (SM.store && SM.store.get && SM.store.get('plan:started', false)) ? planModel() : null;
     var leave = jr ? st.hsDate : st.leaveDate;
     var anchorISO = model && model.anchor ? isoOf(model.anchor) : leave || null;
     var assumed = !!(model && model.assumed);
@@ -999,7 +988,7 @@
       T = ENTER[mode] || null;
       var P = progress();
 
-      var out = mast();
+      var out = '';
       out += '<section class="h-hero wide-layout is-at-' + P.cur + '" aria-labelledby="h-title">' +
         heroCopy() + path(P) + ask() + walk(jr) + '</section>';
       out += offline();
