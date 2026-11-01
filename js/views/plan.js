@@ -1034,7 +1034,13 @@
     'plan.start.jhs': { ja: '中学生', en: 'Junior high school' },
     'plan.start.hs': { ja: '高校生', jr: '高校生', en: 'High school' },
     'plan.start.left': { ja: 'もう出た', jr: 'もう出た', en: 'Already left care' },
-    'plan.start.hint': { ja: '答えると、やることが時期ごとに並びます。このスマホの中だけに残ります。', jr: '答えると、やることが順番にならびます。', en: 'Answer, and your to-dos line up by period. It stays on this phone.' },
+    'plan.start.hint': { ja: '答えはこのスマホの中だけに残ります。', jr: '答えはこのスマホの中だけにのこります。', en: 'Your answer stays on this phone.' },
+    'plan.intro.line': { ja: '巣立ちまでのやることが、駅のように並びます。', jr: '巣立ちまでのやることが、駅のようにならびます。', en: 'Your to-dos up to leaving day line up like stations, in order.' },
+    'plan.intro.sign': { ja: '巣立ちの日', jr: '巣立ちの日', en: 'Leaving day' },
+    'plan.intro.s1': { ja: '話し|はじめる', jr: '話し|はじめる', en: 'Start|talking' },
+    'plan.intro.s2': { ja: 'お金の|計画', jr: 'お金の|計画', en: 'Money|plan' },
+    'plan.intro.s3': { ja: '住まい|探し', jr: '住まい|さがし', en: 'Find a|home' },
+    'plan.intro.s5': { ja: '最初の|1か月', jr: 'さいしょの|1か月', en: 'First|month' },
     'plan.start.q2': { ja: '巣立ちの日は？', en: 'Your leaving day?' },
     'plan.start.jrQ2': { ja: '高校に入る日は？', en: 'When does high school start?' },
     'plan.start.pick': { ja: '日にちを決める', en: 'Set the date' },
@@ -1216,9 +1222,30 @@
       '<button type="button" class="pt-back" data-act="plan-start-back" data-press>' + arrowBack() + '<span>' + esc(t('plan.start.back')) + '</span></button></section>';
   }
   function arrowBack() { return '<span class="pt-back-a" aria-hidden="true">\u2190</span>'; }
+  /* Ryu (2026-11-01): before the first question, a hint of what the tab is — a small road with five stations
+     (two done, いま, the 巣立ちの日 sign, one after) and one line. Drawn in the app's own marks; CSS animates it. */
+  function introSvg() {
+    var lab = function (x, key, i) {
+      var parts = String(t(key)).split('|');
+      return '<text class="pi-t pi-lab" style="--i:' + i + '" x="' + x + '" y="66" text-anchor="middle">' +
+        parts.map(function (w, j) { return '<tspan x="' + x + '"' + (j ? ' dy="12"' : '') + '>' + esc(w) + '</tspan>'; }).join('') + '</text>';
+    };
+    var sq = function (x, cls, i) { return '<rect class="pi-st ' + cls + '" style="--i:' + i + '" x="' + (x - 7) + '" y="29" width="14" height="14"/>'; };
+    var chk = function (x, i) { return '<polyline class="pi-chk" style="--i:' + i + '" points="' + (x - 3.5) + ',36 ' + (x - 0.5) + ',39 ' + (x + 4) + ',33"/>'; };
+    return '<svg class="pt-intro-svg" viewBox="0 0 360 82" aria-hidden="true" focusable="false">' +
+      '<line class="pi-rail" x1="28" y1="36" x2="332" y2="36"/>' +
+      '<line class="pi-fill" x1="28" y1="36" x2="176" y2="36" pathLength="1"/>' +
+      sq(40, 'is-done', 0) + chk(40, 0) + sq(108, 'is-done', 1) + chk(108, 1) + sq(176, 'is-now', 2) +
+      '<g class="pi-now pi-st" style="--i:2"><rect x="158" y="6" width="36" height="17"/><text class="pi-t is-now" x="176" y="18" text-anchor="middle">' + esc(t('plan.tl.now')) + '</text></g>' +
+      '<g class="pi-sign pi-st" style="--i:3"><rect x="212" y="23" width="64" height="26"/><text class="pi-t is-sign" x="244" y="40" text-anchor="middle">' + esc(t('plan.intro.sign')) + '</text></g>' +
+      sq(312, 'is-later', 4) +
+      lab(40, 'plan.intro.s1', 0) + lab(108, 'plan.intro.s2', 1) + lab(176, 'plan.intro.s3', 2) + lab(312, 'plan.intro.s5', 4) +
+    '</svg>';
+  }
   function startHtml() {
     var opts = [['jhs', 'plan.start.jhs'], ['hs', 'plan.start.hs'], ['left', 'plan.start.left']];
     return '<section class="plan-top is-start" id="plan-top" aria-labelledby="plan-top-q">' +
+      '<div class="pt-intro">' + introSvg() + '<p class="pt-intro-l">' + esc(t('plan.intro.line')) + '</p></div>' +
       '<p class="pt-q" id="plan-top-q">' + esc(t('plan.start.q1')) + '</p>' +
       '<div class="pt-opts" role="group" aria-labelledby="plan-top-q">' + opts.map(function (o) {
         return '<button type="button" class="pt-opt" data-act="plan-start" data-value="' + o[0] + '" data-press><span>' + esc(t(o[1])) + '</span>' + arrow() + '</button>';
