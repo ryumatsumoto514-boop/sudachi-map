@@ -173,17 +173,17 @@
     /* 奥付 */
     'home.colo.title': { ja: '巣立ちマップ', en: 'Sudachi Map' },
     'home.colo.ed': { ja: '関東版', en: 'Kanto edition' },
-    'home.colo.by': { ja: 'つくった人', en: 'Made by' },
-    'home.colo.byVal': { ja: 'Economix JP（東京の高校生の団体）', en: 'Economix JP (Tokyo high-school students)' },
-    'home.colo.checked': { ja: '最終確認', en: 'Last checked' },
-    'home.colo.listed': { ja: 'のせている支援', en: 'Listed' },
+    'home.colo.by': { ja: '運営', en: 'Operated by' },
+    'home.colo.byVal': { ja: 'Economix JP（東京の高校生による金融教育団体）', en: 'Economix JP, a financial-education organization run by high-school students in Tokyo' },
+    'home.colo.checked': { ja: '情報の最終確認日', en: 'Information last verified' },
+    'home.colo.listed': { ja: '掲載している支援制度', en: 'Programs listed' },
     'home.colo.listedVal': { ja: '{n}件', en: '{n}' },
-    'home.colo.ads': { ja: '広告', en: 'Ads' },
-    'home.colo.adsVal': { ja: 'なし', en: 'None' },
-    'home.colo.data': { ja: 'あなたの答え', en: 'Your answers' },
-    'home.colo.dataVal': { ja: 'このスマホの中だけ', en: 'Only on this device' },
-    'home.colo.note': { ja: '申し込む前に、公式ページでも確認してください。ここは相談窓口ではありません。', en: 'Check the official page before you apply. This site is not a helpline.' },
-    'home.colo.about': { ja: '掲載基準・運営について', en: 'About & standards' }
+    'home.colo.ads': { ja: '広告', en: 'Advertising' },
+    'home.colo.adsVal': { ja: '掲載していません', en: 'None' },
+    'home.colo.data': { ja: '入力内容の取り扱い', en: 'Your data' },
+    'home.colo.dataVal': { ja: 'お使いの端末内にのみ保存され、外部には送信されません', en: 'Stored only on your device and never sent anywhere' },
+    'home.colo.note': { ja: '各制度の申請前に、必ず公式ページで最新の情報をご確認ください。本サイトは相談窓口ではありません。', en: 'Before applying to any program, please confirm the latest details on its official page. This site is not a counselling service.' },
+    'home.colo.about': { ja: '掲載基準と運営について', en: 'Editorial standards and operation' }
   });
 
   /* ------------------------------------------------------------ helpers */
