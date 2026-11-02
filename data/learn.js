@@ -33,6 +33,7 @@
   SM.data = SM.data || {};
 
   var CHECKED = '2026-10-17';
+  var CHECKED2 = '2026-11-02';   // lessons 13–19 (sources fetched and read on this date)
   function t(ja, jr, en) { var o = { ja: ja, en: en }; if (jr) o.jr = jr; return o; }
 
   /* ------------------------------------------------------------------ sources (all fetched and read on CHECKED) */
@@ -83,7 +84,28 @@
     toritsuKyufu: { org: '東京都教育委員会', url: 'https://www.kyoiku.metro.tokyo.lg.jp/admission/tuition/tuition/scholarship_public_school' },
     toritsuOnline: { org: '東京都教育委員会（各種支援制度のオンライン申請）', url: 'https://www.kyoiku.metro.tokyo.lg.jp/admission/tuition/tuition/starting_application_online' },
     shigaku: { org: '東京都私学財団', url: 'https://www.shigaku-tokyo.or.jp/parents_index/pa_jugyoryo/' },
-    shigakuLeaf: { org: '東京都私学財団', url: 'https://www.shigaku-tokyo.or.jp/wp-content/themes/shigaku/assets/files/brochure/r8_brochure.pdf' }
+    shigakuLeaf: { org: '東京都私学財団', url: 'https://www.shigaku-tokyo.or.jp/wp-content/themes/shigaku/assets/files/brochure/r8_brochure.pdf' },
+    // ---- lessons 13–19 (CHECKED2)
+    soumuErabi: { org: '総務省（携帯電話ポータルサイト）', url: 'https://www.soumu.go.jp/menu_seisaku/ictseisaku/keitai_portal/erabikata_3.html' },
+    soumuNorikae: { org: '総務省（携帯電話ポータルサイト）', url: 'https://www.soumu.go.jp/menu_seisaku/ictseisaku/keitai_portal/norikae_2.html' },
+    soumuQ5: { org: '総務省（携帯電話ポータルサイト）', url: 'https://www.soumu.go.jp/menu_seisaku/ictseisaku/keitai_portal/gimonkaiketsu/q_5.html' },
+    cicAbout: { org: '株式会社シー・アイ・シー（CIC）', url: 'https://www.cic.co.jp/confidence/index.html' },
+    cicHold: { org: '株式会社シー・アイ・シー（CIC）', url: 'https://www.cic.co.jp/confidence/posession.html' },
+    jiccKaiji: { org: '株式会社日本信用情報機構（JICC）', url: 'https://www.jicc.co.jp/kaiji/' },
+    mhlwMyna: { org: '厚生労働省', url: 'https://www.mhlw.go.jp/stf/newpage_08277.html' },
+    mhlwIryoHoken: { org: '厚生労働省', url: 'https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/kenkou_iryou/iryouhoken/iryouhoken01/index.html' },
+    mhlwKogaku: { org: '厚生労働省', url: 'https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/kenkou_iryou/iryouhoken/juuyou/kougakuiryou/index.html' },
+    kenpoKogaku: { org: '全国健康保険協会（協会けんぽ）', url: 'https://www.kyoukaikenpo.or.jp/g3/sb3030/r150/' },
+    chibaMuryo: { org: '千葉県', url: 'https://www.pref.chiba.lg.jp/kenshidou/konkyusya/muteishinnryou.html' },
+    checkParttime: { org: '厚生労働省（確かめよう労働条件）', url: 'https://www.check-roudou.mhlw.go.jp/parttime/' },
+    checkHotline: { org: '厚生労働省（労働条件相談ほっとライン）', url: 'https://www.check-roudou.mhlw.go.jp/lp/hotline/' },
+    caaMail: { org: '消費者庁（特定商取引法ガイド）', url: 'https://www.no-trouble.caa.go.jp/what/mailorder/' },
+    kokusenTeiki: { org: '国民生活センター', url: 'https://www.kokusen.go.jp/news/data/n-20240131_1.html' },
+    kokusenGame: { org: '国民生活センター', url: 'https://www.kokusen.go.jp/soudan_topics/data/game.html' },
+    sagamiharaTennyu: { org: '相模原市', url: 'https://www.city.sagamihara.kanagawa.jp/kurashi/tetsuzuki/1005976.html' },
+    digitalMove: { org: 'デジタル庁', url: 'https://www.digital.go.jp/policies/moving_onestop_service/' },
+    bunkyoMyna: { org: '文京区', url: 'https://www.city.bunkyo.lg.jp/b013/p000321.html' },
+    jpTenkyo: { org: '日本郵便', url: 'https://www.post.japanpost.jp/service/receive/relocation/' }
   };
 
   /* ------------------------------------------------------------------ facts (one place to update) */
@@ -908,6 +930,422 @@
       related: ['tokyo-rodo-sodan', 'rodo-hotline', 'hellowork-wakamono'],
       sources: [S.nensho, S.minWage, S.ntaPart, S.ntaKanpu, S.tokyoJumin, S.jflecJhs],
       checked: CHECKED
+    },
+
+    /* 13 ---------------------------------------------------------------- スマホ代 (added 2026-11-02) */
+    {
+      id: 'sumaho-dai', order: 13, level: 'all', minutes: 3, cat: 'money',
+      title: t('スマホ代は、2つに分けて見る', 'スマホ代って、なにに払ってる？', 'Your phone bill has two parts'),
+      lead: t('毎月の請求は「本体の分割」と「通信のプラン」の合計。分けて見ると、下げられる場所がわかります。',
+        '毎月のスマホ代は「本体のお金」と「通信のお金」の合計。分けて見ると、安くできる場所がわかります。',
+        'Each month you pay handset instalments plus a data plan. Seen apart, you can tell which one to cut.'),
+      steps: [
+        { type: 'compare', head: t('本体と通信は、別の契約', '本体と通信は、べつの契約', 'Handset and plan are separate'),
+          left: { title: t('本体（分割払い）', '本体（分割ばらい）', 'Handset (instalments)'), tone: 'loan',
+            points: [t('買った額を、毎月少しずつ払う約束', '買ったお金を、毎月少しずつ払う', 'The price, paid a little each month'), t('会社を乗り換えても、残りは払い続ける', '会社をかえても、残りは払う', 'Switching carriers doesn’t cancel the rest')] },
+          right: { title: t('通信（料金プラン）', '通信（プラン）', 'Plan (monthly fee)'), tone: 'free',
+            points: [t('いつでも見直せる', 'いつでもかえられる', 'You can change it any time'), t('乗り換えの手数料は、ウェブ手続きなら0円', 'ウェブで手つづきすれば、手数料0円', 'Switching fee is ¥0 if done online')] },
+          note: t('2019年から、回線とセットの大幅な本体値引きは原則できません。本体は本体の値段で考えます。', '本体は、本体のねだんで考えます。', 'Since 2019 carriers may not deeply discount a handset bundled with a line. Think of the handset at its own price.') },
+        { type: 'text', head: t('分割払いは「あとで払う」契約', '分割ばらいは「あとで払う」約束', 'Instalments are a promise to pay later'),
+          ja: 'スマホ本体の分割払いは、クレジットと同じ「あとで払う」契約です。支払いの記録は信用情報機関に残り、延滞すると、あとでカードやローンの審査にひびきます。',
+          jr: 'スマホ本体の分割ばらいは、クレジットと同じ「あとで払う」約束。払うのがおくれると、その記録が残って、あとでカードが作れないことがあります。',
+          en: 'Paying for a handset in instalments is a credit contract. Your payment record goes to a credit bureau, and a late payment hurts later card and loan checks.',
+          mark: t('支払いの記録は信用情報機関に残り', '記録が残って', 'Your payment record goes to a credit bureau') },
+        { type: 'text', head: t('「返せば残りは免除」の条件', '「返せば残りはタダ」の条件', '“Return it and the rest is waived”'),
+          ja: '大手には「○か月目以降に本体を返すと、残りの支払いが免除」というプログラムがあります。返すことが条件なので、手元に残したいなら残りを払います。条件は会社ごとにちがうので、契約前に確認します。',
+          jr: '「○か月たって本体を返せば、残りは払わなくていい」というしくみがあります。返すのが条件。くわしい条件は会社ごとにちがいます。',
+          en: 'Big carriers offer “return the handset after month X and the remaining payments are waived.” Returning it is the condition; keep it and you pay the rest. Terms differ by carrier, so check before signing.',
+          mark: t('返すことが条件なので', '返すのが条件', 'Returning it is the condition') },
+        { type: 'quiz', q: t('月々のスマホ代を安くしたい。まず何を見る？', 'スマホ代を安くしたい。まず何を見る？', 'You want a cheaper phone bill. Look at what first?'),
+          options: [
+            { ja: '通信のプラン（使う量に合っているか）', jr: '通信のプラン', en: 'The plan (does it match how much you use?)', correct: true,
+              why: t('そのとおり。プランはいつでも見直せます。本体の分割は、払い終わるまで変わりません。', 'そのとおり。プランはいつでもかえられます。', 'Right. The plan can change any time; handset instalments can’t until paid off.') },
+            { ja: '最新の本体に分割で買いかえる', jr: '新しい本体に買いかえる', en: 'Upgrade to a new handset on instalments', correct: false,
+              why: t('本体の支払いがふえます。まず通信のプランから。', '本体のお金がふえます。まずプランから。', 'That adds handset payments. Start with the plan.') },
+            { ja: '払うのをやめて様子を見る', jr: '払うのをやめる', en: 'Stop paying and see', correct: false,
+              why: t('止められるだけでなく、分割の延滞は信用情報に残ります。払えないときは先に携帯会社へ連絡。', '止まるだけでなく、記録が残ります。払えないときは先に携帯会社へ。', 'Service stops, and the late instalment goes on your credit record. Call the carrier first if you can’t pay.') }
+          ] },
+        { type: 'text', head: t('契約して「ちがう」と思ったら', '契約して「ちがう」と思ったら', 'Signed up and it’s not right?'),
+          ja: '通信の契約は、契約書を受け取ってから8日以内なら、一方的に解約できます（初期契約解除）。ただし本体の購入は取り消せないことが多いので、本体は別に考えます。',
+          jr: '通信の契約は、契約書をもらってから8日以内なら、やめられます。本体の買い物は、取り消せないことが多いです。',
+          en: 'A telecom contract can be cancelled unilaterally within 8 days of receiving the contract document (初期契約解除). The handset purchase usually cannot, so treat it separately.',
+          mark: t('8日以内なら', '8日以内なら', 'within 8 days') },
+        { type: 'quiz', q: t('新しく契約して3日。家で電波が入らない。', '契約して3日。家で電波が入らない。', 'Three days in, no signal at home.'),
+          options: [
+            { ja: '8日以内なので、初期契約解除を申し出る', jr: '8日以内なので、解約を申し出る', en: 'Within 8 days, so invoke the early cancellation right', correct: true,
+              why: t('そのとおり。通信の契約は8日以内なら解約できます。本体は取り消せないことが多いので、店に「確認措置」が使えるか聞いてみて。', 'そのとおり。8日以内なら解約できます。本体のことは店に聞いてみて。', 'Right. The plan can be cancelled within 8 days. Ask the shop whether the handset can be cancelled too under their confirmation scheme.') },
+            { ja: '2年たつまで我慢する', jr: '2年がまんする', en: 'Put up with it for two years', correct: false,
+              why: t('8日以内なら解約できます。がまんしなくていい。', '8日以内ならやめられます。', 'You can cancel within 8 days. No need to suffer.') },
+            { ja: 'SNSで解決法をさがす', jr: 'SNSでさがす', en: 'Search social media for a fix', correct: false,
+              why: t('まず店と携帯会社へ。困ったら消費生活センター（188）。', 'まず店と携帯会社へ。こまったら188。', 'Go to the shop and carrier first. Stuck? Consumer hotline 188.') }
+          ] }
+      ],
+      recap: [
+        t('スマホ代は「本体」と「通信」の合計。', 'スマホ代は「本体」と「通信」の合計。', 'A phone bill = handset + plan.'),
+        t('通信のプランは、いつでも見直せる。', 'プランは、いつでもかえられる。', 'The plan can change any time.'),
+        t('分割の延滞は、信用情報に残る。', '分割ばらいのおくれは、記録に残る。', 'Late instalments go on your credit record.')
+      ],
+      related: ['tokyo-shohi-center', 'shohisha-188'],
+      sources: [S.soumuErabi, S.soumuNorikae, S.soumuQ5, S.cicHold],
+      checked: CHECKED2
+    },
+
+    /* 14 ---------------------------------------------------------------- 信用情報 */
+    {
+      id: 'shinyo-joho', order: 14, level: 'all', minutes: 2, cat: 'money',
+      title: t('「信用情報」ってなに？', '「しんよう」ってなに？', 'What is a credit record?'),
+      lead: t('カードや分割払いを使うと、「払った」「遅れた」の記録が残ります。この記録が、次の審査で見られます。',
+        'カードや分割ばらいを使うと、「払った」「おくれた」の記録が残ります。この記録が、次に見られます。',
+        'Use a card or instalments and a record of paid or late is kept. That record is what the next check looks at.'),
+      steps: [
+        { type: 'text', head: t('記録されるもの', '記録されるもの', 'What gets recorded'),
+          ja: 'クレジットカード・ローン・分割払いの契約と、毎月の支払い状況。「信用情報機関」が集めていて、カード会社やローン会社が審査のときに見ます。',
+          jr: 'カード・ローン・分割ばらいの契約と、毎月ちゃんと払ったかの記録です。カードやローンの会社が、審査のときに見ます。',
+          en: 'Contracts for credit cards, loans and instalments, and how you pay each month. Credit bureaus collect it, and card and loan companies check it before approving you.',
+          mark: t('審査のときに見ます', '審査のときに見ます', 'check it before approving you') },
+        { type: 'compare', head: t('払った記録と、遅れた記録', '払った記録と、おくれた記録', 'Paid on time, or late'),
+          left: { title: t('期日に払う', '日にちどおりに払う', 'Pay on the due date'), tone: 'free',
+            points: [t('記録はそのまま。問題なし', '記録はきれい', 'Clean record'), t('次のカードやローンが通りやすい', '次のカードが作りやすい', 'Next card or loan is easier')] },
+          right: { title: t('遅れる（延滞）', 'おくれる（えんたい）', 'Pay late (delinquency)'), tone: 'loan',
+            points: [t('「異動」として記録される', '「おくれた」と記録される', 'Marked as a delinquency'), t('カードや分割の審査に通らないことがある', 'カードや分割ばらいがダメになることがある', 'Cards or instalments may be refused')] },
+          note: t('よく「ブラックリストに載る」と言われるのは、この延滞の記録のことです。名簿があるわけではありません。', '「ブラックリスト」とよく言われるのは、この「おくれた」記録のことです。', 'What people call “the blacklist” is simply this delinquency mark. There is no actual list.') },
+        { type: 'text', head: t('いつまで残る？', 'いつまで残る？', 'How long does it stay?'),
+          ja: '契約の記録は、契約中と、終わったあと5年間残ります。延滞の記録も同じです。申し込んだだけの記録も6か月残るので、短い間にたくさん申し込むのも避けます。',
+          jr: '契約の記録は、終わったあとも5年間残ります。おくれた記録も同じ。申しこんだだけでも6か月残ります。',
+          en: 'Contract records stay for the life of the contract and five years after it ends; delinquency marks too. Even an application stays six months, so avoid many applications in a short time.',
+          mark: t('終わったあと5年間', '終わったあとも5年間', 'five years after it ends') },
+        { type: 'quiz', q: t('延滞の記録は、払えば消える？', 'おくれた記録は、払えば消える？', 'Does a late mark vanish once you pay?'),
+          options: [
+            { ja: 'すぐ消える', jr: 'すぐ消える', en: 'Right away', correct: false,
+              why: t('払っても記録は残ります。契約が終わってから5年間です。', '払っても、5年間は残ります。', 'It stays, for five years after the contract ends.') },
+            { ja: '契約が終わったあとも5年残る', jr: '契約が終わっても5年残る', en: 'It stays five years after the contract ends', correct: true,
+              why: t('そのとおり。だから、遅れそうなときは先に連絡して、記録を作らないのがいちばんです。', 'そのとおり。おくれそうなら、先に連絡がいちばん。', 'Right. So if you might be late, call first and avoid the mark altogether.') },
+            { ja: '一生消えない', jr: 'ずっと消えない', en: 'Never', correct: false,
+              why: t('一生ではありません。期間は決まっています。', 'ずっとではありません。', 'Not forever. The period is fixed.') }
+          ] },
+        { type: 'text', head: t('自分の記録は、見られる', '自分の記録は、見られる', 'You can see your own record'),
+          ja: '自分の信用情報は、本人が信用情報機関に申し込めば開示されます（15歳以上、手数料あり）。カードが作れない理由がわからないときに役立ちます。',
+          jr: '自分の記録は、信用情報機関に申しこめば見られます（15歳以上、お金が少しかかります）。',
+          en: 'You can ask a bureau to disclose your own record (age 15 and up, small fee). Useful when a card application is refused and you don’t know why.',
+          mark: t('本人が信用情報機関に申し込めば開示されます', '申しこめば見られます', 'ask a bureau to disclose your own record') },
+        { type: 'quiz', q: t('同じ週に、クレジットカードを3社に申し込んだ。', '同じ週に、カードを3社に申しこんだ。', 'You applied to three card companies in one week.'),
+          options: [
+            { ja: '何も記録されない', jr: '何も残らない', en: 'Nothing is recorded', correct: false,
+              why: t('申し込みの記録も6か月残ります。', '申しこみも6か月残ります。', 'Applications stay six months too.') },
+            { ja: '申し込んだ記録が6か月残る', jr: '申しこんだ記録が6か月残る', en: 'The applications stay on record six months', correct: true,
+              why: t('そのとおり。審査する会社にも見えます。必要なものだけ申し込もう。', 'そのとおり。ほかの会社にも見えます。必要なものだけに。', 'Right, and other companies see them. Apply only for what you need.') },
+            { ja: '3枚とも自動で届く', jr: '3枚とも自動でとどく', en: 'All three arrive automatically', correct: false,
+              why: t('審査があります。通らないこともあります。', '審査があります。', 'There is a check; some may be refused.') }
+          ] }
+      ],
+      recap: [
+        t('払った・遅れたの記録が「信用情報」。', '払った・おくれたの記録が「信用情報」。', 'Your paid/late record is your credit record.'),
+        t('延滞の記録は、契約が終わって5年残る。', 'おくれた記録は、5年残る。', 'Late marks stay five years after the contract.'),
+        t('遅れそうなら、先に連絡。', 'おくれそうなら、先に連絡。', 'If you might be late, call first.')
+      ],
+      related: ['tokyo-shohi-center', 'shohisha-188', 'houterasu'],
+      sources: [S.cicAbout, S.cicHold, S.jiccKaiji],
+      checked: CHECKED2
+    },
+
+    /* 15 ---------------------------------------------------------------- 病院のお金 */
+    {
+      id: 'byoin-okane', order: 15, level: 'hs', minutes: 3, cat: 'procedures',
+      title: t('病院のお金、払いすぎない', '病院のお金', 'Hospital bills: don’t overpay'),
+      lead: t('保険があれば窓口は3割。高くなっても1か月の上限があります。知らないと払いすぎます。',
+        '保険があれば、病院では3割だけ。高くなっても上限があります。',
+        'With insurance you pay 30% at the counter, and there is a monthly cap. Not knowing means overpaying.'),
+      steps: [
+        { type: 'text', head: t('窓口で見せるもの', '窓口で見せるもの', 'What to show at the desk'),
+          ja: '病院では「マイナ保険証」（保険証の登録をしたマイナンバーカード）か、「資格確認書」を見せます。マイナ保険証を使わない人には、資格確認書が申請なしで無料で届きます。昔の保険証は2025年12月1日で使えなくなりました。',
+          jr: '病院では、マイナ保険証か、資格確認書を見せます。マイナ保険証を使わない人には、資格確認書が無料でとどきます。',
+          en: 'Show your My Number card registered as a health insurance card, or an eligibility certificate (資格確認書). If you don’t use the card, the certificate is issued free without applying. Old paper cards stopped working on 1 Dec 2025.',
+          mark: t('申請なしで無料で届きます', '無料でとどきます', 'issued free without applying') },
+        { type: 'text', head: t('払うのは3割', '払うのは3割', 'You pay 30%'),
+          ja: '保険に入っていれば、70歳未満の窓口の支払いは医療費の3割です。施設や親の保険から外れたら、職場の保険か、区市町村の国民健康保険に自分で入ります。入っていないと、いったん全額を払うことになります。',
+          jr: '保険に入っていれば、病院で払うのは3割。施設や親の保険から外れたら、職場の保険か、区市町村の国民健康保険に自分で入ります。',
+          en: 'With insurance, under-70s pay 30% of the cost at the counter. Once you leave your facility’s or parent’s plan, join your workplace plan or your city’s National Health Insurance yourself. Without it, you pay the full amount.',
+          mark: t('自分で入ります', '自分で入ります', 'join your workplace plan or your city’s National Health Insurance yourself') },
+        { type: 'text', head: t('1か月の上限がある', '1か月の上限がある', 'There is a monthly cap'),
+          ja: '入院などで3割でも高くなったとき、1か月に払う額には上限があります（高額療養費）。収入が少ない人ほど上限は低く、住民税が非課税の人は月36,900円、月給がおよそ26万円以下の人は月61,500円（2026年8月から）。超えた分は、あとから戻ります。',
+          jr: '病院のお金が高くなっても、1か月に払う額には上限があります。収入が少ない人ほど低く、住民税がかからない人は月36,900円。超えた分は、あとで戻ります。',
+          en: 'If 30% still gets expensive, say after a hospital stay, a monthly cap applies (高額療養費). The lower your income, the lower the cap: ¥36,900 a month if you pay no resident tax, ¥61,500 if your monthly pay is about ¥260,000 or less (from Aug 2026). Anything above comes back later.',
+          mark: t('1か月に払う額には上限があります', '1か月に払う額には上限があります', 'a monthly cap applies') },
+        { type: 'text', head: t('先に手続きすると、窓口で上限まで', '先に手つづきすると、窓口で上限まで', 'Arrange it first and pay only the cap'),
+          ja: 'マイナ保険証を使うか、保険の窓口で「限度額適用認定証」をもらっておくと、病院の窓口で払うのが上限までになります。あとから戻るのを待たなくてすみます。',
+          jr: 'マイナ保険証を使うか、保険の窓口で「限度額適用認定証」をもらっておくと、病院で払うのが上限までになります。',
+          en: 'Use your My Number insurance card, or get a cap certificate (限度額適用認定証) from your insurer in advance, and the hospital charges only up to the cap, so you don’t wait for a refund.',
+          mark: t('窓口で払うのが上限までになります', '払うのが上限までになります', 'charges only up to the cap') },
+        { type: 'quiz', q: t('手術と入院で、医療費が100万円かかった。保険あり。払うのは？', '手術と入院で、医療費が100万円。保険あり。払うのは？', 'Surgery and a hospital stay cost ¥1,000,000. You’re insured. You pay?'),
+          options: [
+            { ja: '100万円', jr: '100万円', en: '¥1,000,000', correct: false,
+              why: t('保険があれば3割で、さらに1か月の上限があります。', '保険があれば3割、さらに上限があります。', 'Insured means 30%, and then the monthly cap.') },
+            { ja: '30万円', jr: '30万円', en: '¥300,000', correct: false,
+              why: t('3割は30万円ですが、1か月の上限を超えた分は戻ります。収入が低い人なら上限は月6万円前後まで。', '3割は30万円ですが、上限を超えた分は戻ります。', '30% is ¥300,000, but anything over the monthly cap comes back. For low earners the cap is around ¥60,000.') },
+            { ja: '自分の収入の区分の上限まで（数万円）', jr: '上限まで（数万円）', en: 'Only up to the cap for your income band (tens of thousands)', correct: true,
+              why: t('そのとおり。マイナ保険証か限度額適用認定証があれば、窓口の支払いも上限までです。', 'そのとおり。先に手つづきしておけば、窓口でも上限までです。', 'Right. With the card or a cap certificate, even the counter charge stops at the cap.') }
+          ] },
+        { type: 'text', head: t('それでも払えないとき', 'それでも払えないとき', 'If you still can’t pay'),
+          ja: 'お金がなくて病院に行けないときは、「無料低額診療」をしている病院があります。病院の相談窓口で生活の状況を話すと、自己負担の一部か全部が減免されることがあります。区市町村のくらしの相談窓口や福祉事務所にも相談できます。',
+          jr: 'お金がなくて病院に行けないときは、無料や安いお金で診てくれる病院があります。病院の相談窓口や、区市町村の相談窓口に聞いてみて。',
+          en: 'If you can’t afford care, some hospitals run a free or low-cost treatment scheme. Talk to the hospital’s consultation desk about your situation and part or all of your share may be waived. Your city’s life-support desk or welfare office can help too.',
+          mark: t('一部か全部が減免されることがあります', '無料や安いお金で診てくれる病院があります', 'part or all of your share may be waived') },
+        { type: 'quiz', q: t('マイナンバーカードを保険証登録していない。病院はどうする？', 'マイナ保険証がない。病院はどうする？', 'Your My Number card isn’t registered as insurance. At the hospital?'),
+          options: [
+            { ja: '保険なしで全額払う', jr: '全額払う', en: 'Pay the full amount uninsured', correct: false,
+              why: t('保険に入っていれば、資格確認書が無料で届きます。届いていなければ保険の窓口に連絡。', '保険に入っていれば、資格確認書が無料でとどきます。', 'If you’re insured, an eligibility certificate comes free. Not arrived? Call your insurer.') },
+            { ja: '資格確認書を見せる（届いていなければ保険の窓口へ）', jr: '資格確認書を見せる', en: 'Show the eligibility certificate (ask your insurer if it hasn’t come)', correct: true,
+              why: t('そのとおり。マイナ保険証を使わない人には、申請なしで交付されます。', 'そのとおり。申しこまなくても、とどきます。', 'Right. It is issued without applying to anyone not using the card.') },
+            { ja: '病院に行かない', jr: '病院に行かない', en: 'Skip the hospital', correct: false,
+              why: t('我慢すると悪化します。保険の手続きと受診は、両方できます。', 'がまんすると悪くなります。', 'Waiting makes it worse. You can sort the paperwork and still see a doctor.') }
+          ] }
+      ],
+      recap: [
+        t('病院ではマイナ保険証か資格確認書。', '病院ではマイナ保険証か資格確認書。', 'Show your My Number insurance card or certificate.'),
+        t('払うのは3割。1か月の上限もある。', '払うのは3割。1か月の上限もある。', 'You pay 30%, with a monthly cap.'),
+        t('払えないときは、病院の相談窓口へ。', '払えないときは、病院の相談窓口へ。', 'Can’t pay? Ask the hospital’s consultation desk.')
+      ],
+      related: ['kokuho', 'mynumber-card', 'jiritsu-sodan', 'seikatsu-hogo'],
+      sources: [S.mhlwMyna, S.mhlwIryoHoken, S.mhlwKogaku, S.kenpoKogaku, S.chibaMuryo],
+      checked: CHECKED2
+    },
+
+    /* 16 ---------------------------------------------------------------- 働くときのルール */
+    {
+      id: 'hataraku-rule', order: 16, level: 'hs', minutes: 3, cat: 'work',
+      title: t('働くときの、守られるルール', 'はたらくときのルール', 'Rules that protect you at work'),
+      lead: t('アルバイトでも正社員でも、法律で決まった最低ラインがあります。「うちは特別」は通りません。',
+        'アルバイトでも、法律で決まったルールがあります。「うちは特別」は通りません。',
+        'Part-time or full-time, the law sets a floor. “Our place is different” is not an excuse.'),
+      steps: [
+        { type: 'text', head: t('始める前に、紙でもらう', 'はじめる前に、紙でもらう', 'Get it in writing before you start'),
+          ja: '雇う側は、契約期間・更新のルール・仕事の場所と内容・勤務時間と休日・給料・退職のきまり、この6つを書面で渡さなければなりません。口約束だけなら、「書面でください」と言えます。',
+          jr: 'はたらき始める前に、時間・休み・給料・やめるときのきまりなどを書いた紙をもらいます。もらえなければ「ください」と言えます。',
+          en: 'Employers must hand you, in writing: contract period, renewal rules, place and type of work, hours and days off, pay, and the rules for leaving. If it’s all verbal, ask for it in writing.',
+          mark: t('書面で渡さなければなりません', '紙をもらいます', 'in writing') },
+        { type: 'text', head: t('時給の最低ライン', '時給の最低ライン', 'The wage floor'),
+          ja: '東京の最低賃金は時給1,280円（2026年10月から）。これより低い約束は、合意していても通りません。22時〜翌5時の深夜は25%以上、1日8時間・週40時間を超える残業も25%以上の割増がつきます。18歳未満は深夜に働かせられません。',
+          jr: '東京では、時給1,280円より安くはできません。夜10時から朝5時は25%以上高くなります。18歳未満は、夜おそくは働けません。',
+          en: 'Tokyo’s minimum wage is ¥1,280 an hour (from Oct 2026); anything lower doesn’t stand even if you agreed. Night work (10 pm–5 am) and overtime beyond 8 hours a day or 40 a week pay at least 25% extra. Under-18s may not work nights.',
+          mark: t('合意していても通りません', '安くはできません', 'doesn’t stand even if you agreed') },
+        { type: 'text', head: t('有給は、アルバイトにもある', '有給は、アルバイトにもある', 'Part-timers get paid leave too'),
+          ja: '週1日以上働き、6か月続けて、決められた日の8割以上出勤していれば、有給休暇がもらえます。週5日なら6か月で10日。日数は週の勤務日数で変わりますが、「アルバイトにはない」はまちがいです。',
+          jr: 'アルバイトでも、6か月つづけて、決められた日の8割以上出ていれば、有給休暇（休んでも給料が出る日）があります。',
+          en: 'Work at least one day a week for six months, attending 80% of scheduled days, and you earn paid leave: 10 days for a five-day week. Fewer days a week means fewer, but “no paid leave for part-timers” is wrong.',
+          mark: t('「アルバイトにはない」はまちがいです', 'アルバイトでも', '“no paid leave for part-timers” is wrong') },
+        { type: 'quiz', q: t('店長に「アルバイトに有給はないよ」と言われた。', '店長に「アルバイトに有給はない」と言われた。', 'The manager says “part-timers don’t get paid leave.”'),
+          options: [
+            { ja: 'そうなんだと納得する', jr: 'そうなんだと思う', en: 'Accept it', correct: false,
+              why: t('ルールでは、条件を満たせばアルバイトにも有給があります。', '条件を満たせば、アルバイトにもあります。', 'By law, part-timers who meet the conditions get it.') },
+            { ja: '条件（6か月・8割出勤）を満たしていれば、もらえると伝える', jr: '条件を満たしていれば、もらえると伝える', en: 'Say you qualify (6 months, 80% attendance)', correct: true,
+              why: t('そのとおり。言いにくければ、労働基準監督署や相談ダイヤルに先に聞いてから。', 'そのとおり。言いにくければ、先に相談ダイヤルに聞いてから。', 'Right. If it’s hard to say, ask the labour office or hotline first.') },
+            { ja: 'だまって辞める', jr: 'だまってやめる', en: 'Quit without a word', correct: false,
+              why: t('辞める前に、まず相談先に聞いてみよう。無料です。', 'やめる前に、まず相談。無料です。', 'Before quitting, ask a free advice line.') }
+          ] },
+        { type: 'text', head: t('給料と、辞めるとき', '給料と、やめるとき', 'Pay, and quitting'),
+          ja: '給料は全額を、本人に、月1回以上、決まった日に払うのがルール。「ミスしたから罰金」で勝手に引くことには厳しい制限があります。辞めたいときは、期間を決めていない契約なら、申し出から2週間でやめられます。会社が辞めさせるときは、30日前の予告が必要です。',
+          jr: '給料は、全部を、月1回以上、決まった日に。やめたいときは、言ってから2週間でやめられます。会社がやめさせるときは、30日前に言わなければなりません。',
+          en: 'Pay must come in full, to you, at least monthly, on a fixed day; “fines” docked for mistakes are tightly limited. To quit an open-ended contract, give two weeks’ notice. To dismiss you, the employer must give 30 days’ notice.',
+          mark: t('申し出から2週間でやめられます', '2週間でやめられます', 'give two weeks’ notice') },
+        { type: 'quiz', q: t('「代わりが見つかるまで辞めさせない」と言われた。', '「代わりが見つかるまでやめさせない」と言われた。', '“You can’t quit until we find a replacement.”'),
+          options: [
+            { ja: '見つかるまで働き続けるしかない', jr: '見つかるまで働く', en: 'Keep working until they do', correct: false,
+              why: t('期間を決めていない契約なら、申し出から2週間で辞められます。', '言ってから2週間でやめられます。', 'On an open-ended contract, two weeks’ notice is enough.') },
+            { ja: '期間の定めがなければ、申し出から2週間で辞められる', jr: '言ってから2週間でやめられる', en: 'Open-ended contract: two weeks’ notice and you can leave', correct: true,
+              why: t('そのとおり。辞める日を書いた紙やメールを残しておくと安心です。', 'そのとおり。やめる日を書いた紙やメールを残しておこう。', 'Right. Keep a dated note or email of your notice.') },
+            { ja: '無断で行かなくなる', jr: '何も言わずに行かなくなる', en: 'Just stop showing up', correct: false,
+              why: t('トラブルのもと。ちゃんと伝えて2週間、が守られる形です。', 'トラブルのもと。ちゃんと伝えて2週間。', 'Asking for trouble. Give notice, wait two weeks: that’s the protected way.') }
+          ] },
+        { type: 'text', head: t('困ったら、無料で聞ける', 'こまったら、無料で聞ける', 'Free help when something’s off'),
+          ja: '労働局・労働基準監督署の「総合労働相談コーナー」は無料。電話なら「労働条件相談ほっとライン」0120-811-610（平日17〜22時、土日祝9〜21時）。給料が払われないときは、労働基準監督署へ。',
+          jr: 'こまったら「労働条件相談ほっとライン」0120-811-610（無料）。夜や土日も聞けます。給料が払われないときは、労働基準監督署へ。',
+          en: 'The labour bureau’s consultation corners are free. By phone: the working-conditions hotline 0120-811-610 (weekdays 5–10 pm, weekends and holidays 9 am–9 pm). For unpaid wages, go to the Labour Standards Inspection Office.',
+          mark: t('0120-811-610', null, '0120-811-610') }
+      ],
+      recap: [
+        t('条件は、紙でもらう。', '条件は、紙でもらう。', 'Get your terms in writing.'),
+        t('東京の時給は1,280円から。有給はアルバイトにも。', '東京の時給は1,280円から。有給はアルバイトにも。', 'Tokyo: ¥1,280/hour minimum. Paid leave for part-timers too.'),
+        t('辞めるのは、申し出から2週間。', 'やめるのは、言ってから2週間。', 'Quitting takes two weeks’ notice.')
+      ],
+      related: ['tokyo-rodo-sodan', 'rodo-hotline', 'hellowork-wakamono', 'tokyo-shigoto-young'],
+      sources: [S.checkParttime, S.checkHotline, S.minWage],
+      checked: CHECKED2
+    },
+
+    /* 17 ---------------------------------------------------------------- ネット通販・定期購入 */
+    {
+      id: 'teiki-kounyu', order: 17, level: 'all', minutes: 2, cat: 'procedures',
+      title: t('ネットで買う前の、3秒', 'ネットで買う前に', 'Three seconds before you buy online'),
+      lead: t('ネット通販にはクーリング・オフがありません。「初回○円」の定期購入も多い。最終確認画面を見るくせをつけよう。',
+        'ネットで買ったものは、返せないことが多いです。買う前の「最終確認画面」をよく見よう。',
+        'Online shopping has no cooling-off period, and “first box ¥○” subscriptions are common. Make reading the final confirmation screen a habit.'),
+      steps: [
+        { type: 'text', head: t('通販にクーリング・オフはない', 'ネット通販にクーリング・オフはない', 'No cooling-off for online shopping'),
+          ja: '訪問販売などとちがい、ネット通販には、理由なしで取り消せる「クーリング・オフ」がありません。返品できるかどうかは、お店が決めた「返品特約」しだい。表示がなければ、商品が届いてから8日以内なら返品できます（送料は自分）。',
+          jr: 'ネットで買ったものは、お店が「返品できる」と書いているときだけ返せます。書いてなければ、とどいてから8日以内。',
+          en: 'Unlike door-to-door sales, online shopping has no cooling-off right. Whether you can return something depends on the shop’s stated returns policy. If none is shown, you may return within 8 days of delivery, paying the postage yourself.',
+          mark: t('「返品特約」しだい', '「返品できる」と書いているときだけ', 'the shop’s stated returns policy') },
+        { type: 'text', head: t('「初回980円」のうら', '「はじめは980円」のうら', 'Behind “first box ¥980”'),
+          ja: '「初回980円」「定期縛りなし」の広告から、1回だけ買うつもりで注文したら、2回目から高額の定期購入だった、という相談が多く寄せられています。例：1箱のつもりが、3か月ごとに6箱・約2万円。',
+          jr: '「はじめは980円」の広告で1回だけ買うつもりが、2回目から高いお金がかかる「定期購入」だった、という相談が多いです。',
+          en: 'Many complaints start with an ad for “first box ¥980” or “no commitment”: you order once, and it turns out to be a subscription with expensive later deliveries. One case: one box intended, six boxes every three months at about ¥20,000.',
+          mark: t('2回目から高額の定期購入だった', '2回目から高いお金がかかる', 'turns out to be a subscription') },
+        { type: 'text', head: t('最終確認画面で見る4つ', '最終確認画面で見る4つ', 'Four things on the final screen'),
+          ja: '注文ボタンの前の「最終確認画面」には、定期購入かどうか・回数や期間・支払う総額・解約の方法を表示することが法律で決まっています。ここをスクリーンショットで残しておきます。表示がなかったり、まぎらわしかったりしたら、申し込みを取り消せることがあります。',
+          jr: '注文ボタンの前の画面で、「定期かどうか」「何回」「ぜんぶでいくら」「やめ方」を見ます。スクショで残しておこう。',
+          en: 'The screen before the order button must by law show whether it is a subscription, how many times or how long, the total you will pay, and how to cancel. Screenshot it. If it was missing or misleading, you may be able to void the order.',
+          mark: t('表示することが法律で決まっています', 'スクショで残しておこう', 'must by law show') },
+        { type: 'quiz', q: t('SNSの広告「初回500円・いつでも解約OK」。押す前に何をする？', 'SNSの広告「はじめは500円・いつでもやめられる」。押す前に？', 'An ad: “First box ¥500, cancel any time.” Before tapping?'),
+          options: [
+            { ja: '500円なら安いので、すぐ注文', jr: '500円なら安いので注文', en: '¥500 is cheap, order now', correct: false,
+              why: t('安く見せる広告ほど、最終確認画面を見ます。', '安く見える広告ほど、最終確認画面を見る。', 'The cheaper it looks, the harder you read the final screen.') },
+            { ja: '最終確認画面で、定期かどうか・総額・解約方法を見てスクショ', jr: '最終確認画面で、定期かどうか・いくら・やめ方を見てスクショ', en: 'Check the final screen for subscription, total and cancellation, and screenshot it', correct: true,
+              why: t('そのとおり。「いつでも解約OK」でも、解約は電話のみ・期間限定のことがあります。', 'そのとおり。「いつでもやめられる」でも、電話だけ・期間だけのことがあります。', 'Right. “Cancel any time” can mean phone only, within a narrow window.') },
+            { ja: '友だちに聞く', jr: '友だちに聞く', en: 'Ask a friend', correct: false,
+              why: t('聞くのはいいけど、答えは最終確認画面にあります。', '聞くのはいいけど、答えは最終確認画面にあります。', 'Fine, but the answer is on the final screen.') }
+          ] },
+        { type: 'text', head: t('解約できないとき', 'やめられないとき', 'When you can’t cancel'),
+          ja: '解約の電話がつながらないときは、期間内に何度もかけた発信履歴を残して、期間が過ぎても交渉を続けます。商品を返すだけでは解約になりません。困ったら消費者ホットライン188（いやや）へ。近くの消費生活センターにつながります。',
+          jr: '解約の電話がつながらないときは、かけた記録を残して、188に電話。消費生活センターにつながります。',
+          en: 'If the cancellation line never answers, keep your call log as proof you tried within the window and keep negotiating after it. Returning the goods alone does not cancel. Stuck? Call the consumer hotline 188 to reach your local consumer centre.',
+          mark: t('188', null, '188') },
+        { type: 'quiz', q: t('届いた服がイメージとちがう。返せる？', 'とどいた服がイメージとちがう。返せる？', 'The clothes that arrived aren’t what you pictured. Return them?'),
+          options: [
+            { ja: 'クーリング・オフでいつでも返せる', jr: 'いつでも返せる', en: 'Cooling-off: always', correct: false,
+              why: t('通販にはクーリング・オフがありません。', 'ネット通販にクーリング・オフはありません。', 'There’s no cooling-off for online orders.') },
+            { ja: 'お店の返品特約しだい。表示がなければ届いて8日以内', jr: 'お店が決めた返品のルールしだい。書いてなければ8日以内', en: 'Depends on the shop’s policy; if none shown, within 8 days', correct: true,
+              why: t('そのとおり。買う前に「返品」の条件も見ておくと安心。', 'そのとおり。買う前に「返品」のところも見ておこう。', 'Right. Check the returns terms before you buy.') },
+            { ja: '絶対に返せない', jr: 'ぜったい返せない', en: 'Never', correct: false,
+              why: t('返品特約があれば、その条件で返せます。', '返品のルールがあれば、返せます。', 'If the shop has a returns policy, you can, on its terms.') }
+          ] }
+      ],
+      recap: [
+        t('通販にクーリング・オフはない。返品特約を見る。', 'ネット通販にクーリング・オフはない。返品のルールを見る。', 'No cooling-off online. Read the returns policy.'),
+        t('「初回○円」は、定期購入かどうかを最終確認画面で。', '「はじめは○円」は、定期かどうかを最終確認画面で。', '“First box ¥○”: check the final screen for a subscription.'),
+        t('解約できなければ、188。', 'やめられなければ、188。', 'Can’t cancel? Call 188.')
+      ],
+      related: ['shohisha-188', 'tokyo-shohi-center'],
+      sources: [S.caaMail, S.kokusenTeiki],
+      checked: CHECKED2
+    },
+
+    /* 18 ---------------------------------------------------------------- 中学生：ゲーム課金 */
+    {
+      id: 'jr-game-kakin', order: 18, level: 'jr', minutes: 2, cat: 'money',
+      title: t('ゲームの課金は「契約」', 'ゲームの課金って、なに？', 'In-game purchases are contracts'),
+      lead: t('アイテムやガチャにお金を使うのは、お店で買うのと同じ契約。18歳になる前と後で、ルールが変わります。',
+        'ゲームでお金を使うのは、お店で買うのと同じ。18歳の前と後で、ルールがちがいます。',
+        'Paying for items or loot boxes is a contract like buying in a shop. The rules change at 18.'),
+      steps: [
+        { type: 'text', head: t('無料のゲームでも、課金は買い物', 'ゲームはタダでも、課金は買い物', 'Free game, real purchase'),
+          ja: 'ゲーム自体が無料でも、アイテムやガチャにお金を払うのは「買い物の契約」。クレジットカードやキャリア決済（スマホ代と一緒に請求）だと、その場でお金が減って見えないので、気づいたら高額、が起きやすいです。',
+          jr: 'ゲームはタダでも、アイテムやガチャにお金を払うのは「買い物」。カードやスマホ代と一緒の支払いだと、お金がへって見えないので、気づいたら高い金額に、がおきやすいです。',
+          en: 'Even in a free game, paying for items or loot boxes is a purchase. With a credit card or carrier billing (added to the phone bill) you don’t see money leave, so “suddenly it’s a huge amount” happens easily.',
+          mark: t('気づいたら高額、が起きやすいです', '気づいたら高い金額に', '“suddenly it’s a huge amount” happens easily') },
+        { type: 'text', head: t('18歳になる前は、取り消せることがある', '18歳の前は、取り消せることがある', 'Before 18, it can be undone'),
+          ja: '18歳未満の人が親（保護者）の同意なしに結んだ契約は、法律で、原則として取り消せます。ゲームの課金も同じです。ただし、ネットのゲームでは「本当に未成年が使った」と証明するのがむずかしく、必ず取り消せるわけではありません。',
+          jr: '18歳より前に、親の「いいよ」なしでした契約は、原則、取り消せます。でも、ゲームでは「子どもが使った」とわかりにくいので、かならず取り消せるわけではありません。',
+          en: 'Before 18, a contract made without a parent’s or guardian’s consent can in principle be cancelled, and that includes game purchases. But online it is hard to prove a minor made it, so cancellation is not guaranteed.',
+          mark: t('原則として取り消せます', '原則、取り消せます', 'can in principle be cancelled') },
+        { type: 'compare', head: t('取り消せる・取り消せない', '取り消せる・取り消せない', 'Undoable, or not'),
+          left: { title: t('取り消せることがある', '取り消せることがある', 'May be undone'), tone: 'free',
+            points: [t('自分の年齢を正しく入れていた', '年齢を正しく入れていた', 'You entered your real age'), t('親の同意なしの課金', '親の「いいよ」なしの課金', 'No parental consent')] },
+          right: { title: t('取り消せないことが多い', '取り消せないことが多い', 'Usually not'), tone: 'loan',
+            points: [t('年齢を聞かれて「20歳以上」を選んだ', '「20歳以上」を選んだ', 'You picked “20 or over”'), t('親のアカウントや端末から課金した', '親のアカウントや端末で課金した', 'Charged through a parent’s account or device'), t('18歳になってからの課金', '18歳になってからの課金', 'Purchases after turning 18')] },
+          note: t('オンラインゲームの課金などの相談は、2025年度に全国で6,234件ありました。', 'ゲームの課金の相談は、1年で6,000件以上あります。', 'Consumer centres took 6,234 complaints about online game charges in FY2025.') },
+        { type: 'quiz', q: t('年齢を聞かれた。本当は14歳。どうする？', '年齢を聞かれた。本当は14歳。どうする？', 'The game asks your age. You’re 14.'),
+          options: [
+            { ja: '「20歳以上」を選んで進む', jr: '「20歳以上」を選ぶ', en: 'Pick “20 or over” and continue', correct: false,
+              why: t('年齢を偽ると、あとで取り消せなくなります。', '年齢をうそにすると、あとで取り消せなくなります。', 'Lying about your age kills the right to cancel later.') },
+            { ja: '本当の年齢を入れる', jr: '本当の年齢を入れる', en: 'Enter your real age', correct: true,
+              why: t('そのとおり。年齢が正しければ、もし困ったときに「未成年の契約」として取り消せる可能性が残ります。', 'そのとおり。正しい年齢なら、こまったときに取り消せるかもしれません。', 'Right. With your real age on record, the minor’s cancellation right stays open.') },
+            { ja: '親のアカウントで入る', jr: '親のアカウントで入る', en: 'Log in with a parent’s account', correct: false,
+              why: t('親が買ったことになり、取り消しがむずかしくなります。', '親が買ったことになって、取り消しがむずかしくなります。', 'It looks like the parent bought it, which makes cancelling hard.') }
+          ] },
+        { type: 'text', head: t('使う前に、決めておく', '使う前に、決めておく', 'Decide before you spend'),
+          ja: '「月にいくらまで」を決めて、プリペイドカード（コンビニで買える）で払うと、決めた額より多くは使えません。カードやキャリア決済を端末に登録したままにしないこと。施設の職員さんや里親さんと、ルールを先に決めておくと安心です。',
+          jr: '「月にいくらまで」を決めて、コンビニのプリペイドカードで払うと、それより多くは使えません。カードは端末に登録したままにしない。先に大人とルールを決めておこう。',
+          en: 'Set a monthly limit and pay with a prepaid card from a convenience store: you can’t spend more than you loaded. Don’t leave a credit card or carrier billing registered on the device. Agree the rules with your carer first.',
+          mark: t('決めた額より多くは使えません', 'それより多くは使えません', 'you can’t spend more than you loaded') },
+        { type: 'quiz', q: t('気づいたら、スマホ代の請求が5万円ふえていた。', '気づいたら、スマホ代が5万円ふえていた。', 'Your phone bill is suddenly ¥50,000 higher.'),
+          options: [
+            { ja: 'だまって自分でなんとかする', jr: 'だまって自分でなんとかする', en: 'Keep quiet and handle it alone', correct: false,
+              why: t('ひとりで抱えない。早いほど対応できます。', 'ひとりでなやまない。早いほどなんとかなります。', 'Don’t carry it alone. Sooner is better.') },
+            { ja: 'すぐ大人に話して、支払先に「未成年の課金」と申し出る。188にも相談できる', jr: 'すぐ大人に話して、「子どもの課金」と申し出る。188にも相談できる', en: 'Tell an adult now and report it as a minor’s purchase; 188 can help', correct: true,
+              why: t('そのとおり。まず支払いをしたプラットフォーム（アプリストアなど）に申し出て、ダメならゲーム会社へ。消費者ホットライン188も使えます。', 'そのとおり。まずアプリストアなどに申し出て、ダメならゲーム会社へ。188にも相談できます。', 'Right. Start with the platform you paid (the app store), then the game company. The consumer hotline 188 can help too.') },
+            { ja: '取り消せないのであきらめる', jr: 'あきらめる', en: 'Give up, it can’t be undone', correct: false,
+              why: t('必ずではないけれど、取り消せることがあります。あきらめる前に相談。', 'かならずではないけれど、取り消せることがあります。', 'Not guaranteed, but often possible. Ask before giving up.') }
+          ] }
+      ],
+      recap: [
+        t('課金は、買い物の契約。', '課金は、買い物。', 'Charges are purchases, that is, contracts.'),
+        t('18歳前の課金は取り消せることがある。年齢は正しく。', '18歳の前なら取り消せることがある。年齢は正しく。', 'Before 18 they may be undone; enter your real age.'),
+        t('上限を決めて、プリペイドで。', '上限を決めて、プリペイドで。', 'Set a limit and use prepaid.')
+      ],
+      related: ['shohisha-188', 'childline', 'kodomo-sos'],
+      sources: [S.mojSeinen, S.kokusenGame, S.caa18],
+      checked: CHECKED2
+    },
+
+    /* 19 ---------------------------------------------------------------- 引っ越しの手続き */
+    {
+      id: 'hikkoshi-tetsuzuki', order: 19, level: 'hs', minutes: 3, cat: 'procedures',
+      title: t('引っ越したら、14日以内に', '引っ越したあとの手つづき', 'After moving: the 14-day list'),
+      lead: t('住む場所が変わると、役所・カード・郵便の手続きがまとめて来ます。順番と期限を知っていれば、1日で終わります。',
+        '引っ越すと、役所やカードや郵便の手つづきがあります。順番がわかれば1日でおわります。',
+        'A new address brings a bundle of paperwork: city office, cards, mail. Know the order and deadlines and it takes one day.'),
+      steps: [
+        { type: 'text', head: t('まず、転入届（14日以内）', 'まず、転入届（14日以内）', 'First, the move-in notice (14 days)'),
+          ja: '新しい区市町村の窓口で、引っ越した日から14日以内に転入届を出します。持ち物は、前の住所地でもらう「転出証明書」（マイナンバーカードで転出届をした人はカード本体）と、本人確認書類。14日を過ぎると、理由を聞かれます。',
+          jr: '新しい区市町村の役所で、引っ越した日から14日以内に「転入届」を出します。持ち物は、転出証明書（またはマイナンバーカード）と、本人確認書類。',
+          en: 'File a move-in notice at your new city office within 14 days of moving. Bring the move-out certificate from your old city (or your My Number card if you filed the move-out with it) and ID. After 14 days you will be asked why.',
+          mark: t('引っ越した日から14日以内', '引っ越した日から14日以内', 'within 14 days of moving') },
+        { type: 'text', head: t('転出届は、スマホでできる', '転出届は、スマホでできる', 'The move-out notice can be done on your phone'),
+          ja: '前の区市町村への「転出届」は、マイナンバーカードがあればマイナポータルからオンラインで出せます（2023年2月から全国）。前の役所に行かなくてすみます。転入届は、新しい役所の窓口で出します。',
+          jr: '前の役所への「転出届」は、マイナンバーカードがあればスマホから出せます。転入届は、新しい役所の窓口で。',
+          en: 'The move-out notice to your old city can be filed online via Mynaportal with your My Number card (nationwide since Feb 2023), so no trip to the old office. The move-in notice is done in person at the new office.',
+          mark: t('マイナポータルからオンラインで出せます', 'スマホから出せます', 'filed online via Mynaportal') },
+        { type: 'text', head: t('マイナンバーカードの住所も、その場で', 'マイナンバーカードの住所も、その場で', 'Update your My Number card there too'),
+          ja: '転入届と一緒に、マイナンバーカードの住所を書きかえる手続きをします。転入届から90日以内にしないとカードが失効します。4桁の暗証番号が必要。住所が変わると署名用の電子証明書は失効するので、使う人は再発行も。手数料は無料です。',
+          jr: '転入届と一緒に、マイナンバーカードの住所も書きかえます。90日以内にしないと、カードが使えなくなります。4桁の暗証番号が必要。',
+          en: 'At the same visit, have your My Number card’s address updated; if not done within 90 days of the move-in notice the card expires. You need your 4-digit PIN. A change of address voids the signature certificate, so renew it if you use it. No fee.',
+          mark: t('90日以内にしないとカードが失効します', '90日以内にしないと、カードが使えなくなります', 'if not done within 90 days of the move-in notice the card expires') },
+        { type: 'quiz', q: t('引っ越して10日。まだ何もしていない。', '引っ越して10日。まだ何もしていない。', 'Ten days since moving. Nothing done yet.'),
+          options: [
+            { ja: 'まだ4日ある。転入届とマイナンバーカードの住所変更を一緒に', jr: 'まだ4日ある。転入届とカードの住所変更を一緒に', en: 'Four days left: move-in notice and card update together', correct: true,
+              why: t('そのとおり。転出証明書（またはカード）と本人確認書類、4桁の暗証番号を持って窓口へ。', 'そのとおり。転出証明書（またはカード）、本人確認書類、暗証番号を持って窓口へ。', 'Right. Bring the move-out certificate (or your card), ID and your 4-digit PIN.') },
+            { ja: '落ち着いてから、来月', jr: '来月でいい', en: 'Next month, once settled', correct: false,
+              why: t('14日を過ぎます。カードも失効することがあります。', '14日をすぎます。カードも使えなくなることがあります。', 'That passes the 14 days, and the card can expire.') },
+            { ja: 'ネットで転入届を出す', jr: 'ネットで転入届を出す', en: 'File the move-in notice online', correct: false,
+              why: t('ネットで出せるのは転出届。転入届は窓口です。', 'ネットで出せるのは転出届。転入届は窓口です。', 'Only the move-out notice is online. Move-in is in person.') }
+          ] },
+        { type: 'text', head: t('郵便は、1年間ただで転送', '郵便は、1年間ただで転送', 'Mail is forwarded free for a year'),
+          ja: '郵便局に「転居届」を出すと、古い住所に来た郵便が1年間、無料で新しい住所に届きます（届出日から1年）。スマホの「e転居」なら24時間いつでも。登録まで3〜7営業日かかるので、引っ越しが決まったら早めに。',
+          jr: '郵便局に「転居届」を出すと、前の住所に来た手紙が1年間、ただで新しい住所にとどきます。スマホからもできます。',
+          en: 'File a change of address with Japan Post and mail sent to your old address is forwarded free for one year from the filing date. Use the e-tenkyo app any time; registration takes 3–7 business days, so do it early.',
+          mark: t('1年間、無料で', '1年間、ただで', 'forwarded free for one year') },
+        { type: 'text', head: t('あとは、住所を使っているところ', 'あとは、住所を教えたところ', 'Then everyone who has your address'),
+          ja: '国民健康保険と国民年金は、転入届のときに窓口で。銀行、スマホ、奨学金、バイト先、通っている学校にも新しい住所を伝えます。1つずつ消していけば、1日で終わります。',
+          jr: '健康保険と年金は、転入届のときに。銀行・スマホ・奨学金・バイト先・学校にも、新しい住所を伝えます。',
+          en: 'National health insurance and pension: at the same counter as the move-in notice. Then tell your bank, phone carrier, scholarship office, employer and school. Tick them off one by one.' },
+        { type: 'quiz', q: t('前の住所に届く郵便、どうなる？', '前の住所にとどく手紙、どうなる？', 'What happens to mail sent to your old address?'),
+          options: [
+            { ja: '自動で新しい住所に届く', jr: '自動で新しい住所にとどく', en: 'It follows you automatically', correct: false,
+              why: t('郵便局への転居届が必要です。', '郵便局への転居届がいります。', 'You have to file a change of address with Japan Post.') },
+            { ja: '転居届を出せば、1年間無料で転送される', jr: '転居届を出せば、1年間ただで転送', en: 'With a change-of-address form, forwarded free for a year', correct: true,
+              why: t('そのとおり。届出日から1年。登録に3〜7営業日かかります。', 'そのとおり。出した日から1年。', 'Right: one year from the filing date. Allow 3–7 business days.') },
+            { ja: 'ずっと転送される', jr: 'ずっと転送される', en: 'Forwarded forever', correct: false,
+              why: t('1年です。続けたいときは、もう一度転居届を出します。', '1年です。つづけたいときは、もう一度出します。', 'One year. To continue, file again.') }
+          ] }
+      ],
+      recap: [
+        t('転入届は14日以内。転出届はスマホで。', '転入届は14日以内。転出届はスマホで。', 'Move-in notice within 14 days; move-out online.'),
+        t('マイナンバーカードの住所も、その場で（90日以内）。', 'マイナンバーカードの住所も、その場で。', 'Update your My Number card there (within 90 days).'),
+        t('郵便は、転居届で1年無料転送。', '郵便は、転居届で1年ただで転送。', 'Mail: free forwarding for a year.')
+      ],
+      related: ['hikkoshi-todoke', 'mynumber-card', 'kokuho'],
+      sources: [S.sagamiharaTennyu, S.digitalMove, S.bunkyoMyna, S.jpTenkyo],
+      checked: CHECKED2
     }
   ];
 })();
