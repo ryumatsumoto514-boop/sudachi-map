@@ -7097,8 +7097,15 @@ body.lang-en .v-plan .pi-t.is-sign { font-size: 11px; }
   .v-plan .pt-cd { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "l l" "d e"; align-content: start; }
   .v-plan .pt-st { grid-column: 2; margin-left: var(--s-6); padding-top: var(--s-4); }
   .v-plan .pt-acts { display: none; }               /* the side column has 職員に見せる · カレンダー; the line is right there */
-  .v-plan .plan-top.is-start { display: block; max-width: var(--read-w); }
-  .v-plan .pt-intro-svg { max-width: 560px; }
+  /* the start (Q1 / Q2): the question on the left, the road and its line on the right (Ryu, 2026-11-02: the right
+     half was empty) */
+  .v-plan .plan-top.is-start { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); column-gap: var(--s-10); align-items: center; max-width: none; padding-top: var(--s-6); }
+  .v-plan .plan-top.is-start > * { grid-column: 1; }
+  .v-plan .plan-top.is-start > .pt-intro { grid-column: 2; grid-row: 1 / span 4; margin: 0; padding-left: var(--s-8); border-left: 1px solid var(--rule); }
+  .v-plan .plan-top.is-start .pt-intro-svg { max-width: none; margin-left: 0; margin-bottom: var(--s-5); }
+  .v-plan .plan-top.is-start .pt-intro-l { font-size: var(--t-lead); }
+  .v-plan .plan-top.is-start .pt-opts, .v-plan .plan-top.is-start .pt-opts-2 { grid-template-columns: minmax(0, 1fr); }
+  .v-plan .plan-top.is-start .pt-q { font-size: var(--t-h2); }
   .v-plan .pt-cd.is-ask { border-right: 0; }
   .v-plan .rm-fold, .v-plan .rm-fold-list, .v-plan .rm-fold-list.is-closed { display: contents; }
   .v-plan .rm-fold-head, .v-plan .rm-label, .v-plan .rm-why, .v-plan .rm-next, .v-plan .rm-head-in > .rm-name { display: none; }
@@ -8103,4 +8110,33 @@ html.m-reduce .v-ask .ask-best.is-new::before { animation: none; }
 @media (min-width: 900px) {
   .v-ask .ask { gap: var(--s-6); }
   .v-ask .ask-best { column-gap: 20px; }
+}
+
+/* desktop (≥1100): two columns — the question, the box and the answer on the left; the examples (as a list) and the
+   other ways in a side column on the right (Ryu, 2026-11-02: the right half was empty). The phone copies of both,
+   inside #ask-out, are hidden here; the side column is hidden below. */
+.v-ask .ask-side { display: none; }
+@media (min-width: 1100px) {
+  .v-ask .ask { grid-template-columns: minmax(0, 1fr) 320px; column-gap: var(--s-10); align-items: start; }
+  .v-ask .ask > .ask-head, .v-ask .ask > .ask-box, .v-ask .ask > .ask-out, .v-ask .ask > [role="status"] { grid-column: 1; }
+  .v-ask .ask > .ask-box { margin-left: 0; margin-right: 0; padding-left: 0; padding-right: 0; }
+  .v-ask .ask-side {
+    display: grid; gap: var(--s-8); align-content: start; grid-column: 2; grid-row: 1 / span 4; align-self: start;
+    position: sticky; top: calc(var(--appbar-h) + var(--s-8)); padding-left: var(--s-8); border-left: 1px solid var(--rule);
+  }
+  .v-ask .ask-side .ask-chips { gap: var(--s-2); }
+  .v-ask .ask-side .chips { display: grid; gap: 0; border-top: 1px solid var(--rule); }
+  .v-ask .ask-side .chip {
+    justify-content: space-between; width: 100%; min-height: 48px; padding: 0 4px 0 0; border-radius: 0; box-shadow: none;
+    border-bottom: 1px solid var(--rule); font-size: var(--fs-base); font-weight: 700; white-space: normal;
+  }
+  .v-ask .ask-side .chip::before { content: "\2192"; order: 2; font-family: var(--font-num); font-weight: 500; color: var(--ink-3); transition: transform var(--dur-quick) var(--ease-standard); }
+  .v-ask .ask-side .chip:hover { background: var(--paper-2); }
+  .v-ask .ask-side .chip:hover::before { transform: translateX(3px); color: var(--ink); }
+  .v-ask .ask-side .ask-ways .list { border-top: 0; }
+  /* the start screen keeps ほかのさがし方 under the box (the left column would be bare); with an answer on the left,
+     it moves to the side column */
+  .v-ask .ask-out .ask-start > .ask-chips, .v-ask .ask-out > .ask-starters { display: none; }
+  .v-ask .ask-out.is-empty ~ .ask-side .ask-ways { display: none; }
+  .v-ask .ask-out .ask-start > .ask-ways { margin-top: var(--s-2); }
 }

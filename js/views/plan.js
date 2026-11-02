@@ -1214,7 +1214,8 @@
     return model.track === 'junior' ? (!answers().stage && !state().hsDate) : (!!model.assumed && !dateSeen());
   }
   function askHtml(model) {
-    return '<section class="plan-top is-start is-start-2" id="plan-top" aria-labelledby="plan-top-q2">' + askDateHtml(model) +
+    return '<section class="plan-top is-start is-start-2" id="plan-top" aria-labelledby="plan-top-q2">' +
+      '<div class="pt-intro">' + introSvg() + '<p class="pt-intro-l">' + esc(t('plan.intro.line')) + '</p></div>' + askDateHtml(model) +
       '<button type="button" class="pt-back" data-act="plan-start-back" data-press>' + arrowBack() + '<span>' + esc(t('plan.start.back')) + '</span></button></section>';
   }
   function arrowBack() { return '<span class="pt-back-a" aria-hidden="true">\u2190</span>'; }

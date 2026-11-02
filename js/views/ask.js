@@ -297,13 +297,19 @@
   }
   function startHtml(enter) {
     return '<div class="ask-start">' +
-      chipsHtml(startersList(), t('ask.try'), 'ask-starters', enter ? { reveal: 200 } : null) +
-      '<div class="ask-ways"' + (enter ? ' data-reveal="up" data-reveal-delay="360"' : '') + '><p class="ask-chips-k">' + esc(t('ask.ways')) + '</p><div class="list">' +
-        SM.ui.listItem({ title: t('ask.wayQ'), href: '#/find/q/1', icon: 'list' }) +
-        SM.ui.listItem({ title: t('ask.wayCats'), href: '#/find', icon: 'search' }) +
-      '</div></div></div>';
+      chipsHtml(startersList(), t('ask.try'), 'ask-starters', enter ? { reveal: 200 } : null) + waysHtml(enter) + '</div>';
   }
 
+  // the desktop side column: the same examples as a list, then the other ways (never shown together with startHtml)
+  function sideHtml() {
+    return chipsHtml(startersList(), t('ask.try'), 'ask-side-ex') + waysHtml(false);
+  }
+  function waysHtml(enter) {
+    return '<div class="ask-ways"' + (enter ? ' data-reveal="up" data-reveal-delay="360"' : '') + '><p class="ask-chips-k">' + esc(t('ask.ways')) + '</p><div class="list">' +
+        SM.ui.listItem({ title: t('ask.wayQ'), href: '#/find/q/1', icon: 'list' }) +
+        SM.ui.listItem({ title: t('ask.wayCats'), href: '#/find', icon: 'search' }) +
+      '</div></div>';
+  }
   /* ------------------------------------------------------------------ the whole answer */
   function orderedGroups(res) {
     var best = res.best ? res.best.key : null;
@@ -520,7 +526,9 @@
     var res = q.trim() ? run(q.trim()) : null;
     mem.sig = sig(res);
     if (res && mem.openQ !== res.n) { mem.open = {}; mem.openQ = res.n; }
-    return '<div class="ask">' +
+    // Ryu (2026-11-02): the desktop used only the left half; the page is wide now, with the examples and the other
+    // ways in a side column (ask.css ≥1100 hides the phone copies inside #ask-out, and the side column below 1100)
+    return '<div class="ask wide-layout">' +
       // the entrance (navigation): the title line, the promise, the box rising, then the starter words one by one
       '<header class="ask-head">' +
         '<h1 class="ask-h1" data-reveal="line">' + esc(t('ask.h1')) + '</h1>' +
@@ -532,6 +540,7 @@
       '</div>' +
       '<p class="sr-only" role="status" aria-live="polite" aria-atomic="true" id="ask-live"></p>' +
       '<div class="ask-out' + (res ? '' : ' is-empty') + '" id="ask-out"' + (res ? ' data-reveal="up" data-reveal-delay="180"' : '') + '>' + (res ? resultsHtml(res) : startHtml(true)) + '</div>' +
+      '<aside class="ask-side" aria-label="' + esc(t('ask.try')) + '" data-reveal="fade" data-reveal-delay="240">' + sideHtml() + '</aside>' +
     '</div>';
   }
 
