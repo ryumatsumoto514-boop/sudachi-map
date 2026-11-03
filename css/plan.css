@@ -330,7 +330,6 @@ body.lang-en .tl-item .tl-seal { font-size: var(--t-micro); padding: 0 4px; }
 .v-plan .plan-show .plan-side-k { padding-bottom: var(--s-2); border-bottom: 2px solid var(--ink); color: var(--ink); font-weight: 700; }
 .v-plan .plan-tools-list { border-top: 0; }
 .v-plan .plan-tools-list .list-item { min-height: 72px; }
-.v-plan .plan-show .list-ic { width: 24px; }
 .v-plan .plan-show .list-chev { color: var(--ink); }
 
 /* 保存した支援: compact program rows, each naming its station on the line, + remove */
@@ -498,7 +497,6 @@ body.lang-en .v-plan .pi-t.is-sign { font-size: 11px; }
 @keyframes pi-fade { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) {
   .v-plan .pi-fill, .v-plan .pi-st, .v-plan .pi-flag, .v-plan .pi-sign { animation: pi-fade 300ms ease both; stroke-dashoffset: 0; }
-}
 }
 .v-plan .plan-top.is-start { padding: var(--s-4) 0 var(--s-3); }
 .v-plan .pt-q { margin: 0 0 var(--s-3); font-family: var(--font-display); font-weight: 700; font-size: var(--t-h3); line-height: var(--lh-heading); color: var(--ink); }
@@ -969,4 +967,118 @@ body.lang-en .v-plan .pi-t.is-sign { font-size: 11px; }
 @media (min-width: 1100px) {
   .v-plan .rm-now-only > .rm-body-end { padding: 0 var(--s-8) 0 0; }
   .v-plan .rm-now-only.is-end > .rm-head:not(.is-static) { cursor: pointer; }
+}
+
+/* =====================================================================
+   v10 (SPEC-v10 "signs you press, paper you read"): what you press is a filled panel (no outline), what you read
+   sits on paper, the green line is the structure. Labels are 13px Plex 700 ink-2 (never small grey). No heavy
+   rule under the page title. Tokens only (dark mode follows).
+   ===================================================================== */
+.v-plan { --lbl: 0.8125rem; --lbl-ls: 0.06em; }
+/* labels: printed, not grey */
+.v-plan :is(.plan-track-cap, .pt-k, .rm-label, .sv-sug-k, .plan-side-k, .rm-tog, .rm-count-w, .pt-c > small),
+.tl-item .tl-dr-row > dt, .tl-item-prog .tl-saved-k, .tl-item-prog .tl-fact-k, .plan-saved-item .plan-saved-at {
+  font-family: var(--font-display); font-weight: 700; font-size: var(--lbl, 0.8125rem); letter-spacing: var(--lbl-ls, 0.06em); color: var(--ink-2);
+}
+.v-plan :is(.rm-date, .rm-box-d, .pt-cd-d, .rm-body-when, .sv-meta, .rm-count, .pt-c-of) { color: var(--ink-2); }
+.v-plan :is(.plan-note, .pt-hint, .rm-note, .rm-empty) { font-size: var(--t-meta); letter-spacing: var(--ls-body); color: var(--ink-2); }
+.v-plan .rm-label > span::after { display: none; }
+.v-plan .rm-label > span { display: inline-flex; align-items: center; gap: 8px; }
+.v-plan .rm-label > span::before { content: ""; width: 4px; height: 1em; background: var(--action); }
+
+/* ---------- the top card: no heavy rule under the title; the actions are a strip of filled sign panels ---------- */
+.v-plan .plan-top { border-top: 0; border-bottom: 0; }
+.v-plan .pt-cd { padding-top: var(--s-2); border-bottom: 0; }
+.v-plan .pt-cd-k { font-weight: 700; color: var(--ink); }
+.v-plan .pt-st { margin-top: var(--s-2); }
+.v-plan .pt-st::before { width: 4px; }
+.v-plan .pt-t-n > span { text-decoration-color: var(--action); }
+.v-plan .pt-acts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; border-top: 0; margin-top: var(--s-2); }
+.v-plan .pt-act, .v-plan .pt-act + .pt-act {
+  margin: 0; min-height: 56px; padding: var(--s-2) 6px; border: 0; border-radius: var(--r-ctl);
+  background: var(--paper-2); color: var(--ink); flex-direction: column; gap: 4px;
+}
+.v-plan .pt-act .icon { width: 20px; height: 20px; color: var(--ink); }
+@media (hover: hover) { .v-plan .pt-act:hover { background: var(--paper-3); } }
+.v-plan .pt-act:active { background: var(--paper-3); }
+@media (max-width: 359px) {
+  .v-plan .pt-acts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .v-plan .pt-act:nth-child(3) { grid-column: 1 / -1; border-top: 0; flex-direction: row; }
+}
+/* 日にちを決める / 変える: a filled panel */
+.v-plan .rm-edit { box-shadow: none; background: var(--paper-2); border-radius: var(--r-ctl); padding: 0 var(--s-4); }
+@media (hover: hover) { .v-plan .rm-edit:hover { background: var(--paper-3); } }
+.v-plan .rm-edit:active { background: var(--paper-3); }
+
+/* ---------- the first visit: the road is a full-bleed panel, the answers are filled panels ---------- */
+.v-plan .plan-top.is-start { padding: 0; }
+.v-plan .pt-intro {
+  margin: var(--s-2) calc(var(--gutter) * -1) var(--s-7); padding: var(--s-7) 0 var(--s-6);
+  background: var(--paper-2);
+}
+.v-plan .pt-intro-svg { width: 100%; max-width: none; margin: 0 0 var(--s-5); }
+.v-plan .pt-intro-l { padding: 0 var(--gutter); font-family: var(--font-body); font-size: var(--t-lead); line-height: var(--lh-meta); color: var(--ink); }
+.v-plan .pi-rail { stroke: var(--paper-3); stroke-width: 8; }
+.v-plan .pi-fill { stroke-width: 8; }
+.v-plan .pi-fade-a, .v-plan .pi-fade-b { stop-color: var(--paper-3); }
+.v-plan .pi-st.is-later, .v-plan .pi-sign rect { fill: var(--field); }
+.v-plan .pt-q { font-size: var(--t-h2); margin-bottom: var(--s-4); }
+.v-plan .pt-opts { gap: var(--s-2); }
+.v-plan .pt-opt {
+  min-height: 64px; padding: 0 var(--s-5); box-shadow: none; border-radius: var(--r-ctl);
+  background: var(--paper-2); color: var(--ink); font-size: var(--t-body);
+}
+.v-plan .pt-opt.is-quiet { box-shadow: none; background: var(--paper-2); color: var(--ink); font-weight: 500; }
+@media (hover: hover) { .v-plan .pt-opt:hover { background: var(--paper-3); } }
+.v-plan .pt-opt:active { background: var(--paper-3); }
+.v-plan .pt-back { color: var(--ink); }
+
+/* ---------- the road (phone): a thicker line, bigger stations, the open station's tasks on paper ---------- */
+@media (max-width: 1099px) {
+  .v-plan .rm-wrap { --ln: 6px; --mk: 14px; }
+  .v-plan .rm-st.is-current, .v-plan .rm-st.is-milestone { --mk: 22px; }
+  .v-plan .rm-mk { box-shadow: inset 0 0 0 2px var(--ink); background: var(--field); }
+  .v-plan .rm-head-in.is-compact > .rm-name, .v-plan .rm-fold-head .rm-head-in.is-compact > .rm-title { color: var(--ink); font-weight: 500; }
+  .v-plan .rm-st.is-open .rm-head-in.is-compact > .rm-name { font-weight: 700; }
+  .v-plan .rm-head-in.is-compact .rm-rel { color: var(--ink-2); }
+  .v-plan .rm-head-in.is-compact { min-height: 56px; }
+  .v-plan .rm-box > .rm-head-in { min-height: 56px; }
+  .v-plan .rm-box-k > .rm-title { font-weight: 700; }
+}
+.v-plan .rm-next { box-shadow: none; background: var(--ink); color: var(--paper); }
+/* task rows: 56px, the check is a white field with an ink frame (the one form control) */
+.tl-item .tl-row { min-height: 56px; }
+.tl-item .tl-box { box-shadow: inset 0 0 0 2px var(--ink); border-radius: var(--r-ctl); }
+.tl-item .tl-item-aside { color: var(--ink-2); }
+.tl-item .tl-who { box-shadow: none; background: var(--paper-2); border-radius: var(--r-ctl); }
+.tl-item .tl-say { border-left: 4px solid var(--action); background: var(--paper-2); padding: var(--s-2) var(--s-3); }
+.tl-item .tl-seal { box-shadow: inset 0 0 0 2px currentColor; }
+.v-plan .tl-na-t, .v-plan .tl-na-t .arrow { color: var(--ink-2); }
+.v-plan .tl-related-k { color: var(--ink); }
+.v-plan .sv-row.is-sug .sv-name { color: var(--ink); }
+.v-plan .sv-row.is-sug .cat-icon { opacity: 1; }
+.v-plan .sv-row.is-sug .sv-main > .arrow { color: var(--ink); }
+
+/* ---------- desktop: section heads take the green tick, not an ink rule ---------- */
+@media (min-width: 1100px) {
+  .v-plan .rm-wrap { --ln: 8px; --mk: 16px; }
+  .v-plan .rm-st.is-current, .v-plan .rm-st.is-milestone { --mk: 24px; }
+  .v-plan .rm-mk { box-shadow: inset 0 0 0 2px var(--ink); background: var(--field); }
+  .v-plan .rm-rel { color: var(--ink-2); font-weight: 700; }
+  .v-plan .rm-head-in.is-compact .rm-rel { color: var(--ink-2); }
+  .v-plan .rm-head-in.has-short > .rm-short { color: var(--ink-2); }
+  .v-plan .rm-body-title { border-bottom: 0; padding-bottom: 0; }
+  .v-plan .rm-body-title::before { content: ""; flex: none; width: 4px; height: 1em; background: var(--action); }
+  .v-plan .rm-body-title:has(> .rm-now)::before { display: none; }
+  .v-plan .tl-items { border-top: 1px solid var(--rule); margin-top: var(--s-3); }
+  .v-plan .plan-show .plan-side-k { display: flex; align-items: center; gap: 10px; padding-bottom: var(--s-3); border-bottom: 0; color: var(--ink); font-size: var(--t-h3); letter-spacing: var(--ls-0); }
+  .v-plan .plan-show .plan-side-k::before { content: ""; flex: none; width: 4px; height: 1em; background: var(--action); }
+  .v-plan .plan-tools-list .list-item { background: var(--paper-2); border: 0; padding-inline: var(--s-4); }
+  .v-plan .plan-tools-list .list-item + .list-item { margin-top: 4px; }
+  .v-plan .pt-cd { border-right: 0; }
+  .v-plan .pt-st { margin-top: 0; }
+  .v-plan .pt-acts { display: none; }
+  .v-plan .plan-top.is-start > .pt-intro { margin: 0; padding: var(--s-9) var(--s-7); border-left: 0; }
+  .v-plan .plan-top.is-start .pt-intro-l { padding: 0; }
+  .v-plan .rm-box > .rm-head-in { border-radius: 0; background: var(--field); }
 }

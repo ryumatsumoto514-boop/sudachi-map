@@ -154,7 +154,8 @@
 .btn-sos.m-pressed, .pill-sos.m-pressed, .sos-li.is-urgent > .sos-row.m-pressed { background: var(--red-hover); border-color: var(--red-hover); }
 :is(.chip, .pill:not(.pill-sos), .icon-btn, .pcard-save, .sos-copy, .back).m-pressed { background-color: var(--paper-3); transition: none; }
 .chip[aria-pressed="true"].m-pressed { background: var(--ink-2); border-color: var(--ink-2); }
-.opt.m-pressed { background: var(--paper-2); transition: none; }
+.opt.m-pressed { background: var(--paper-3); transition: none; }   /* v10: options rest on paper-2 */
+.appbar .pill-exit.m-pressed { background-color: var(--ink); color: var(--paper); }
 /* rows: the 6% ink wash shows on pointerdown (the :active rules in base.css wait for the browser's own timing) */
 :is(a.list-item, button.list-item, .contact-item, details.disclose > summary, .sos-home-link).m-pressed::before {
   opacity: 1; background: color-mix(in srgb, var(--paper-2), var(--ink) 6%); transition: none;
@@ -396,9 +397,10 @@ html.vt-fade::view-transition-new(root) { animation: m-fade-in 200ms linear both
 .m-stick-s { position: absolute; width: 1px; height: 2px; opacity: 0; pointer-events: none; }
 /* the reading line (motion.js wireAppbar): the brand's green line draws along the foot of the app bar as the page is
    read — scroll(root) progress, scaleX from the left; shown only on a page that scrolls (is-on) */
+/* v10: the bar's foot is already a 3px green line, so the reading progress runs ON it in ink (the train on the line) */
 .appbar .m-readline {
-  position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; z-index: 1;
-  background: var(--action, #0b6e44); transform-origin: left center; transform: scaleX(0);
+  position: absolute; left: 0; right: 0; bottom: -3px; height: 3px; z-index: 1;
+  background: var(--ink, #1b1b19); transform-origin: left center; transform: scaleX(0);
   opacity: 0; pointer-events: none; transition: opacity var(--dur-quick) linear;
 }
 .appbar .m-readline.is-on { opacity: 1; }

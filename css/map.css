@@ -793,8 +793,6 @@
   }
   .v-map .m-cats.chips-scroll::after { content: ""; }
   .v-map .m-cats .chip:not([aria-pressed="true"]) { background: var(--paper); }
-  .v-map .m-cats .chip { box-shadow: inset 0 0 0 1px var(--rule-2), 0 1px 2px rgba(20, 20, 18, 0.12); }
-  .v-map .m-cats .chip[aria-pressed="true"] { box-shadow: inset 0 0 0 1px var(--ink), 0 1px 2px rgba(20, 20, 18, 0.16); }
   .v-map .m-mapwrap { margin-top: var(--s-2); }
   .v-map .m-zoom { top: 60px; }
 }
@@ -908,3 +906,56 @@
   .v-map .m-loc-main > .m-more { grid-column: 1; order: 9; }
   .v-map .m-loc-main .m-loc-pin { grid-column: 2; order: 10; align-self: start; margin: 0 -6px 0 0; }
 }
+
+/* =====================================================================
+   v10 (SPEC-v10): signs you press, paper you read. On a phone the category chips sit on the paper above the
+   map frame (they used to ride over its top edge, with the frame's loading line running behind them); every
+   control is a filled panel (chips paper-2 → ink when on, 変える filled, the area picker a white field with a
+   2px ink frame); list rows are strong: a 40px mark, 13px Plex 700 labels, the focused row on a green line.
+   map.js measures the chips' lap (chipsLap) and --m-above, so the camera follows without a JS change.
+   ===================================================================== */
+.v-map { --lbl: 0.8125rem; --lbl-ls: 0.06em; }
+.v-map :is(.m-picker-k, .m-loc-meta, .m-tel-k, .m-k, .m-asub, .m-peek-meta, .m-pk-gtitle) {
+  font-family: var(--font-display); font-weight: 700; font-size: var(--lbl); letter-spacing: var(--lbl-ls); color: var(--ink-2);
+}
+.v-map :is(.m-loc-ja, .m-foot-src, .m-about > summary, .m-subhead-n, .m-acell .arrow) { color: var(--ink-2); }
+.v-map .m-acell-c { color: var(--ink); }
+.v-map .m-loc-meta > span { border-left-color: var(--ink-4); }
+.v-map .m-k { border-right-color: var(--ink-4); }
+
+/* 変える (desktop) and the picker (phone): filled */
+.v-map .m-picker-go { box-shadow: none; background: var(--paper-2); }
+@media (hover: hover) { .v-map .m-picker:hover .m-picker-go { background: var(--paper-3); } }
+.v-map .m-picker:active .m-picker-go { background: var(--paper-3); }
+
+/* list rows */
+.v-map .m-loc { padding: var(--s-5) 0; }
+.v-map .m-loc > .cat-icon { --mark: 40px; margin-top: 0; }
+.v-map .m-loc.is-focus { box-shadow: inset 4px 0 0 var(--action); }
+.v-map .m-loc-pin { color: var(--ink); font-weight: 700; }
+.v-map .m-more > summary { color: var(--ink); font-weight: 700; }
+.v-map .m-count > span { color: var(--ink); }
+
+/* the zoom stack: a filled sign panel on the map */
+.v-map .m-zoom { box-shadow: none; background: var(--field); }
+.v-map .m-zbtn + .m-zbtn { border-top-color: var(--paper-3); }
+
+@media (max-width: 1099px) {
+  /* the area picker reads as a select: a white field, a 2px ink frame */
+  .v-map .m-picker { background: var(--field); box-shadow: inset 0 0 0 2px var(--ink); height: 48px; }
+  @media (hover: hover) { .v-map .m-picker:hover { background: var(--field); box-shadow: inset 0 0 0 3px var(--ink); } }
+  .v-map .m-picker:active { background: var(--paper-2); }
+  /* the chips sit on paper above the frame: nothing of the map (nor its loading line) runs behind them */
+  .v-map .m-cats { margin-bottom: 0; padding-block: 4px 8px; background: var(--paper); }
+  .v-map .m-cats .chip, .v-map .m-cats .chip:not([aria-pressed="true"]) { background: var(--paper-2); box-shadow: none; }
+  .v-map .m-cats .chip[aria-pressed="true"] { background: var(--ink); box-shadow: none; }
+  .v-map .m-mapwrap { margin-top: 0; }
+  .v-map .m-zoom { top: 12px; }
+  .v-map .m-svgwrap.is-ph { top: 40px; }
+  @container mframe (min-width: 560px) { .v-map .m-svgwrap.is-ph { top: 52px; } }
+}
+/* the 児童相談所 layer chip: its mark stays outlined (it is a layer, not a category), on the filled chip */
+.v-map .m-cats .chip[data-cat="jisou"][aria-pressed="true"] .cat-mark { color: var(--paper); }
+.v-map :is(.m-load-t, .m-peek-sub, .m-peek-isub, .m-pk-text small, .m-pk-none, .m-pk-opt > .arrow, .m-peek-item > .icon) { color: var(--ink-2); }
+/* desktop: the loading line sits at the map's foot, not under the app bar's green line */
+@media (min-width: 1100px) { .v-map .m-load-bar { position: absolute; left: 0; right: 0; bottom: 0; } .v-map .m-load { bottom: 0; } }

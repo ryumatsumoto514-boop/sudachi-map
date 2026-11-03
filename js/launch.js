@@ -1,18 +1,20 @@
-/* 巣立ちマップ v5 — launch.js (LAUNCH). Classic script, loaded last (after boot.js).
-   SPEC-v5 Part A 1, MOTION-SPEC §2. Reads window.__lx from the head gate in index.html.
+/* 巣立ちマップ v10 — launch.js (LAUNCH). Classic script, loaded last (after boot.js).
+   SPEC-v10 Opening, MOTION-SPEC §2. Reads window.__lx from the head gate in index.html.
 
-   1. html.lx-full — the hand-off. The opening already runs on the inline CSS in index.html from frame 1 (the line
-      draws across the screen, the 巣 box arrives along it, 立ちマップ ride in). This script:
+   1. html.lx-full — the hand-off. The opening already runs on the inline CSS in index.html from frame 1 ("the route
+      turns into the logo": the 巣 box stamps, the line draws, six stations 住金学働手話 rise, a train runs along the
+      line and each station sinks as 立ちマップ rises in its place, the step pops and the train rides off; ≈1.9s, or
+      ×0.6 for the 急行 version, html.lx-x, L.k). This script:
         - holds the view's entrance (SM.motion.hold) while the splash is up,
-        - waits for H = max(intro end 740ms, first render, the web fonts if they are in by then); on a slow network the
-          splash holds with a small "train" running along the line (CSS) until the app is ready,
-        - in one frame reads the geometry, then FLIPs the lockup into the app-bar logo, lifts the whole line up into
-          the app bar's underline (it thins and settles into the hairline colour), fades the caption and the paper,
-          and raises the tab bar (the rail on desktop),
+        - waits for H = max(intro end 1900ms × k, first render, the web fonts if they are in by then); on a slow network
+          the splash holds with a train looping along the line (CSS) until the app is ready,
+        - in one frame reads the geometry, then FLIPs the lockup into the app-bar logo, flattens the step and lifts the
+          whole line into the app bar's 3px green line, flies the tagline onto home's kicker (the same sentence),
+          fades the paper and raises the tab bar (slides the rail in on desktop),
         - releases the view's entrance 60ms into the hand-off (home.js cascades its first screen in from there),
         - when everything lands, in the same frame: removes the splash, restores the chrome, writes sm2:seen.
       A tap / key / wheel on the splash (head gate) fast-forwards the intro and hands off as soon as the app is ready.
-   2. html.lx-short — the 0.55s returning beat is pure CSS (inline); this keeps it in step if boot repaints the bar,
+   2. html.lx-short — the 0.6s returning beat (+ the step pop) is pure CSS (inline); this keeps it in step if boot repaints the bar,
       then tidies up. html.lx-fade (reduced motion) — fades the page in once it has rendered (css/launch.css).
    3. Always: meta theme-color follows the theme; SM.loadMapLib() loads MapLibre + the map data on first use.
 
@@ -48,7 +50,7 @@
       themeQueued = false;
       var dark = de.getAttribute('data-theme') === 'dark', bg = '';
       try { bg = getComputedStyle(d.body).backgroundColor; } catch (e) { }
-      if (!bg || /rgba\(.*,\s*0\)$|transparent/.test(bg)) bg = dark ? '#141413' : '#FFFFFF';
+      if (!bg || /rgba\(.*,\s*0\)$|transparent/.test(bg)) bg = dark ? '#141413' : '#FBFAF6';
       setMeta('theme-color', bg);
       setMeta('color-scheme', dark ? 'dark' : 'light');
     });
@@ -178,8 +180,11 @@
       L.done = true;
       emit('sm:launched', { mode: 'short' });
     };
-    // the green line has settled into the hairline (≈620ms): what is left is exactly the real border
-    if (bar) bar.addEventListener('animationend', function (e) { if (e.animationName === 'lx-soft') setTimeout(tidy, 20); });
+    // the brand line's step has popped (≈760ms; English has no step: the bar's line has drawn, ≈460ms). What is left
+    // is exactly the static bar, so dropping the class changes no pixel.
+    if (bar) bar.addEventListener('animationend', function (e) {
+      if (e.animationName === 'lx-s-pop' || (e.animationName === 'lx-draw' && e.target === bar && de.classList.contains('lx-en'))) setTimeout(tidy, 20);
+    });
     setTimeout(tidy, 1600);
   }
 
@@ -204,9 +209,10 @@
     return;
   }
 
-  var INTRO_END = 660;       // the last kana is landing, the caption has hung (inline CSS in index.html)
-  var FONT_DEADLINE = 660;  // web fonts may be waited for only while the intro still plays: never on the network
-  var MOVE = 360, MOVE_SKIP = 260;
+  var K = L.k || 1;                           // 1, or 0.6 for the 急行 version (html.lx-x, --lx-k)
+  var INTRO_END = Math.round(1900 * K);       // the step has popped, the train has left, プ has risen (inline CSS)
+  var FONT_DEADLINE = INTRO_END;              // web fonts may be waited for only while the intro still plays
+  var MOVE = 420, MOVE_SKIP = 260;
   var EASE = 'cubic-bezier(0.2, 0, 0, 1)';          // --ease-standard
   /* the lockup's flight, split by axis: it shrinks toward its top-left (and moves across) a little ahead of its rise,
      so its far end clears すぐ閉じる on the way up instead of grazing the button's corner. */
@@ -215,7 +221,7 @@
 
   de.classList.add('lx-on');
   var release = noop;
-  try { if (SM.motion && typeof SM.motion.hold === 'function') release = SM.motion.hold('launch', 2600) || noop; } catch (e) { release = noop; }
+  try { if (SM.motion && typeof SM.motion.hold === 'function') release = SM.motion.hold('launch', INTRO_END + 1800) || noop; } catch (e) { release = noop; }
   var released = false;
   function releaseView() {
     if (released) return;
@@ -298,11 +304,16 @@
     started = true; L.out = true;
     var skipped = !!L.skipped, dur = skipped ? MOVE_SKIP : MOVE;
     var lock = root.querySelector('.lx-lockup'), track = root.querySelector('.lx-track');
-    var paper = root.querySelector('.lx-paper'), cap = root.querySelector('.lx-cap'), runner = root.querySelector('.lx-run');
-    var line = lock && lock.querySelector('.lg-line'), word = lock && lock.querySelector('.lg-word');
+    var paper = root.querySelector('.lx-paper'), cap = root.querySelector('.lx-cap');
+    var runner = root.querySelector('.lx-run'), train = root.querySelector('.lx-train');
+    var step = root.querySelector('.lx-step'), stub = root.querySelector('.lx-l3');
+    var line = lock && lock.querySelector('.lx-ll'), head = lock && lock.querySelector('.lx-l0'), word = lock && lock.querySelector('.lx-clip');
     var appbar = d.querySelector('.appbar'), brand = appbar && appbar.querySelector('.brand');
     var tBox = brand && (brand.querySelector('.lg-box') || brand.querySelector('svg'));
     var tabbar = d.querySelector('.tabbar');
+    var en = de.classList.contains('lx-en') || !!(brand && brand.querySelector('.logo-lockup.is-en'));
+    var capIn = cap && cap.querySelector(en ? '.lx-cap-en' : '.lx-cap-ja');
+    var kick = d.querySelector('#view .h-kicker .h-ln-i');
     var rs;
     try { rs = getComputedStyle(root); } catch (e) { rs = null; }
     // splash already gone (CSS failsafe fired, reduced motion, no CSS): just clean up
@@ -319,7 +330,22 @@
     var cs = getComputedStyle(appbar);
     var bw = parseFloat(cs.borderBottomWidth) || 0, bc = cs.borderBottomColor, bstyle = cs.borderBottomStyle;
     var wide = !!(w.matchMedia && w.matchMedia('(min-width: 900px)').matches);
-    var en = de.classList.contains('lx-en') || !!brand.querySelector('.logo-lockup.is-en');
+    // the tagline lands on home's kicker (the same sentence) when it is there and on one line
+    var flip = null;
+    if (capIn && kick) {
+      try {
+        var cr = capIn.getBoundingClientRect(), kr = kick.getBoundingClientRect(), kw = 0;
+        // the kicker's text, not its block (it is as wide as the column): the tagline is scaled to end where it ends
+        try { var rg = d.createRange(); rg.selectNodeContents(kick); kw = rg.getBoundingClientRect().width; } catch (e) { kw = 0; }
+        var ccs = getComputedStyle(capIn), kcs = getComputedStyle(kick);
+        var fc = parseFloat(ccs.fontSize), fk = parseFloat(kcs.fontSize), lh = parseFloat(kcs.lineHeight) || fk * 1.5;
+        if (cr.width && kr.width && fc && fk && kr.height < lh * 1.5 && kcs.display !== 'none') {
+          var sc = fk / fc;
+          if (kw && Math.abs(kw / cr.width - sc) < sc * 0.2) sc = kw / cr.width;   // same sentence: match its length
+          flip = { dx: kr.left - cr.left, dy: (kr.top + kr.height / 2) - (cr.top + cr.height / 2), s: sc, k: [kr.left, kr.top, kr.height, fk, kw] };
+        }
+      } catch (e) { flip = null; }
+    }
     if (!la.height || !tb.height) { finish(false); return; }
     var unit = la.height / 23, lineY = la.top + 22 * unit;   // the line's centre (lockup units 21–23)
 
@@ -330,6 +356,7 @@
     appbar.style.backgroundColor = 'transparent';
     appbar.style.borderBottomColor = 'transparent';
     if (runner) runner.style.display = 'none';
+    if (train) train.style.display = 'none';
     // launch.js is alive: the CSS failsafes must not cut the hand-off short
     try {
       root.getAnimations().forEach(function (a) { if (/^lx-failsafe/.test(a.animationName || '')) a.cancel(); });
@@ -347,32 +374,24 @@
     // 1. the lockup FLIPs into the app-bar logo: box onto box (transform-origin 0 0 = the box's top-left)
     var side = la.height * 20 / 23;                       // the box is 20 of the lockup's 23 units
     var s = tb.height / side, dx = tb.left - la.left, dy = tb.top - la.top;
-    L.geom = { from: [la.left, la.top, side], to: [tb.left, tb.top, tb.height], line: [lineY, ab.bottom], wide: wide };
+    L.geom = { from: [la.left, la.top, side], to: [tb.left, tb.top, tb.height], line: [lineY, ab.bottom], wide: wide, k: K, cap: flip };
+    /* the flight is split by axis: it shrinks toward its top-left (and moves across) a little ahead of its rise, so
+       its far end clears すぐ閉じる on the way up */
     run(lock, [{ translate: '0 0' }, { translate: '0 ' + dy + 'px' }], { duration: dur, easing: EASE_Y, fill: 'forwards' });
     run(lock, [{ transform: 'none' }, { transform: 'translateX(' + dx + 'px) scale(' + s + ')' }],
       { duration: dur, easing: EASE_X, fill: 'forwards' });
-    /* the logo's own green line (under 立ちマップ, ending in the step) was drawn by the track until now (same pixels);
-       it flies with the lockup and lands on the bar's brand line (base.css .brand::after), which takes over in the
-       landing frame. Only the run under the box lets go. English and bars without the line: it all lets go. */
-    if (line) line.style.opacity = '1';
-    var run1 = line && line.querySelector('.lg-run1');
-    if (line && run1 && hasBarLine && !en) {
-      var NS = 'http://www.w3.org/2000/svg';
-      var head = d.createElementNS(NS, 'path');
-      head.setAttribute('class', 'lg-run0');
-      head.setAttribute('d', 'M0 21H23.333V23H0Z');
-      run1.setAttribute('d', 'M23.333 21H124.429V23H23.333Z');
-      line.insertBefore(head, run1);
-      run(head, [{ opacity: 1 }, { opacity: 0 }], { duration: 160, easing: 'linear', fill: 'forwards' });
+    /* the logo's own green line (under 立ちマップ, ending in the step) flies with the lockup (HTML layers, composited)
+       and lands on the bar's brand line (base.css .brand::after), which takes over in the landing frame. The run under
+       the box lets go. English and bars without the line: it all lets go. */
+    if (line && hasBarLine && !en) {
       var uEnd = tb.height / 20;                        // px per lockup unit once docked
-      // the bar's line: 2px tall, 2px under the box → centre at 20 + 3px, in units; the lockup's centre is at 22
+      // the bar's brand line: 2px tall, 2px under the box → its centre at 20u + 3px; the lockup's centre is at 22u
       var gapU = 3 / uEnd - 2, thick = Math.max(0.5, Math.min(1.2, 1 / uEnd));
-      line.style.transformBox = 'view-box';
-      line.style.transformOrigin = '0 22px';
-      run(line, [{ transform: 'none' }, { transform: 'translateY(' + gapU.toFixed(3) + 'px) scaleY(' + thick.toFixed(3) + ')' }],
+      line.style.opacity = '1'; if (head) head.style.opacity = '1';
+      line.style.transformOrigin = '0 ' + (22 * unit).toFixed(2) + 'px';
+      run(line, [{ transform: 'none' }, { transform: 'translateY(' + (gapU * unit).toFixed(2) + 'px) scaleY(' + thick.toFixed(3) + ')' }],
         { duration: dur, easing: EASE, fill: 'forwards' });
-    } else if (line) {
-      run(line, [{ opacity: 1 }, { opacity: 0 }], { duration: 160, easing: 'linear', fill: 'forwards' });
+      run(head, [{ opacity: 1 }, { opacity: 0 }], { duration: 160, easing: 'linear', fill: 'forwards' });
     }
     if (en) {
       // English: only the box travels. The JP wordmark fades; "Sudachi Map" fades in, in place.
@@ -383,7 +402,11 @@
       run(tWord, [{ opacity: 0 }, { opacity: 1 }], { duration: 160, delay: skipped ? 100 : 200, easing: 'linear', fill: 'both' }, true);
     }
 
-    // 2. the line keeps going: the whole track rises and becomes the app bar's underline (its width, its colour)
+    // 2. the line keeps going: the step settles back into the line (the logo carries its own step up), and the whole
+    //    line rises and becomes the app bar's green line (its width, its thickness)
+    var half = Math.round(dur * 0.5);
+    run(step, [{ transform: 'none' }, { transform: 'translateY(' + (4 * unit).toFixed(2) + 'px)' }], { duration: half, easing: EASE, fill: 'forwards' });
+    run(stub, [{ transform: 'translateY(101%)' }, { transform: 'none' }], { duration: half, easing: EASE, fill: 'forwards' });
     var hasBorder = bw > 0 && bstyle !== 'none' && !/^transparent$|rgba\([^)]*,\s*0\)$/.test(bc);
     var target = ab.bottom - (hasBorder ? bw / 2 : 0.5);
     var ty = target - lineY, sy = Math.max(0.15, (hasBorder ? bw : 1) / (2 * unit));
@@ -391,19 +414,29 @@
     run(track, [{ transform: 'translateY(0) scaleY(1)' }, { transform: 'translateY(' + ty.toFixed(2) + 'px) scaleY(' + sy.toFixed(3) + ')' }],
       { duration: dur, easing: EASE_Y, fill: 'forwards' });
     if (hasBorder) {
-      // the green settles into the hairline: a hairline of the bar's own colour fades in where the line lands
+      // the bar's own line fades in, crisp on whole pixels, exactly where the travelling line lands
       var hair = d.createElement('i');
       hair.style.cssText = 'position:absolute;left:0;right:0;display:block;pointer-events:none;top:' + (ab.bottom - bw) + 'px;height:' + bw + 'px;background:' + bc;
       root.appendChild(hair);
-      run(hair, [{ opacity: 0 }, { opacity: 1 }], { duration: dur * 0.45, delay: dur * 0.55, easing: 'linear', fill: 'both' });
+      run(hair, [{ opacity: 0 }, { opacity: 1 }], { duration: dur * 0.2, delay: dur * 0.8, easing: 'linear', fill: 'both' });
     }
-    run(track, [{ opacity: 1 }, { opacity: 0 }], { duration: dur * 0.45, delay: dur * 0.55, easing: 'linear', fill: 'both' });
+    run(track, [{ opacity: 1 }, { opacity: 0 }], { duration: dur * 0.2, delay: dur * 0.8, easing: 'linear', fill: 'both' });
 
-    // 3. caption out, paper out, tab bar (rail) in
-    run(cap, [{ opacity: 1 }, { opacity: 0 }], { duration: 90, easing: 'cubic-bezier(0, 0, 0.2, 1)', fill: 'forwards' });
-    run(paper, [{ opacity: 1 }, { opacity: 0 }], { duration: 180, delay: skipped ? 0 : 60, easing: 'linear', fill: 'both' });
+    // 3. the tagline flies onto home's kicker and hands over to it (a cross-fade at the end: the kicker is set in
+    //    the web font, the tagline in the system font); else it simply fades. Paper out, tab bar (rail) in.
+    if (flip) {
+      cap.style.overflow = 'visible';
+      kick.style.animation = 'none';
+      run(capIn, [{ transform: 'none' }, { transform: 'translate(' + flip.dx.toFixed(2) + 'px,' + flip.dy.toFixed(2) + 'px) scale(' + flip.s.toFixed(4) + ')' }],
+        { duration: dur, easing: 'cubic-bezier(0.25, 0.7, 0.1, 1)', fill: 'forwards' });   // settles early: the hand-over is in place
+      run(capIn, [{ opacity: 1 }, { opacity: 0 }], { duration: dur * 0.3, delay: dur * 0.7, easing: 'linear', fill: 'forwards' });
+      run(kick, [{ opacity: 0 }, { opacity: 1 }], { duration: dur * 0.3, delay: dur * 0.7, easing: 'linear', fill: 'both' }, true);
+    } else {
+      run(cap, [{ opacity: 1 }, { opacity: 0 }], { duration: 90, easing: 'cubic-bezier(0, 0, 0.2, 1)', fill: 'forwards' });
+    }
+    run(paper, [{ opacity: 1 }, { opacity: 0 }], { duration: 200, delay: skipped ? 0 : 60, easing: 'linear', fill: 'both' });
     if (tabbar) {
-      run(tabbar, wide ? [{ opacity: 0, transform: 'translateX(-12px)' }, { opacity: 1, transform: 'none' }] : [{ transform: 'translateY(100%)' }, { transform: 'none' }],
+      run(tabbar, wide ? [{ transform: 'translateX(-100%)' }, { transform: 'none' }] : [{ transform: 'translateY(100%)' }, { transform: 'none' }],
         { duration: dur, delay: skipped ? 0 : 80, easing: 'cubic-bezier(0.2, 0.9, 0.3, 1)', fill: 'both' }, true);
     }
 
@@ -411,7 +444,7 @@
     //    first line rises as the paper fades, so there is no empty frame between the poster and the page
     setTimeout(releaseView, skipped ? 40 : 60);
 
-    // 5. land: same frame — splash gone, real logo + border + tab bar in place (pixel-identical underneath)
+    // 5. land: same frame — splash gone, real logo + line + kicker + tab bar in place (pixel-identical underneath)
     var all = anims.concat(chromeAnims.filter(function (a) { return a.effect && a.effect.getTiming().duration < 10000; }));
     var landed = false;
     function land() { if (landed) return; landed = true; finish(false); }

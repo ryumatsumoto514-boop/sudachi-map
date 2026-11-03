@@ -93,7 +93,7 @@ html:has(.subbar:not([hidden]) .subbar-title:not(:empty)) .v-learn .ln-top > .ey
 .v-learn .ln-thumb > .ln-cover { width: 72px; height: 72px; aspect-ratio: auto; }
 .v-learn .ln-thumb.is-blank { display: grid; place-items: center; background: var(--paper-2); }
 /* a 72px row thumb is the subject on its ground line, not a tinted tile (the card and cover keep the tint) */
-@media (max-width: 899px) { .v-learn .ln-thumb .il [data-il="plate"] { display: none; } }
+/* v10: every cover is the same paper panel (the thumb shows its plate too) — see the v10 block */
 .v-learn .ln-row-body { display: grid; gap: 4px; min-width: 0; padding-top: 1px; }
 .v-learn .ln-row-title { font-family: var(--font-display); font-weight: 700; font-size: var(--t-h3); line-height: var(--lh-title); letter-spacing: var(--ls-0); }
 @media (hover: hover) { .v-learn .ln-row:hover .ln-row-title { text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 0.22em; } }
@@ -382,7 +382,7 @@ body.is-big .v-learn .ln-opts { gap: 16px; }
   width: 7.4em; min-height: 46px; padding: 0 10px; text-align: right;
   font-family: var(--font-num); font-size: max(16px, var(--fs-lg)); font-weight: 700; font-variant-numeric: tabular-nums;
 }
-.v-learn .ln-field-rate .ln-field-in .input, .v-learn .ln-field-years .ln-field-in .input { width: 4.4em; }
+.v-learn .ln-field-rate .ln-field-in .input, .v-learn .ln-field-years .ln-field-in .input { width: 5em; }
 .v-learn .ln-u { font-family: var(--font-display); font-size: var(--fs-sm); font-weight: 500; color: var(--ink-2); }
 .v-learn .ln-field .help { margin-top: -2px; }
 .v-learn .ln-field-seg { gap: 10px; }
@@ -660,3 +660,97 @@ html.m-reduce .v-learn .ln-segs.is-full .ln-seg > i { transition-delay: 0ms; }
   text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.3em;
 }
 .v-learn .ln-resume-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+/* =====================================================================
+   v10 (SPEC-v10): signs you press, paper you read. Covers are one kind of panel everywhere; まずはここから is a
+   deliberate green-tinted sign panel; the step is printed on paper (no hairline frame); quiz options and compare
+   sides are filled panels; progress is the green line; labels 13px Plex 700 ink-2. Tokens only.
+   ===================================================================== */
+.v-learn { --lbl: 0.8125rem; --lbl-ls: 0.06em; }
+.v-learn :is(.ln-meta, .ln-eyebrow, .ln-kind, .ln-big-k, .ln-detail-k, .ln-fin-count-k, .ln-sum-k) {
+  font-family: var(--font-display); font-weight: 700; font-size: var(--lbl); letter-spacing: var(--lbl-ls); color: var(--ink-2);
+}
+.v-learn .ln-meta .num { color: var(--ink); }
+.v-learn :is(.ln-sum-of, .ln-prog-n .of, .ln-fin-count .of) { color: var(--ink); }
+.v-learn :is(.ln-src-d, .ln-src-u, .ln-kv dd small, .ln-quiz-hint, .ln-keys) { color: var(--ink-2); }
+.v-learn .ln-sep { color: var(--ink-2); }
+
+/* the count: one green line, segment per lesson */
+.v-learn .ln-psegs { gap: 2px; }
+.v-learn .ln-pseg { height: 6px; }
+
+/* covers: the paper-2 plate is the panel; the 72px row thumb is that same panel, cropped square */
+.v-learn .ln-thumb .il [data-il="plate"] { display: inline; }
+.v-learn .ln-thumb { background: var(--paper-2); }
+.v-learn .ln-row-go { color: var(--ink); }
+.v-learn .ln-row.is-done .ln-row-title { color: var(--ink); }
+
+/* まずはここから: a sign panel — green-tinted ground, the green flag, the cover as its own panel, one green button */
+.v-learn .ln-feature.band { background: var(--action-tint); border-top: 6px solid var(--action); padding-top: var(--s-5); padding-bottom: var(--s-6); }
+.v-learn .ln-feature-k {
+  justify-self: start; display: inline-flex; align-items: center; min-height: 28px; padding: 0 10px;
+  background: var(--action-fill); color: var(--on-action-fill);
+  font-size: var(--lbl); letter-spacing: var(--lbl-ls);
+}
+.v-learn .ln-feature.is-done .ln-feature-k { background: none; color: var(--action-text); padding: 0; }
+.v-learn .ln-feature-art .ln-cover { aspect-ratio: 2 / 1; }
+.v-learn .ln-feature-h { font-size: var(--t-h1); }
+.v-learn .ln-feature-go { justify-self: stretch; }
+@media (min-width: 600px) and (max-width: 1099px) { .v-learn .ln-feature-go { justify-self: start; } }
+@media (min-width: 1100px) {
+  .v-learn .ln-feature.band { padding: var(--s-5) var(--s-5) var(--s-6); }
+  .v-learn .ln-feature-art .ln-cover { aspect-ratio: 3 / 2; }
+  .v-learn .ln-feature-h { font-size: var(--t-h2); }
+}
+
+/* desktop cards: cover panel + title, no hairline frame round them */
+@media (min-width: 900px) {
+  .v-learn .ln-li { border-bottom: 0; }
+  .v-learn .ln-rows { row-gap: var(--s-4); }
+  .v-learn .ln-row { padding: 0 0 var(--s-4); }
+  .v-learn .ln-row::before { inset: -8px calc(var(--s-2) * -1) 0; }
+}
+
+/* ---------- the lesson ---------- */
+/* progress: the green line, one segment per step */
+.v-learn .ln-segs { gap: 2px; }
+.v-learn .ln-seg { height: 6px; }
+.v-learn .ln-seg > i { background: var(--action); }
+.v-learn .ln-head { border-bottom: 0; padding-bottom: 0; }
+/* the step is printed on the page: no frame. On a phone the first step's cover runs edge to edge as a panel */
+.v-learn .ln-stage > .ln-step { box-shadow: none; border-radius: 0; padding: 0; background: var(--paper); }
+.v-learn .ln-ghost > .ln-step { box-shadow: none; }
+.v-learn .ln-stage > .ln-step > .ln-cover { margin: 0 calc(var(--gutter) * -1) var(--s-2); width: calc(100% + 2 * var(--gutter)); max-width: none; max-height: 200px; }
+@media (min-width: 600px) { .v-learn .ln-stage > .ln-step > .ln-cover { margin: 0 0 var(--s-2); width: 100%; max-height: none; } }
+@media (min-width: 900px) { .v-learn .ln-stage > .ln-step > .ln-cover { max-width: 480px; } }
+.v-learn .ln-big-v { color: var(--ink); }
+
+/* compare: two filled panels in their tone */
+.v-learn .ln-cmp { gap: 4px; }
+.v-learn .ln-side, .v-learn .ln-side + .ln-side { padding: var(--s-5) var(--s-4) var(--s-4); border-left: 0; background: var(--paper-2); }
+.v-learn .ln-side.tone-free, .v-learn .tone-free.ln-side { background: var(--action-tint); }
+.v-learn .ln-side.tone-loan, .v-learn .tone-loan.ln-side { background: var(--amber-tint); }
+.v-learn .ln-side-rule { height: 4px; }
+.v-learn .ln-side-body { color: var(--ink); }
+@media (max-width: 359px) { .v-learn .ln-side, .v-learn .ln-side + .ln-side { padding: var(--s-4); } }
+@media (max-width: 439px) { body.is-big .v-learn .ln-side, body.is-big .v-learn .ln-side + .ln-side { padding: var(--s-4); } body.is-big .v-learn .ln-cmp { gap: 4px; } }
+.v-learn .ln-note { border-top: 0; padding-top: 0; }
+
+/* quiz: filled options, the key is an ink station-number box */
+.v-learn .ln-opt { background: var(--paper-2); box-shadow: none; }
+.v-learn .ln-opts .ln-opt.has-sweep { background: var(--paper-2); }
+@media (hover: hover) { .v-learn .ln-opt:not([aria-disabled="true"]):hover { box-shadow: none; background: var(--paper-3); } }
+.v-learn .ln-opt:not([aria-disabled="true"]):active { background: var(--paper-3); }
+.v-learn .ln-opt-key { background: var(--ink); color: var(--paper); box-shadow: none; }
+.v-learn .ln-opt.is-correct .ln-opt-key { background: transparent; }
+.v-learn .ln-opts .ln-opt.is-wrong { background: var(--paper-2); box-shadow: none; }
+.v-learn .ln-opt.is-wrong .ln-opt-key { background: transparent; box-shadow: none; }
+.v-learn .ln-opt.is-wrong .ln-opt-t { color: var(--ink-2); }
+.v-learn .ln-ans-l { box-shadow: none; background: var(--action-tint); }
+.v-learn .ln-yours { box-shadow: none; background: var(--paper-3); color: var(--ink); }
+.v-learn .ln-fb-box { border-top-width: 4px; }
+
+/* calculators */
+.v-learn .ln-detail-k { border-bottom: 0; }
+.v-learn .ln-out { border-top: 4px solid var(--ink); }
+.v-learn .ln-resume { border-left: 4px solid var(--action); }

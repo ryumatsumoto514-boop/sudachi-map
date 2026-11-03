@@ -622,6 +622,109 @@ body.lang-en .v-home .h-colo-ed { text-transform: uppercase; }
 }
 
 /* =====================================================================
+   v10 (SPEC-v10 "signs you press, paper you read") — home
+   · the display line is bigger (44 phone / 56 desktop), set tight
+   · the picture shows on the phone too: a full-bleed paper-2 panel right under the heading, the figures standing
+     on its foot (the art's ground line, y 192 of 216, is the panel's bottom edge)
+   · the path is a station strip: filled numbered boxes (green done / ink here / panel ahead) on a 6px line
+   · きく is a real field: white, 2px ink frame, the magnifier in an ink square (no grey line on paper)
+   · no grey labels or numbers: ink-2 at least
+   ===================================================================== */
+.v-home .h-hero { grid-template-areas: "copy" "art" "path" "ask"; }
+.v-home .h-copy { grid-area: copy; }
+.v-home .h-art { grid-area: art; }
+.v-home .h-path { grid-area: path; }
+.v-home .h-ask { grid-area: ask; }
+.v-home .h-main { font-size: min(var(--t-display), 12.4cqi); line-height: 1.16; letter-spacing: var(--ls-title); }
+body.is-ruby .v-home .h-main { line-height: 1.55; }
+.v-home .h-kicker { color: var(--ink-2); font-weight: 700; font-size: var(--fs-base); }
+.v-home .h-sub { color: var(--ink-2); margin-top: var(--s-4); }
+
+/* the picture panel (phone): ≈160px, full bleed, figures on its foot */
+.v-home .h-art {
+  display: flex; justify-content: center; align-items: flex-end; overflow: hidden;
+  margin: var(--s-6) calc(var(--gutter) * -1) 0; padding: var(--s-4) var(--gutter) 0;
+  background: var(--paper-2); box-shadow: inset 0 -2px 0 var(--ink);
+}
+.v-home .h-art .il { width: min(280px, 100%); flex: none; margin-bottom: calc(min(280px, 100%) * -24 / 360); }
+/* short phones (SE class, 320×640): the first green action must stay above the fold — the picture steps aside */
+@media (max-height: 700px) and (max-width: 899px) { .v-home .h-art { display: none; } }
+
+/* the station strip */
+.v-home .h-path { --mk: 48px; --ln: 6px; margin-top: var(--s-7); }
+.v-home .h-st::before { background: var(--paper-3); }
+.v-home .h-st.is-done::before { background: var(--action); }
+.v-home .h-st-no {
+  background: var(--paper-3); color: var(--ink-2); box-shadow: none; border-radius: 0;
+  font-size: var(--fs-2xl);
+}
+.v-home .h-st.is-now .h-st-no { background: var(--ink); color: var(--paper); }
+.v-home .h-st.is-done .h-st-no { background: var(--action); color: var(--on-action); }
+.v-home .h-st-text { padding-top: 4px; }
+.v-home .h-st-name { font-size: var(--t-h2); }
+.v-home .h-st.is-ahead .h-st-name { color: var(--ink-2); }
+.v-home .h-st-f.is-quiet { color: var(--ink-2); }
+.v-home .h-st-here { padding: 4px 8px; border-radius: var(--r-ctl); background: var(--ink); color: var(--paper); letter-spacing: var(--ls-0); }
+.v-home .h-st-tag { padding: 2px 6px; box-shadow: none; background: var(--paper-3); color: var(--ink-2); border-radius: var(--r-ctl); }
+.v-home .h-cta { min-height: 64px; }
+
+/* きく: a field like every other — label above, white field with the ink magnifier square, きく → inside on the right */
+.v-home .h-ask { margin-top: var(--s-8); gap: var(--s-2); }
+.v-home .h-ask-k { font-size: var(--t-label); font-weight: 700; letter-spacing: var(--ls-label); color: var(--ink-2); }
+.v-home .h-ask-ic { display: none; }
+.v-home .h-ask-line {
+  align-items: center; min-height: 56px; padding-left: 68px;
+  background: var(--field); border: 2px solid var(--ink); border-radius: var(--r-ctl);
+}
+.v-home .h-ask-line::before {
+  content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 52px; pointer-events: none;
+  background: var(--ink); border-radius: 2px 0 0 2px;
+}
+.v-home .h-ask-line::after {
+  left: 14px; right: auto; top: 50%; bottom: auto; width: 24px; height: 24px; margin-top: -12px;
+  background: var(--paper); transform: none !important; animation: none !important;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.25' stroke-linecap='square'%3E%3Ccircle cx='10.5' cy='10.5' r='6.5'/%3E%3Cpath d='M15.5 15.5 20 20'/%3E%3C/svg%3E") center / contain no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.25' stroke-linecap='square'%3E%3Ccircle cx='10.5' cy='10.5' r='6.5'/%3E%3Cpath d='M15.5 15.5 20 20'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.v-home .h-ask-line:focus-within::after { height: 24px; background: var(--paper); }
+.v-home .h-ask-line:focus-within { border-color: var(--focus); box-shadow: inset 0 0 0 1px var(--focus); }
+.v-home .h-ask-in { min-height: 52px; padding: 0; font-size: var(--fs-lg); }
+.v-home .h-ask-in::placeholder { color: var(--ink-3); font-family: var(--font-body); font-weight: 400; }
+.v-home .h-ask-go { min-height: 52px; padding: 0 var(--s-4) 0 var(--s-2); }
+.v-home .h-ask-go:focus-visible { outline-offset: -4px; }
+
+/* below the fold: 40px marks on the 困りごと line, no grey */
+.v-home .h-route { --mk: 40px; --row: 72px; --ln: 6px; }
+.v-home .h-stop-name { font-size: var(--fs-lg); }
+.v-home .h-stop-n { color: var(--ink); }
+.v-home .h-stop-n small { color: var(--ink-2); }
+.v-home .h-lp-of, .v-home .h-lp-k, .v-home .h-lf-meta, .v-home .h-lr-m, .v-home .h-colo-ed, .v-home .h-tt-tags { color: var(--ink-2); }
+.v-home .h-lp-k, .v-home .h-lr-k { font-weight: 700; color: var(--ink-2); }
+.v-home .h-lf-meta { font-weight: 700; }
+.v-home .h-tt-ic { box-shadow: none; background: var(--paper-2); }
+.v-home .h-tt-num.is-chat .h-tt-ic { box-shadow: none; background: var(--action-tint); }
+.v-home .h-ls { background: var(--paper-3); }
+.v-home .h-lf-art.is-blank { border-bottom: 2px solid var(--ink); }
+.v-home .h-colo { border-top: 2px solid var(--ink); }
+
+/* wide: the picture keeps its panel beside the copy; the strip runs across */
+@container home (min-width: 760px) {
+  .v-home .h-hero { grid-template-areas: "copy art" "path path" "ask ask"; }
+  .v-home .h-main { font-size: min(var(--t-display), 6.2cqi); line-height: 1.12; }
+  body.lang-en .v-home .h-main { font-size: min(var(--t-display), 7.2cqi); }
+  .v-home .h-kicker { font-size: var(--t-kicker); }
+  .v-home .h-art { margin: 0; padding: var(--s-6) var(--s-6) 0; align-self: end; }
+  .v-home .h-art .il { width: 100%; margin-bottom: calc(-24 / 360 * 100%); }
+  .v-home .h-path { --mk: 56px; --ln: 6px; border-top: 0; padding-top: 0; margin-top: var(--s-9); }
+  .v-home .h-st::before { top: calc(var(--mk) / 2 - var(--ln) / 2); }
+  .v-home .h-st-no { font-size: var(--fs-2xl); }
+  .v-home .h-ask { margin-top: var(--s-9); grid-template-columns: minmax(0, 1fr); }
+  .v-home .h-ask-k { padding-bottom: 0; font-size: var(--t-label); }
+  .v-home .h-ask-in { font-size: var(--t-h3); min-height: 60px; }
+  .v-home .h-route { --mk: 56px; }
+}
+
+/* =====================================================================
    About (#/about) — the reading column (8 of 12 on desktop)
    ===================================================================== */
 .v-about { container: about / inline-size; }

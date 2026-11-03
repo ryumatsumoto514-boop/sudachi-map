@@ -1,11 +1,12 @@
-/* 巣立ちマップ v5 — launch.css (LAUNCH). SPEC-v5 Part A 1 · MOTION-SPEC §2.
+/* 巣立ちマップ v10 — launch.css (LAUNCH). SPEC-v10 Opening · MOTION-SPEC §2.
    The opening itself (the splash, the app bar while it is up, the returning beat in the bar) is INLINE in
    index.html <head>: it has to paint on frame 1, before any stylesheet arrives. This file holds only what
    comes after the stylesheets in the page (the view and the tab bar), so it is never late for them.
 
    Which opening plays (decided by the head gate in index.html before first paint):
-     html.lx-full   the first load of home this session (or ?lx=1): the line, the station box, the hand-off
-     html.lx-short  every other load (reload / return in the same session, a deep link): a 0.55s beat in the bar
+     html.lx-full   the first load of home this session (or ?lx=1): the route turns into the logo, the hand-off
+                    (+ html.lx-x: the 急行 version, every timing × 0.6, in a new session once it has played before)
+     html.lx-short  every other load (reload / return in the same session, a deep link): a 0.6s beat in the bar
      html.lx-fade   reduced motion (OS or 設定): the page cross-fades in (opacity only, 200ms), nothing moves
      (none)         ?lx=0
    js/launch.js runs the hand-off and tidies every mode up; each hidden state below has a failsafe. */
@@ -15,9 +16,8 @@
    (html.lx-in, as the logo docks); home's own cascade then brings each part in. */
 html.lx-full:not(.lx-in) #view { opacity: 0; animation: lx-restore-o 1ms linear 12s forwards; }
 html.lx-full .tabbar { transform: translateY(100%); animation: lx-restore-t 1ms linear 12s forwards; }
-/* desktop: the rail slides in from the left under the splash (54 < 55): the logo flies over it */
-/* (a short slide with a fade, not from off-screen: a slow frame never shows the icons cut at the edge) */
-@media (min-width: 900px) { html.lx-full .tabbar { transform: translateX(-12px); opacity: 0; z-index: 54; animation-name: lx-restore-r; } }
+/* desktop: the rail slides in from the left edge under the fading splash paper (54 < 55): the logo flies over it */
+@media (min-width: 900px) { html.lx-full .tabbar { transform: translateX(-100%); z-index: 54; animation-name: lx-restore-r; } }
 @keyframes lx-restore-o { from, to { opacity: 1; } }
 @keyframes lx-restore-t { from, to { transform: none; } }
 @keyframes lx-restore-r { from, to { transform: none; opacity: 1; } }

@@ -1439,6 +1439,7 @@
           // the detail layers (rivers, parks, main roads at full precision) follow once the reveal has played
           setTimeout(function () { try { SM.mapStyle.start(); } catch (e) { } }, reduced() ? 300 : 1300);
         };
+        GL.land = land;   // v10: flyIn (outside this closure) lands through this; it threw "land is not defined"
         if (S.focus) glFocusCamera(S.focus, { instant: true });
         if (GL.flyIn && !S.focus && !reduced()) { GL.flewIn = true; setTimeout(flyIn, 260); return; }
         GL.flewIn = true;
@@ -1447,6 +1448,7 @@
       /* opening flight: all of Tokyo → the area (no area: a short push in). The border starts drawing at 60%
          of the flight and the pins drop at 85%, as an area change does; a drag or a tap takes the camera over */
       var flyIn = function () {
+        var land = GL.land || function () { };
         if (!GL.map || !GL.el || !GL.el.isConnected) { land(); return; }
         var cam = cameraFor(targetBounds());
         if (!cam) { land(); return; }

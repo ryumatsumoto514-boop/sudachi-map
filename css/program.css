@@ -932,7 +932,7 @@ body.tl-reading { overflow: hidden; }
 }
 .v-tools .ck-help-hours { font-size: var(--t-label); line-height: 1.5; color: var(--ink-3); }
 .v-tools .ck-help.is-urgent :is(.ck-help-name, .ck-help-num) { color: var(--red-text); }
-.v-tools .ck-help.is-urgent .call-go { color: var(--red-text); box-shadow: inset 0 0 0 1.5px var(--red-text); }
+.v-tools .ck-help.is-urgent .call-go { color: var(--red-text); background: var(--red-tint); }
 .v-tools .ck-help-more {
   justify-self: start; display: inline-block; align-content: center; min-height: 36px; margin: -6px 0 6px;
   color: var(--ink-2); font-family: var(--font-display); font-weight: 500; font-size: var(--fs-sm); letter-spacing: var(--ls-0); text-decoration: none;
@@ -1319,3 +1319,104 @@ body.lang-en .v-tools :is(.tl-title, .tl-hub-t, .scr-label-title) { word-break: 
 .v-tools .tl-kicker a { min-height: 44px; min-width: 44px; margin-block: -10px; }
 .v-tools .tl-kicker a::before { content: none; }
 .v-tools .tl-reset { min-width: 44px; }
+
+/* =====================================================================
+   v10 (SPEC-v10): signs you press, paper you read.
+   Program: no rule under the title (it was a double heavy rule with the facts' top), the key facts are one
+   strong sign panel (big ink / green numbers, 13px Plex 700 labels), tags are tints, everything pressable is a
+   filled panel, accordion rows are clean ruled rows. Tools: the illustration stands on a full-bleed panel (no
+   corner picture), the balance is ink (never grey), the result is a panel, controls are filled.
+   ===================================================================== */
+:is(.v-program, .v-tools, .pg-show) { --lbl: 0.8125rem; --lbl-ls: 0.06em; }
+.v-program :is(.pg-eyebrow, .pg-f dt, .pg-sub-h, .pg-kv dt, .pg-ask-n, .pg-tel-label, .pg-hours dt, .pg-loc-area, .pg-loc-kv dt, .pg-local-k, .pg-area-k),
+:is(.v-program, .v-tools) .pg-lesson-k, .pg-show-k,
+.v-tools :is(.tl-kicker, .tl-label, .scr-ctx-k, .scr-help-k, .rd-help-k, .ck-zones > span, .mn-big-k, .mn-vs-k, .mn-w-l, .scr-peek-k) {
+  font-family: var(--font-display); font-weight: 700; font-size: var(--lbl, 0.8125rem); letter-spacing: var(--lbl-ls, 0.06em); color: var(--ink-2);
+}
+.v-program :is(.pg-acc-meta, .pg-docs-count, .pg-note, .pg-link-host, .pg-src-warn, .pg-ja-note, .pg-report p),
+.pg-show-n, .pg-show-hint,
+.v-tools :is(.tl-hub-n, .tl-note, .tl-private, .tl-private-ic, .rd-pos-of, .rd-note, .ck-count, .tl-float-of, .mn-bd-p, .mn-hint, .mn-w-x, .ck-help-hours) { color: var(--ink-2); }
+:is(.v-program, .v-tools) .pg-sep { color: var(--ink-2); }
+.v-program .pg-doc-in:checked ~ .pg-doc-t { color: var(--ink-2); }
+
+/* ---------- masthead: title, then the one hook line — no rule ---------- */
+.v-program .pg-title-rule { display: none; }
+.v-program .pg-hook { margin-top: var(--s-4); }
+.v-program .pg-tags .tag { padding-block: 3px; }
+
+/* ---------- key facts: one sign panel ---------- */
+.v-program .pg-facts {
+  margin-inline: calc(var(--gutter) * -1); padding: var(--s-2) var(--gutter);
+  background: var(--paper-2); border: 0; border-top: 6px solid var(--action);
+}
+@media (min-width: 900px) { .v-program .pg-facts { margin-inline: 0; padding-inline: var(--s-6); } }
+.v-program .pg-f { gap: 6px; padding: var(--s-4) var(--s-4) var(--s-4) 0; border-top: 1px solid var(--paper-3); }
+.v-program .pg-f.is-r { padding: var(--s-4) 0 var(--s-4) var(--s-4); border-left: 1px solid var(--paper-3); }
+@media (max-width: 379px) {
+  body:is(.is-big, .lang-en) .v-program .pg-f.is-r,
+  body:is(.is-big, .lang-en) .v-program .pg-f:first-child:not(.is-wide) + .pg-f.is-r { padding: var(--s-4) 0; border-left: 0; border-top: 1px solid var(--paper-3); }
+}
+.v-program .pg-f dt { color: var(--ink); }
+.v-program .pg-f dd { font-size: var(--t-h2); line-height: var(--lh-heading); }
+.v-program .pg-f.is-amount dd { font-size: var(--t-h2); line-height: 1.3; }
+.v-program .pg-f.is-amount .amt-n { font-size: 3.5rem; line-height: 1; }
+@media (min-width: 900px) { .v-program .pg-f.is-amount .amt-n { font-size: var(--fs-5xl); } }
+.v-program .pg-f dd small { color: var(--ink-2); }
+.v-program .pg-k-more { box-shadow: none; background: var(--paper-3); color: var(--ink); font-weight: 700; min-height: 24px; padding: 0 8px; }
+.v-program .pg-meter i { height: 10px; }
+
+/* ---------- pressable: filled panels, no outline ---------- */
+.v-program .pg-act-row .btn { background: var(--paper-2); border-color: transparent; }
+@media (hover: hover) { .v-program .pg-act-row .btn:hover { background: var(--paper-3); } }
+.v-program .pg-act-row .btn:active, .v-program .pg-save[aria-pressed="true"] { background: var(--paper-3); }
+.v-program .pg-act { border-color: transparent; background: var(--paper-2); }
+@media (hover: hover) { .v-program .pg-act:hover { background: var(--paper-3); } }
+.v-program .pg-act:active, .v-program .pg-act-save[aria-pressed="true"] { background: var(--paper-3); }
+.v-program .pg-act-call, .v-program .pg-act-local { background: var(--action-fill); border-color: var(--action-fill); }
+.v-program .pg-doc-box { box-shadow: inset 0 0 0 2px var(--ink); }
+
+/* ---------- accordion: clean ruled rows ---------- */
+.v-program .pg-accs { border-top: 1px solid var(--rule); }
+.v-program .pg-acc-btn { min-height: 64px; padding: var(--s-4) 0; }
+.v-program .pg-acc-ic { color: var(--ink); }
+.v-program .pg-acc.is-open .pg-acc-btn .pg-acc-t { color: var(--ink); }
+.v-program .pg-acc.is-open > .pg-acc-h .pg-acc-btn { box-shadow: inset 0 -2px 0 var(--action); }
+.v-program .pg-local { border-top: 1px solid var(--rule); }
+.v-program .pg-tokyo-k { font-weight: 700; font-size: var(--lbl); letter-spacing: var(--lbl-ls); }
+
+/* ---------- tools: the illustration on a full-bleed panel ---------- */
+.v-tools .tl-head.has-il { align-items: stretch; }
+.v-tools .tl-art { display: grid; place-items: end center; background: var(--paper-2); }
+.v-tools .tl-art .il [data-il="plate"] { display: none; }
+@media (max-width: 899px) {
+  .v-tools .tl-head.has-il { grid-template-columns: minmax(0, 1fr); }
+  .v-tools .tl-head.has-il .tl-kicker, .v-tools .tl-head.has-il .tl-title, .v-tools .tl-head.has-il .tl-lead { grid-column: 1; grid-row: auto; }
+  .v-tools .tl-head.has-il .tl-art {
+    grid-column: 1; grid-row: auto; order: 9; justify-self: stretch; width: auto; max-width: none; height: 136px; margin-inline: calc(var(--gutter) * -1); padding-top: var(--s-4);
+  }
+  .v-tools .tl-head.has-il .tl-art .il { width: auto; height: 100%; }
+  .v-tools .tl-head.has-il .tl-art .il > svg.il-svg { width: auto; height: 100%; }
+}
+@media (min-width: 900px) { .v-tools .tl-art { width: 320px; padding: var(--s-5) var(--s-6) 0; } }
+
+/* ---------- 生活費: the balance in ink, the result as a panel, filled controls ---------- */
+.v-tools .mn-big.st-ex .mn-big-v { color: var(--ink); }
+.v-tools .mn-ex-tag { box-shadow: none; background: var(--paper-3); color: var(--ink); font-size: var(--lbl); min-height: 24px; padding: 0 8px; }
+.v-tools .mn-big { padding: var(--s-5) var(--s-4) var(--s-4); border-top: 0; background: var(--paper-2); }
+.v-tools .mn-res-body { background: transparent; }
+.v-tools .mn-vs-k { color: var(--ink); }
+.v-tools .mn-vs-v, .v-tools .mn-bd-v { color: var(--ink); }
+.v-tools .mn-bd > .tl-label { display: flex; align-items: center; gap: 8px; color: var(--ink); }
+.v-tools .mn-bd > .tl-label::before { content: ""; flex: none; width: 4px; height: 1em; background: var(--action); }
+.v-tools .mn-bd-bar { background: var(--ink); }
+.v-tools .mn-track { height: 6px; margin-top: -3px; }
+.v-tools .mn-range::-webkit-slider-thumb { background: var(--ink); border: 3px solid var(--paper); box-shadow: 0 0 0 1px var(--ink); }
+.v-tools .mn-range::-moz-range-thumb { background: var(--ink); border: 3px solid var(--paper); box-shadow: 0 0 0 1px var(--ink); }
+.v-tools .mn-range:active::-webkit-slider-thumb { background: var(--action); }
+.v-tools .mn-range:active::-moz-range-thumb { background: var(--action); }
+.v-tools .rd-close, .v-tools .rd-prev { box-shadow: none; background: var(--paper-2); }
+.v-tools .tl-float-dot.st-ex { background: var(--ink-2); }
+/* まなぶ rows: the cover is the same paper panel as on まなぶ */
+:is(.v-program, .v-tools) .pg-lesson-thumb:has(> .il) { background: var(--paper-2); }
+:is(.v-program, .v-tools) .pg-lesson-thumb .il [data-il="plate"] { display: inline; }
+@media (min-width: 900px) { .v-program .pg-f:not(.is-amount) dd { font-size: var(--t-h3); } }

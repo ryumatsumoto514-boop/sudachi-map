@@ -22,6 +22,9 @@
 .v-ask .ask-field { position: relative; }
 .v-ask .ask-field .search-clear[hidden] { display: none; }
 .v-ask .ask-field .input { font-size: var(--fs-lg); }
+/* v10: one focus ring only — the field's own frame (base.css) — even when the box is focused on arrival */
+.v-ask .ask-field .input:focus-visible { outline: none; }
+.v-ask .ask-box:focus-within { outline: none; box-shadow: none; }
 
 /* ---- output ---- */
 .v-ask .ask-out { display: grid; gap: var(--s-8); min-width: 0; }
@@ -58,7 +61,7 @@
 .v-ask .ask-cr-urgent.is-big .sos-li.is-urgent .sos-row { min-height: 104px; padding: 14px 14px 16px; }
 .v-ask .ask-cr-urgent.is-big .sos-li.is-urgent .sos-num { font-size: var(--fs-3xl); margin-bottom: 4px; }
 .v-ask .ask-cr-urgent .sos-desc { color: var(--on-red); font-size: var(--t-meta); }
-.v-ask .ask-cr-k { font-size: var(--t-label); font-weight: 700; letter-spacing: var(--ls-label); color: var(--ink-2); margin-top: var(--s-2); }
+.v-ask .ask-cr-k { font-family: var(--font-display); font-size: var(--t-label); font-weight: 700; letter-spacing: var(--ls-label); color: var(--ink-2); margin-top: var(--s-2); }
 .v-ask .ask-cr-all { margin-top: var(--s-2); }
 
 /* ---- (b) the answer ---- */
@@ -71,9 +74,9 @@
 .v-ask .ask-qh-t { display: inline-block; max-width: 100%; transform-origin: 0 50%; }
 .v-ask .ask-topics { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 0.25em; row-gap: 2px; margin-top: calc(-1 * var(--s-2));
   font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--ink-2); }
-.v-ask .ask-topics-k { margin-right: 0.75em; color: var(--ink-3); }
+.v-ask .ask-topics-k { margin-right: 0.75em; color: var(--ink-2); }
 .v-ask .ask-topic { color: var(--ink); font-weight: 700; }
-.v-ask .ask-sep { color: var(--ink-3); }
+.v-ask .ask-sep { color: var(--ink-2); }
 .v-ask .ask-near { font-size: var(--t-body); color: var(--ink-2); }
 
 .v-ask .ask-best-wrap { display: grid; gap: var(--s-2); }
@@ -94,10 +97,10 @@
 .v-ask .ask-best.is-new::before { animation: ask-draw 560ms var(--ease-draw, ease-out) 60ms both; }
 .v-ask .ask-best > * { min-width: 0; }
 .v-ask .ask-best-mark { padding-top: 2px; }
-.v-ask .ask-best-pin { display: inline-grid; place-items: center; width: 56px; height: 56px; border: 2px solid var(--ink); border-radius: var(--r-0, 0); color: var(--ink); }
+.v-ask .ask-best-pin { display: inline-grid; place-items: center; width: 56px; height: 56px; border: 0; border-radius: var(--r-ctl); background: var(--paper-2); color: var(--ink); }
 .v-ask .ask-best-pin .icon { width: 28px; height: 28px; }
 .v-ask .ask-best-main { display: grid; gap: var(--s-2); align-content: start; }
-.v-ask .ask-best-kind { font-size: var(--t-label); line-height: var(--lh-ui); letter-spacing: var(--ls-label); color: var(--ink-2); }
+.v-ask .ask-best-kind { font-family: var(--font-display); font-weight: 700; font-size: var(--t-label); line-height: var(--lh-ui); letter-spacing: var(--ls-label); color: var(--ink-2); }
 .v-ask .ask-best-title {
   font-family: var(--font-display); font-size: var(--t-h3); font-weight: 700;
   line-height: var(--lh-title); letter-spacing: var(--ls-0);
@@ -106,7 +109,7 @@
 @media (hover: hover) { .v-ask .ask-best-title a:hover { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 0.2em; } }
 .v-ask .ask-best-what { font-size: var(--t-body); line-height: var(--lh); color: var(--ink-2); }
 .v-ask .ask-best-key { display: block; font-size: var(--fs-base); font-weight: 700; color: var(--ink); line-height: 1.4; }
-.v-ask .ask-best-k { display: block; margin-bottom: 2px; font-size: var(--t-label); font-weight: 400; letter-spacing: var(--ls-label); color: var(--ink-2); }
+.v-ask .ask-best-k { display: block; margin-bottom: 2px; font-family: var(--font-display); font-size: var(--t-label); font-weight: 700; letter-spacing: var(--ls-label); color: var(--ink-2); }
 .v-ask .ask-best-num { font-family: var(--font-num); font-size: var(--t-num-l); font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: var(--ls-0); white-space: nowrap; }
 .v-ask .ask-best-acts { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-5); margin-top: var(--s-2); }
 .v-ask .ask-best-save { margin: -10px -11px 0 0; }
@@ -120,13 +123,13 @@
 }
 .v-ask .ask-jump-b:last-child { border-right: 0; }
 @media (hover: hover) { .v-ask .ask-jump-b:hover > span:first-child { text-decoration: underline; text-underline-offset: 0.28em; } }
-.v-ask .ask-jump-n { font-family: var(--font-num); font-weight: 700; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.v-ask .ask-jump-n { font-family: var(--font-num); font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
 
 /* ---- (c) groups ---- */
 .v-ask .ask-group { display: grid; min-width: 0; }
 .v-ask .ask-group .section-title { scroll-margin-top: calc(var(--appbar-h) + var(--safe-t) + 80px); }
 .v-ask .ask-group .section-title:focus { outline: none; }
-.v-ask .ask-count { font-family: var(--font-num); font-weight: 700; font-size: var(--t-num-inline); color: var(--ink-2); white-space: nowrap; align-self: end; }
+.v-ask .ask-count { font-family: var(--font-num); font-weight: 700; font-size: var(--t-num-inline); color: var(--ink); white-space: nowrap; align-self: end; }
 .v-ask .ask-count .unit { font-family: var(--font-display); font-size: var(--t-unit-inline); margin-left: 2px; }
 .v-ask .ask-rest[hidden] { display: none; }
 .v-ask .ask-rows.ask-rest { border-top: 0; }
@@ -182,11 +185,11 @@ html.m-reduce .v-ask .ask-best.is-new::before { animation: none; }
   .v-ask .ask-side .ask-chips { gap: var(--s-2); }
   .v-ask .ask-side .chips { display: grid; gap: 0; border-top: 1px solid var(--rule); }
   .v-ask .ask-side .chip {
-    justify-content: space-between; width: 100%; min-height: 48px; padding: 0 4px 0 0; border-radius: 0; box-shadow: none;
-    border-bottom: 1px solid var(--rule); font-size: var(--fs-base); font-weight: 700; white-space: normal;
+    justify-content: space-between; width: 100%; min-height: 56px; padding: 0 4px 0 0; border-radius: 0; box-shadow: none; background: none;
+    border-bottom: 1px solid var(--rule); font-size: var(--fs-base); font-weight: 500; white-space: normal;
   }
-  .v-ask .ask-side .chip::before { content: "\2192"; order: 2; font-family: var(--font-num); font-weight: 500; color: var(--ink-3); transition: transform var(--dur-quick) var(--ease-standard); }
-  .v-ask .ask-side .chip:hover { background: var(--paper-2); }
+  .v-ask .ask-side .chip::before { content: "\2192"; order: 2; font-family: var(--font-num); font-weight: 500; color: var(--ink-2); transition: transform var(--dur-quick) var(--ease-standard); }
+  .v-ask .ask-side .chip:hover { background: none; text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 0.28em; }
   .v-ask .ask-side .chip:hover::before { transform: translateX(3px); color: var(--ink); }
   .v-ask .ask-side .ask-ways .list { border-top: 0; }
   /* the start screen keeps ほかのさがし方 under the box (the left column would be bare); with an answer on the left,
